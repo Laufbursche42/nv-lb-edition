@@ -31,7 +31,7 @@ final class FrameParser {
 
     // live / status model
     private Integer speed, mode, soc, range, totalMile, fault;
-    private String region = "", serial = "", pid = "";
+    private String region = "", serial = "", pid = "", configRaw = "";
     private Integer maxSpeed, limitSpeed, limitOn, startSpeed, lock, unit, breakSpeed, driveMode, cruise, tcs, eco;
     private Integer packMv, packMa, soh, temp, cycles;
     // realtime-only fields (0x90/0x91/0x92 push): charging + trip context, not in the 0x70/0x72 reads
@@ -60,18 +60,31 @@ final class FrameParser {
                 if ((rx[i] & 0xFF) == 0x55 && (rx[i + 1] & 0xFF) == 0xAA) { start = i; break; }
             }
             if (start < 0) { if (rxLen > 0) { rx[0] = rx[rxLen - 1]; rxLen = 1; } return; }
-            int cmd = (start + 3 < rxLen) ? (rx[start + 3] & 0xFF) : -1;
+            // Drop any noise before the start marker so the length below is read at a fixed offset.
+            if (start > 0) { System.arraycopy(rx, start, rx, 0, rxLen - start); rxLen -= start; }
+            int cmd = (rxLen > 3) ? (rx[3] & 0xFF) : -1;
             int end = -1;
-            for (int i = start + 4; i + 1 < rxLen; i++) {
-                int a = rx[i] & 0xFF, b = rx[i + 1] & 0xFF;
-                if (a == 0xFE && b == 0xFD) { end = i + 1; break; }
-                if (a == 0xAE && b == 0xAD && cmd >= 0xA0) { end = i + 1; break; }
+            // Preferred: trust the length byte. Frame = 55 AA <flag> <cmd> <len> <len bytes> <ck> t1 t2,
+            // so the trailer sits at index 8+len-1. Jumping there means a payload that happens to contain
+            // an FE FD (or AE AD) byte pair can no longer truncate the report - the bug that intermittently
+            // nulled the high 0x70 offsets (tcs@11, maxSpeed@25, driveMode@26).
+            if (rxLen >= 5) {
+                int total = 8 + (rx[4] & 0xFF);
+                if (rxLen >= total) {
+                    int t1 = rx[total - 2] & 0xFF, t2 = rx[total - 1] & 0xFF;
+                    if ((t1 == 0xFE && t2 == 0xFD) || (t1 == 0xAE && t2 == 0xAD && cmd >= 0xA0)) end = total - 1;
+                }
             }
+            // Fallback: scan for the trailer if the length byte did not line up (corrupt/misaligned).
             if (end < 0) {
-                if (start > 0) { System.arraycopy(rx, start, rx, 0, rxLen - start); rxLen -= start; }
-                return;
+                for (int i = 4; i + 1 < rxLen; i++) {
+                    int a = rx[i] & 0xFF, b = rx[i + 1] & 0xFF;
+                    if (a == 0xFE && b == 0xFD) { end = i + 1; break; }
+                    if (a == 0xAE && b == 0xAD && cmd >= 0xA0) { end = i + 1; break; }
+                }
             }
-            byte[] f = Arrays.copyOfRange(rx, start, end + 1);
+            if (end < 0) return;                          // frame not complete yet - wait for more bytes
+            byte[] f = Arrays.copyOfRange(rx, 0, end + 1);
             try { dispatch(f); } catch (Throwable t) { Log.e(TAG, "dispatch failed", t); }
             int consumed = end + 1;
             System.arraycopy(rx, consumed, rx, 0, rxLen - consumed);
@@ -142,6 +155,8 @@ final class FrameParser {
         fwUwb = ascii(p, 16, 4);
     }
 
+    private static final char[] HEXCH = "0123456789abcdef".toCharArray();
+
     private void decodeSN(byte[] p) {
         StringBuilder sb = new StringBuilder();
         for (byte b : p) { int c = b & 0xFF; if (c >= 0x20 && c < 0x7f) sb.append((char) c); }
@@ -149,6 +164,12 @@ final class FrameParser {
         if (serial.length() >= 10) region = serial.substring(8, 10);
         Matcher m = Pattern.compile("[A-Za-z]?(\\d{4})").matcher(serial);
         pid = m.find() ? m.group(1) : "";
+        // Raw config block (first 17 bytes) as lowercase hex, for the NT5 region read-modify-write:
+        // the region letters live at bytes 8-9 and are rewritten via the factory 0xA2 config write.
+        int n = Math.min(17, p.length);
+        StringBuilder cr = new StringBuilder(n * 2);
+        for (int i = 0; i < n; i++) { int v = p[i] & 0xFF; cr.append(HEXCH[v >> 4]).append(HEXCH[v & 0xF]); }
+        configRaw = cr.toString();
     }
 
     // Realtime push frames. Offsets verified against the manufacturer app BleHandler (cases 144/145/146)
@@ -203,6 +224,7 @@ final class FrameParser {
             put(o, "speed", speed); put(o, "mode", mode); put(o, "driveMode", driveMode);
             put(o, "soc", soc); put(o, "range", range); put(o, "totalMile", totalMile); put(o, "fault", fault);
             o.put("region", region); o.put("serial", serial); o.put("pid", pid);
+            o.put("configRaw", configRaw);
             put(o, "maxSpeed", maxSpeed); put(o, "limitSpeed", limitSpeed); put(o, "limitOn", limitOn);
             put(o, "startSpeed", startSpeed); put(o, "lock", lock); put(o, "unit", unit);
             put(o, "breakSpeed", breakSpeed); put(o, "cruise", cruise); put(o, "tcs", tcs); put(o, "eco", eco);

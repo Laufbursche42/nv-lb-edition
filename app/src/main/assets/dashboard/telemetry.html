@@ -265,6 +265,10 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 
   <div id="model-banner">
     <div class="model-line"><span data-i18n="settings.model.label">Model:</span> <span id="model-name">-</span></div>
+    <div class="model-line model-pick">
+      <span data-i18n="settings.model.pick">Falsch erkannt? Modell wählen:</span>
+      <select class="set-ctrl" id="model-select"></select>
+    </div>
   </div>
 
   <!-- Scooter connection + settings -->
@@ -494,6 +498,30 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div class="settings-row mt-8 no-bottom-rule">
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.tune.restore.label">Zurück auf Normal</div><div class="settings-row-sublabel" data-i18n="scooter.tune.restore.sub">Sendet den normalen Fahrmodus 3</div></div>
         <button id="tune-restore" class="route-gpx-btn" data-i18n="scooter.tune.restore">Normal</button>
+      </div>
+    </div>
+
+    <!-- Region test panel: rewrites the region letters in the config block via the factory 0xA2 write
+         (wrapped in line-test), the same path navee-unlock uses. Shown for any NON-XT model. The write
+         is additionally gated on the REAL hardware pid (naveeRegionAllowed), so it can NEVER run on an
+         XT5 even if the model dropdown is overridden. Deep, risky write: the display goes dark during
+         line-test and the exit likely resets the scooter. Own device only, private ground. -->
+    <div id="region-panel" style="display:none">
+      <div class="section-hdr sub-hdr" data-i18n="scooter.region.section.title">Region / Land (Test)</div>
+      <div class="settings-group pt-4">
+        <div class="settings-row-sublabel mb-8" data-i18n="scooter.region.intro">
+          Schreibt die Regionskennung (zwei Buchstaben wie US oder DE) per Factory-Write 0xA2 in den Konfig-Block. Riskant: das Display wird kurz dunkel plus der Roller startet danach meist neu. Wirkt nur, wenn der Controller nicht gesperrt ist. Sitzt die harte Grenze im Flash, bleibt es wirkungslos. Nur eigenes Gerät, Privatgelände. Bei XT5 ist die Funktion gesperrt.
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.region.current.label">Aktuelle Region</div></div>
+          <span class="dg-value" id="region-current">-</span>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.region.code.label">Neue Region (2 Buchstaben)</div><div class="settings-row-sublabel" data-i18n="scooter.region.code.sub">z.B. US für freizügige Region, DE zum Zurücksetzen</div></div>
+          <input class="set-ctrl" id="region-code" type="text" maxlength="2" value="US" style="text-transform:uppercase; width:4em">
+        </div>
+        <button id="region-send" class="route-gpx-btn" data-i18n="scooter.region.send">Region schreiben</button>
+        <div class="settings-row-sublabel m-6-0-0" id="region-status" data-i18n="scooter.region.status.idle">Noch nichts gesendet.</div>
       </div>
     </div>
 
@@ -2505,19 +2533,72 @@ function liveRaw() {
   catch (e) { return {}; }
 }
 
-/* -- Model line --
-   NAVEE has no per-model feature gating in this app: the settings this app writes are the same
-   single-opcode writes on every model, so the banner only shows the advertised BLE name. */
-let _lastModelKey = null;   // kept so applyLang() can force one refresh of the model line
+/* -- Model line + manual picker --
+   Detect the connected NAVEE model from the serial pid (0x74 report), show it in the settings banner,
+   and offer a manual override dropdown for the case where auto-detection is wrong or the serial has not
+   been read yet. The pid -> model map is the full fleet map from the reverse-engineering work. */
+const NAVEE_MODELS = {
+  '2213':'N65i','2314':'V25/V25i','2322':'S40','2326':'V3 Pro','2327':'V25 Pro/V25i Pro',
+  '2328':'V40i/V40i Pro','2329':'V50i Pro','2334':'S60','2345':'ST3 Pro','2353':'P50',
+  '2401':'ST3','2402':'GT3','2403':'GT3 Pro','2416':'XT5 Pro','2417':'E20','2418':'GT3 Max',
+  '2422':'E25','2435':'Birdie 3','2436':'V25i Pro II','2437':'V40i Pro II','2438':'V50i Pro II',
+  '2441':'ST5 Pro','2442':'G5','2443':'XT5 Ultra','2449':'NT5 Ultra X','2504':'K100','2505':'K100 Pro',
+  '2506':'K100 Max','2509':'N65i II','2515':'Birdie 3x','2517':'ST5 Max','2518':'G5 pro','2519':'G5 Max',
+  '2529':'XT5 Max','2536':'S2','2538':'UT5 Max','2543':'NT5 Max','2545':'GT5 Pro','2546':'GT5 Max',
+  '2547':'UT5 Ultra','2573':'E25 Go','2585':'UT5 Ultra X','2611':'E45 Pro','2612':'E60 Pro','2614':'S2',
+  '2619':'UT3 Pro','2620':'UT3 Max','2623':'V45i','2634':'E20 Lite','2643':'E60 Pro','2646':'UT3',
+  '2657':'NT5 Max+','2658':'NT5 Ultra','2701':'NT3 Pro','2704':'GT3 Pro','2707':'NT5 Turbo','2714':'ST3 Pro',
+  '2736':'KG05','2739':'WOLF X','2745':'NT3 Max','2753':'E45 Pro','2754':'E60 Pro','2768':'EXO S Pro',
+  '2782':'XT5',   // XT5 pid named in navee-unlock; kept so naveeIsXT() hard-blocks the region write on it
+};
+// Pull the 4-digit pid out of a serial: skip an optional family letter, take the next 4 digits.
+function naveePidOf(sn) { if (!sn) return ''; const m = String(sn).match(/[A-Za-z]?(\d{4})/); return m ? m[1] : ''; }
+function naveeModelFromPid(pid) { return (pid && NAVEE_MODELS[pid]) ? NAVEE_MODELS[pid] : ''; }
+// XT5 family (XT5 Pro/Ultra/Max). The factory region write (0xA2 + line-test) MUST NEVER run on these.
+function naveeIsXT(name) { return /^XT/i.test(name || ''); }
+// The REAL model from the hardware serial pid, ignoring any manual dropdown override. The risky region
+// write keys off this, never the override, so a dropdown pick can never arm it on an XT5.
+function naveeRealModel() { return naveeModelFromPid(liveRaw().pid || ''); }
+// Region write allowed ONLY when the real pid resolves to a KNOWN, non-XT model. Unknown pid, missing
+// serial or any XT model -> not allowed. Fail-safe: default deny.
+function naveeRegionAllowed() { const m = naveeRealModel(); return !!m && !naveeIsXT(m); }
 
-function populateModelSelect() {}   // no model picker on NAVEE - kept as a no-op for applyLang()
+let _lastModelKey = null;   // kept so applyLang() can force one refresh of the model line
+let _modelSelectFilled = false;
+
+// Fill the manual override dropdown once: an "Auto" entry plus every distinct model name, sorted.
+function populateModelSelect() {
+  const sel = document.getElementById('model-select');
+  if (!sel || _modelSelectFilled) return;
+  const names = Array.from(new Set(Object.values(NAVEE_MODELS))).sort((a, b) => a.localeCompare(b));
+  const auto = document.createElement('option');
+  auto.value = ''; auto.setAttribute('data-i18n', 'settings.model.auto'); auto.textContent = 'Auto (erkannt)';
+  sel.appendChild(auto);
+  for (const nm of names) { const o = document.createElement('option'); o.value = nm; o.textContent = nm; sel.appendChild(o); }
+  sel.addEventListener('change', () => { state.modelOverride = sel.value || ''; applyModelUi(liveRaw().btName); });
+  _modelSelectFilled = true;
+}
 
 function applyModelUi(btName) {
-  // NAVEE: no per-model feature gating in this app - just show the advertised name as the model line.
+  const d = liveRaw();
+  const auto = naveeModelFromPid(d.pid || '');             // '' if pid unknown / not read yet
+  const override = state.modelOverride || '';              // '' = follow auto-detection
+  const eff = override || auto;                            // effective model name
   const nameEl = document.getElementById('model-name');
-  if (!nameEl) return;
-  const nm = (btName || '').trim();
-  nameEl.textContent = nm || '-';
+  if (nameEl) nameEl.textContent = eff || (btName || '').trim() || '-';
+  const sel = document.getElementById('model-select');
+  if (sel && sel.value !== override) sel.value = override; // keep the picker in sync
+  applyModelPanels(eff);
+}
+
+// Show/hide model-specific panels. The region test panel shows for any non-XT model (effective =
+// override or auto). The write itself is separately gated on the REAL pid (naveeRegionAllowed), so an
+// override can never arm it on an XT5.
+function applyModelPanels(modelName) {
+  const rp = document.getElementById('region-panel');
+  if (rp) rp.style.display = (modelName && !naveeIsXT(modelName)) ? '' : 'none';
+  const rc = document.getElementById('region-current');
+  if (rc) rc.textContent = liveRaw().region || '-';
 }
 
 
@@ -3022,6 +3103,55 @@ function initRideBanner() {
    Opcodes: immobilizer 0x51 (via LB.setLock), cruise 0x52, zero-start 0x6A, drive mode 0x58. */
 const NAVEE_CMD = { cruise: 0x52, zerostart: 0x6A, drivemode: 0x58, tcs: 0x5F, unit: 0x55 };
 const NAVEE_ECO = { cmd: 0x6F, sub: 5 };   // eco / low-power is a 0x6F sub-command, not a plain toggle
+// Start-off (kickstart) default level. 3 is the manufacturer default and the firmware's parked clamp
+// floor (values <3 are forced to 3 while parked). The quick button lights up whenever startSpeed
+// differs from this, so a set non-default level is visible even when zero-start (0) is unreachable
+// at standstill.
+const NAVEE_STARTSPEED_DEFAULT = 3;
+function setRegionStatus(msg) { const el = document.getElementById('region-status'); if (el) el.textContent = msg; }
+// Raw NAVEE frame builders for the factory region write, sent via LB.sendRaw as a hex string. The
+// checksum is the sum of every byte from 0x55 through the last payload byte, & 0xFF. Normal/read frames
+// end FE FD; the undocumented factory frames (cmd >= 0xA0) end AE AD. Mirrors navee-unlock exactly.
+function naveeCk(b) { let s = 0; for (const x of b) s = (s + x) & 0xFF; return s; }
+function naveeHex(b) { return b.map(x => (x & 0xFF).toString(16).padStart(2, '0')).join(''); }
+function naveeReadFrameHex(cmd) { const body = [0x55, 0xAA, 0x00, cmd & 0xFF]; return naveeHex([...body, naveeCk(body), 0xFE, 0xFD]); }
+function naveeFactoryHex(sub, payload) {
+  payload = (payload || []).map(x => x & 0xFF);
+  const body = [0x55, 0xAA, 0x00, sub & 0xFF, payload.length & 0xFF, ...payload];
+  return naveeHex([...body, naveeCk(body), 0xAE, 0xAD]);
+}
+function naveeSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Region write via the factory 0xA2 config write, wrapped in line-test (0xA0 1 / 0xA0 0), exactly like
+// navee-unlock.writeRegionCode. HARD-GATED on the real hardware pid: refuses on XT5, on an unknown pid
+// and when the serial/config block has not been read - a dropdown override cannot bypass this.
+async function naveeWriteRegion(code) {
+  code = (code || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+  if (code.length !== 2) { setRegionStatus(t('scooter.region.status.badcode')); return; }
+  if (!naveeRegionAllowed()) { setRegionStatus(t('scooter.region.status.blocked')); return; }
+  if (typeof LB === 'undefined' || !LB.sendRaw) { showToast(t('msg.app.only.in.app')); return; }
+  const cfgHex = liveRaw().configRaw || '';
+  if (cfgHex.length < 34) { setRegionStatus(t('scooter.region.status.noconfig')); return; }  // 17 bytes = 34 hex
+  const cfg = [];
+  for (let i = 0; i < 34; i += 2) cfg.push(parseInt(cfgHex.substr(i, 2), 16));
+  cfg[8] = code.charCodeAt(0); cfg[9] = code.charCodeAt(1);   // region letters sit at config bytes 8-9
+  try {
+    setRegionStatus(tf('scooter.region.status.sending', { c: code }));
+    LB.sendRaw(naveeFactoryHex(0xA0, [0x01]));   // enter line-test so the readback echoes to BLE (display dark)
+    await naveeSleep(500);
+    LB.sendRaw(naveeFactoryHex(0xA2, cfg));       // config write, full 17 bytes
+    await naveeSleep(500);
+    LB.sendRaw(naveeFactoryHex(0xB9, []));         // read the live config back
+    await naveeSleep(1500);
+    LB.sendRaw(naveeReadFrameHex(0x74));           // refresh the 0x74 serial/region tile
+    await naveeSleep(400);
+  } catch (err) {
+    showToast(tf('msg2.toast.error', { e: err }));
+  } finally {
+    LB.sendRaw(naveeFactoryHex(0xA0, [0x00]));   // ALWAYS exit line-test (display back on; likely resets)
+  }
+  setRegionStatus(tf('scooter.region.status.sent', { c: code }));
+}
 
 /* Shared connected-guard for a settings write; toasts when not usable. */
 function naveeGuard() {
@@ -3037,7 +3167,7 @@ function prefillScooterSettings(live) {
   const setC = (id, on) => { if (live && focused(id)) return; const el = document.getElementById(id); if (el && on != null) el.checked = !!on; };
   const setV = (id, v) => { if (live && focused(id)) return; const el = document.getElementById(id); if (el && v != null && v !== '') el.value = v; };
   if (d.lock === 0 || d.lock === 1) setC('ss-lock', d.lock === 1);          // 1 = locked
-  if (d.cruise === 0 || d.cruise === 1) setC('ss-cruise', d.cruise === 1);
+  if (typeof d.cruise === 'number') setC('ss-cruise', d.cruise > 0);
   if (d.tcs === 0 || d.tcs === 1) setC('ss-tcs', d.tcs === 1);
   if (d.eco === 0 || d.eco === 1) setC('ss-eco', d.eco === 1);
   if (d.unit === 0 || d.unit === 1) setC('ss-unit', d.unit === 1);   // 1 = mph on the scooter display
@@ -3128,6 +3258,23 @@ function wireSpeedRelease() {
     if (!naveeGuard()) return;
     if (sendSpeedRelease(false)) showToast(t('msg2.navee.tune.restored'), 3000);
   });
+  // Region test panel: the factory 0xA2 region write. Hard-gated on the REAL pid (never XT5, never an
+  // unknown model) plus a confirm dialog, because it enters line-test and likely resets the scooter.
+  const regionSend = document.getElementById('region-send');
+  if (regionSend) regionSend.addEventListener('click', () => {
+    if (!naveeGuard()) return;
+    if (!naveeRegionAllowed()) { setRegionStatus(t('scooter.region.status.blocked')); return; }
+    const el = document.getElementById('region-code');
+    const code = (el ? el.value : '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+    if (code.length !== 2) { setRegionStatus(t('scooter.region.status.badcode')); return; }
+    document.getElementById('confirm-title').textContent = t('scooter.region.confirm.title');
+    const warn = document.getElementById('confirm-warn');
+    if (warn) { warn.textContent = t('scooter.region.confirm.warn'); warn.style.display = 'block'; }
+    document.getElementById('confirm-msg').textContent = tf('scooter.region.confirm.body', { c: code });
+    document.getElementById('confirm-ok').textContent = t('scooter.region.confirm.ok');
+    state.confirmCb = () => { naveeWriteRegion(code); };
+    document.getElementById('confirm-overlay').classList.add('open');
+  });
 }
 
 /* Send the release (drive mode 4) or the normal mode (3) and remember which one went out.
@@ -3171,14 +3318,17 @@ function toggleDriveQuick(key) {
     try { LB.setLock(locked); showToast(locked ? t('msg2.navee.lock.off') : t('msg2.navee.lock.on')); }
     catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
   } else if (key === 'cruise') {
-    pushSetting(NAVEE_CMD.cruise, (d.cruise === 1) ? 0 : 1);
+    pushSetting(NAVEE_CMD.cruise, (typeof d.cruise === 'number' && d.cruise > 0) ? 0 : 1);
   } else if (key === 'tcs') {
     pushSetting(NAVEE_CMD.tcs, (d.tcs === 1) ? 0 : 1);
   } else if (key === 'zerostart') {
-    // Quick toggle: zero start (level 0) vs the default kick-off level 3. The fine 0-5 choice is
-    // on the scooter-settings page.
-    const on = (typeof d.startSpeed === 'number' && d.startSpeed === 0);
-    pushSetting(NAVEE_CMD.zerostart, on ? 3 : 0);
+    // Quick toggle: "on" = any non-default start-off level is set. Pressing it while on restores the
+    // default level; pressing it while off requests zero-start (level 0). The fine 0-5 choice is on the
+    // scooter-settings page. Note: parked, the firmware clamps <3 up to 3, so zero-start only takes
+    // while rolling / in mode 6-8 - but a level of 4 or 5 set on the settings page is reachable and
+    // will light the button.
+    const on = (typeof d.startSpeed === 'number' && d.startSpeed !== NAVEE_STARTSPEED_DEFAULT);
+    pushSetting(NAVEE_CMD.zerostart, on ? NAVEE_STARTSPEED_DEFAULT : 0);
   }
 }
 
@@ -3190,8 +3340,10 @@ function reflectDriveQuick() {
   wrap.classList.toggle('dq-disabled', !connected);
   const d = liveRaw();
   const on = {
-    zerostart: (typeof d.startSpeed === 'number' && d.startSpeed === 0),
-    cruise: (d.cruise === 1),
+    zerostart: (typeof d.startSpeed === 'number' && d.startSpeed !== NAVEE_STARTSPEED_DEFAULT),
+    // Cruise: mirror the manufacturer, which highlights on getCcsStatus() != 0, not an exact ==1.
+    // The numeric guard keeps a missing key (undefined) from reading as "on".
+    cruise: (typeof d.cruise === 'number' && d.cruise > 0),
     tcs: (d.tcs === 1),
     lock: (d.lock === 1)
   };
@@ -3229,29 +3381,42 @@ function fitFold() {
   const avail = scroller.clientHeight - parseFloat(cs.paddingTop || '0') - FOLD_BOTTOM_GAP;
   if (!(avail > 0)) return;
 
+  // Measure the NATURAL content height with no forced height and no distribution, so the factor is
+  // computed from the real content, not from a layout a previous pass already stretched.
+  inner.style.height = '';
+  inner.style.justifyContent = '';
+
   // offsetHeight is the LAYOUT height and ignores the transform, so the factor can be recomputed
   // without first removing the one already applied.
   let scale = _foldScale || 1;
+  let natural = 0;
   for (let pass = 0; pass < 2; pass++) {
     inner.style.width = (100 / scale) + '%';
-    const natural = inner.offsetHeight;
+    natural = inner.offsetHeight;
     if (!(natural > 0)) return;
     scale = Math.max(FOLD_MIN_SCALE, Math.min(FOLD_MAX_SCALE, avail / natural));
   }
 
-  // Already there: rewriting the same values would resize the observed children again, and a
-  // factor that lands either side of a text-wrap boundary could then oscillate forever.
-  if (Math.abs(scale - _foldScale) < 0.005) {
-    inner.style.width = (100 / _foldScale) + '%';
-    return;
-  }
-  _foldScale = scale;
+  // Oscillation guard: if the factor barely moved keep the old one, so a width rewrite cannot flip a
+  // text-wrap boundary and swing forever. Fall through so the fill logic still runs (avail may have
+  // changed even when the factor did not).
+  if (Math.abs(scale - _foldScale) >= 0.005) _foldScale = scale;
+  scale = _foldScale;
+
   inner.style.width = (100 / scale) + '%';
   inner.style.transform = 'scale(' + scale + ')';
-  // Never shorter than the screen: when the factor runs into the upper cap the scaled block
-  // stops short of the bottom edge, and the next section's heading would peek in. Claiming the
-  // full height keeps everything after the fold below the edge either way.
-  fold.style.height = Math.round(Math.max(avail, inner.offsetHeight * scale)) + 'px';
+  // Fill the whole visible height. When the scaled content is shorter than avail - the factor hit its
+  // upper cap on a tall screen - stretch the inner block to avail/scale so the scaled result is
+  // exactly avail, and let the flex column space its rows out. That distributes the empty band as gaps
+  // between the tiles instead of leaving it all at the bottom. (No effect on child sizes, so the
+  // ResizeObserver watching the children does not re-fire.)
+  if (natural * scale < avail - 1) {
+    inner.style.height = (avail / scale) + 'px';
+    inner.style.justifyContent = 'space-between';
+  }
+  // Claim at least the full height; when the content is taller than avail (min scale on a short
+  // screen) claim the scaled content height so #fold's overflow:hidden does not clip it.
+  fold.style.height = Math.round(Math.max(avail, natural * scale)) + 'px';
 }
 
 /* Re-fit whenever the viewport or the fold's own content changes (a gear tag appearing, a

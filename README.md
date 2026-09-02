@@ -52,7 +52,7 @@ Everything below is implemented and shipping in the app.
 
 - **Live speed drums** - side-by-side scooter speed and GPS speed.
 - **Hero tiles** - state of charge (SOC), the current drive mode (gear) and battery current at a glance.
-- **Quick toggles** right below the tiles - zero-start, cruise control and the immobilizer. They are written to the scooter immediately and are greyed out while disconnected.
+- **Quick toggles** right below the tiles - zero-start, cruise control, traction control and the immobilizer. They are written to the scooter immediately, are greyed out while disconnected and colour in when the scooter reports the function as active, so you can see an accepted command at a glance.
 - **Vehicle and battery grid** - remaining range, the max-speed parameter, pack voltage, battery temperature, battery SOH, charge cycles, total and trip distance, Bluetooth signal strength and the scooter's fault code.
 - **Current ride (GPS)** - distance, time, average speed, altitude, climb and descent, GPS fix quality and the number of recorded points.
 
@@ -72,14 +72,24 @@ Everything below is implemented and shipping in the app.
 
 ### Scooter settings
 
-- **Four functions, written immediately** over Bluetooth - there is no Save button because each control is a single one-byte command:
+- **Written immediately** over Bluetooth - there is no Save button because each control is a single command:
   - **Immobilizer** - lock or unlock the scooter electronically.
   - **Cruise control** - on or off.
-  - **Zero-start** - start without kicking off.
+  - **Traction control (TCS)** - on or off.
+  - **Zero-start** - the kick-off level (0 to 5), from "start without kicking off" up to a firm push threshold.
   - **Drive mode** - the gear / riding level.
+  - **Eco / low-power mode** and the **display unit** (km/h or mph on the scooter's own screen).
 - **A "?" help popup on the settings** that need one.
+- **Model line and picker** - the connected model is detected from the scooter's serial and shown at the top of the settings. If it is wrong or has not been read yet, a dropdown lets you pick the model by hand.
 - **The shown state comes from the scooter**, not from the phone: the live parameter report drives every control, so what you see is what the scooter currently reports.
 - **The firmware has the last word.** The app sends the command and shows what comes back. A function your model or its firmware does not support stays without effect; the app does not pretend otherwise.
+
+### Speed release and region - private ground only
+
+These change how fast the scooter runs. **On public roads they are not legal: they void the operating permit (ABE) and the insurance cover.** Use them on your own scooter, on private ground.
+
+- **Speed release** - one button (and a triple-tap on the km/h tile on the main screen) puts the XT5 family into its top drive mode, so the scooter runs at its built-in top speed instead of the restricted one. The firmware sets the actual figure, so it is a range rather than a number you dial in. Confirmed on the XT5 Ultra; the other XT5 models are expected but not yet ridden, and other models simply ignore it.
+- **Region** - on non-XT5 models a panel writes a two-letter region code (for example US or DE) to test whether a more permissive region raises the limit. It is **blocked on the XT5 family** and asks you to confirm first, because the screen goes dark for a moment and the scooter usually restarts. It only has an effect where the scooter accepts the write; on many units the real limit sits in firmware and the write does nothing.
 
 ### Info & diagnostics
 
@@ -131,11 +141,11 @@ Everything below is implemented and shipping in the app.
 Naming the gaps is part of being honest about a feasibility study:
 
 - **No firmware flashing, no OTA and no firmware files of any kind.** The app never writes firmware to the scooter and never downloads any.
-- **No speed unlock.** Nothing here raises the scooter's top speed or changes its region.
+- **No arbitrary speed number.** The speed release commands the scooter's own built-in top speed; it does not let you dial in a figure the firmware would not otherwise reach.
 - **No identity or serial rename.**
 - **No in-app app update.** New versions are installed the same way as the first one.
 - **No fault-code dictionary.** The raw code is shown, nothing is invented around it.
-- **No per-cell battery data, no dual-motor, motor-mode or traction-control controls and no per-gear profile editor** - the NAVEE protocol as observed here does not offer them.
+- **No per-cell battery data, no dual-motor or motor-mode controls and no per-gear profile editor** - the NAVEE protocol as observed here does not offer them.
 
 ## Installing the app
 

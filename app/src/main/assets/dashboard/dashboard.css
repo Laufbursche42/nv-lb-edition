@@ -440,6 +440,10 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 #drive-quick .dq-btn:active { opacity: .7; }
+/* Accepted/on state (lock engaged, TCS on, cruise on): reflectDriveQuick() sets .active from the
+   live 0x70/0x90 read-back each tick, so paint it in the accent fill like the .seg toggles do. This
+   is the STATE class and is deliberately distinct from the :active press pseudo-class above. */
+#drive-quick .dq-btn.active { background: var(--btnfill); color: #0A0C10; border-color: var(--btnfill); }
 /* Cruise while the scooter is locked: the firmware refuses the write, so mark it as unavailable. */
 #drive-quick .dq-btn.dq-locked { opacity: .45; }
 #drive-quick.dq-disabled { opacity: .4; filter: grayscale(1); }

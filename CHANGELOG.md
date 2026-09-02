@@ -16,9 +16,18 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
-## 1.1 - unreleased
+## 1.0.1
 
-The first NAVEE build. The series is 1.1 per `version.properties`; the patch number is filled in by the build from the commit count, and no release has been tagged yet, so this section is headed by the series rather than by a version and a date that do not exist.
+- **Model detection with a manual picker.** The connected model is read from the scooter's serial and shown in the settings; a dropdown corrects a wrong or missing detection.
+- **Region write** on non-XT5 models - writes a two-letter region code to test a more permissive region. It is hard-blocked on the XT5 family (decided by the real hardware, not the picker) and asks for confirmation, because the screen goes dark and the scooter usually restarts.
+- **Accepted state is now shown.** The immobilizer, cruise control, traction control and zero-start quick toggles colour in when the scooter reports the function active. Before this they never highlighted even when the scooter had accepted the command.
+- **Zero-start quick toggle** lights up whenever a non-default kick-off level is set.
+- **Sturdier frame reassembly** - the parameter report is framed by its length rather than by scanning for the end marker, so a payload that happens to contain the marker bytes no longer truncates it.
+- Documentation brought in line with what the app already does.
+
+## 1.0.0
+
+The first NAVEE build.
 
 The app now speaks to a NAVEE scooter and to nothing else. It is a feasibility study, not a finished product, and it comes with no warranty. NAVEE is a trademark of its owner and is used here descriptively: this is not an official NAVEE app and it is not affiliated with, endorsed by or connected to NAVEE.
 
@@ -31,14 +40,19 @@ The app now speaks to a NAVEE scooter and to nothing else. It is a feasibility s
 
 ### Scooter settings
 
-Four settings are written, each one on its own command and each one carrying only what was touched:
+Each setting is written on its own command and carries only what was touched:
 
 - **Immobilizer** (`0x51`) - locks and unlocks the scooter electronically.
-- **Cruise control** (`0x52`).
-- **Zero start** (`0x6A`).
-- **Drive mode** (`0x58`).
+- **Cruise control** (`0x52`), **traction control** (`0x5F`) and the **eco / low-power** mode - simple on/off.
+- **Zero-start** (`0x6A`) - the kick-off level (0 to 5). The quick toggle lights up whenever a non-default level is set.
+- **Drive mode** (`0x58`) - the gear / riding level.
+- **Display unit** (`0x55`) - km/h or mph on the scooter's own screen.
 
-They are readable back from the `0x70` parameter block, together with the unit, the start speed, the limit speed and its enable bit, the maximum speed and the brake speed.
+They read back from the `0x70` parameter block, together with the start speed, the limit speed and its enable bit, the maximum speed and the brake speed. The four quick toggles under the speed drums - immobilizer, cruise control, traction control and zero-start - now colour in when the scooter reports the function active, so an accepted command is visible at a glance.
+
+### Speed release
+
+The speed release changes how the scooter rides and is the reason for the legal notice. It is for private ground on your own scooter only; on a public road it voids the operating permit and the insurance. It sends the top drive mode to the XT5 family, which makes the meter command the unit's SKU top speed (the firmware clamps the result to the unit). It is also reachable by triple-tapping the km/h VCU tile on the main screen. Confirmed on an XT5 Ultra at 50.8 km/h; the rest of the family is code-derived but not yet ridden, and non-XT5 models ignore it.
 
 ### What the pages read
 
@@ -55,7 +69,7 @@ Everything below was in the app this one was forked from and is gone. None of it
 - The in-app APK self-update.
 - The identity rename that rewrote the vehicle number plus the speed unlock that rode on it.
 - Per-gear profile editing.
-- Dual-motor, motor-mode and traction-control switches. A NAVEE scooter has one motor.
+- Dual-motor and motor-mode switches. A NAVEE scooter has one motor. (Traction control is a real NAVEE setting and stayed - see above.)
 - Per-cell battery voltages.
 - Every model name of the other make.
 
