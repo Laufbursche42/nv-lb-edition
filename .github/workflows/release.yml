@@ -1,0 +1,140 @@
+# Release build - fully automatic, no manual tagging.
+#
+# On every push to `main` that touches more than docs (see paths-ignore below) this builds a SIGNED
+# release APK and publishes a GitHub Release. The version series starts at 1.0.0 and the patch level
+# goes up by one for every release, so:
+#   first substantial push  -> v1.0.0
+#   next substantial push   -> v1.0.1
+#   ... and so on.
+# A push that only changes README/markdown/screenshots/CI/licence does NOT trigger this workflow,
+# so it neither builds nor bumps the version. Manual runs (Actions -> Run workflow) behave the same.
+#
+# The patch number is the count of GitHub Releases that already exist in this series, so it starts at
+# 0 (=> 1.0.0) and cannot drift; the Android versionCode is the workflow run number, which only ever
+# increases. Both are passed to Gradle with -PverName / -PverCode, so the number inside the APK
+# matches the release tag exactly.
+#
+# Required repository Secrets (Settings -> Secrets and variables -> Actions):
+#   KEYSTORE_BASE64    - the release keystore, base64-encoded (contents of keystore.base64.txt)
+#   KEYSTORE_PASSWORD  - the keystore (store) password
+#   KEY_ALIAS          - the key alias inside the keystore
+#   KEY_PASSWORD       - the password for that key alias
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'screenshots/**'
+      - 'LICENSE'
+      - 'license.md'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.github/**'
+      - '_portspec/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish signed APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute the next version (series 1.0.x, patch = number of existing releases)
+        id: ver
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MAJOR=$(sed -n 's/^major=//p' version.properties)
+          MINOR=$(sed -n 's/^minor=//p' version.properties)
+          # Count releases already published in this MAJOR.MINOR series. The first release -> patch 0.
+          EXISTING=$(gh release list --repo "${{ github.repository }}" --limit 1000 \
+                      --json tagName --jq '[.[] | select(.tagName | startswith("v'"$MAJOR"'.'"$MINOR"'."))] | length' 2>/dev/null || echo 0)
+          PATCH="$EXISTING"
+          VERSION="$MAJOR.$MINOR.$PATCH"
+          TAG="v$VERSION"
+          # versionCode must only ever grow. The run number is monotonic per repo.
+          VCODE="${{ github.run_number }}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "vcode=$VCODE" >> "$GITHUB_OUTPUT"
+          echo "Next release: $TAG  (versionCode $VCODE, $EXISTING existing releases in series $MAJOR.$MINOR)"
+
+      - name: Guard against a duplicate tag (re-run safety)
+        id: exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.ver.outputs.tag }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.ver.outputs.tag }} already exists -> nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 21 (Temurin)
+        if: steps.exists.outputs.exists == 'false'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        if: steps.exists.outputs.exists == 'false'
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        if: steps.exists.outputs.exists == 'false'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        if: steps.exists.outputs.exists == 'false'
+        run: chmod +x ./gradlew
+
+      - name: Decode keystore from KEYSTORE_BASE64 secret
+        if: steps.exists.outputs.exists == 'false'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed release APK
+        if: steps.exists.outputs.exists == 'false'
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease -PverName="${{ steps.ver.outputs.version }}" -PverCode="${{ steps.ver.outputs.vcode }}"
+
+      - name: Stage APK under the release name
+        if: steps.exists.outputs.exists == 'false'
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/nv-lb-edition-${{ steps.ver.outputs.tag }}.apk"
+
+      - name: Build release notes (changelog + disclaimer + footer)
+        if: steps.exists.outputs.exists == 'false'
+        run: |
+          chmod +x .github/build-release-notes.sh
+          .github/build-release-notes.sh "${{ steps.ver.outputs.version }}" > "$RUNNER_TEMP/release-notes.md"
+          echo "----- release notes -----"
+          cat "$RUNNER_TEMP/release-notes.md"
+
+      - name: Create GitHub Release and upload the signed APK
+        if: steps.exists.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.ver.outputs.tag }}" dist/*.apk \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "nv-lb-edition ${{ steps.ver.outputs.tag }}" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"

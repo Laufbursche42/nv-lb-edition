@@ -1,0 +1,3599 @@
+<!--
+Laufbursche Edition - an app for NAVEE e-scooters.
+Copyright (c) 2026 Laufbursche (https://github.com/Laufbursche42)
+Source-available under the PolyForm Noncommercial License 1.0.0 with Additional Terms. See license.md.
+-->
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<!-- Styling may only come from a file next to this page, never from the document
+     itself. The page is loaded from file:///android_asset, where 'self' matches
+     nothing, so the file: scheme is the source that works here. Scripts are not
+     restricted: the page carries its own inline script. -->
+<meta http-equiv="Content-Security-Policy"
+      content="style-src file:; object-src 'none'; base-uri 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Telemetry - Laufbursche Edition (NAVEE)</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+<!-- Debug-mode banner: visible only while native debug logging is recording. -->
+<div class="debug-banner" id="debug-banner" data-i18n="dash.debug.banner">&#9888; DEBUG MODE ON: recording logs</div>
+<div id="app">
+
+  <!-- ── Topbar ─────────────────────────────────────── -->
+  <div id="topbar">
+    <div class="tb-left">
+      <img class="tb-logo" src="logo.svg" alt="Laufbursche Edition (NAVEE): app for NAVEE scooters" data-i18n-alt="dash.topbar.logo.alt" onerror="this.style.display='none'">
+    </div>
+    <span class="tb-title" aria-hidden="true"></span>
+    <div class="tb-right">
+      <button class="icon-btn" id="btn-connect" aria-label="Connect scooter" data-i18n-aria="dash.topbar.connect" title="Connect scooter" data-i18n-title="dash.topbar.connect"><svg id="ble-dot" class="ble-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="bt-path" d="M17.71 7.71 12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg></button>
+      <button class="icon-btn" id="btn-streaming" aria-label="Streaming" data-i18n-aria="dash.topbar.streaming" title="Streaming" data-i18n-title="dash.topbar.streaming" data-i18n="dash.topbar.streaming.icon">&#128225;</button>
+      <button class="icon-btn" id="btn-theme" aria-label="Toggle theme" data-i18n-aria="dash.topbar.theme.toggle" data-i18n="dash.topbar.theme.icon">&#9728;</button>
+      <button class="icon-btn" id="btn-settings" aria-label="Settings" data-i18n-aria="dash.topbar.settings" data-i18n="dash.topbar.settings.icon">&#9881;</button>
+    </div>
+  </div>
+
+  <!-- ── Scrollable Content ─────────────────────────── -->
+  <div id="scroller">
+
+    <!-- Everything down to the drive-mode toggles is the "fold": it is scaled by fitFold() to
+         fill exactly one screen, so a rider never has to scroll for the live values. The
+         sections after the fold start below the bottom edge and are reached by swiping up. -->
+    <div id="fold">
+     <div id="fold-inner">
+
+    <!-- Speed Drums -->
+    <div id="speed-row">
+      <div class="speed-drum ble-drum">
+        <div class="sd-val" id="ble-speed">-</div>
+        <div class="sd-unit" data-i18n="dash.speed.vcu.unit">km/h &middot; VCU</div>
+      </div>
+      <div class="speed-drum gps-drum">
+        <div class="sd-val" id="gps-speed">-</div>
+        <div class="sd-unit" data-i18n="dash.speed.gps.unit">km/h &middot; GPS</div>
+      </div>
+    </div>
+
+    <!-- Hero Metrics -->
+    <div id="hero-row">
+      <div class="hero-cell">
+        <div class="hc-val" id="soc-val">-</div>
+        <div class="hc-unit" data-i18n="dash.hero.battery.unit">Battery %</div>
+      </div>
+      <div class="hero-cell">
+        <div class="hc-val" id="gear-val">-</div>
+        <div class="hc-unit" data-i18n="dash.hero.gear.label">Gear</div>
+        <div class="hc-tag is-hidden" id="gear-tag"></div>
+      </div>
+      <div class="hero-cell">
+        <div class="hc-val" id="current-val">-</div>
+        <div class="hc-unit" data-i18n="dash.hero.current.unit">A Current</div>
+      </div>
+    </div>
+
+    <!-- Live telemetry tiles: the values that change while riding. The first row is the drive
+         (power drawn, pack voltage, battery temperature), the second the trip context (range the
+         scooter reports, odometer, link quality). Settings-type values live in the grid below. -->
+    <div class="section-hdr sub-hdr">
+      <span data-i18n="dash.tele.section">Antrieb &amp; Akku</span>
+    </div>
+    <div id="tele-area">
+      <div id="tele-row">
+        <div class="tele-cell">
+          <div class="tc-title" data-i18n="dash.tele.power.title">LEISTUNG</div>
+          <div class="tc-main"><span id="tl-power">-</span></div>
+          <div class="tc-unit" data-i18n="dash.tele.power.unit">W</div>
+        </div>
+        <div class="tele-cell">
+          <div class="tc-title" data-i18n="dash.tele.volt.title">SPANNUNG</div>
+          <div class="tc-main"><span id="tl-volt">-</span></div>
+          <div class="tc-unit" data-i18n="dash.tele.volt.unit">V</div>
+        </div>
+        <div class="tele-cell">
+          <div class="tc-title" data-i18n="dash.tele.temp.title">AKKU</div>
+          <div class="tc-main"><span id="tl-temp">-</span></div>
+          <div class="tc-unit" data-i18n="dash.tele.temp.unit">&deg;C</div>
+        </div>
+      </div>
+      <div id="tele-row-2">
+        <div class="tele-cell">
+          <div class="tc-title" data-i18n="dash.tele.range.title">REICHWEITE</div>
+          <div class="tc-main"><span id="tl-range">-</span></div>
+          <div class="tc-unit" data-i18n="dash.tele.range.unit">km</div>
+        </div>
+        <div class="tele-cell">
+          <div class="tc-title" data-i18n="dash.tele.odo.title">GESAMT</div>
+          <div class="tc-main"><span id="tl-odo">-</span></div>
+          <div class="tc-unit" data-i18n="dash.tele.odo.unit">km</div>
+        </div>
+        <div class="tele-cell">
+          <div class="tc-title" data-i18n="dash.tele.soh.title">AKKU-ZUSTAND</div>
+          <div class="tc-main"><span id="tl-soh">-</span></div>
+          <div class="tc-unit" data-i18n="dash.tele.soh.unit">%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick drive-mode toggles. Same controller keys as the scooter-settings sheet, but written
+         immediately instead of on Save. Greyed out until the scooter is connected. -->
+    <div id="drive-quick" class="dq-disabled" role="group" aria-label="Drive mode quick toggles" data-i18n-aria="dash.drive.quick.group">
+      <button type="button" class="dq-btn" data-dq="zerostart" aria-label="Toggle zero start" data-i18n-aria="dash.drive.quick.kickstart.aria" data-i18n="dash.drive.quick.kickstart">Zero-Start</button>
+      <button type="button" class="dq-btn" data-dq="cruise" aria-label="Toggle cruise control" data-i18n-aria="dash.drive.quick.cruise.aria" data-i18n="dash.drive.quick.cruise">Tempomat</button>
+      <button type="button" class="dq-btn" data-dq="tcs" aria-label="Toggle traction control" data-i18n-aria="dash.drive.quick.tcs.aria" data-i18n="dash.drive.quick.tcs">TCS</button>
+      <button type="button" class="dq-btn" data-dq="lock" aria-label="Toggle immobilizer" data-i18n-aria="dash.drive.quick.lock.aria" data-i18n="dash.drive.quick.lock">Sperre</button>
+    </div>
+
+     </div>
+    </div>
+    <!-- end of fold -->
+
+    <!-- Data Grid -->
+    <div class="section-hdr sub-hdr" data-i18n="dash.grid.vehicle.section">Vehicle &amp; battery</div>
+    <div id="data-grid">
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.range">Reichweite</span><span class="dg-value" id="dg-range">-</span></div>
+        <div class="dg-cell"><span class="dg-label dg-label-wide" data-i18n="dash.grid.speed.max.param">Max-Speed (Param)</span><span class="dg-value" id="dg-max">-</span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-labwrap"><span class="dg-label" data-i18n="dash.grid.voltage">Voltage</span><button type="button" class="set-help" data-set-help="dg-volt" aria-label="What is this?" data-i18n-aria="dash.help.what" data-i18n="dash.help.icon">?</button></span><span class="dg-value" id="dg-volt">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.battery.temp">Battery temp</span><span class="dg-value" id="dg-btemp">-</span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.battery.soh">Battery SOH</span><span class="dg-value" id="dg-soh">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.battery.cycles">Cycles</span><span class="dg-value" id="dg-cycles">-</span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.odo.total">Total</span><span class="dg-value" id="dg-total">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.odo.trip">Trip</span><span class="dg-value" id="dg-single">-</span></div>
+      </div>
+      <!-- Settings the scooter reports back in its 0x70 parameter frame (read-only here; the
+           writable ones live on the scooter-settings page). -->
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label dg-label-wide" data-i18n="dash.grid.limit">Tempolimit</span><span class="dg-value" id="dg-limit">-</span></div>
+        <div class="dg-cell"><span class="dg-label dg-label-wide" data-i18n="dash.grid.startspeed">Zero-Start ab</span><span class="dg-value" id="dg-startspeed">-</span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.brake">Bremsstärke</span><span class="dg-value" id="dg-brake">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.drivemode">Fahrmodus</span><span class="dg-value" id="dg-drivemode">-</span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-labwrap"><span class="dg-label" data-i18n="dash.grid.rssi">RSSI</span><button type="button" class="set-help" data-set-help="dg-rssi" aria-label="What is this?" data-i18n-aria="dash.help.what" data-i18n="dash.help.icon">?</button></span><span class="dg-value" id="dg-rssi">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.error">Error</span><span class="dg-value" id="dg-err">-</span></div>
+      </div>
+    </div>
+
+    <!-- Current ride (GPS) -->
+    <div class="section-hdr sub-hdr" data-i18n="dash.ride.section">Current ride (GPS)</div>
+    <div id="data-grid">
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.ride.distance">Distance</span><span class="dg-value" id="dg-dist">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.ride.time">Time</span><span class="dg-value" id="dg-time">-</span></div>
+      </div>
+      <div class="dg-row one-col">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.ride.speed.avg">Avg speed</span><span class="dg-value" id="dg-ride-avg">-</span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.ride.altitude">Altitude</span><span class="dg-value" id="dg-alt">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.ride.elevation">Elev +/-</span><span class="dg-value" id="dg-hm">-</span></div>
+      </div>
+      <div class="dg-row">
+        <div class="dg-cell"><span class="dg-labwrap"><span class="dg-label" data-i18n="dash.ride.gps.fix">GPS fix</span><button type="button" class="set-help" data-set-help="dg-gps" aria-label="What is this?" data-i18n-aria="dash.help.what" data-i18n="dash.help.icon">?</button></span><span class="dg-value" id="dg-gps">-</span></div>
+        <div class="dg-cell"><span class="dg-labwrap"><span class="dg-label" data-i18n="dash.ride.points">Points</span><button type="button" class="set-help" data-set-help="dg-pts" aria-label="What is this?" data-i18n-aria="dash.help.what" data-i18n="dash.help.icon">?</button></span><span class="dg-value" id="dg-pts">-</span></div>
+      </div>
+      <div class="dg-row one-col is-hidden" id="dg-stop-row">
+        <button type="button" id="btn-stop-ride" class="ride-stop-btn" data-i18n="dash.ride.stop">Stop ride</button>
+      </div>
+    </div>
+
+    <!-- All battery/cell values (scrollable like Lite) -->
+    <div class="section-hdr sub-hdr" data-i18n="dash.allvalues.section">All values</div>
+    <div id="all-values">
+      <div class="no-routes" id="all-values-empty" data-i18n="dash.allvalues.empty">Connect the scooter to see all values</div>
+    </div>
+
+    <!-- Bottom Spacer -->
+    <div class="icon-16"></div>
+  </div><!-- /scroller -->
+</div><!-- /app -->
+
+<!-- ── Routes page ────────────────────────────────── -->
+<div id="routes-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-routes-back" aria-label="Back" data-i18n-aria="routes.nav.back.label" data-i18n="routes.nav.back.icon">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="routes.title">Recorded routes</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="routes-scroller">
+    <div id="routes-section">
+      <div class="section-hdr">
+        <span data-i18n="routes.saved.heading">Recorded routes</span>
+        <span class="label-strong" id="routes-count"></span>
+      </div>
+      <div id="routes-list">
+        <div class="no-routes" id="no-routes-msg" data-i18n="routes.empty.message">No routes recorded</div>
+      </div>
+    </div>
+    <div id="actions-section">
+      <div class="section-hdr"><span data-i18n="routes.delete.heading">Delete</span></div>
+      <div class="action-btn-row">
+        <button class="del-btn" data-period="24h" data-i18n="routes.delete.range.24h">&lt;24h</button>
+        <button class="del-btn" data-period="7d" data-i18n="routes.delete.range.7d">&lt;7d</button>
+        <button class="del-btn" data-period="30d" data-i18n="routes.delete.range.30d">&lt;30d</button>
+        <button class="del-btn" data-period="all" data-i18n="routes.delete.range.all">All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Draggable turn-by-turn banner on the dashboard (shown while a navigation session is active) -->
+<div id="nav-banner">
+  <span id="nav-arrow" data-i18n="routes.turn.arrow">↑</span>
+  <div id="nav-texts">
+    <div id="nav-turn">-</div>
+    <div id="nav-sub"></div>
+  </div>
+  <span id="nav-dist"></span>
+  <button type="button" id="nav-end" aria-label="End navigation" data-i18n-aria="routes.turn.end.label" data-i18n="routes.turn.end.icon">✕</button>
+</div>
+
+<!-- Ride banner: the single thing that shows on the main screen while a ride records. It floats
+     over the fold and starts just above the "Motors" heading, and the rider can drag it anywhere.
+     Deliberately a sibling of #app, not a child of the fold: a transformed ancestor would become
+     the containing block for a fixed element and the banner would ride along with the scaling. -->
+<div id="ride-banner">
+  <span id="rb-dot" aria-hidden="true"></span>
+  <div id="rb-texts">
+    <div id="rb-dist">-</div>
+    <div id="rb-time">-</div>
+  </div>
+  <button type="button" id="rb-stop" aria-label="Stop ride" data-i18n-aria="dash.ride.stop" data-i18n="dash.ride.stop">Stop ride</button>
+</div>
+
+<!-- ── Settings Overlay ────────────────────────────── -->
+<div id="settings-overlay"></div>
+<div id="settings-sheet">
+  <div class="settings-topbar">
+    <h2 data-i18n="routes.settings.title">Settings</h2>
+    <button class="icon-btn" id="btn-close-settings" data-i18n="settings.close.symbol">&#10005;</button>
+  </div>
+
+  <div id="model-banner">
+    <div class="model-line"><span data-i18n="settings.model.label">Model:</span> <span id="model-name">-</span></div>
+  </div>
+
+  <!-- Scooter connection + settings -->
+  <div class="settings-group">
+    <div class="settings-group-title" data-i18n="settings.scooter.group.title">Scooter</div>
+    <button id="btn-connect-scooter"><svg class="icon-inline" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M17.71 7.71 12 2h-1v7.59L6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM13 5.83l1.88 1.88L13 9.59V5.83zm1.88 10.46L13 18.17v-3.76l1.88 1.88z"/></svg> <span data-i18n="settings.scooter.connect.action">Connect scooter</span></button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.connect.hint">Scan and connect over Bluetooth</div>
+    <button id="btn-scooter-settings" data-i18n="settings.scooter.settings.action">&#9881; Scooter settings</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.settings.hint">Wegfahrsperre, Tempomat, Zero-Start, Fahrmodus (Roller muss verbunden sein)</div>
+    <button id="btn-error-reports" data-i18n="settings.scooter.errors.action">&#9888; Read error reports</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.errors.hint">Active scooter faults and battery warnings (scooter must be connected)</div>
+    <button id="btn-info" data-i18n="settings.scooter.info.action">&#8505; Scooter info</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.info.hint">Seriennummer und Firmware-Versionen</div>
+    <button id="btn-battery" data-i18n="settings.scooter.battery.action">&#128267; Battery info</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.battery.hint">Akkustand, Zustand und Eckdaten (Roller muss verbunden sein)</div>
+    <button id="btn-navigation" data-i18n="settings.scooter.navigation.action">&#129517; Navigation</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.navigation.hint">Open the navigation screen</div>
+  </div>
+
+  <!-- GPS: the recording settings and the recordings they produce belong together. -->
+  <div class="settings-group has-top-rule">
+    <div class="settings-group-title" data-i18n="settings.gps.group.title">GPS recording</div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.gps.autotrack.label">Auto-track rides</div>
+        <div class="settings-row-sublabel" data-i18n="settings.gps.autotrack.hint">Records a GPS ride after ~20 m; stops when the scooter disconnects</div>
+      </div>
+      <button type="button" class="set-help" data-set-help="gps-auto" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-gps-auto" checked>
+        <label class="toggle-label" for="toggle-gps-auto"></label>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.gps.interval.label">Interval</div>
+      </div>
+      <button type="button" class="set-help" data-set-help="gps-interval" aria-label="What is this?" data-i18n-aria="settings.help.hint">?</button>
+      <select class="set-ctrl" id="gps-interval-sel">
+        <option value="1" data-i18n="settings.gps.interval.option.1s">1 s</option>
+        <option value="2" data-i18n="settings.gps.interval.option.2s">2 s</option>
+        <option value="5" data-i18n="settings.gps.interval.option.5s">5 s</option>
+        <option value="10" data-i18n="settings.gps.interval.option.10s">10 s</option>
+        <option value="30" data-i18n="settings.gps.interval.option.30s">30 s</option>
+      </select>
+    </div>
+    <button id="btn-open-routes" class="mt-10"><span data-i18n="settings.scooter.routes.action">&#128506; Recorded routes</span><span id="routes-count-badge"></span></button>
+  </div>
+
+  <!-- Display -->
+  <div class="settings-group">
+    <div class="settings-group-title" data-i18n="settings.display.group.title">Display</div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.display.dark.label">Dark mode</div>
+      </div>
+      <button type="button" class="set-help" data-set-help="disp-dark" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-dark" checked>
+        <label class="toggle-label" for="toggle-dark"></label>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.display.language">Language</div>
+        <div class="settings-row-sublabel" data-i18n="settings.display.language.sub">English or German</div>
+      </div>
+      <div class="lang-switch" id="lang-switch" role="group" data-i18n-aria="settings.display.language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="de">DE</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.display.mph.label">Unit mph</div>
+        <div class="settings-row-sublabel" data-i18n="settings.display.mph.hint">Default: km/h</div>
+      </div>
+      <button type="button" class="set-help" data-set-help="disp-mph" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-mph">
+        <label class="toggle-label" for="toggle-mph"></label>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.display.fullscreen.label">Fullscreen</div>
+        <div class="settings-row-sublabel" data-i18n="settings.display.fullscreen.hint">Hide the Android status bar</div>
+      </div>
+      <button type="button" class="set-help" data-set-help="disp-fullscreen" aria-label="What is this?" data-i18n-aria="settings.help.hint">?</button>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-fullscreen">
+        <label class="toggle-label" for="toggle-fullscreen"></label>
+      </div>
+    </div>
+    <button id="btn-open-display" class="settings-btn mt-10"><span data-i18n="settings.display.colors.action">&#127912; Display settings</span></button>
+  </div>
+
+  <!-- Debug logging -->
+  <div class="settings-group has-top-rule">
+    <div class="settings-group-title" data-i18n="settings.debug.group.title">Debug</div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.debug.mode.label">Debug mode</div>
+        <div class="settings-row-sublabel" data-i18n="settings.debug.mode.hint">Records logs for troubleshooting</div>
+      </div>
+      <button type="button" class="set-help" data-set-help="debug-mode" aria-label="What is this?" data-i18n-aria="settings.help.hint">?</button>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-debug">
+        <label class="toggle-label" for="toggle-debug"></label>
+      </div>
+    </div>
+    <button class="mt-10" id="btn-export-logs" data-i18n="settings.debug.export.action">&#128228; Export debug logs</button>
+    <div class="settings-row-sublabel m-6-0-2" data-i18n="settings.debug.export.hint">Share the recorded log file (email/message)</div>
+  </div>
+
+  <!-- Version info + disclaimer (opens a modal) -->
+  <div class="settings-group has-top-rule">
+    <button id="btn-whatsnew" data-i18n="settings.whatsnew">&#10024; What is new</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.whatsnew.sub">What changed in this version</div>
+    <button id="btn-version-info" data-i18n="settings.version.info.action">&#8505; Version Info &amp; Disclaimer</button>
+  </div>
+</div>
+
+<!-- ── Connect page ───────────────────────────────── -->
+<div id="connect-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-connect-back" aria-label="Back" data-i18n-aria="settings.connect.back.aria" data-i18n="settings.connect.back.symbol">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="settings.scooter.connect.action">Connect scooter</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="connect-scroller">
+    <div class="conn-state" id="conn-state" data-i18n="settings.connect.state.disconnected">Not connected</div>
+    <div class="row-8 mb-6">
+      <button class="grow" id="btn-scan" data-i18n="settings.connect.scan.action">&#8635; Scan</button>
+      <button class="grow" id="btn-disconnect" data-i18n="settings.connect.disconnect.action">Disconnect</button>
+    </div>
+    <div class="is-hidden" id="known-wrap"><div class="section-hdr sub-hdr" data-i18n="settings.connect.lastdevice.title">Last device</div><div id="known-device"></div></div>
+    <div class="section-hdr sub-hdr" data-i18n="settings.connect.devices.title">Devices</div>
+    <div id="scan-list">
+      <div class="no-routes" id="scan-empty" data-i18n="settings.connect.scan.empty">Tap "Scan" to search for the scooter</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Scooter settings page ──────────────────────── -->
+<div id="scooter-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-scooter-back" aria-label="Back" data-i18n-aria="scooter.nav.back">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="scooter.page.title">Scooter settings</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="scooter-scroller">
+
+    <div class="settings-row-sublabel mb-8" data-i18n="scooter.intro.note">
+      Jede Änderung wird sofort per Bluetooth an den Roller gesendet. Bitte zuerst verbinden.
+    </div>
+
+    <!-- NAVEE functions: single-opcode writes (immobilizer 0x51, cruise 0x52, zero-start 0x6A,
+         drive mode 0x58). Each control writes immediately; the live 0x70 report drives the shown state. -->
+    <div class="section-hdr sub-hdr" data-i18n="scooter.func.section.title">Funktionen</div>
+    <div class="settings-group pt-4">
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.lock.label">Wegfahrsperre</div><div class="settings-row-sublabel" data-i18n="scooter.lock.sub">Roller elektronisch sperren</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-lock"><label class="toggle-label" for="ss-lock"></label></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.cruise.label">Tempomat</div><div class="settings-row-sublabel" data-i18n="scooter.cruise.sub">Geschwindigkeit automatisch halten</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-cruise"><label class="toggle-label" for="ss-cruise"></label></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.zerostart.label">Anfahrstufe</div><div class="settings-row-sublabel" data-i18n="scooter.zerostart.sub">0 = Zero-Start (ohne Anschieben), 1 bis 5 = Anschiebe-Schwelle</div></div>
+        <select class="set-ctrl" id="ss-zerostart">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+          <option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <!-- The manufacturer app only ever writes 3 (normal) or 5 (turbo) here; 4 is the speed
+           release and has its own button further down, so it is deliberately not in this list. -->
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.drivemode.label">Fahrmodus</div><div class="settings-row-sublabel" data-i18n="scooter.drivemode.sub">Normal oder Turbo</div></div>
+        <select class="set-ctrl" id="ss-drivemode">
+          <option value="3" data-i18n="scooter.drivemode.normal">Normal</option>
+          <option value="5" data-i18n="scooter.drivemode.turbo">Turbo</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.tcs.label">Traktionskontrolle</div><div class="settings-row-sublabel" data-i18n="scooter.tcs.sub">Durchdrehen des Rades bremsen</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-tcs"><label class="toggle-label" for="ss-tcs"></label></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.eco.label">Eco-Modus</div><div class="settings-row-sublabel" data-i18n="scooter.eco.sub">Stromsparender, sanfterer Antritt</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-eco"><label class="toggle-label" for="ss-eco"></label></div>
+      </div>
+      <div class="settings-row no-bottom-rule">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.unit.label">Roller-Anzeige: mph</div><div class="settings-row-sublabel" data-i18n="scooter.unit.sub">Einheit am Roller-Display (aus = km/h)</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-unit"><label class="toggle-label" for="ss-unit"></label></div>
+      </div>
+    </div>
+
+    <div class="settings-row-sublabel mt-8" data-i18n="scooter.func.note">
+      Der aktuelle Zustand wird live vom Roller gelesen. Welche Funktionen dein Modell unterstützt, hängt von der Firmware ab; nicht unterstützte Schalter bleiben ohne Wirkung.
+    </div>
+
+    <!-- Speed release (drive mode 4 written with opcode 0x58). Deliberately a one-shot BUTTON, not
+         a toggle: the gear byte lives in RAM, the scooter drops it on a mode-button press or a
+         restart, and it cannot be read back, so a toggle would show a state that does not exist. -->
+    <div class="section-hdr sub-hdr" data-i18n="scooter.tune.section.title">Speed-Freischaltung</div>
+    <div class="settings-group pt-4">
+      <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.intro">
+        Schickt den Fahrmodus 4 an den Roller. Nur die XT5-Familie kennt diesen Modus; am XT5 Ultra ist er im Fahrtest bestätigt (50,8 km/h), bei XT5 Pro und XT5 Max ist er aus dem Code belegt aber noch nicht am Gerät geprüft. Bei allen anderen Modellen passiert nichts.
+      </div>
+      <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.detail">
+        Der Wert ist fest, es gibt nichts einzustellen: der Roller wählt ihn selbst aus seinem SKU-Byte (40, 50, 60 oder 65), der Controller rundet auf seine nächste Stufe. Der Zustand steht nur im Arbeitsspeicher, ein Druck auf die Modus-Taste oder ein Neustart setzt ihn zurück. Also vor jeder Fahrt neu senden.
+      </div>
+      <div class="fw-warn" data-i18n="scooter.tune.legal">
+        <b>Nur auf privatem Grund.</b> Mit dieser Freischaltung fährt der Roller schneller als zugelassen. Damit erlischt die Betriebserlaubnis und der Versicherungsschutz; auf öffentlichen Wegen ist das nicht erlaubt.
+      </div>
+      <button id="tune-send" class="gs-save-btn" data-i18n="scooter.tune.send">Fahrmodus 4 senden</button>
+      <div class="settings-row-sublabel m-6-0-0" id="tune-status" data-i18n="scooter.tune.status.idle">Noch nicht gesendet.</div>
+      <div class="settings-row-sublabel m-6-0-0" data-i18n="scooter.tune.gesture">
+        Schneller geht es unterwegs mit der Geste: dreimal kurz auf die km/h-VCU-Kachel im Hauptbildschirm tippen schaltet die Freischaltung ein und wieder aus. Die Kachel wird rot, solange sie aktiv ist.
+      </div>
+      <div class="settings-row mt-8 no-bottom-rule">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.tune.restore.label">Zurück auf Normal</div><div class="settings-row-sublabel" data-i18n="scooter.tune.restore.sub">Sendet den normalen Fahrmodus 3</div></div>
+        <button id="tune-restore" class="route-gpx-btn" data-i18n="scooter.tune.restore">Normal</button>
+      </div>
+    </div>
+
+    <div class="icon-16"></div>
+  </div>
+</div>
+
+<!-- ── Streaming page ─────────────────────────────── -->
+<div id="streaming-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-streaming-back" aria-label="Back" data-i18n-aria="info.nav.back">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="info.streaming.title">Streaming</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="streaming-scroller">
+    <div class="section-hdr sub-hdr" data-i18n="info.streaming.srt.section">SRT push</div>
+    <div class="settings-row-sublabel mb-8" data-i18n="info.streaming.srt.hint">
+      Streams the screen (with the telemetry overlay) over SRT. Paste the full push URL.
+    </div>
+    <textarea id="stream-url" rows="4"
+      placeholder="srt://host:16002/?streamid=push/live/…&latency=1000000" data-i18n-ph="info.streaming.url.placeholder"></textarea>
+    <div id="stream-status" class="settings-row-sublabel m-10-0" data-i18n="info.streaming.status.idle">Status: idle</div>
+    <div class="row-8">
+      <button class="grow" id="btn-stream-start" data-i18n="info.streaming.start">&#9654; Start stream</button>
+      <button class="grow" id="btn-stream-stop" data-i18n="info.streaming.stop">&#9632; Stop</button>
+    </div>
+    <div class="settings-row-sublabel mt-14 lh-15" data-i18n="info.streaming.note">
+      The URL is stored encrypted on the device. Use the push URL (port 16002 for SRT).
+      Confirm the screen-capture prompt when asked.
+    </div>
+    <!-- No data-i18n here: the script writes the app version into this element. -->
+        <div id="build-info" class="settings-row-sublabel footnote">build @@BUILDNO@@</div>
+  </div>
+</div>
+
+<!-- ── Error reports page ─────────────────────────── -->
+<div id="error-reports-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-error-reports-back" aria-label="Back" data-i18n-aria="info.nav.back">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="info.errors.title">Error reports</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="error-reports-scroller">
+    <div class="settings-row-sublabel mb-10" data-i18n="info.errors.hint">
+      Active faults and battery warnings read live from the scooter (BLE). No server involved.
+    </div>
+    <div id="err-list"></div>
+    <div class="is-hidden" id="err-empty" data-i18n="info.errors.empty">No active errors</div>
+  </div>
+</div>
+
+<!-- ── Scooter info page ──────────────────────────── -->
+<div id="info-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-info-back" aria-label="Back" data-i18n-aria="info.nav.back">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="info.scooter.title">Scooter info</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="info-scroller">
+    <div class="settings-row-sublabel mb-10" data-i18n="info.scooter.hint">
+      Identity and firmware versions read live from the scooter (BLE). No server involved.
+    </div>
+    <div class="settings-group pt-4">
+      <!-- Identity read from the scooter. The Bluetooth advertised name IS the full FIN.
+           Both rows are read-only and refresh from lb_live_data on the 1 s render loop. -->
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-label" data-i18n="info.scooter.fin.label">FIN / Bluetooth Name</div>
+          <div class="settings-row-sublabel mono-break" id="info-btname">-</div>
+        </div>
+        <button id="btn-copy-btname" class="route-gpx-btn" data-i18n="info.copy">Copy</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-label" data-i18n="info.scooter.frame.label">Seriennummer</div>
+          <div class="settings-row-sublabel mono-break" id="info-serial">-</div>
+        </div>
+        <button id="btn-copy-serial" class="route-gpx-btn">Copy</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="info.scooter.fw.meter">Firmware Display</div></div>
+        <span class="note-md" id="info-fw-meter">-</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="info.scooter.fw.bldc">Firmware Controller</div></div>
+        <span class="note-md" id="info-fw-bldc">-</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="info.scooter.fw.bms">Firmware BMS</div></div>
+        <span class="note-md" id="info-fw-bms">-</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="info.scooter.fw.screen">Firmware Screen</div></div>
+        <span class="note-md" id="info-fw-screen">-</span>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="info.scooter.fw.uwb">Firmware UWB</div></div>
+        <span class="note-md" id="info-fw-uwb">-</span>
+      </div>
+    </div>
+
+    <!-- Ride log: opt-in local recording of the full BLE telemetry snapshot (native side owns storage). -->
+    <div class="settings-group has-top-rule">
+      <div class="settings-group-title" data-i18n="info.ridelog.title">Ride log</div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-label" data-i18n="info.ridelog.record.label">Record ride log</div>
+          <div class="settings-row-sublabel" data-i18n="info.ridelog.record.hint">Off by default. Records the telemetry snapshot the scooter sends, once per minute while you ride: speed, drive mode, battery level, pack voltage and current, battery temperature, health and cycles, total distance and the fault code. Recording starts as soon as the scooter first moves. All rides are kept until you delete them.</div>
+        </div>
+        <div class="toggle-wrap">
+          <input type="checkbox" class="toggle-input" id="toggle-ridelog">
+          <label class="toggle-label" for="toggle-ridelog"></label>
+        </div>
+      </div>
+      <div class="settings-row-sublabel m-8-0-0"><span data-i18n="info.ridelog.analysis.hint">View the exported CSV/JSON as graphs with the</span> <span class="link-ble" onclick="openExt('https://github.com/Laufbursche42/leat')" data-i18n="info.ridelog.analysis.tool">Laufbursche Edition (NAVEE) Analysis Tool (leat)</span>.</div>
+      <div class="settings-row-sublabel m-10-0-6" data-i18n="info.ridelog.recorded.title">Recorded rides</div>
+      <div id="ridelog-list"></div>
+      <div class="section-hdr mt-14"><span data-i18n="info.ridelog.delete.title">Delete rides</span></div>
+      <div class="action-btn-row">
+        <button class="del-btn" data-rideperiod="24h" data-i18n="info.ridelog.delete.24h">&lt;24h</button>
+        <button class="del-btn" data-rideperiod="7d" data-i18n="info.ridelog.delete.7d">&lt;7d</button>
+        <button class="del-btn" data-rideperiod="30d" data-i18n="info.ridelog.delete.30d">&lt;30d</button>
+        <button class="del-btn" data-rideperiod="all" data-i18n="info.ridelog.delete.all">All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- -- Battery info page (pack values from live BLE data) -- -->
+<div id="battery-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-battery-back" aria-label="Back" data-i18n-aria="info.nav.back">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="info.battery.title">Battery info</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="battery-scroller">
+    <div class="settings-row-sublabel mb-10" data-i18n="info.battery.hint">
+      Zustand und Eckdaten des Akkus werden live vom Roller gelesen (BLE). Es wird nichts gesendet.
+    </div>
+    <div class="settings-group pt-4">
+      <div class="settings-group-title" data-i18n="info.battery.health.title">Battery health</div>
+      <div id="bat-health"></div>
+    </div>
+    <div class="settings-group has-top-rule">
+      <div class="settings-group-title" data-i18n="info.battery.pack.title">Pack summary</div>
+      <div id="bat-pack"></div>
+    </div>
+    <div class="settings-group has-top-rule">
+      <div class="settings-group-title" data-i18n="info.battery.cells.title">Cells</div>
+      <div id="bat-cells" class="cell-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Display settings page ──────────────────────── -->
+<!-- Tile colour, page background and text brightness, kept separately for the dark and the light
+     theme. The background picker is what OLED riders reach for: set it to pure black and the
+     unlit pixels really switch off. -->
+<div id="display-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-display-back" aria-label="Back" data-i18n-aria="info.nav.back">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="display.title">Display settings</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="display-scroller">
+    <div class="settings-row-sublabel mb-10" data-i18n="display.hint">
+      Colours are stored per theme: what you set here applies to the theme you are editing, the other one keeps its own values.
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-title" data-i18n="display.dark.title">Dark mode</div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-label" data-i18n="display.tile.color">Tile colour</div>
+          <div class="settings-row-sublabel" data-i18n="display.tile.oled">Pure black switches OLED pixels off here too</div>
+        </div>
+        <input type="color" class="color-ctrl" id="dsp-dark-card">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left">
+          <div class="settings-row-label" data-i18n="display.bg.color">Background</div>
+          <div class="settings-row-sublabel" data-i18n="display.bg.oled">Pure black switches OLED pixels off</div>
+        </div>
+        <input type="color" class="color-ctrl" id="dsp-dark-bg">
+      </div>
+      <div class="settings-row col-stretch">
+        <div class="settings-row-label" data-i18n="display.text.brightness">Text brightness</div>
+        <div class="settings-row-sublabel" data-i18n="display.brightness.hint">Applies to the text and to every coloured readout</div>
+        <input type="range" class="range-ctrl" id="dsp-dark-lum" min="0" max="100" step="1">
+      </div>
+      <button type="button" id="btn-dsp-reset-dark" class="settings-btn mt-10" data-i18n="display.reset.dark">Reset dark mode</button>
+    </div>
+
+    <div class="settings-group has-top-rule">
+      <div class="settings-group-title" data-i18n="display.light.title">Light mode</div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.tile.color">Tile colour</div></div>
+        <input type="color" class="color-ctrl" id="dsp-light-card">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.bg.color">Background</div></div>
+        <input type="color" class="color-ctrl" id="dsp-light-bg">
+      </div>
+      <div class="settings-row col-stretch">
+        <div class="settings-row-label" data-i18n="display.text.contrast">Text contrast</div>
+        <div class="settings-row-sublabel" data-i18n="display.brightness.hint">Applies to the text and to every coloured readout</div>
+        <input type="range" class="range-ctrl" id="dsp-light-lum" min="0" max="100" step="1">
+      </div>
+      <button type="button" id="btn-dsp-reset-light" class="settings-btn mt-10" data-i18n="display.reset.light">Reset light mode</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Version Info & Disclaimer modal ─────────────── -->
+<div id="verinfo-overlay">
+  <div id="verinfo-box" role="dialog" aria-modal="true" aria-labelledby="verinfo-title">
+    <h3 id="verinfo-title" data-i18n="fw.verinfo.title">Version Info &amp; Disclaimer</h3>
+    <div class="verinfo-ver"><span data-i18n="fw.verinfo.appversion.label">App version:</span> <span id="verinfo-ver">-</span></div>
+    <p id="verinfo-disclaimer" data-i18n="fw.verinfo.disclaimer">This is not an official NAVEE app. The developer (Laufbursche) is not affiliated with, endorsed by or connected to NAVEE. NAVEE is a trademark of its respective owner.</p>
+    <p id="verinfo-license" data-i18n="fw.verinfo.license">Laufbursche Edition (NAVEE) is source-available under the PolyForm Noncommercial License 1.0.0 with Additional Terms. Read the <span class="link-ble" onclick="openExt('https://github.com/Laufbursche42/nv-lb-edition/blob/main/README.md')">GitHub README</span> and <span class="link-ble" onclick="openExt('https://github.com/Laufbursche42/nv-lb-edition/blob/main/license.md')">License</span>.</p>
+    <p id="verinfo-osm" data-i18n="fw.verinfo.map.attribution">Offline maps and POI data (camping / charging) are &copy; OpenStreetMap contributors, licensed under the ODbL 1.0.</p>
+    <p><span class="link-ble" id="verinfo-disclaimer-link" data-i18n="disclaimer.read.link">Read the liability disclaimer</span></p>
+    <button type="button" id="verinfo-close" data-i18n="fw.verinfo.close">Close</button>
+  </div>
+</div>
+
+<!-- ── Liability disclaimer: accepted once on the first start, readable any time after.
+     One box, two modes: "accept" shows the tick box and the accept button and cannot be
+     dismissed; "read" shows the same text with a close button. -->
+<div id="disclaimer-overlay">
+  <div id="disclaimer-box" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title">
+    <h3 id="disclaimer-title" data-i18n="disclaimer.title">Please read this first</h3>
+    <p id="disclaimer-lede" data-i18n="disclaimer.lede">Laufbursche Edition (NAVEE) is a feasibility study, not a finished product.</p>
+    <ul id="disclaimer-list"></ul>
+    <label class="consent-row" id="disclaimer-consent-wrap">
+      <input type="checkbox" id="disclaimer-consent">
+      <span data-i18n="disclaimer.consent">I have read this and I use the app at my own risk.</span>
+    </label>
+    <button type="button" id="disclaimer-accept" disabled data-i18n="disclaimer.accept">Accept</button>
+    <button type="button" id="disclaimer-close" data-i18n="disclaimer.close">Close</button>
+  </div>
+</div>
+
+<!-- ── What is new modal: opens once per version and from the settings ── -->
+<div id="whatsnew-overlay">
+  <div id="whatsnew-box" role="dialog" aria-modal="true" aria-labelledby="whatsnew-title">
+    <h3 id="whatsnew-title" data-i18n="whatsnew.title">What is new</h3>
+    <div class="verinfo-ver"><span data-i18n="fw.verinfo.appversion.label">App version:</span> <span id="whatsnew-ver">-</span></div>
+    <ul id="whatsnew-list"></ul>
+    <button type="button" id="whatsnew-close" data-i18n="whatsnew.close">Got it</button>
+  </div>
+</div>
+
+<!-- ── Toast ───────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ── Confirm Dialog ──────────────────────────────── -->
+<div id="confirm-overlay">
+  <div id="confirm-box">
+    <!-- No data-i18n on the two lines below: every dialog writes its own text here. -->
+    <h3 id="confirm-title">Delete routes?</h3>
+    <p class="is-hidden" id="confirm-warn"></p>
+    <p id="confirm-msg">This action cannot be undone.</p>
+    <div class="confirm-btns">
+      <button id="confirm-cancel" data-i18n="confirm.cancel">Cancel</button>
+      <button id="confirm-ok" data-i18n="confirm.delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script>
+// The current language, declared first: everything below may look a string up.
+let lang = 'en';
+
+/* ═══════════════════════════════════════════════════════════
+   NAVEE LB - Telemetry  (full implementation)
+   ═══════════════════════════════════════════════════════════ */
+
+'use strict';
+
+/* ── Debug logging (native LB bridge) ─────────────────────── */
+// Reflect the native debug flag into the UI (toggle + red banner). All calls guarded so the
+// dashboard still works when opened outside the app (typeof LB === 'undefined').
+function isDebugOn() {
+  try { return typeof LB !== 'undefined' && LB.isDebug && !!LB.isDebug(); } catch (e) { return false; }
+}
+function syncDebugUI() {
+  const on = isDebugOn();
+  const t = document.getElementById('toggle-debug');
+  if (t) t.checked = on;
+  const b = document.getElementById('debug-banner');
+  if (b) b.style.display = on ? 'block' : 'none';
+}
+// Forward uncaught JS errors + console.error/warn to the native log file (only while debug is ON).
+(function installDebugForwarding() {
+  function fwd(prefix, args) {
+    try {
+      if (!isDebugOn()) return;
+      const parts = [];
+      for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        try { parts.push(typeof a === 'string' ? a : JSON.stringify(a)); }
+        catch (e) { parts.push(String(a)); }
+      }
+      LB.log(prefix + parts.join(' '));
+    } catch (e) {}
+  }
+  const _err = (console && console.error) ? console.error.bind(console) : function () {};
+  const _warn = (console && console.warn) ? console.warn.bind(console) : function () {};
+  console.error = function () { fwd('console.error: ', arguments); _err.apply(console, arguments); };
+  console.warn = function () { fwd('console.warn: ', arguments); _warn.apply(console, arguments); };
+  window.addEventListener('error', function (ev) {
+    try {
+      if (!isDebugOn()) return;
+      const msg = ev && ev.message ? ev.message : String(ev);
+      const src = (ev && ev.filename) ? (' @' + ev.filename + ':' + ev.lineno + ':' + ev.colno) : '';
+      LB.log('window.onerror: ' + msg + src);
+    } catch (e) {}
+  });
+  window.addEventListener('unhandledrejection', function (ev) {
+    try {
+      if (!isDebugOn()) return;
+      const r = ev ? ev.reason : null;
+      LB.log('unhandledrejection: ' + (r && r.message ? r.message : String(r)));
+    } catch (e) {}
+  });
+})();
+
+/* ── Utilities ────────────────────────────────────────────── */
+
+const storage = {
+  // localStorage in this webview survives app restarts and in-place updates, so values
+  // such as the SRT url stick. Every call is guarded: storage can throw when it is blocked.
+  get: k => {
+    let v = null;
+    try { v = localStorage.getItem(k); } catch(_) {}
+    return v;
+  },
+  set: (k, v) => {
+    try { localStorage.setItem(k, v); } catch(_) {}
+  },
+  remove: k => {
+    try { localStorage.removeItem(k); } catch(_) {}
+  }
+};
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+function formatDuration(ms) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function fmtDateTime(ts) {
+  const d = new Date(ts);
+  return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+function gpxFilename(ts) {
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `navee_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.gpx`;
+}
+
+/* Elements start hidden through the .is-hidden class, never an inline style, because the content
+   security policy rejects a style attribute in the markup. Clearing an inline display therefore
+   does not reveal anything: the class has to go too. */
+function showEl(el, on) {
+  if (!el) return;
+  el.classList.toggle('is-hidden', !on);
+  el.style.display = on ? '' : 'none';
+}
+
+let _toastTimer = null;
+function showToast(msg, dur = 3000, variant = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.toggle('err', variant === 'err');
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ── State ────────────────────────────────────────────────── */
+
+const state = {
+  ble: null,            // last parsed BLE data object
+  bleConnected: false,
+  useMph: false,
+  gpsAutoStart: true,
+  gpsIntervalMs: 5000,  // min spacing between recorded track points (lb_gps_interval, seconds)
+  gpsWatchId: null,
+  gpsPos: null,         // last GPS position
+  gpsSats: null,        // satellite count if available
+  currentRide: null,    // { id, startTime, points, dist, hmPlus, hmMinus }
+  armDistM: 0,          // metres travelled since connect (scooter speed integral) for 20 m auto-arm
+  armLastTs: null,      // last live-data ts used by the arming integral
+  rideStopped: false,   // set by the Stop button: block auto-re-arm until the next reconnect
+  routes: [],           // loaded from lb_routes
+  rideTimer: null,      // for elapsed time display
+  saveTimer: null,      // periodic save
+  streamingCfg: { host: '', port: '' },
+  pendingDeletePeriod: null,
+  confirmCb: null,
+};
+
+/* ── Display settings (per-theme colours) ─────────────────────
+   Tile colour, page background and text brightness, stored separately for dark and light. The
+   values are written as inline custom properties on :root, which outrank both the :root and the
+   [data-theme="light"] blocks in the stylesheet, so applyDisplay() has to run again on every
+   theme switch to swap in the other theme's set. */
+
+const DISPLAY_KEY = 'lb_display_custom';
+const DISPLAY_DEFAULTS = {
+  dark:  { card: '#111420', bg: '#0A0C10', lum: 90 },
+  light: { card: '#ffffff', bg: '#e8edf5', lum: 100 }
+};
+
+function loadDisplayCfg() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null'); } catch (e) {}
+  const out = { dark: Object.assign({}, DISPLAY_DEFAULTS.dark), light: Object.assign({}, DISPLAY_DEFAULTS.light) };
+  if (saved) {
+    ['dark', 'light'].forEach(k => { if (saved[k]) Object.assign(out[k], saved[k]); });
+  }
+  return out;
+}
+
+function saveDisplayCfg(cfg) {
+  try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(cfg)); } catch (e) {}
+}
+
+/* Text and label colours are derived from the brightness slider rather than picked, so a rider
+   cannot land on text that is invisible against their own background. Hue and saturation stay at
+   the theme's own values; only lightness moves. */
+function displayTextColors(theme, lum) {
+  const v = Math.max(0, Math.min(100, Number(lum)));
+  if (theme === 'dark') {
+    return { text: `hsl(210 57% ${(60 + v * 0.37).toFixed(1)}%)`, label: `hsl(210 35% ${(50 + v * 0.35).toFixed(1)}%)` };
+  }
+  // Light mode: higher means darker text, i.e. more contrast against a bright background.
+  const l = (40 - v * 0.33).toFixed(1);
+  return { text: `hsl(226 43% ${l}%)`, label: `hsl(226 43% ${l}%)` };
+}
+
+/* The coloured readouts. The slider dims these the same way the brightness slider dims the plain
+   text, so a night rider can take the glare out of the whole screen and not just the white parts.
+   Hue and saturation are kept; only lightness moves towards the background. */
+const DISPLAY_ACCENTS = {
+  dark:  { value: '#BCEB39', ble: '#B8F020', gps: '#3DB8FF', good: '#1EE89A', btnfill: '#B8F020', warn: '#FFAA18', danger: '#FF5050' },
+  light: { value: '#2FEBA2', ble: '#2A6A00', gps: '#005AA0', good: '#2FEBA2', btnfill: '#2FEBA2', warn: '#A05800', danger: '#CC2020' }
+};
+
+function hexToHsl(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  const l = (mx + mn) / 2;
+  let h = 0, s = 0;
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (mx === r) h = 60 * (((g - b) / d) % 6);
+    else if (mx === g) h = 60 * ((b - r) / d + 2);
+    else h = 60 * ((r - g) / d + 4);
+    if (h < 0) h += 360;
+  }
+  return { h: h, s: s * 100, l: l * 100 };
+}
+
+function applyDisplay() {
+  const cfg = loadDisplayCfg();
+  const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const c = cfg[theme];
+  const root = document.documentElement;
+  root.style.setProperty('--card', c.card);
+  root.style.setProperty('--bg', c.bg);
+  const t = displayTextColors(theme, c.lum);
+  root.style.setProperty('--text', t.text);
+  root.style.setProperty('--label', t.label);
+
+  // The same slider dims the coloured readouts: one brightness control for the whole screen.
+  // 100 leaves the palette exactly as designed; lower values pull every coloured readout towards
+  // the background, dark mode downwards and light mode upwards.
+  const a = Math.max(0, Math.min(100, Number(c.lum)));
+  const k = 0.35 + 0.65 * (a / 100);
+  const base = DISPLAY_ACCENTS[theme];
+  Object.keys(base).forEach(name => {
+    const hsl = hexToHsl(base[name]);
+    if (!hsl) return;
+    const l = theme === 'dark' ? hsl.l * k : 100 - (100 - hsl.l) * k;
+    root.style.setProperty('--' + name, `hsl(${hsl.h.toFixed(0)} ${hsl.s.toFixed(0)}% ${l.toFixed(1)}%)`);
+  });
+}
+
+function initDisplayPage() {
+  const cfg = loadDisplayCfg();
+  const bind = (theme, key, id, isRange) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = isRange ? String(cfg[theme][key]) : cfg[theme][key];
+    el.addEventListener('input', () => {
+      const now = loadDisplayCfg();
+      now[theme][key] = isRange ? Number(el.value) : el.value;
+      saveDisplayCfg(now);
+      applyDisplay();          // live preview, but only for the theme currently on screen
+    });
+  };
+  bind('dark',  'card', 'dsp-dark-card',  false);
+  bind('dark',  'bg',   'dsp-dark-bg',    false);
+  bind('dark',  'lum',  'dsp-dark-lum',   true);
+  bind('light', 'card', 'dsp-light-card', false);
+  bind('light', 'bg',   'dsp-light-bg',   false);
+  bind('light', 'lum',  'dsp-light-lum',  true);
+
+  const reset = (theme) => {
+    const now = loadDisplayCfg();
+    now[theme] = Object.assign({}, DISPLAY_DEFAULTS[theme]);
+    saveDisplayCfg(now);
+    applyDisplay();
+    refreshDisplayControls();
+  };
+  const rd = document.getElementById('btn-dsp-reset-dark');
+  if (rd) rd.addEventListener('click', () => reset('dark'));
+  const rl = document.getElementById('btn-dsp-reset-light');
+  if (rl) rl.addEventListener('click', () => reset('light'));
+}
+
+function refreshDisplayControls() {
+  const cfg = loadDisplayCfg();
+  const put = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  put('dsp-dark-card',  cfg.dark.card);
+  put('dsp-dark-bg',    cfg.dark.bg);
+  put('dsp-dark-lum',   String(cfg.dark.lum));
+  put('dsp-light-card', cfg.light.card);
+  put('dsp-light-bg',   cfg.light.bg);
+  put('dsp-light-lum',  String(cfg.light.lum));
+}
+
+function openDisplayPage() {
+  refreshDisplayControls();
+  document.getElementById('display-page').classList.add('open');
+}
+function closeDisplayPage() {
+  document.getElementById('display-page').classList.remove('open');
+}
+
+/* ── Theme ────────────────────────────────────────────────── */
+
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  // Swap the logo so its subtitle stays readable (white on dark, dark on light).
+  const logo = document.querySelector('.tb-logo');
+  if (logo) logo.src = dark ? 'logo.svg' : 'logo-light.svg';
+  // Let native screens follow the same theme.
+  if (typeof LB !== 'undefined' && LB.setTheme) { try { LB.setTheme(dark); } catch (e) {} }
+  const btn = document.getElementById('btn-theme');
+  // Sun in dark mode (click to go light), Moon in light mode (click to go dark)
+  btn.innerHTML = dark ? '&#9728;' : '&#9790;';
+  document.getElementById('toggle-dark').checked = dark;
+  storage.set('lb_theme', dark ? 'dark' : 'light');
+  // The rider's own colours are inline properties on :root and therefore outrank the stylesheet's
+  // theme block, so the other theme's set has to be written now that the theme has changed.
+  try { applyDisplay(); } catch (e) {}
+}
+
+function initTheme() {
+  const saved = storage.get('lb_theme');
+  const dark = saved !== 'light';
+  applyTheme(dark);
+}
+
+/* ── BLE Data ─────────────────────────────────────────────── */
+
+function parseBLE(raw) {
+  if (!raw) return null;
+  try {
+    const d = JSON.parse(raw);
+    if (!d || typeof d.ts !== 'number') return null;
+    const num = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+    // NAVEE telemetry: packMv/packMa are milli-units; pack current is rider-frame (positive = draw).
+    // driveMode is the NAVEE "gear"/mode. Single motor - no front/rear split, no pole voltage.
+    const o = {
+      speed:    num(d.speed),
+      maxSpeed: num(d.maxSpeed),
+      soc:      num(d.soc),
+      soh:      num(d.soh),
+      volt:     num(d.packMv) / 1000,
+      current:  num(d.packMa) / 1000,
+      gear:     (typeof d.driveMode === 'number') ? d.driveMode : (parseInt(d.driveMode) || 0),
+      btemp:    num(d.temp),
+      cycles:   num(d.cycles),
+      totalMile: num(d.totalMile),
+      tripMile: (typeof d.tripMile === 'number' ? d.tripMile : -1),
+      range:    num(d.range),
+      lock:     (typeof d.lock === 'number' ? d.lock : -1),
+      cruise:   (typeof d.cruise === 'number' ? d.cruise : -1),
+      tcs:      (typeof d.tcs === 'number' ? d.tcs : -1),
+      eco:      (typeof d.eco === 'number' ? d.eco : -1),
+      chargingState: (typeof d.chargingState === 'number' ? d.chargingState : null),
+      drivingStatus: (typeof d.drivingStatus === 'number' ? d.drivingStatus : null),
+      startSpeed: (typeof d.startSpeed === 'number' ? d.startSpeed : -1),
+      limitSpeed: num(d.limitSpeed),
+      limitOn:  num(d.limitOn),
+      breakSpeed: (typeof d.breakSpeed === 'number' ? d.breakSpeed : null),
+      fault:    num(d.fault),
+      rssi:     num(d.rssi),
+      btName:   d.btName || '',
+      serial:   d.serial || '',
+      region:   d.region || '',
+      pid:      d.pid || '',
+      fwMeter:  d.fwMeter || '', fwBldc: d.fwBldc || '', fwBms: d.fwBms || '',
+      fwScreen: d.fwScreen || '', fwUwb: d.fwUwb || '',
+      ts:       d.ts
+    };
+    // "All values" list, built from the NAVEE snapshot (renderAllValues consumes .top/.bottom).
+    o.top = naveeAllValues(o);
+    o.bottom = [];
+    return o;
+  } catch (e) { return null; }
+}
+
+// Build the "All values" rows from a decoded NAVEE snapshot. Names avoid the BATTERY_AV_NAMES set
+// so they are not hidden from the main list.
+function naveeAllValues(o) {
+  const rows = [];
+  const push = (name, value) => rows.push({ name: name, value: value });
+  push('Speed', convSpeed(o.speed) + ' ' + (state.useMph ? 'mph' : 'km/h'));
+  push('Battery %', Math.round(o.soc) + ' %');
+  push('Battery Health', Math.round(o.soh) + ' %');
+  push('Pack Voltage', o.volt.toFixed(1) + ' V');
+  push('Pack Current', o.current.toFixed(2) + ' A');
+  push('Battery Temp', Math.round(o.btemp) + ' \u00b0C');
+  push('Charge Cycles', String(o.cycles));
+  push('Range', Math.round(o.range) + ' ' + (state.useMph ? 'mi' : 'km'));
+  if (o.tripMile >= 0) push('Trip', convDist(o.tripMile).toFixed(1) + ' ' + (state.useMph ? 'mi' : 'km'));
+  if (typeof o.chargingState === 'number') push('Charging', o.chargingState ? 'yes' : 'no');
+  if (typeof o.tcs === 'number' && o.tcs >= 0) push('Traction control', o.tcs ? 'on' : 'off');
+  if (o.maxSpeed) push('Max Speed (param)', o.maxSpeed + ' km/h');
+  if (o.limitSpeed) push('Speed Limit', o.limitSpeed + ' km/h' + (o.limitOn ? ' (on)' : ' (off)'));
+  if (o.startSpeed >= 0) push('Start Speed', o.startSpeed + ' km/h');
+  push('Drive Mode', String(o.gear));
+  if (o.region) push('Region', o.region);
+  return rows;
+}
+
+function tempColor(t) {
+  return t > 60 ? 'var(--danger)' : t > 45 ? 'var(--warn)' : 'var(--text)';
+}
+
+// Plain-language explanation for each all-values row (keyed by the exact name FrameParser emits).
+const AV_HELP = {
+  "System Voltage": 'msg.help.av.system.voltage',
+  "Pole Voltage": 'msg.help.av.pole.voltage',
+  "Current": 'msg.help.av.current',
+  "SOC": 'msg.help.av.soc',
+  "SOH": 'msg.help.av.soh',
+  "CELL MAX TEMP": 'msg.help.av.cell.max.temp',
+  "CELL MIN TEMP": 'msg.help.av.cell.min.temp',
+  "Cell Count": 'msg.help.av.cell.count',
+  "Max Voltage": 'msg.help.av.max.voltage',
+  "Min Voltage": 'msg.help.av.min.voltage',
+  "Rated Capacity": 'msg.help.av.rated.capacity',
+  "Charge Counter": 'msg.help.av.charge.counter',
+  "Charge MOS": 'msg.help.av.charge.mos',
+  "Discharge MOS": 'msg.help.av.discharge.mos',
+  "Relay 1": 'msg.help.av.relay1',
+  "Relay 2": 'msg.help.av.relay2',
+  "Relay M": 'msg.help.av.relaym',
+  "Balance": 'msg.help.av.balance',
+  "Charge Status": 'msg.help.av.charge.status',
+  "Cell TEMP0": 'msg.help.av.cell.temp0',
+  "Cell TEMP1": 'msg.help.av.cell.temp1',
+  "Cell TEMP2": 'msg.help.av.cell.temp2',
+  "MOS TEMP0": 'msg.help.av.mos.temp0',
+  "MOS TEMP1": 'msg.help.av.mos.temp1',
+  "BMS PCB TEMP0": 'msg.help.av.bms.pcb.temp0',
+  "BMS PCB TEMP1": 'msg.help.av.bms.pcb.temp1',
+  "Front Motor Current": 'msg.help.av.front.motor.current',
+  "Rear Motor Current": 'msg.help.av.rear.motor.current',
+  "Front Motor Temp": 'msg.help.av.front.motor.temp',
+  "Rear Motor Temp": 'msg.help.av.rear.motor.temp',
+  "Motor Mode": 'msg.help.av.motor.mode',
+  "Power": 'msg.help.av.power',
+  "Speed": 'msg.help.av.speed',
+  "Reverse Gear": 'msg.help.av.reverse.gear',
+  "Rear Control Status": 'msg.help.av.rear.control.status',
+  "Front Control Status": 'msg.help.av.front.control.status',
+  "Brake Fault": 'msg.help.av.brake.fault',
+  "Warning": 'msg.help.av.warning',
+  "Warning 2": 'msg.help.av.warning2',
+  "Tail-light Warning": 'msg.help.av.taillight.warning',
+  "Park": 'msg.help.av.park',
+  "Cruise Active": 'msg.help.av.cruise.active',
+  "Headlight": 'msg.help.av.headlight',
+  "Turn Signal L": 'msg.help.av.turn.signal.left',
+  "Turn Signal R": 'msg.help.av.turn.signal.right',
+  "Front ECU 1": 'msg.help.av.front.ecu1',
+  "Front ECU 2": 'msg.help.av.front.ecu2',
+  "System Status 3": 'msg.help.av.system.status3',
+  "Battery Lock": 'msg.help.av.battery.lock',
+  "GPS Lock": 'msg.help.av.gps.lock',
+  "Power Mode": 'msg.help.av.power.mode',
+  "Light Sensor": 'msg.help.av.light.sensor',
+  "Voice": 'msg.help.av.voice',
+  "Anti-theft level": 'msg.help.av.antitheft.level',
+  "Custom Key": 'msg.help.av.custom.key',
+  "Avg Speed": 'msg.help.av.avg.speed',
+  "Max Speed": 'msg.help.av.max.speed',
+  "Trip": 'msg.help.av.trip',
+  "Odometer": 'msg.help.av.odometer',
+  "Recuperation": 'msg.help.av.recuperation'
+};
+
+let avHelpModal = null;
+let avHelpDelegated = false;
+
+// Build (once) the shared help popup and its close/backdrop/Escape handlers, outside #all-values.
+function ensureAvHelpModal() {
+  if (avHelpModal) return avHelpModal;
+  const overlay = document.createElement('div');
+  overlay.id = 'avhelp-overlay';
+  overlay.innerHTML =
+    '<div id="avhelp-box" role="dialog" aria-modal="true" aria-labelledby="avhelp-title">' +
+      '<h3 id="avhelp-title"></h3>' +
+      '<p id="avhelp-body"></p>' +
+      '<button type="button" id="avhelp-close">' + t('msg.help.close') + '</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeAvHelp(); });
+  overlay.querySelector('#avhelp-close').addEventListener('click', closeAvHelp);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && avHelpModal && avHelpModal.classList.contains('open')) closeAvHelp();
+  });
+  avHelpModal = overlay;
+  return overlay;
+}
+
+// Generic opener: fills the shared modal with any title + body text and shows it.
+function openHelp(title, text) {
+  const overlay = ensureAvHelpModal();
+  overlay.querySelector('#avhelp-title').textContent = title || '';
+  overlay.querySelector('#avhelp-body').textContent = text || '';
+  overlay.classList.add('open');
+}
+
+function openAvHelp(name) {
+  if (!name || !Object.prototype.hasOwnProperty.call(AV_HELP, name)) return;
+  openHelp(name, t(AV_HELP[name]));
+}
+
+function closeAvHelp() {
+  if (avHelpModal) avHelpModal.classList.remove('open');
+}
+
+// Plain-language explanation for every app / controller / per-gear setting.
+// Keyed by the row's data-set-help attribute; reuses the same modal as AV_HELP.
+const SETTINGS_HELP = {
+  "disp-dark": { title: 'msg.help.set.disp.dark.title', text: 'msg.help.set.disp.dark.text' },
+  "disp-mph": { title: 'msg.help.set.disp.mph.title', text: 'msg.help.set.disp.mph.text' },
+  "disp-fullscreen": { title: 'msg.help.set.disp.fullscreen.title', text: 'msg.help.set.disp.fullscreen.text' },
+  "gps-auto": { title: 'msg.help.set.gps.auto.title', text: 'msg.help.set.gps.auto.text' },
+  "gps-interval": { title: 'msg.help.set.gps.interval.title', text: 'msg.help.set.gps.interval.text' },
+  "debug-mode": { title: 'msg.help.set.debug.mode.title', text: 'msg.help.set.debug.mode.text' },
+  "dg-rssi": { title: 'msg.help.set.dg.rssi.title', text: 'msg.help.set.dg.rssi.text' },
+  "dg-volt": { title: 'msg.help.set.dg.volt.title', text: 'msg.help.set.dg.volt.text' },
+  "dg-gps": { title: 'msg.help.set.dg.gps.title', text: 'msg.help.set.dg.gps.text' },
+  "dg-pts": { title: 'msg.help.set.dg.pts.title', text: 'msg.help.set.dg.pts.text' }
+};
+
+let settingsHelpDelegated = false;
+
+// One document-level delegated listener for every ".set-help" button (survives re-renders).
+function ensureSettingsHelpDelegation() {
+  if (settingsHelpDelegated) return;
+  document.addEventListener('click', e => {
+    const btn = e.target.closest && e.target.closest('.set-help');
+    if (!btn) return;
+    const key = btn.getAttribute('data-set-help');
+    const h = key && SETTINGS_HELP[key];
+    if (h) {
+      e.preventDefault(); e.stopPropagation();
+      openHelp(t(h.title), t(h.text));
+    }
+  });
+  settingsHelpDelegated = true;
+}
+
+// Battery / BMS values that now live on their own Battery Info page - hidden from the main "All values"
+// list. They are NOT removed from the telemetry snapshot, so the ride recorder still logs them all.
+const BATTERY_AV_NAMES = new Set([
+  'System Voltage', 'Pole Voltage', 'Current', 'SOC', 'SOH', 'CELL MAX TEMP', 'CELL MIN TEMP',
+  'Cell Count', 'Max Voltage', 'Min Voltage', 'Rated Capacity', 'Charge Counter',
+  'Charge MOS', 'Discharge MOS', 'Relay 1', 'Relay 2', 'Relay M', 'Balance', 'Charge Status',
+  'Cell TEMP0', 'Cell TEMP1', 'Cell TEMP2', 'MOS TEMP0', 'MOS TEMP1', 'BMS PCB TEMP0', 'BMS PCB TEMP1'
+]);
+function renderAllValues(data) {
+  data = data || {};
+  const box = document.getElementById('all-values');
+  if (!box) return;
+  // One delegated click listener on the container (rows are rebuilt ~2x/s, so per-row would be lost).
+  if (!avHelpDelegated) {
+    box.addEventListener('click', e => {
+      const btn = e.target.closest && e.target.closest('.av-help');
+      if (btn && box.contains(btn)) openAvHelp(btn.getAttribute('data-help-name'));
+    });
+    avHelpDelegated = true;
+  }
+  const rows = [];
+  (data.top || []).forEach(x => { if (x && x.name != null && !BATTERY_AV_NAMES.has(x.name)) rows.push([x.name, x.value]); });
+  (data.bottom || []).forEach(x => { if (x && x.name != null && !BATTERY_AV_NAMES.has(x.name)) rows.push([x.name, x.value]); });
+  if (!rows.length) {
+    // The rebuilt box keeps data-i18n, so a language switch reaches this line too.
+    box.innerHTML = '<div class="no-routes" id="all-values-empty" data-i18n="dash.allvalues.empty">'
+      + t('dash.allvalues.empty') + '</div>';
+    return;
+  }
+  box.innerHTML = rows.map(r => {
+    const help = Object.prototype.hasOwnProperty.call(AV_HELP, r[0])
+      ? '<button type="button" class="av-help" aria-label="" data-help-name="">?</button>' : '';
+    return `<div class="av-row"><span class="av-label"></span><span class="av-val"></span>${help}</div>`;
+  }).join('');
+  const rowEls = box.querySelectorAll('.av-row');
+  rows.forEach((r, i) => {
+    rowEls[i].querySelector('.av-label').textContent = r[0];
+    rowEls[i].querySelector('.av-val').textContent = r[1];
+    const hb = rowEls[i].querySelector('.av-help');
+    if (hb) {
+      // setAttribute escapes the value safely (no HTML parsing of the name).
+      hb.setAttribute('data-help-name', r[0]);
+      hb.setAttribute('aria-label', tf('msg.allvalues.help.aria', { name: r[0] }));
+    }
+  });
+}
+
+function isFresh(ts) {
+  return ts && (Date.now() - ts < 5000);
+}
+
+// The gear tile shows only the gear NUMBER; this tag adds a P (parked) / R (reverse) state or is
+// hidden when neither applies. No Eco/Drive/Sport words.
+function gearTag(park, reverse) {
+  if (park)    return { text: t('msg.gear.tag.park'), cls: 'gear-tag-na',    show: true };
+  if (reverse) return { text: t('msg.gear.tag.reverse'), cls: 'gear-tag-sport', show: true };
+  return { text: '', cls: '', show: false };
+}
+
+function hideGearTag() {
+  const el = document.getElementById('gear-tag');
+  if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+
+function convSpeed(kmh) {
+  if (state.useMph) return (kmh * 0.621371).toFixed(1);
+  return kmh.toFixed(1);
+}
+function speedUnit() { return state.useMph ? t('msg.speed.unit.vcu.mph') : t('msg.speed.unit.vcu.kmh'); }
+function speedUnitGPS() { return state.useMph ? t('msg.speed.unit.gps.mph') : t('msg.speed.unit.gps.kmh'); }
+// Distance follows the same app unit toggle as speed: km or miles depending on useMph.
+function convDist(km) {
+  const v = (typeof km === 'number' && isFinite(km)) ? km : 0;
+  return state.useMph ? v * 0.621371 : v;
+}
+function distUnit() { return state.useMph ? 'mi' : 'km'; }
+
+function setTxt(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+function updateBLEUI(data) {
+  const bleDot = document.getElementById('ble-dot');
+
+  document.querySelector('.ble-drum .sd-unit').textContent = speedUnit();
+  document.querySelector('.gps-drum .sd-unit').textContent = speedUnitGPS();
+
+  const DASH = ['ble-speed','soc-val','gear-val','current-val','dg-range','dg-max',
+    'dg-volt','dg-btemp','dg-soh','dg-cycles','dg-total','dg-single','dg-rssi','dg-err',
+    'tl-power','tl-volt','tl-temp','tl-range','tl-odo','tl-soh',
+    'dg-limit','dg-startspeed','dg-brake','dg-drivemode'];
+
+  if (!data) {
+    DASH.forEach(id => setTxt(id, '-'));
+    hideGearTag();
+    renderAllValues(null);
+    return;
+  }
+
+  const connected = isFresh(data.ts);
+  const wasConnected = state.bleConnected;
+  state.bleConnected = connected;
+  state.ble = data;
+
+  if (connected !== wasConnected) onBLEConnectionChange(connected);
+
+  bleDot.classList.toggle('connected', connected);
+  const connBtn = document.getElementById('btn-connect');
+  if (connBtn) connBtn.classList.toggle('connected', connected);
+
+  if (!connected) {
+    DASH.forEach(id => setTxt(id, '-'));
+    hideGearTag();
+    renderAllValues(null);
+    return;
+  }
+
+  // Show the connected model name (from the advertised BLE name).
+  try { applyModelUi(data.btName); } catch (e) {}
+
+  // Auto-arm a ride once the scooter has actually moved ~20 m (keeps GPS off while parked).
+  try { maybeArmRide(data); } catch (e) {}
+
+  // Speed. The VCU tile turns red while the speed release is active (triple-tap toggles it). The
+  // scooter never reports the gear byte back, so this shows what THIS session last sent - a mode
+  // button press or a restart on the scooter clears the release without telling the app.
+  setTxt('ble-speed', convSpeed(data.speed));
+  {
+    const spEl = document.getElementById('ble-speed');
+    if (spEl) spEl.style.color = _speedReleased ? 'var(--danger)' : '';
+  }
+  // Range as the scooter reports it (0x90/0x91), and the max-speed PARAMETER from the 0x70 report -
+  // not a session maximum, so it is labelled as a parameter in the grid.
+  setTxt('dg-range', Math.round(convDist(data.range)) + ' ' + distUnit());
+  setTxt('dg-max', convSpeed(data.maxSpeed) + ' ' + (state.useMph ? 'mph' : 'km/h'));
+
+  // Hero
+  setTxt('soc-val', Math.round(data.soc));
+  setTxt('gear-val', data.gear);
+  hideGearTag();
+  // Signed from the rider's point of view: pack draw reads negative and red, recuperation reads
+  // positive and green. The controller reports draw as positive, hence the flip.
+  const cur = data.current;
+  const curEl = document.getElementById('current-val');
+  if (curEl) {
+    const shown = -cur;
+    curEl.textContent = shown > 0 ? '+' + shown.toFixed(1) : shown.toFixed(1);
+    curEl.style.color = cur > 0 ? 'var(--danger)' : cur < 0 ? 'var(--good)' : 'var(--text)';
+  }
+
+  // Grid
+  setTxt('dg-volt', data.volt.toFixed(1) + ' V');
+  setTxt('dg-btemp', Math.round(data.btemp) + ' \u00b0C');
+  const btEl = document.getElementById('dg-btemp'); if (btEl) btEl.style.color = tempColor(data.btemp);
+  setTxt('dg-soh', Math.round(data.soh) + ' %');
+  setTxt('dg-cycles', String(data.cycles));
+  setTxt('dg-total', Math.round(convDist(data.totalMile)) + ' ' + distUnit());
+  // Trip distance the scooter itself reports (0x91/0x92); "-" until a ride frame carries it.
+  setTxt('dg-single', (data.tripMile >= 0) ? (convDist(data.tripMile).toFixed(1) + ' ' + distUnit()) : '-');
+  setTxt('dg-rssi', data.rssi + ' dBm');
+  const rssiEl = document.getElementById('dg-rssi');
+  if (rssiEl) rssiEl.style.color = data.rssi < -85 ? 'var(--danger)' : data.rssi < -70 ? 'var(--warn)' : 'var(--good)';
+  setTxt('dg-err', String(data.fault || 0));
+
+  // Parameters the scooter reports in its 0x70 frame. limitOn carries bit 7 of the limit byte.
+  setTxt('dg-limit', data.limitSpeed
+    ? (data.limitSpeed + ' km/h ' + (data.limitOn ? t('msg2.navee.limit.on') : t('msg2.navee.limit.off')))
+    : '-');
+  setTxt('dg-startspeed', (data.startSpeed >= 0) ? (data.startSpeed + ' km/h') : '-');
+  setTxt('dg-brake', (typeof data.breakSpeed === 'number') ? String(data.breakSpeed) : '-');
+  setTxt('dg-drivemode', String(data.gear));
+
+  // Live telemetry tiles. Power is derived: pack voltage times pack current.
+  const watt = data.volt * data.current;
+  setTxt('tl-power', Math.round(watt));
+  const pwEl = document.getElementById('tl-power');
+  if (pwEl) pwEl.style.color = watt < -5 ? 'var(--good)' : '';   // negative = recuperating
+  setTxt('tl-volt', data.volt.toFixed(1));
+  setTxt('tl-temp', Math.round(data.btemp));
+  const ttEl = document.getElementById('tl-temp'); if (ttEl) ttEl.style.color = tempColor(data.btemp);
+  setTxt('tl-range', Math.round(convDist(data.range)));
+  setTxt('tl-odo', Math.round(convDist(data.totalMile)));
+  setTxt('tl-soh', Math.round(data.soh));
+
+  // All values
+  renderAllValues(data);
+}
+
+function tickBLE() {
+  const raw = storage.get('lb_live_data');
+  const data = parseBLE(raw);
+  updateBLEUI(data);
+  updateRideUI();
+  // Mirror the NAVEE quick toggles onto the scooter state (~2x/s).
+  reflectDriveQuick();
+  // Keep the scooter-settings page live while it is open.
+  maybeLiveRefreshScooterSettings();
+}
+
+function onBLEConnectionChange(nowConnected) {
+  if (nowConnected) {
+    // Live GPS speed on the main screen runs the WHOLE time you are connected - it is independent
+    // of ride recording. The ride itself only arms (starts recording points) once the scooter has
+    // actually travelled ARM_DISTANCE_M (maybeArmRide).
+    startGPSWatch();
+    state.armDistM = 0;
+    state.armLastTs = null;
+    state.rideStopped = false;
+  } else {
+    // BLE dropped (manual disconnect or the scooter powered off - same thing): always finalize
+    // the ride and stop GPS. The speed release does not survive on the scooter either, so drop
+    // the flag rather than showing a release that is no longer in effect.
+    _speedReleased = false;
+    try { setTxt('tune-status', t('scooter.tune.status.idle')); } catch (e) {}
+    finalizeRide();
+    stopGPSWatch();
+    state.armDistM = 0;
+    state.armLastTs = null;
+    state.rideStopped = false;
+  }
+}
+
+/* ── Ride Management ──────────────────────────────────────── */
+
+function loadRoutes() {
+  try {
+    const raw = storage.get('lb_routes');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch(e) { return []; }
+}
+
+function saveRoutes(routes) {
+  try {
+    storage.set('lb_routes', JSON.stringify(routes));
+  } catch(e) {}
+}
+
+const ARM_DISTANCE_M = 20;   // auto-start a ride after this much real movement (metres)
+
+// While connected, integrate the scooter's own reported speed to detect genuine movement and
+// auto-start (arm) a ride once ARM_DISTANCE_M has been covered. Measuring from the scooter (not
+// GPS) means GPS stays off while parked-but-connected.
+function maybeArmRide(data) {
+  if (!state.gpsAutoStart) return;                      // ride auto-tracking master switch
+  if (state.currentRide || state.rideStopped) return;   // already riding or stopped this session
+  const now = (data && data.ts) ? data.ts : Date.now();
+  const spd = (data && typeof data.speed === 'number') ? data.speed : 0;   // km/h
+  if (state.armLastTs != null && spd > 0) {
+    const dtH = (now - state.armLastTs) / 3600000;
+    if (dtH > 0 && dtH < 0.02) state.armDistM += spd * dtH * 1000;   // km/h * h * 1000 = metres
+  }
+  state.armLastTs = now;
+  if (state.armDistM >= ARM_DISTANCE_M) startRide();
+}
+
+function startRide() {
+  const id = `ride_${Date.now()}`;
+  state.currentRide = {
+    id,
+    startTime: Date.now(),
+    endTime: 0,
+    dist: 0,
+    hmPlus: 0,
+    hmMinus: 0,
+    points: []
+  };
+  state.routes = loadRoutes();
+  startGPSWatch();   // ensure GPS is running (no-op if already active from the connect event)
+  clearInterval(state.rideTimer);
+  state.rideTimer = setInterval(updateRideUI, 1000);
+  clearInterval(state.saveTimer);
+  state.saveTimer = setInterval(periodicSaveRide, 10000);
+  renderRoutes();
+  updateRideUI();
+}
+
+function finalizeRide() {
+  if (!state.currentRide) return;
+  state.currentRide.endTime = Date.now();
+  state.routes = loadRoutes().filter(r => r.id !== state.currentRide.id);
+  // Only save if ride has meaningful data
+  if (state.currentRide.points.length >= 2 || state.currentRide.dist > 0.01) {
+    state.routes.push({ ...state.currentRide });
+  }
+  saveRoutes(state.routes);
+  state.currentRide = null;
+  clearInterval(state.rideTimer);
+  clearInterval(state.saveTimer);
+  // GPS keeps running while connected (live speed on the main screen); it stops only on disconnect.
+  renderRoutes();
+  updateRideUI();
+}
+
+// Stop button for a live ride: finalize now and block auto-re-arm until the next reconnect.
+function stopLiveRide() {
+  state.rideStopped = true;
+  finalizeRide();
+}
+
+function periodicSaveRide() {
+  if (!state.currentRide) return;
+  // Save current ride as last element with endTime=0 (crash recovery)
+  state.routes = loadRoutes().filter(r => r.id !== state.currentRide.id);
+  state.routes.push({ ...state.currentRide, endTime: 0 });
+  saveRoutes(state.routes);
+  renderRoutes();
+}
+
+/* ── GPS Tracking ─────────────────────────────────────────── */
+
+function startGPSWatch() {
+  if (state.gpsWatchId !== null) return;
+  try {
+    if (navigator.geolocation) {
+      state.gpsWatchId = navigator.geolocation.watchPosition(
+        pos => onGPSSuccess({
+          coords: {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            altitude: pos.coords.altitude || 0,
+            speed: pos.coords.speed || 0
+          },
+          timestamp: pos.timestamp
+        }),
+        onGPSError,
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+    }
+  } catch(e) {}
+}
+
+function stopGPSWatch() {
+  if (state.gpsWatchId === null) return;
+  try {
+    if (navigator.geolocation) navigator.geolocation.clearWatch(state.gpsWatchId);
+  } catch(e) {}
+  state.gpsWatchId = null;
+  state.gpsPos = null;
+  document.getElementById('gps-speed').textContent = '-';
+  document.getElementById('dg-gps').textContent = '-';
+  document.getElementById('dg-alt').textContent = '-';
+}
+
+function onGPSSuccess(pos) {
+  const coords = pos.coords;
+  const lat = Math.round(coords.latitude  * 1e6) / 1e6;
+  const lon = Math.round(coords.longitude * 1e6) / 1e6;
+  const alt = coords.altitude != null ? Math.round(coords.altitude * 10) / 10 : null;
+  const ts  = pos.timestamp || Date.now();
+  // Prefer the GPS Doppler speed (coords.speed) - most accurate source. Some devices/WebViews
+  // never report it; fall back to distance/time from the previous fix so the readout still
+  // tracks reality instead of dropping to 0.
+  let spd;
+  if (coords.speed != null && coords.speed >= 0) {
+    spd = coords.speed * 3.6; // m/s -> km/h
+  } else if (state.gpsPos && state.gpsPos.lat != null) {
+    const dts = (ts - state.gpsPos.ts) / 1000; // seconds since last fix
+    spd = (dts > 0.2 && dts < 5)
+      ? haversine(state.gpsPos.lat, state.gpsPos.lon, lat, lon) / (dts / 3600) // km / h
+      : (state.gpsPos.speed || 0);
+  } else {
+    spd = 0;
+  }
+
+  state.gpsPos = { lat, lon, alt, speed: spd, ts };
+
+  // Update GPS speed display
+  const gpsSpeedEl = document.getElementById('gps-speed');
+  gpsSpeedEl.textContent = state.useMph
+    ? (spd * 0.621371).toFixed(1)
+    : spd.toFixed(1);
+
+  // Update GPS display fields
+  document.getElementById('dg-alt').textContent = alt != null ? `${alt} m` : '-';
+  document.getElementById('dg-gps').textContent = t('msg.gps.fix');
+
+  // Record point to current ride, throttled to the configured GPS interval. watchPosition fires
+  // as fast as the OS reports; we only store a point once at least state.gpsIntervalMs have passed
+  // since the last recorded point. Reading state.gpsIntervalMs live means changing the interval
+  // takes effect for the ongoing recording without re-arming the watch.
+  if (state.currentRide && state.bleConnected) {
+    const pts = state.currentRide.points;
+    const last = pts.length ? pts[pts.length - 1] : null;
+    // 250 ms tolerance so a tick landing just shy of the interval still counts (avoids drift).
+    if (!last || (ts - last.ts) >= (state.gpsIntervalMs - 250)) {
+      addPointToRide(lat, lon, alt, ts, spd);
+    }
+  }
+}
+
+function onGPSError(err) {
+  document.getElementById('gps-speed').textContent = '-';
+  document.getElementById('dg-gps').textContent = t('msg.gps.nofix');
+}
+
+function addPointToRide(lat, lon, alt, ts, speed) {
+  const ride = state.currentRide;
+  const pts  = ride.points;
+  const pt   = { lat, lon, alt: alt !== null ? alt : 0, ts, speed: Math.round(speed * 10) / 10 };
+
+  if (pts.length > 0) {
+    const prev = pts[pts.length - 1];
+    const d = haversine(prev.lat, prev.lon, lat, lon);
+    ride.dist += d;
+    ride.dist = Math.round(ride.dist * 100) / 100;
+
+    if (alt !== null && prev.alt != null) {
+      const dAlt = alt - prev.alt;
+      if (dAlt > 0.5) ride.hmPlus  = Math.round(ride.hmPlus  + dAlt);
+      else if (dAlt < -0.5) ride.hmMinus = Math.round(ride.hmMinus + Math.abs(dAlt));
+    }
+  }
+
+  pts.push(pt);
+}
+
+/* ── Ride UI ──────────────────────────────────────────────── */
+
+function updateRideUI() {
+  const ride = state.currentRide;
+  const stopRow = document.getElementById('dg-stop-row');
+  showEl(stopRow, !!ride);
+  showRideBanner(!!ride);
+  if (ride) {
+    const elapsed = Date.now() - ride.startTime;
+    setTxt('dg-dist', `${convDist(ride.dist).toFixed(2)} ${distUnit()}`);
+    setTxt('dg-time', formatDuration(elapsed));
+    setTxt('rb-dist', `${convDist(ride.dist).toFixed(2)} ${distUnit()}`);
+    setTxt('rb-time', formatDuration(elapsed));
+    // Real trip average = GPS distance / elapsed time (the scooter's own avgSpeed resets to 0 when
+    // stopped, so we compute our own). Guard divide-by-zero -> 0.
+    const avgKmh = elapsed > 0 ? (ride.dist / (elapsed / 3600000)) : 0;
+    setTxt('dg-ride-avg', `${convSpeed(avgKmh)} ${state.useMph ? 'mph' : 'km/h'}`);
+    setTxt('dg-hm', `+${ride.hmPlus}/-${ride.hmMinus} m`);
+    setTxt('dg-pts', String(ride.points.length));
+  } else {
+    setTxt('dg-dist', '-');
+    setTxt('dg-time', '-');
+    setTxt('dg-ride-avg', '-');
+    setTxt('dg-hm', '-');
+    setTxt('dg-pts', '-');
+  }
+}
+
+/* ── Route Rendering ──────────────────────────────────────── */
+
+// One-time crash recovery at startup: an app kill mid-ride leaves the 10 s autosave in lb_routes
+// with endTime === 0, which then renders forever as "LIVE". Finalize any such orphan (no ride is
+// active at startup) and drop rides that never gathered real data.
+function recoverStuckRides() {
+  try {
+    const routes = loadRoutes();
+    let changed = false;
+    const out = [];
+    for (const r of routes) {
+      let rr = r;
+      if (r && r.endTime === 0) {
+        const pts = Array.isArray(r.points) ? r.points : [];
+        const end = pts.length ? pts[pts.length - 1].ts : r.startTime;
+        rr = { ...r, endTime: end || r.startTime || Date.now() };
+        changed = true;
+      }
+      const nPts = (rr && Array.isArray(rr.points)) ? rr.points.length : 0;
+      if (nPts >= 2 || (rr && rr.dist > 0.01)) out.push(rr);
+      else changed = true;   // drop empty / degenerate rides
+    }
+    if (changed) saveRoutes(out);
+  } catch (e) {}
+}
+
+function renderRoutes() {
+  const routes = loadRoutes();
+  state.routes = routes;
+
+  const list = document.getElementById('routes-list');
+  const noMsg = document.getElementById('no-routes-msg');
+  const countEl = document.getElementById('routes-count');
+
+  // Filter out crash-recovery in-progress entries from display
+  const finished = routes.filter(r => r.endTime > 0);
+  const inProgress = routes.find(r => r.endTime === 0);
+
+  countEl.textContent = finished.length > 0 ? tf('msg.routes.count', { n: finished.length }) : '';
+  const badge = document.getElementById('routes-count-badge');
+  if (badge) badge.textContent = finished.length > 0 ? String(finished.length) : '';
+
+  // Clear list
+  list.innerHTML = '';
+
+  if (finished.length === 0 && !inProgress) {
+    list.appendChild(noMsg);
+    noMsg.style.display = '';
+    return;
+  }
+
+  // Sort: newest first
+  const sorted = [...finished].sort((a,b) => b.startTime - a.startTime);
+
+  // Show in-progress ride at top if exists (from state.currentRide, more accurate)
+  const displayRide = state.currentRide || inProgress;
+  if (displayRide) {
+    const el = makeRouteItem(displayRide, true);
+    list.appendChild(el);
+  }
+
+  sorted.forEach(route => {
+    const el = makeRouteItem(route, false);
+    list.appendChild(el);
+  });
+}
+
+function makeRouteItem(route, live) {
+  const el = document.createElement('div');
+  el.className = 'route-item';
+
+  const duration = route.endTime > 0
+    ? formatDuration(route.endTime - route.startTime)
+    : formatDuration(Date.now() - route.startTime);
+
+  const dateStr = fmtDate(route.startTime);
+  const dist    = route.dist.toFixed(2);
+  const hmStr   = `+${route.hmPlus}/-${route.hmMinus}m`;
+
+  const info = document.createElement('div');
+  info.className = 'route-info';
+  info.innerHTML = `
+    <div class="route-date">${dateStr}${live ? '<span class="route-live-badge" data-i18n="msg.routes.item.live.badge">LIVE</span>' : ''}</div>
+    <div class="route-stats">${tf('msg.routes.item.stats', { dist: dist, duration: duration, hm: hmStr, n: route.points.length })}</div>
+  `;
+
+  el.appendChild(info);
+
+  if (live) {
+    const stopBtn = document.createElement('button');
+    stopBtn.className = 'route-gpx-btn';
+    stopBtn.textContent = t('msg.ride.stop.button');
+    stopBtn.addEventListener('click', e => { e.stopPropagation(); stopLiveRide(); });
+    el.appendChild(stopBtn);
+  }
+
+  if (!live && route.points.length > 0) {
+    const mapsBtn = document.createElement('button');
+    mapsBtn.className = 'route-gpx-btn';
+    mapsBtn.textContent = t('msg.route.showmap.button');
+    mapsBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      showRouteOnOurMap(route);
+    });
+    el.appendChild(mapsBtn);
+
+    const btn = document.createElement('button');
+    btn.className = 'route-gpx-btn';
+    btn.textContent = t('msg.route.gpx.button');
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      exportGPX(route);
+    });
+    el.appendChild(btn);
+  }
+
+  return el;
+}
+
+/* ── Show route on our offline map ────────────────────────── */
+
+/* Display a recorded ride on the app's own offline Mapsforge map (NavActivity) instead of
+   an external Google Maps intent. Passes the route's {lat, lon} points to the native bridge. */
+function showRouteOnOurMap(route) {
+  const src = (route && route.points) ? route.points : [];
+  if (src.length === 0) { showToast(t('msg.route.nopoints')); return; }
+  const pts = src.map(p => ({ lat: p.lat, lon: p.lon }));
+  if (typeof LB !== 'undefined' && LB.showRouteOnMap) {
+    LB.showRouteOnMap(JSON.stringify(pts));
+  } else {
+    showToast(t('msg.app.only.in.app'));
+  }
+}
+
+/* ── GPX Export ───────────────────────────────────────────── */
+
+function buildGPXString(route) {
+  const d = new Date(route.startTime);
+  const name = `NAVEE ${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const lines = [];
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push('<gpx version="1.1" creator="Laufbursche Edition (NAVEE)" xmlns="http://www.topografix.com/GPX/1/1">');
+  lines.push('  <trk>');
+  lines.push(`    <name>${escXML(name)}</name>`);
+  lines.push('    <trkseg>');
+  for (const pt of route.points) {
+    lines.push(`      <trkpt lat="${pt.lat}" lon="${pt.lon}">`);
+    lines.push(`        <ele>${pt.alt}</ele>`);
+    lines.push(`        <time>${fmtDateTime(pt.ts)}</time>`);
+    lines.push(`        <extensions><speed>${pt.speed}</speed></extensions>`);
+    lines.push('      </trkpt>');
+  }
+  lines.push('    </trkseg>');
+  lines.push('  </trk>');
+  lines.push('</gpx>');
+  return lines.join('\n');
+}
+
+function escXML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* Error codes the native bridge returns, mapped to the catalogue. */
+const GPX_ERROR_KEYS = {
+  downloads:  'msg.gpx.error.downloads',
+  createfile: 'msg.gpx.error.createfile',
+  writer:     'msg.gpx.error.writer',
+  save:       'msg.gpx.error.save'
+};
+
+function exportGPX(route) {
+  if (!route || route.points.length === 0) {
+    showToast(t('msg.route.nopoints'));
+    return;
+  }
+  const gpxStr  = buildGPXString(route);
+  const filename = gpxFilename(route.startTime);
+
+  if (typeof LB !== 'undefined' && LB.saveGpxToDownloads) {
+    // The bridge writes the file, so the toast reports its result instead of guessing.
+    let res = null;
+    try { res = JSON.parse(LB.saveGpxToDownloads(filename, gpxStr) || 'null'); } catch (e) { res = null; }
+    if (res && res.ok) {
+      showToast(tf('msg.gpx.saved', { filename: res.name || filename }));
+    } else {
+      const key = (res && GPX_ERROR_KEYS[res.error]) || 'msg.gpx.error.save';
+      showToast(t(key), 3000, 'err');
+    }
+    return;
+  }
+
+  // Plain browser: the blob download really runs there.
+  const blob = new Blob([gpxStr], { type: 'application/gpx+xml' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(tf('msg.gpx.download', { filename: filename }));
+}
+
+/* ── Delete Routes ────────────────────────────────────────── */
+
+function deleteRoutesByPeriod(period) {
+  const now = Date.now();
+  let cutoff = 0;
+
+  if (period === '24h') cutoff = now - 24 * 3600 * 1000;
+  else if (period === '7d')  cutoff = now - 7  * 86400 * 1000;
+  else if (period === '30d') cutoff = now - 30 * 86400 * 1000;
+  else if (period === 'all') cutoff = Infinity;
+
+  let routes = loadRoutes();
+
+  if (period === 'all') {
+    // Keep only currently recording in-progress ride
+    if (state.currentRide) {
+      routes = [{ ...state.currentRide, endTime: 0 }];
+    } else {
+      routes = [];
+    }
+  } else {
+    routes = routes.filter(r => {
+      // Keep in-progress (endTime=0) always
+      if (r.endTime === 0) return true;
+      // Keep if startTime is NEWER than cutoff
+      return r.startTime > cutoff;
+    });
+  }
+
+  saveRoutes(routes);
+  state.routes = routes;
+  renderRoutes();
+  showToast(t('msg.routes.deleted'));
+}
+
+function confirmDelete(period) {
+  const labels = {
+    '24h': t('msg.routes.delete.period.24h'),
+    '7d':  t('msg.routes.delete.period.7d'),
+    '30d': t('msg.routes.delete.period.30d'),
+    'all': t('msg.routes.delete.period.all')
+  };
+  document.getElementById('confirm-title').textContent = t('msg.routes.delete.confirm.title');
+  document.getElementById('confirm-msg').textContent =
+    tf('msg.routes.delete.confirm.body', { period: labels[period] });
+  state.confirmCb = () => deleteRoutesByPeriod(period);
+  document.getElementById('confirm-ok').textContent = t('msg.confirm.ok.delete');
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+/* ── Settings ─────────────────────────────────────────────── */
+
+function loadSettings() {
+  // Theme
+  const theme = storage.get('lb_theme');
+  const dark = theme !== 'light';
+  applyTheme(dark);
+
+  // mph
+  const mphVal = storage.get('lb_units');
+  state.useMph = mphVal === 'mph';
+  document.getElementById('toggle-mph').checked = state.useMph;
+
+  // GPS auto
+  const gpsAuto = storage.get('lb_gps_auto');
+  state.gpsAutoStart = gpsAuto !== 'off';
+  document.getElementById('toggle-gps-auto').checked = state.gpsAutoStart;
+
+  // GPS recording interval (seconds; default 5). Applied as a throttle in onGPSSuccess.
+  const gpsIntSaved = parseInt(storage.get('lb_gps_interval'), 10);
+  const gpsIntSec = (gpsIntSaved > 0) ? gpsIntSaved : 5;
+  state.gpsIntervalMs = gpsIntSec * 1000;
+  const gpsIntSel = document.getElementById('gps-interval-sel');
+  if (gpsIntSel) gpsIntSel.value = String(gpsIntSec);
+
+  // Fullscreen (native immersive mode; reflect the persisted native flag into the toggle).
+  try {
+    if (typeof LB !== 'undefined' && LB.isFullscreen) {
+      const fs = document.getElementById('toggle-fullscreen');
+      if (fs) fs.checked = !!LB.isFullscreen();
+    }
+  } catch (e) {}
+
+  // SRT streaming URL (encrypted at rest, read from this WebView's localStorage).
+  const surl = srtDecrypt(storage.get('lb_srt_url'));
+  if (surl) { const el = document.getElementById('stream-url'); if (el) el.value = surl; }
+
+  // Debug mode: read the persisted native flag to set the toggle and show/hide the banner.
+  syncDebugUI();
+}
+
+/* ── SRT streaming (native module via the LB bridge) ──────────── */
+
+/* Store the URL encrypted at rest (RC4 stream cipher, synchronous so it always
+   works in the local webview - crypto.subtle is not available there). The key lives
+   in the app (no user password), so this is encryption at rest: the storage DB no
+   longer holds plaintext, but it is not protection against reverse-engineering. */
+const SRT_KEY = [
+  0x8f,0x2a,0x71,0x3c,0x9e,0x14,0xb5,0x60, 0xd7,0x22,0x4e,0xa9,0x63,0x1f,0x88,0xc0,
+  0x35,0xf7,0x1b,0x6d,0x40,0x2c,0x91,0x5a, 0x0e,0xb8,0x77,0xd3,0x64,0xaf,0x19,0x52
+];
+
+function _b64enc(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s);
+}
+function _b64dec(str) {
+  const s = atob(str);
+  const b = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  return b;
+}
+function _rc4(key, data) {
+  const s = [];
+  for (let i = 0; i < 256; i++) s[i] = i;
+  let j = 0;
+  for (let i = 0; i < 256; i++) {
+    j = (j + s[i] + key[i % key.length]) & 255;
+    const t = s[i]; s[i] = s[j]; s[j] = t;
+  }
+  const out = new Uint8Array(data.length);
+  let a = 0; j = 0;
+  for (let k = 0; k < data.length; k++) {
+    a = (a + 1) & 255;
+    j = (j + s[a]) & 255;
+    const t = s[a]; s[a] = s[j]; s[j] = t;
+    out[k] = data[k] ^ s[(s[a] + s[j]) & 255];
+  }
+  return out;
+}
+
+function srtEncrypt(plain) {
+  if (!plain) return '';
+  // Prefer the native Android Keystore via the LB bridge (LB.encrypt -> "k1:"+base64).
+  // Fall back to the RC4-at-rest scheme when the bridge is missing or returns nothing.
+  if (typeof LB !== 'undefined' && LB.encrypt) {
+    try {
+      const enc = LB.encrypt(plain);
+      if (enc && ('' + enc).length) return '' + enc;
+    } catch (e) {}
+  }
+  return 'r:' + _b64enc(_rc4(SRT_KEY, new TextEncoder().encode(plain)));
+}
+function srtDecrypt(stored) {
+  if (!stored) return '';
+  if (stored.slice(0, 3) === 'k1:') {
+    // Native Keystore value: only LB.decrypt can read it.
+    if (typeof LB !== 'undefined' && LB.decrypt) {
+      try {
+        const dec = LB.decrypt(stored);
+        if (dec) return '' + dec;
+      } catch (e) {}
+    }
+    return '';
+  }
+  if (stored.slice(0, 2) === 'r:') {
+    try { return new TextDecoder().decode(_rc4(SRT_KEY, _b64dec(stored.slice(2)))); }
+    catch (e) { return ''; }
+  }
+  if (stored.slice(0, 5) === 'srt:/' || stored.slice(0, 6) === 'srtla:') return stored; // legacy plaintext
+  return '';
+}
+
+function srtSaveUrl(url) {
+  // Never wipe a stored URL with an empty value - a blur/change on an empty field
+  // used to overwrite the saved URL with nothing.
+  if (!url) return;
+  const enc = srtEncrypt(url);
+  storage.set('lb_srt_url', enc); // WebView localStorage survives restarts here
+}
+
+/* Read the real status the native StreamService reports via the LB bridge
+   (idle / connecting / live / failed: reason / stopped). */
+function readStreamStatus() {
+  if (typeof LB === 'undefined' || !LB.streamStatus) return '';
+  try {
+    const v = LB.streamStatus();
+    return (v === undefined || v === null) ? '' : ('' + v);
+  } catch (e) { return ''; }
+}
+
+function setStreamStatus(txt) {
+  const el = document.getElementById('stream-status');
+  if (el) el.textContent = tf('msg.stream.status.prefix', { txt: txt });
+}
+
+function startSrtStream() {
+  const url = document.getElementById('stream-url').value.trim();
+  if (!url) { showToast(t('msg.stream.url.missing')); return; }
+  srtSaveUrl(url);
+  if (typeof LB === 'undefined' || !LB.startStream) { showToast(t('msg.app.only.in.app')); return; }
+  try {
+    LB.startStream(url);
+    setStreamStatus(t('msg.stream.status.requesting'));
+    showToast(t('msg.stream.prompt.confirm'));
+  } catch(e) {
+    showToast(tf('msg.error.generic', { e: e }));
+    setStreamStatus(t('msg.stream.status.error'));
+  }
+}
+
+function stopSrtStream() {
+  if (typeof LB === 'undefined' || !LB.stopStream) { showToast(t('msg.app.only.in.app')); return; }
+  try {
+    LB.stopStream();
+    setStreamStatus(t('msg.stream.status.stopped'));
+    showToast(t('msg.stream.stopped.toast'));
+  } catch(e) { showToast(tf('msg.error.generic', { e: e })); }
+}
+
+function openSettings() {
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-sheet').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-sheet').classList.remove('open');
+}
+
+/* ── Language ──────────────────────────────────────────────── */
+//
+// English is the base language, German a translation layer in i18n.js. A key that
+// is missing in German falls back to English, so a half-finished translation shows
+// wording rather than a raw key. The rider's choice wins over the device language.
+
+function t(key) {
+  const cat = window.I18N || {};
+  const own = cat[lang] || {};
+  if (typeof own[key] === 'string') return own[key];
+  const base = cat.en || {};
+  return typeof base[key] === 'string' ? base[key] : key;
+}
+
+// Lists live in the catalogue as arrays, for example the what-is-new points.
+function tList(key) {
+  const cat = window.I18N || {};
+  const own = (cat[lang] || {})[key];
+  if (Array.isArray(own) && own.length) return own;
+  const base = (cat.en || {})[key];
+  return Array.isArray(base) ? base : [];
+}
+
+// "Packet {n} of {m}" with the numbers filled in.
+function tf(key, vars) {
+  return t(key).replace(/\{(\w+)\}/g, (m, name) => (vars && vars[name] != null) ? String(vars[name]) : m);
+}
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(n => {
+    const v = t(n.getAttribute('data-i18n'));
+    // Only the few strings that carry emphasis or an entity go in as markup.
+    if (/[<&]/.test(v)) n.innerHTML = v; else n.textContent = v;
+  });
+  const attrs = [['data-i18n-aria', 'aria-label'], ['data-i18n-ph', 'placeholder'],
+                 ['data-i18n-title', 'title'], ['data-i18n-alt', 'alt']];
+  attrs.forEach(pair => {
+    document.querySelectorAll('[' + pair[0] + ']').forEach(n => {
+      n.setAttribute(pair[1], t(n.getAttribute(pair[0])));
+    });
+  });
+  document.querySelectorAll('#lang-switch button').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+  });
+  // Text the script owns: the model banner is refreshed once it shows a looked-up name.
+  populateModelSelect();
+  if (_lastModelKey !== null) {
+    _lastModelKey = null;
+    try { applyModelUi(liveRaw().btName); } catch (e) {}
+  }
+  renderWhatsNewList();
+  renderDisclaimerList();
+  // Label lengths just changed, so the fold has to be measured again.
+  try { scheduleFitFold(); } catch (e) {}
+}
+
+function setLang(next) {
+  lang = (next === 'de') ? 'de' : 'en';
+  try { localStorage.setItem('lb_lang', lang); } catch (e) {}
+  applyLang();
+}
+
+function initLang() {
+  let chosen = null;
+  try { chosen = localStorage.getItem('lb_lang'); } catch (e) {}
+  if (chosen !== 'de' && chosen !== 'en') {
+    // No choice yet: follow the device and fall back to the base language.
+    const dev = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    chosen = (dev === 'de') ? 'de' : 'en';
+  }
+  lang = chosen;
+  applyLang();
+}
+
+/* ── What is new ───────────────────────────────────────────── */
+//
+// Opens by itself once per version and on demand from the settings. The version
+// the rider has already seen is remembered, so an update shows the modal again.
+
+function appVersionString() {
+  try {
+    if (typeof LB !== 'undefined' && LB.appVersion) {
+      const v = LB.appVersion();
+      if (v) return '' + v;
+    }
+  } catch (e) {}
+  return '';
+}
+
+function renderWhatsNewList() {
+  const host = document.getElementById('whatsnew-list');
+  if (!host) return;
+  host.innerHTML = '';
+  tList('whatsnew.points').forEach(p => {
+    const li = document.createElement('li');
+    li.innerHTML = p;   // our own translation table, the only markup is <b>
+    host.appendChild(li);
+  });
+}
+
+function openWhatsNew() {
+  const v = document.getElementById('whatsnew-ver');
+  if (v) v.textContent = appVersionString() || '-';
+  renderWhatsNewList();
+  const o = document.getElementById('whatsnew-overlay');
+  if (o) o.classList.add('open');
+}
+
+// Closing counts as read: the version is stored, so it does not open again by itself.
+function closeWhatsNew() {
+  const o = document.getElementById('whatsnew-overlay');
+  if (o) o.classList.remove('open');
+  const v = appVersionString();
+  if (v) { try { localStorage.setItem('lb_seen_version', v); } catch (e) {} }
+}
+
+function maybeShowWhatsNew() {
+  if (!tList('whatsnew.points').length) return;   // nothing to tell
+  const v = appVersionString();
+  if (!v) return;
+  let seen = null;
+  try { seen = localStorage.getItem('lb_seen_version'); } catch (e) {}
+  if (seen === v) return;
+  openWhatsNew();
+}
+
+/* ── Liability disclaimer ─────────────────────────────────── */
+
+// Bump this and every rider reads and accepts the terms once more.
+const DISCLAIMER_VERSION = '1';
+
+function disclaimerAccepted() {
+  try { return localStorage.getItem('lb_disclaimer_accepted') === DISCLAIMER_VERSION; } catch (e) { return false; }
+}
+
+function renderDisclaimerList() {
+  const host = document.getElementById('disclaimer-list');
+  if (!host) return;
+  host.innerHTML = '';
+  tList('disclaimer.points').forEach(p => {
+    const li = document.createElement('li');
+    li.innerHTML = p;   // our own translation table, the only markup is <b>
+    host.appendChild(li);
+  });
+}
+
+// Two modes on one box. 'accept' is the first start: it demands the tick box and neither the
+// backdrop nor Escape gets rid of it. 'read' is every later look at the same text.
+function openDisclaimer(mode) {
+  const o = document.getElementById('disclaimer-overlay');
+  if (!o) return;
+  const asking = mode === 'accept';
+  renderDisclaimerList();
+  const h = document.getElementById('disclaimer-title');
+  if (h) {
+    h.setAttribute('data-i18n', asking ? 'disclaimer.title' : 'disclaimer.title.read');
+    h.textContent = t(h.getAttribute('data-i18n'));
+  }
+  const cb = document.getElementById('disclaimer-consent');
+  if (cb) cb.checked = false;
+  const acc = document.getElementById('disclaimer-accept');
+  if (acc) acc.disabled = true;
+  ['disclaimer-consent-wrap', 'disclaimer-accept'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('is-hidden', !asking);
+  });
+  const cls = document.getElementById('disclaimer-close');
+  if (cls) cls.classList.toggle('is-hidden', asking);
+  const box = document.getElementById('disclaimer-box');
+  if (box) box.scrollTop = 0;
+  o.classList.add('open');
+}
+
+function closeDisclaimer() {
+  const o = document.getElementById('disclaimer-overlay');
+  if (o) o.classList.remove('open');
+}
+
+// True while the box is waiting for the tick box, so nothing dismisses it sideways.
+function disclaimerIsAsking() {
+  const acc = document.getElementById('disclaimer-accept');
+  const o = document.getElementById('disclaimer-overlay');
+  return !!(o && o.classList.contains('open') && acc && !acc.classList.contains('is-hidden'));
+}
+
+function acceptDisclaimer() {
+  try { localStorage.setItem('lb_disclaimer_accepted', DISCLAIMER_VERSION); } catch (e) {}
+  closeDisclaimer();
+  try { maybeShowWhatsNew(); } catch (e) {}
+}
+
+// The terms come first: what is new waits until they are accepted.
+function maybeShowFirstRun() {
+  if (!disclaimerAccepted()) { openDisclaimer('accept'); return; }
+  maybeShowWhatsNew();
+}
+
+/* ── Version Info & Disclaimer modal ──────────────────────── */
+
+// Fill the app version (native LB.appVersion, same source as the Info page) and open the modal.
+function openVersionInfo() {
+  let ver = '-';
+  try {
+    if (typeof LB !== 'undefined' && LB.appVersion) { const v = LB.appVersion(); if (v) ver = '' + v; }
+  } catch (e) {}
+  const vEl = document.getElementById('verinfo-ver');
+  if (vEl) vEl.textContent = ver;
+  const o = document.getElementById('verinfo-overlay');
+  if (o) o.classList.add('open');
+}
+function closeVersionInfo() {
+  const o = document.getElementById('verinfo-overlay');
+  if (o) o.classList.remove('open');
+}
+
+/* ── Connect page (BLE scan / connect / disconnect via LB bridge) ── */
+
+function openConnectPage() {
+  document.getElementById('connect-page').classList.add('open');
+  maybeAutoConnectKnown();
+}
+function closeConnectPage() {
+  document.getElementById('connect-page').classList.remove('open');
+}
+
+/* Show the remembered scooter as a pinned "Last device" row and auto-reconnect to it once. */
+function maybeAutoConnectKnown() {
+  const wrap = document.getElementById('known-wrap');
+  const box  = document.getElementById('known-device');
+  if (!wrap || !box) return;
+  if (typeof LB === 'undefined' || !LB.lastDevice) { wrap.style.display='none'; return; }
+  let dev = null;
+  try { const j = LB.lastDevice(); if (j) dev = JSON.parse(j); } catch (e) {}
+  if (!dev || !dev.address) { wrap.style.display='none'; return; }
+  // render a tap-to-reconnect row
+  box.innerHTML = '';
+  const el = document.createElement('div'); el.className = 'scan-item';
+  const info = document.createElement('div'); info.className = 'route-info';
+  const nm = document.createElement('div'); nm.className = 'scan-name'; nm.textContent = dev.name || t('msg.connect.known.device.fallback');
+  const ad = document.createElement('div'); ad.className = 'scan-addr'; ad.textContent = dev.address;
+  info.appendChild(nm); info.appendChild(ad);
+  const rc = document.createElement('div'); rc.className = 'scan-rssi'; rc.textContent = t('msg.connect.reconnect.label');
+  el.appendChild(info); el.appendChild(rc);
+  el.addEventListener('click', () => { try { LB.connect(dev.address, dev.name || ''); showToast(tf('msg.connect.reconnecting', { device: dev.name || dev.address })); } catch (e) {} });
+  box.appendChild(el);
+  wrap.style.display = 'block';
+  // auto-attempt once if not already connected
+  if (!state.bleConnected && LB.connect) {
+    try { LB.connect(dev.address, dev.name || ''); showToast(tf('msg.connect.reconnecting', { device: dev.name || dev.address })); } catch (e) {}
+  }
+}
+
+function startScan() {
+  if (typeof LB === 'undefined' || !LB.scan) { showToast(t('msg.app.only.in.app')); return; }
+  const list = document.getElementById('scan-list');
+  if (list) list.innerHTML = '<div class="no-routes" data-i18n="msg.scan.scanning">Scanning…</div>';
+  try { LB.scan(); } catch (e) { showToast(tf('msg.error.generic', { e: e })); }
+}
+
+function doDisconnect() {
+  if (typeof LB === 'undefined' || !LB.disconnect) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.disconnect(); showToast(t('msg.connect.disconnecting')); } catch (e) { showToast(tf('msg.error.generic', { e: e })); }
+}
+
+/* Native pushes discovered devices here: [{name, address, rssi}]. */
+window.__onBleScan = function(listArg) {
+  let arr = [];
+  try { arr = (typeof listArg === 'string') ? JSON.parse(listArg) : (listArg || []); }
+  catch (e) { arr = []; }
+  const box = document.getElementById('scan-list');
+  if (!box) return;
+  if (!Array.isArray(arr) || arr.length === 0) {
+    box.innerHTML = '<div class="no-routes" data-i18n="msg.scan.none">No devices found: tap Scan again</div>';
+    return;
+  }
+  box.innerHTML = '';
+  arr.forEach(dev => {
+    if (!dev) return;
+    const el = document.createElement('div');
+    el.className = 'scan-item';
+    const info = document.createElement('div');
+    info.className = 'route-info';
+    const nm = document.createElement('div'); nm.className = 'scan-name';
+    nm.textContent = dev.name || t('msg.scan.device.unknown');
+    const ad = document.createElement('div'); ad.className = 'scan-addr';
+    ad.textContent = dev.address || '';
+    info.appendChild(nm); info.appendChild(ad);
+    const rs = document.createElement('div'); rs.className = 'scan-rssi';
+    rs.textContent = (dev.rssi != null && dev.rssi !== '') ? (dev.rssi + ' dBm') : '';
+    el.appendChild(info); el.appendChild(rs);
+    el.addEventListener('click', () => {
+      if (typeof LB === 'undefined' || !LB.connect) { showToast(t('msg.app.only.in.app')); return; }
+      try { LB.connect(dev.address, dev.name || ''); showToast(tf('msg.connect.connecting', { device: dev.name || dev.address })); }
+      catch (e) { showToast(tf('msg.error.generic', { e: e })); }
+    });
+    box.appendChild(el);
+  });
+};
+
+/* Native pushes connection state here: {connected, name, address, status}. */
+window.__onBleState = function(stArg) {
+  let s = stArg;
+  try { if (typeof stArg === 'string') s = JSON.parse(stArg); } catch (e) { s = {}; }
+  s = s || {};
+  const connected = !!s.connected;
+  const cs = document.getElementById('conn-state');
+  if (cs) {
+    if (connected) {
+      cs.innerHTML = tf('msg.connect.state.connected', { name: escXML(s.name || s.address || t('msg.connect.state.name.fallback')) }) +
+        (s.status ? ' · ' + escXML(s.status) : '');
+    } else {
+      cs.textContent = t('msg.connect.state.disconnected') + (s.status ? ' · ' + s.status : '');
+    }
+  }
+  const dot = document.getElementById('ble-dot');
+  if (dot) dot.classList.toggle('connected', connected);
+  const connBtn = document.getElementById('btn-connect');
+  if (connBtn) connBtn.classList.toggle('connected', connected);
+};
+
+/* ── Scooter settings (writable settings via LB.sendSetting) ── */
+
+function liveRaw() {
+  try { const o = JSON.parse(storage.get('lb_live_data')); return (o && typeof o === 'object') ? o : {}; }
+  catch (e) { return {}; }
+}
+
+/* -- Model line --
+   NAVEE has no per-model feature gating in this app: the settings this app writes are the same
+   single-opcode writes on every model, so the banner only shows the advertised BLE name. */
+let _lastModelKey = null;   // kept so applyLang() can force one refresh of the model line
+
+function populateModelSelect() {}   // no model picker on NAVEE - kept as a no-op for applyLang()
+
+function applyModelUi(btName) {
+  // NAVEE: no per-model feature gating in this app - just show the advertised name as the model line.
+  const nameEl = document.getElementById('model-name');
+  if (!nameEl) return;
+  const nm = (btName || '').trim();
+  nameEl.textContent = nm || '-';
+}
+
+
+function pick(d, keys) {
+  for (const k of keys) { if (d[k] !== undefined && d[k] !== null && d[k] !== '') return d[k]; }
+  return undefined;
+}
+function setSegActive(sel, val) {
+  document.querySelectorAll(sel + ' button').forEach(b => {
+    const raw = (b.dataset.val != null) ? b.dataset.val : b.dataset.mode;
+    b.classList.toggle('active', parseInt(raw, 10) === val);
+  });
+}
+
+/* Send one partial settings object; native merges it onto the maintained state and
+   emits a full 0x18 frame (BRIDGE field names). Returns true when dispatched. */
+/* Send one NAVEE command with a single-byte value (write frame 55 AA 00 cmd 01 val ck FE FD). */
+function pushSetting(cmd, val) {
+  if (typeof LB === 'undefined' || !LB.sendToggle) { showToast(t('msg.app.only.in.app')); return false; }
+  if (!state.bleConnected) { showToast(t('msg2.toast.connect_scooter_first')); return false; }
+  try { LB.sendToggle(cmd, val); return true; }
+  catch (e) { showToast(tf('msg2.toast.error', { e: e })); return false; }
+}
+
+function openScooterPage() {
+  prefillScooterSettings();
+  document.getElementById('scooter-page').classList.add('open');
+}
+
+function closeScooterPage() {
+  document.getElementById('scooter-page').classList.remove('open');
+}
+
+/* ── Error reports (active faults / warnings from live BLE data) ── */
+
+// Build the list of currently active faults. NAVEE reports ONE numeric fault code in its realtime
+// frame (0x90 byte 0); 0 means no fault. The per-code meaning is not documented, so the raw code is
+// shown instead of a guessed label - never claim a diagnosis the scooter did not give.
+function collectErrors() {
+  const d = liveRaw();
+  const items = [];
+  const f = (typeof d.fault === 'number') ? d.fault : parseInt(d.fault, 10);
+  if (f && !isNaN(f)) {
+    items.push({ kind: 'fault', title: tf('msg2.error.navee.fault', { code: f }), sub: t('msg2.error.navee.fault.sub') });
+  }
+  return items;
+}
+
+function renderErrorReports() {
+  const list = document.getElementById('err-list');
+  const empty = document.getElementById('err-empty');
+  if (!list || !empty) return;
+  const items = collectErrors();
+  list.innerHTML = '';
+  if (!items.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  items.forEach(it => {
+    const row = document.createElement('div');
+    row.className = 'err-item sev-' + it.kind;
+    const dot = document.createElement('div');
+    dot.className = 'err-dot';
+    const body = document.createElement('div');
+    body.className = 'err-body';
+    const title = document.createElement('div');
+    title.className = 'err-title';
+    title.textContent = it.title;
+    const sub = document.createElement('div');
+    sub.className = 'err-sub';
+    sub.textContent = it.sub;
+    body.appendChild(title);
+    body.appendChild(sub);
+    row.appendChild(dot);
+    row.appendChild(body);
+    list.appendChild(row);
+  });
+}
+
+let _errTimer = null;
+function openErrorReports() {
+  renderErrorReports();
+  document.getElementById('error-reports-page').classList.add('open');
+  clearInterval(_errTimer);
+  _errTimer = setInterval(renderErrorReports, 1000);
+}
+function closeErrorReports() {
+  document.getElementById('error-reports-page').classList.remove('open');
+  clearInterval(_errTimer);
+  _errTimer = null;
+}
+
+/* ── Scooter info page (identity + firmware from live BLE data) ── */
+
+// Render the info fields from lb_live_data; show "-" for anything not yet received.
+let _btNamePrefilled = false;   // kept as a harmless flag; the info page no longer edits identity
+
+function renderInfoPage() {
+  const d = liveRaw();
+  const dash = v => (v === undefined || v === null || v === '') ? '-' : ('' + v);
+  setTxt('info-btname',   dash(d.btName));
+  setTxt('info-serial',   dash(d.serial));
+  setTxt('info-fw-meter', dash(d.fwMeter));
+  setTxt('info-fw-bldc',  dash(d.fwBldc));
+  setTxt('info-fw-bms',   dash(d.fwBms));
+  setTxt('info-fw-screen',dash(d.fwScreen));
+  setTxt('info-fw-uwb',   dash(d.fwUwb));
+}
+
+function copyBtName() {
+  const bt = liveRaw().btName;
+  if (bt === undefined || bt === null || bt === '') { showToast(t('msg2.info.toast.no_btname')); return; }
+  if (typeof LB === 'undefined' || !LB.copyClipboard) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.copyClipboard('' + bt); showToast(t('msg2.info.toast.btname_copied')); }
+  catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
+}
+
+// Copy the serial number (frameNum) to the Android clipboard via the native bridge.
+function copySerial() {
+  const d = liveRaw();
+  const serial = d.serial;
+  if (serial === undefined || serial === null || serial === '') { showToast(t('msg2.info.toast.no_serial')); return; }
+  if (typeof LB === 'undefined' || !LB.copyClipboard) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.copyClipboard('' + serial); showToast(t('msg2.info.toast.serial_copied')); }
+  catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
+}
+
+/* ── Ride log (Scooter info page): opt-in local recording owned by the native side.
+   Every LB.* call is guarded so the page still works when opened outside the app. ── */
+
+// Reflect the native recording state onto the toggle.
+function renderRideLogToggle() {
+  const t = document.getElementById('toggle-ridelog');
+  if (!t) return;
+  let on = false;
+  try {
+    if (typeof LB !== 'undefined' && LB.isRideLogging) on = !!LB.isRideLogging();
+  } catch (e) {}
+  t.checked = on;
+}
+
+// Human-friendly ride duration, e.g. "23 min" or "1 h 04 min".
+function fmtRideDuration(sec) {
+  const total = Math.max(0, Math.round(sec || 0));
+  const mins = Math.round(total / 60);
+  if (mins < 60) return mins + ' min';
+  const h = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return h + ' h ' + (rem < 10 ? '0' : '') + rem + ' min';
+}
+
+// Build the recorded-rides list from LB.listRides() (JSON array string, newest first, all rides).
+function renderRideList() {
+  const list = document.getElementById('ridelog-list');
+  if (!list) return;
+  list.textContent = '';
+  let rides = [];
+  try {
+    if (typeof LB !== 'undefined' && LB.listRides) {
+      const raw = LB.listRides();
+      if (raw) rides = JSON.parse(raw) || [];
+    }
+  } catch (e) { rides = []; }
+  if (!Array.isArray(rides) || rides.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'settings-row-sublabel';
+    empty.textContent = t('msg2.ridelog.list.empty');
+    list.appendChild(empty);
+    return;
+  }
+  rides.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'route-item';
+    const info = document.createElement('div');
+    info.className = 'route-info';
+    const date = document.createElement('div');
+    date.className = 'route-date';
+    date.textContent = new Date(r.start).toLocaleString();
+    const stats = document.createElement('div');
+    stats.className = 'route-stats';
+    const dist = convDist(typeof r.distanceKm === 'number' ? r.distanceKm : 0).toFixed(1) + ' ' + distUnit();
+    stats.textContent = fmtRideDuration(r.durationSec) + ' · ' + dist;
+    info.appendChild(date);
+    info.appendChild(stats);
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:6px;flex:0 0 auto';
+    const csv = document.createElement('button');
+    csv.className = 'route-gpx-btn';
+    csv.textContent = t('msg2.ridelog.export.csv');
+    csv.addEventListener('click', () => exportRide(r.id, 'csv'));
+    const json = document.createElement('button');
+    json.className = 'route-gpx-btn';
+    json.textContent = t('msg2.ridelog.export.json');
+    json.addEventListener('click', () => exportRide(r.id, 'json'));
+    const del = document.createElement('button');
+    del.className = 'route-gpx-btn';
+    del.textContent = '🗑';
+    del.setAttribute('aria-label', t('msg2.ridelog.delete.aria'));
+    del.style.color = 'var(--danger)';
+    del.addEventListener('click', () => confirmDeleteRide(r.id));
+    btns.appendChild(csv);
+    btns.appendChild(json);
+    btns.appendChild(del);
+    row.appendChild(info);
+    row.appendChild(btns);
+    list.appendChild(row);
+  });
+}
+
+// Confirm (via the shared confirm dialog) then delete one recorded ride through the native bridge,
+// and refresh the list.
+function confirmDeleteRide(id) {
+  document.getElementById('confirm-title').textContent = t('msg2.ridelog.delete.one.title');
+  document.getElementById('confirm-msg').textContent = t('msg2.ridelog.delete.one.body');
+  state.confirmCb = () => {
+    if (typeof LB !== 'undefined' && LB.deleteRide) {
+      try { LB.deleteRide('' + id); } catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
+    } else {
+      showToast(t('msg.app.only.in.app'));
+    }
+    renderRideList();
+  };
+  document.getElementById('confirm-ok').textContent = t('msg2.confirm.ok.delete');
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+// Bulk-delete recorded rides by period (mirrors the routes Delete section). "<24h/7d/30d" delete rides
+// OLDER than that window (recent ones are kept); "all" deletes every ride.
+function deleteRidesByPeriod(period) {
+  if (typeof LB === 'undefined' || !LB.listRides) { showToast(t('msg.app.only.in.app')); return; }
+  try {
+    if (period === 'all') {
+      if (LB.deleteAllRides) LB.deleteAllRides();
+    } else {
+      const cutoff = Date.now() - (period === '24h' ? 24 * 3600e3 : period === '7d' ? 7 * 86400e3 : 30 * 86400e3);
+      let rides = [];
+      try { rides = JSON.parse(LB.listRides() || '[]') || []; } catch (e) { rides = []; }
+      rides.forEach(r => { if (r && r.start < cutoff && LB.deleteRide) { try { LB.deleteRide('' + r.id); } catch (e) {} } });
+    }
+  } catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
+  renderRideList();
+}
+
+// Confirm (shared dialog) then bulk-delete rides.
+function confirmDeleteRides(period) {
+  const labels = { '24h': t('msg2.ridelog.period.24h'), '7d': t('msg2.ridelog.period.7d'), '30d': t('msg2.ridelog.period.30d') };
+  document.getElementById('confirm-title').textContent = t('msg2.ridelog.delete.bulk.title');
+  document.getElementById('confirm-msg').textContent = (period === 'all')
+    ? t('msg2.ridelog.delete.bulk.all')
+    : tf('msg2.ridelog.delete.bulk.period', { period: labels[period] });
+  state.confirmCb = () => deleteRidesByPeriod(period);
+  document.getElementById('confirm-ok').textContent = t('msg2.confirm.ok.delete');
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+// Open an external URL in the system browser via the native bridge (no-op-safe outside the app).
+function openExt(url) {
+  if (typeof LB !== 'undefined' && LB.openUrl) { try { LB.openUrl(url); return; } catch (e) {} }
+  showToast(url);
+}
+
+// Ask the native side to export one ride as "csv" or "json".
+function exportRide(id, format) {
+  if (typeof LB === 'undefined' || !LB.exportRide) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.exportRide('' + id, format); }
+  catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
+}
+
+// Refresh both the toggle state and the last-3-rides list (called whenever the page opens).
+function renderRideLog() {
+  renderRideLogToggle();
+  renderRideList();
+}
+
+let _infoTimer = null;
+function openInfoPage() {
+  _btNamePrefilled = false;   // re-prefill the identity editor with the current FIN on open
+  renderInfoPage();
+  renderRideLog();                                  // toggle state + last-3-rides list, refreshed on open
+  document.getElementById('info-page').classList.add('open');
+  clearInterval(_infoTimer);
+  _infoTimer = setInterval(renderInfoPage, 1000);   // keep values live while the page is open
+}
+function closeInfoPage() {
+  document.getElementById('info-page').classList.remove('open');
+  clearInterval(_infoTimer);
+  _infoTimer = null;
+}
+
+/* -- Battery info page (pack values from live BLE data) -- */
+
+// Render the battery health summary, pack summary and per-cell grid from lb_live_data. No command
+// is sent - the BMS streams the 55 51/54/55/56/52/53 frames automatically once connected.
+function renderBatteryPage() {
+  const d = liveRaw();
+  const dash = v => (v === undefined || v === null || v === '') ? '-' : ('' + v);
+
+  // Not connected: prompt to connect instead of showing stale or empty values.
+  if (!state.bleConnected) {
+    const h = document.getElementById('bat-health');
+    if (h) { h.className = 'bat-health'; h.innerHTML = '<div class="bat-health-title" data-i18n="msg2.battery.health.connect_first">Connect scooter first</div>'; }
+    const p = document.getElementById('bat-pack'); if (p) p.innerHTML = '';
+    const g = document.getElementById('bat-cells');
+    if (g) g.innerHTML = '<div class="settings-row-sublabel span-all">' + t('msg2.battery.cells.connect_first') + '</div>';
+    return;
+  }
+
+  // Health summary: NAVEE streams no per-fault BMS array, only the single scooter fault code, so the
+  // same collectErrors() list drives this section (it matches "Read error reports" exactly).
+  const warnings = (typeof collectErrors === 'function' ? collectErrors() : []).map(it => it.title);
+  const health = document.getElementById('bat-health');
+  if (health) {
+    if (!warnings.length) {
+      health.className = 'bat-health ok';
+      health.innerHTML = '<div class="bat-health-title" data-i18n="msg2.battery.health.ok">Healthy: no active battery faults</div>';
+    } else {
+      health.className = 'bat-health bad';
+      const items = warnings.map(w => '<li>' + w + '</li>').join('');
+      health.innerHTML = '<div class="bat-health-title">' +
+        tf('msg2.battery.health.active_warnings', { n: warnings.length, s: warnings.length > 1 ? 's' : '' }) +
+        '</div><ul>' + items + '</ul>';
+    }
+  }
+
+  // Pack summary rows.
+  const rows = [];
+  const push = (label, val) => rows.push({ label: label, val: val });
+  // NAVEE BMS summary from the 0x72 battery frame (packMv/packMa are milli-units).
+  push(t('msg2.battery.pack.system_voltage'), (typeof d.packMv === 'number') ? (d.packMv / 1000).toFixed(1) + ' V' : '-');
+  push(t('msg2.battery.pack.current'),        (typeof d.packMa === 'number') ? (d.packMa / 1000).toFixed(2) + ' A' : '-');
+  push(t('msg2.battery.pack.soc'),            (typeof d.soc === 'number') ? dash(d.soc) + ' %' : '-');
+  push(t('msg2.battery.pack.soh'),            (typeof d.soh === 'number') ? dash(d.soh) + ' %' : '-');
+  push(t('msg2.battery.pack.temp'),           (typeof d.temp === 'number') ? dash(d.temp) + ' °C' : '-');
+  push(t('msg2.battery.pack.charge_cycles'),  dash(d.cycles));
+  const pack = document.getElementById('bat-pack');
+  if (pack) {
+    pack.innerHTML = rows.map(r =>
+      '<div class="settings-row"><div class="settings-row-left"><div class="settings-row-label">' + r.label +
+      '</div></div><span class="note-md">' + r.val + '</span></div>'
+    ).join('');
+  }
+
+  // NAVEE streams no per-cell voltages over BLE, so state that plainly instead of leaving a
+  // placeholder that would wait forever.
+  const grid = document.getElementById('bat-cells');
+  if (grid) {
+    grid.innerHTML = '<div class="settings-row-sublabel span-all" data-i18n="msg2.battery.cells.unavailable">'
+      + t('msg2.battery.cells.unavailable') + '</div>';
+  }
+}
+
+let _batteryTimer = null;
+function openBatteryPage() {
+  renderBatteryPage();
+  document.getElementById('battery-page').classList.add('open');
+  clearInterval(_batteryTimer);
+  _batteryTimer = setInterval(renderBatteryPage, 1000);   // keep values live while the page is open
+}
+function closeBatteryPage() {
+  document.getElementById('battery-page').classList.remove('open');
+  clearInterval(_batteryTimer);
+  _batteryTimer = null;
+}
+
+
+
+// ── Dashboard navigation banner (fed by MainActivity via NavSession) ──
+window.__onNav = function(o) {
+  try {
+    const b = document.getElementById('nav-banner');
+    if (!b) return;
+    if (!o || !o.active) { b.style.display = 'none'; return; }
+    b.style.display = 'flex';
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('nav-arrow', o.turnArrow || '↑');
+    set('nav-turn', o.offRoute ? t('msg2.nav.recalculating') : (o.turnText || '-'));
+    set('nav-dist', o.offRoute ? '' : navFmtM(o.distToTurnM));
+    set('nav-sub', o.offRoute ? t('msg2.nav.off_route') : tf('msg2.nav.remaining', { dist: navFmtM(o.remainingM) }));
+  } catch (e) {}
+};
+
+function navFmtM(m) {
+  m = +m || 0;
+  return m < 1000 ? Math.round(m) + ' m' : (m / 1000).toFixed(1) + ' km';
+}
+
+// Make the nav banner draggable (position persisted); the End button stops navigation via the bridge.
+function initNavBanner() {
+  const b = document.getElementById('nav-banner');
+  if (!b) return;
+  const end = document.getElementById('nav-end');
+  if (end) end.addEventListener('click', (e) => {
+    e.stopPropagation();
+    try { if (typeof LB !== 'undefined' && LB.endNav) LB.endNav(); } catch (err) {}
+  });
+  const KEY = 'lb_nav_banner_pos';
+  try {
+    const p = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (p && typeof p.left === 'number' && typeof p.top === 'number') {
+      b.style.left = p.left + 'px'; b.style.top = p.top + 'px';
+      b.style.right = 'auto'; b.style.bottom = 'auto';
+    }
+  } catch (e) {}
+  let drag = null;
+  b.addEventListener('pointerdown', (e) => {
+    if (e.target && e.target.id === 'nav-end') return;
+    const r = b.getBoundingClientRect();
+    b.style.width = r.width + 'px';
+    b.style.left = r.left + 'px'; b.style.top = r.top + 'px';
+    b.style.right = 'auto'; b.style.bottom = 'auto';
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    try { b.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  b.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const w = b.offsetWidth, h = b.offsetHeight;
+    const left = Math.max(4, Math.min(e.clientX - drag.dx, window.innerWidth - w - 4));
+    const top = Math.max(4, Math.min(e.clientY - drag.dy, window.innerHeight - h - 4));
+    b.style.left = left + 'px'; b.style.top = top + 'px';
+  });
+  const drop = () => {
+    if (!drag) return; drag = null;
+    try { localStorage.setItem(KEY, JSON.stringify({ left: parseFloat(b.style.left), top: parseFloat(b.style.top) })); } catch (e) {}
+  };
+  b.addEventListener('pointerup', drop);
+  b.addEventListener('pointercancel', drop);
+}
+
+/* ── Ride banner ──────────────────────────────────────────────
+   The one indicator on the main screen while a ride records. Floats over the fold, starts just
+   above the "Motors" heading and can be dragged anywhere; the dragged spot is remembered. */
+
+const RIDE_BANNER_KEY = 'lb_ride_banner_pos';
+
+/* Park it above the "Motors" heading. Only used until the rider drags it somewhere else. */
+function placeRideBannerDefault(b) {
+  const hdr = document.querySelector('#fold-inner .section-hdr');
+  const h = b.offsetHeight || 44;
+  let top = 8;
+  if (hdr) {
+    const r = hdr.getBoundingClientRect();
+    top = Math.max(8, r.top - h - 6);
+  }
+  b.style.left = '8px'; b.style.right = '8px';
+  b.style.top = top + 'px'; b.style.bottom = 'auto'; b.style.width = '';
+}
+
+function showRideBanner(on) {
+  const b = document.getElementById('ride-banner');
+  if (!b) return;
+  const was = b.classList.contains('open');
+  b.classList.toggle('open', !!on);
+  if (on && !was) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(RIDE_BANNER_KEY) || 'null'); } catch (e) {}
+    if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+      b.style.left = saved.left + 'px'; b.style.top = saved.top + 'px';
+      b.style.right = 'auto'; b.style.bottom = 'auto';
+      if (typeof saved.width === 'number') b.style.width = saved.width + 'px';
+    } else {
+      // offsetHeight is only real once the element is displayed, so measure after the class flip.
+      placeRideBannerDefault(b);
+    }
+  }
+}
+
+function initRideBanner() {
+  const b = document.getElementById('ride-banner');
+  if (!b) return;
+  const stop = document.getElementById('rb-stop');
+  if (stop) stop.addEventListener('click', (e) => { e.stopPropagation(); stopLiveRide(); });
+
+  let drag = null;
+  b.addEventListener('pointerdown', (e) => {
+    if (e.target && e.target.id === 'rb-stop') return;
+    const r = b.getBoundingClientRect();
+    b.style.width = r.width + 'px';
+    b.style.left = r.left + 'px'; b.style.top = r.top + 'px';
+    b.style.right = 'auto'; b.style.bottom = 'auto';
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    try { b.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  b.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const w = b.offsetWidth, h = b.offsetHeight;
+    const left = Math.max(4, Math.min(e.clientX - drag.dx, window.innerWidth - w - 4));
+    const top = Math.max(4, Math.min(e.clientY - drag.dy, window.innerHeight - h - 4));
+    b.style.left = left + 'px'; b.style.top = top + 'px';
+  });
+  const drop = () => {
+    if (!drag) return; drag = null;
+    try {
+      localStorage.setItem(RIDE_BANNER_KEY, JSON.stringify({
+        left: parseFloat(b.style.left), top: parseFloat(b.style.top), width: b.offsetWidth
+      }));
+    } catch (e) {}
+  };
+  b.addEventListener('pointerup', drop);
+  b.addEventListener('pointercancel', drop);
+}
+
+/* -- NAVEE scooter settings (single-opcode writes) --
+   Each control writes immediately over BLE; the live 0x70 parameter report drives the shown state.
+   Opcodes: immobilizer 0x51 (via LB.setLock), cruise 0x52, zero-start 0x6A, drive mode 0x58. */
+const NAVEE_CMD = { cruise: 0x52, zerostart: 0x6A, drivemode: 0x58, tcs: 0x5F, unit: 0x55 };
+const NAVEE_ECO = { cmd: 0x6F, sub: 5 };   // eco / low-power is a 0x6F sub-command, not a plain toggle
+
+/* Shared connected-guard for a settings write; toasts when not usable. */
+function naveeGuard() {
+  if (typeof LB === 'undefined' || !LB.sendToggle) { showToast(t('msg.app.only.in.app')); return false; }
+  if (!state.bleConnected) { showToast(t('msg2.toast.connect_scooter_first')); return false; }
+  return true;
+}
+
+/* Reflect the live NAVEE state onto the settings controls (never clobber a focused control). */
+function prefillScooterSettings(live) {
+  const d = liveRaw();
+  const focused = id => { const ae = document.activeElement; return !!ae && ae.id === id; };
+  const setC = (id, on) => { if (live && focused(id)) return; const el = document.getElementById(id); if (el && on != null) el.checked = !!on; };
+  const setV = (id, v) => { if (live && focused(id)) return; const el = document.getElementById(id); if (el && v != null && v !== '') el.value = v; };
+  if (d.lock === 0 || d.lock === 1) setC('ss-lock', d.lock === 1);          // 1 = locked
+  if (d.cruise === 0 || d.cruise === 1) setC('ss-cruise', d.cruise === 1);
+  if (d.tcs === 0 || d.tcs === 1) setC('ss-tcs', d.tcs === 1);
+  if (d.eco === 0 || d.eco === 1) setC('ss-eco', d.eco === 1);
+  if (d.unit === 0 || d.unit === 1) setC('ss-unit', d.unit === 1);   // 1 = mph on the scooter display
+  // Zero-start / startup-speed level (0 = zero start, 1..5 = kick-off threshold).
+  if (typeof d.startSpeed === 'number' && d.startSpeed >= 0 && d.startSpeed <= 5) setV('ss-zerostart', d.startSpeed);
+  // The select only carries the two modes the scooter accepts here (3 normal, 5 turbo). Anything
+  // else the scooter reports (for example 4 after a speed release) has no option, so leave the
+  // control alone rather than blanking it.
+  if (typeof d.driveMode === 'number') {
+    const dm = document.getElementById('ss-drivemode');
+    if (dm && dm.options && Array.prototype.some.call(dm.options, o => String(o.value) === String(d.driveMode))) {
+      setV('ss-drivemode', d.driveMode);
+    }
+  }
+}
+
+/* While the scooter-settings page is open, refresh the controls from live data every tick. */
+function maybeLiveRefreshScooterSettings() {
+  const page = document.getElementById('scooter-page');
+  if (!page || !page.classList.contains('open')) return;
+  prefillScooterSettings(true);
+}
+
+function wireScooterSettings() {
+  const lock = document.getElementById('ss-lock');
+  if (lock) lock.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    // LB.setLock(unlocked): checked = locked -> setLock(false); unchecked -> setLock(true).
+    try { LB.setLock(!e.target.checked); showToast(e.target.checked ? t('msg2.navee.lock.on') : t('msg2.navee.lock.off')); }
+    catch (err) { showToast(tf('msg2.toast.error', { e: err })); }
+  });
+  const cruise = document.getElementById('ss-cruise');
+  if (cruise) cruise.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    pushSetting(NAVEE_CMD.cruise, e.target.checked ? 1 : 0);
+  });
+  const zero = document.getElementById('ss-zerostart');
+  if (zero) zero.addEventListener('change', e => {
+    if (!naveeGuard()) return;
+    pushSetting(NAVEE_CMD.zerostart, parseInt(e.target.value, 10) || 0);
+  });
+  const tcs = document.getElementById('ss-tcs');
+  if (tcs) tcs.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    pushSetting(NAVEE_CMD.tcs, e.target.checked ? 1 : 0);
+  });
+  const eco = document.getElementById('ss-eco');
+  if (eco) eco.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    // Eco is a 0x6F sub-command (sub 5), not a plain single-byte opcode.
+    if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(NAVEE_ECO.cmd, NAVEE_ECO.sub, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
+  });
+  const unit = document.getElementById('ss-unit');
+  if (unit) unit.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    pushSetting(NAVEE_CMD.unit, e.target.checked ? 1 : 0);
+  });
+  const dm = document.getElementById('ss-drivemode');
+  if (dm) dm.addEventListener('change', e => {
+    if (!naveeGuard()) return;
+    pushSetting(NAVEE_CMD.drivemode, parseInt(e.target.value, 10) || 0);
+  });
+  wireSpeedRelease();
+}
+
+/* -- Speed release: drive mode 4 (opcode 0x58) --
+   0x58 writes the gear byte straight into controller RAM with no auth and no lock gate. Mode 4 makes
+   the meter emit its SKU speed instead of the country-filtered one, which the controller then honours.
+   The value itself is fixed by the scooter's SKU byte, so there is nothing to enter. The byte does not
+   survive a mode-button press or a restart, and it cannot be read back - hence a button plus a status
+   line rather than a toggle, and a confirmation before anything is sent. */
+function wireSpeedRelease() {
+  const send = document.getElementById('tune-send');
+  if (send) send.addEventListener('click', () => {
+    if (!naveeGuard()) return;
+    document.getElementById('confirm-title').textContent = t('msg2.navee.tune.confirm.title');
+    const warn = document.getElementById('confirm-warn');
+    if (warn) { warn.textContent = t('msg2.navee.tune.confirm.warn'); warn.style.display = 'block'; }
+    document.getElementById('confirm-msg').textContent = t('msg2.navee.tune.confirm.body');
+    document.getElementById('confirm-ok').textContent = t('msg2.navee.tune.confirm.ok');
+    state.confirmCb = () => {
+      if (sendSpeedRelease(true)) showToast(t('msg2.navee.tune.sent'), 4000);
+    };
+    document.getElementById('confirm-overlay').classList.add('open');
+  });
+  const restore = document.getElementById('tune-restore');
+  if (restore) restore.addEventListener('click', () => {
+    if (!naveeGuard()) return;
+    if (sendSpeedRelease(false)) showToast(t('msg2.navee.tune.restored'), 3000);
+  });
+}
+
+/* Send the release (drive mode 4) or the normal mode (3) and remember which one went out.
+   The scooter cannot report the gear byte back, so this session flag is the only state there is:
+   it drives the tile colour and is deliberately cleared on every disconnect, because a restart or
+   a press of the mode button silently drops the release on the scooter side. */
+let _speedReleased = false;
+
+function sendSpeedRelease(on) {
+  if (!pushSetting(NAVEE_CMD.drivemode, on ? 4 : 3)) return false;
+  _speedReleased = !!on;
+  setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
+  return true;
+}
+
+/* Hidden gesture on the VCU speed tile: triple-tap toggles the speed release. Same gesture and the
+   same 700 ms window as before; on a NAVEE it drives drive mode 4 instead of the other platform's
+   lock command. The tile turns red while the release is active. */
+let _vcuTapCount = 0, _vcuTapTimer = null;
+
+function onVcuTileTap() {
+  _vcuTapCount++;
+  clearTimeout(_vcuTapTimer);
+  if (_vcuTapCount >= 3) { _vcuTapCount = 0; toggleSpeedRelease(); return; }
+  _vcuTapTimer = setTimeout(() => { _vcuTapCount = 0; }, 700);
+}
+
+function toggleSpeedRelease() {
+  if (!naveeGuard()) return;
+  const next = !_speedReleased;
+  if (!sendSpeedRelease(next)) return;
+  showToast(next ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'), 4000);
+}
+
+/* -- Main-screen drive-mode quick toggles (Zero-Start / Tempomat / Sperre) -- */
+function toggleDriveQuick(key) {
+  if (!naveeGuard()) return;
+  const d = liveRaw();
+  if (key === 'lock') {
+    const locked = (d.lock === 1);
+    try { LB.setLock(locked); showToast(locked ? t('msg2.navee.lock.off') : t('msg2.navee.lock.on')); }
+    catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
+  } else if (key === 'cruise') {
+    pushSetting(NAVEE_CMD.cruise, (d.cruise === 1) ? 0 : 1);
+  } else if (key === 'tcs') {
+    pushSetting(NAVEE_CMD.tcs, (d.tcs === 1) ? 0 : 1);
+  } else if (key === 'zerostart') {
+    // Quick toggle: zero start (level 0) vs the default kick-off level 3. The fine 0-5 choice is
+    // on the scooter-settings page.
+    const on = (typeof d.startSpeed === 'number' && d.startSpeed === 0);
+    pushSetting(NAVEE_CMD.zerostart, on ? 3 : 0);
+  }
+}
+
+/* Mirror the scooter state onto the three quick buttons (called every tickBLE). */
+function reflectDriveQuick() {
+  const wrap = document.getElementById('drive-quick');
+  if (!wrap) return;
+  const connected = !!state.bleConnected;
+  wrap.classList.toggle('dq-disabled', !connected);
+  const d = liveRaw();
+  const on = {
+    zerostart: (typeof d.startSpeed === 'number' && d.startSpeed === 0),
+    cruise: (d.cruise === 1),
+    tcs: (d.tcs === 1),
+    lock: (d.lock === 1)
+  };
+  wrap.querySelectorAll('.dq-btn[data-dq]').forEach(btn => {
+    btn.classList.toggle('active', connected && !!on[btn.dataset.dq]);
+  });
+}
+
+
+/* ── First-screen fold ────────────────────────────────────────
+   Scale the fold so it fills exactly the visible height of the scroller: the rider sees speed,
+   battery, gear, current, motors and the quick toggles without scrolling, and everything after
+   it begins below the bottom edge.
+
+   The inner block is laid out at 100/scale percent width and then scaled from its top-left, so
+   the scaled result is exactly the scroller width. Height feeds back into width through text
+   wrapping, so the factor is computed twice; the second pass is what makes narrow phones land
+   on the right value. */
+
+const FOLD_MIN_SCALE = 0.55;   // below this the labels stop being readable, so allow a scroll instead
+const FOLD_MAX_SCALE = 1.5;    // above this the tiles look inflated on a tall screen
+const FOLD_BOTTOM_GAP = 5;     // breathing room between the last button row and the screen edge
+
+let _foldScale = 0;            // last applied factor, 0 = never fitted
+
+function fitFold() {
+  const scroller = document.getElementById('scroller');
+  const fold = document.getElementById('fold');
+  const inner = document.getElementById('fold-inner');
+  if (!scroller || !fold || !inner) return;
+
+  const cs = getComputedStyle(scroller);
+  // clientHeight includes the padding box; the fold starts below the top padding and its bottom
+  // edge is meant to sit on the screen edge, so only the top padding comes off.
+  const avail = scroller.clientHeight - parseFloat(cs.paddingTop || '0') - FOLD_BOTTOM_GAP;
+  if (!(avail > 0)) return;
+
+  // offsetHeight is the LAYOUT height and ignores the transform, so the factor can be recomputed
+  // without first removing the one already applied.
+  let scale = _foldScale || 1;
+  for (let pass = 0; pass < 2; pass++) {
+    inner.style.width = (100 / scale) + '%';
+    const natural = inner.offsetHeight;
+    if (!(natural > 0)) return;
+    scale = Math.max(FOLD_MIN_SCALE, Math.min(FOLD_MAX_SCALE, avail / natural));
+  }
+
+  // Already there: rewriting the same values would resize the observed children again, and a
+  // factor that lands either side of a text-wrap boundary could then oscillate forever.
+  if (Math.abs(scale - _foldScale) < 0.005) {
+    inner.style.width = (100 / _foldScale) + '%';
+    return;
+  }
+  _foldScale = scale;
+  inner.style.width = (100 / scale) + '%';
+  inner.style.transform = 'scale(' + scale + ')';
+  // Never shorter than the screen: when the factor runs into the upper cap the scaled block
+  // stops short of the bottom edge, and the next section's heading would peek in. Claiming the
+  // full height keeps everything after the fold below the edge either way.
+  fold.style.height = Math.round(Math.max(avail, inner.offsetHeight * scale)) + 'px';
+}
+
+/* Re-fit whenever the viewport or the fold's own content changes (a gear tag appearing, a
+   longer translation, rotation, the keyboard opening). Coalesced into one animation frame so a
+   burst of mutations costs one measurement. */
+let _foldPending = false;
+function scheduleFitFold() {
+  if (_foldPending) return;
+  _foldPending = true;
+  requestAnimationFrame(() => { _foldPending = false; try { fitFold(); } catch (e) {} });
+}
+
+function initFold() {
+  scheduleFitFold();
+  window.addEventListener('resize', scheduleFitFold);
+  window.addEventListener('orientationchange', scheduleFitFold);
+  if (window.ResizeObserver) {
+    const inner = document.getElementById('fold-inner');
+    const scroller = document.getElementById('scroller');
+    // Observe the CHILDREN, not #fold-inner itself: observing an element whose own size the
+    // callback changes is a feedback loop.
+    const ro = new ResizeObserver(scheduleFitFold);
+    if (inner) Array.prototype.forEach.call(inner.children, el => ro.observe(el));
+    if (scroller) ro.observe(scroller);
+  }
+}
+
+/* ── Event Wiring ─────────────────────────────────────────── */
+
+function wireEvents() {
+  // Connect icon in the topbar: open the Connect page (scan / connect / disconnect).
+  document.getElementById('btn-connect').addEventListener('click', openConnectPage);
+  document.getElementById('btn-connect-back').addEventListener('click', closeConnectPage);
+  document.getElementById('btn-scan').addEventListener('click', startScan);
+  document.getElementById('btn-disconnect').addEventListener('click', doDisconnect);
+  const stopRideBtn = document.getElementById('btn-stop-ride');
+  if (stopRideBtn) stopRideBtn.addEventListener('click', stopLiveRide);
+
+  // Routes sub-page open/close
+  document.getElementById('btn-open-routes').addEventListener('click', () => {
+    closeSettings();
+    renderRoutes();
+    document.getElementById('routes-page').classList.add('open');
+  });
+  document.getElementById('btn-routes-back').addEventListener('click', () => {
+    document.getElementById('routes-page').classList.remove('open');
+  });
+
+  // Streaming page open/close
+  document.getElementById('btn-streaming').addEventListener('click', () => {
+    setStreamStatus(readStreamStatus() || 'idle');
+    document.getElementById('streaming-page').classList.add('open');
+  });
+  document.getElementById('btn-streaming-back').addEventListener('click', () => {
+    document.getElementById('streaming-page').classList.remove('open');
+  });
+
+  // Theme toggle button (sun/moon in topbar)
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    applyTheme(!isDark);
+    document.getElementById('toggle-dark').checked = !isDark;
+  });
+
+  // Settings open/close
+  document.getElementById('btn-settings').addEventListener('click', openSettings);
+  document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
+  document.getElementById('settings-overlay').addEventListener('click', closeSettings);
+
+  // Connect scooter (settings sheet): open the Connect page.
+  document.getElementById('btn-connect-scooter').addEventListener('click', () => {
+    closeSettings();
+    openConnectPage();
+  });
+
+  // Scooter settings: open the in-app scooter settings page (requires a connected scooter).
+  document.getElementById('btn-scooter-settings').addEventListener('click', () => {
+    if (!state.bleConnected) { showToast(t('msg2.toast.no_scooter_connected'), 3000, 'err'); return; }
+    closeSettings();
+    openScooterPage();
+  });
+  document.getElementById('btn-scooter-back').addEventListener('click', closeScooterPage);
+  wireScooterSettings();
+
+  // Read error reports: show current active faults/errors from live BLE data (requires connection).
+  document.getElementById('btn-error-reports').addEventListener('click', () => {
+    if (!state.bleConnected) { showToast(t('msg2.toast.no_scooter_connected'), 3000, 'err'); return; }
+    closeSettings();
+    openErrorReports();
+  });
+  document.getElementById('btn-error-reports-back').addEventListener('click', closeErrorReports);
+
+  // Scooter info: identity + firmware/app versions read from live BLE data.
+  document.getElementById('btn-info').addEventListener('click', () => {
+    closeSettings();
+    openInfoPage();
+  });
+  document.getElementById('btn-info-back').addEventListener('click', closeInfoPage);
+
+  // Battery info: pack values read from live BLE data.
+  document.getElementById('btn-battery').addEventListener('click', () => {
+    closeSettings();
+    openBatteryPage();
+  });
+  document.getElementById('btn-battery-back').addEventListener('click', closeBatteryPage);
+
+  document.getElementById('btn-open-display').addEventListener('click', () => {
+    closeSettings();
+    openDisplayPage();
+  });
+  document.getElementById('btn-display-back').addEventListener('click', closeDisplayPage);
+
+  document.getElementById('btn-copy-btname').addEventListener('click', copyBtName);
+  document.getElementById('btn-copy-serial').addEventListener('click', copySerial);
+
+  // Ride log opt-in toggle: mirror the change straight to the native recorder.
+  document.getElementById('toggle-ridelog').addEventListener('change', e => {
+    if (typeof LB !== 'undefined' && LB.setRideLogging) {
+      try { LB.setRideLogging(!!e.target.checked); } catch (err) {}
+    }
+  });
+
+  // Navigation: hand off to the native navigation screen (implemented by the app).
+  document.getElementById('btn-navigation').addEventListener('click', () => {
+    if (window.LB && LB.openNavigation) LB.openNavigation();
+    else showToast(t('msg.app.only.in.app'));
+  });
+
+  // Main-screen NAVEE quick toggles: Zero-Start (0x6A) / Tempomat (0x52) / Sperre (0x51).
+  // (When disconnected the control has pointer-events:none, so these never fire.)
+  document.querySelectorAll('#drive-quick .dq-btn[data-dq]').forEach(btn => {
+    btn.addEventListener('click', () => toggleDriveQuick(btn.dataset.dq));
+  });
+
+  // Hidden gesture: triple-tap the VCU speed tile to toggle the speed release (drive mode 4).
+  const vcuTile = document.querySelector('#speed-row .ble-drum');
+  if (vcuTile) vcuTile.addEventListener('click', onVcuTileTap);
+
+  // Version Info & Disclaimer (side-menu footer): open the modal (Close / backdrop / Escape).
+  document.getElementById('btn-version-info').addEventListener('click', () => {
+    closeSettings();
+    openVersionInfo();
+  });
+  document.getElementById('verinfo-close').addEventListener('click', closeVersionInfo);
+  document.getElementById('verinfo-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('verinfo-overlay')) closeVersionInfo();
+  });
+  document.addEventListener('keydown', e => {
+    const o = document.getElementById('verinfo-overlay');
+    if (e.key === 'Escape' && o && o.classList.contains('open')) closeVersionInfo();
+  });
+
+  // What is new: from the settings and Got it / backdrop / Escape to close.
+  document.getElementById('btn-whatsnew').addEventListener('click', () => {
+    closeSettings();
+    openWhatsNew();
+  });
+  document.getElementById('whatsnew-close').addEventListener('click', closeWhatsNew);
+  document.getElementById('whatsnew-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('whatsnew-overlay')) closeWhatsNew();
+  });
+  document.addEventListener('keydown', e => {
+    const o = document.getElementById('whatsnew-overlay');
+    if (e.key === 'Escape' && o && o.classList.contains('open')) closeWhatsNew();
+  });
+
+  // Liability disclaimer. Only the read mode closes on Escape or the backdrop: the first
+  // start has to end with the tick box, not by tapping next to the box.
+  document.getElementById('disclaimer-consent').addEventListener('change', e => {
+    document.getElementById('disclaimer-accept').disabled = !e.target.checked;
+  });
+  document.getElementById('disclaimer-accept').addEventListener('click', acceptDisclaimer);
+  document.getElementById('disclaimer-close').addEventListener('click', closeDisclaimer);
+  document.getElementById('disclaimer-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget && !disclaimerIsAsking()) closeDisclaimer();
+  });
+  document.addEventListener('keydown', e => {
+    const o = document.getElementById('disclaimer-overlay');
+    if (e.key === 'Escape' && o && o.classList.contains('open') && !disclaimerIsAsking()) closeDisclaimer();
+  });
+  document.getElementById('verinfo-disclaimer-link').addEventListener('click', () => {
+    closeVersionInfo();
+    openDisclaimer('read');
+  });
+
+  // Language switch in the display settings
+  document.querySelectorAll('#lang-switch button').forEach(b => {
+    b.addEventListener('click', () => setLang(b.dataset.lang));
+  });
+
+  // Dark mode toggle in settings
+  document.getElementById('toggle-dark').addEventListener('change', e => {
+    applyTheme(e.target.checked);
+  });
+
+  // mph toggle
+  document.getElementById('toggle-mph').addEventListener('change', e => {
+    state.useMph = e.target.checked;
+    storage.set('lb_units', state.useMph ? 'mph' : 'kmh');
+    try { renderRoutes(); } catch (err) {}   // flip the saved-route distances now; live tiles flip on the next tick
+  });
+
+  // GPS auto
+  document.getElementById('toggle-gps-auto').addEventListener('change', e => {
+    state.gpsAutoStart = e.target.checked;
+    storage.set('lb_gps_auto', state.gpsAutoStart ? 'on' : 'off');
+    if (!state.gpsAutoStart) {
+      // Turning auto-tracking off stops the current RECORDING only - the live GPS speed keeps running.
+      if (state.currentRide) finalizeRide();
+      state.armDistM = 0;
+    }
+  });
+
+  // GPS recording interval: persist and apply live to the ongoing/next recording.
+  const gpsIntSel = document.getElementById('gps-interval-sel');
+  if (gpsIntSel) gpsIntSel.addEventListener('change', e => {
+    const sec = parseInt(e.target.value, 10) || 5;
+    state.gpsIntervalMs = sec * 1000;
+    storage.set('lb_gps_interval', String(sec));
+  });
+
+  // Fullscreen toggle: hide/show the Android status bar via the native bridge (persisted natively).
+  const fsToggle = document.getElementById('toggle-fullscreen');
+  if (fsToggle) fsToggle.addEventListener('change', e => {
+    try {
+      if (typeof LB !== 'undefined' && LB.setFullscreen) LB.setFullscreen(e.target.checked);
+      else showToast(t('msg.app.only.in.app'));
+    } catch (err) {}
+  });
+
+  // Debug mode toggle: persist via native (survives restarts) then reflect the banner state.
+  const dbgToggle = document.getElementById('toggle-debug');
+  if (dbgToggle) dbgToggle.addEventListener('change', e => {
+    try {
+      if (typeof LB !== 'undefined' && LB.setDebug) LB.setDebug(e.target.checked);
+      else showToast(t('msg.app.only.in.app'));
+    } catch (err) {}
+    syncDebugUI();
+  });
+
+  // Export debug logs: share the recorded log file via the native chooser.
+  const dbgExport = document.getElementById('btn-export-logs');
+  if (dbgExport) dbgExport.addEventListener('click', () => {
+    try {
+      if (typeof LB !== 'undefined' && LB.exportLogs) LB.exportLogs();
+      else showToast(t('msg.app.only.in.app'));
+    } catch (err) {}
+  });
+
+  // SRT streaming: store URL encrypted on every edit (input fires on paste too) + start/stop
+  const _saveUrl = () => srtSaveUrl(document.getElementById('stream-url').value.trim());
+  document.getElementById('stream-url').addEventListener('input', _saveUrl);
+  document.getElementById('stream-url').addEventListener('change', _saveUrl);
+  document.getElementById('stream-url').addEventListener('blur', _saveUrl);
+  document.getElementById('btn-stream-start').addEventListener('click', startSrtStream);
+  document.getElementById('btn-stream-stop').addEventListener('click', stopSrtStream);
+
+  // Delete buttons (routes)
+  document.querySelectorAll('.del-btn[data-period]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      confirmDelete(btn.dataset.period);
+    });
+  });
+  // Delete buttons (ride logs)
+  document.querySelectorAll('.del-btn[data-rideperiod]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      confirmDeleteRides(btn.dataset.rideperiod);
+    });
+  });
+
+  // Confirm dialog
+  document.getElementById('confirm-ok').addEventListener('click', () => {
+    document.getElementById('confirm-overlay').classList.remove('open');
+    const w = document.getElementById('confirm-warn'); if (w) { w.textContent = ''; w.style.display = 'none'; }
+    if (state.confirmCb) { state.confirmCb(); state.confirmCb = null; }
+  });
+  document.getElementById('confirm-cancel').addEventListener('click', () => {
+    document.getElementById('confirm-overlay').classList.remove('open');
+    const w = document.getElementById('confirm-warn'); if (w) { w.textContent = ''; w.style.display = 'none'; }
+    state.confirmCb = null;
+  });
+
+  // "?" help buttons on every setting row (delegated once, survives re-renders).
+  ensureSettingsHelpDelegation();
+}
+
+/* ── Initialisation ───────────────────────────────────────── */
+
+function init() {
+  // Show the app version (read natively from the package) in the streaming build-info line.
+  // The settings footer version now lives in the Version Info & Disclaimer modal.
+  try {
+    const ver = (window.LB && LB.appVersion) ? LB.appVersion() : '';
+    const bi = document.getElementById('build-info');
+    if (bi) bi.textContent = ver || '';
+  } catch (e) {}
+  loadSettings();
+  initLang();      // before anything renders, so the first paint is in the rider's language
+  wireEvents();
+  populateModelSelect();
+  recoverStuckRides();
+  renderRoutes();
+  initNavBanner();
+  initRideBanner();
+  initDisplayPage();
+  initFold();      // after initLang, so the first measurement sees the rider's own label lengths
+
+  // Start BLE polling
+  tickBLE();
+  setInterval(tickBLE, 500);
+
+  // The terms first, then what changed. Both open once and stay closed after that.
+  try { maybeShowFirstRun(); } catch (e) {}
+
+  // Poll the native stream status while the streaming page is open
+  setInterval(() => {
+    const page = document.getElementById('streaming-page');
+    if (page && page.classList.contains('open')) {
+      const s = readStreamStatus();
+      if (s) setStreamStatus(s);
+    }
+  }, 1500);
+
+  // Check initial BLE state. Do NOT auto-start GPS or a ride here - a ride arms itself only after
+  // ~20 m of real movement (maybeArmRide). GPS speed, however, starts right away when connected.
+  const raw = storage.get('lb_live_data');
+  const data = parseBLE(raw);
+  if (data && isFresh(data.ts)) {
+    state.bleConnected = true;
+    startGPSWatch();   // live GPS speed on the main screen whenever connected
+    state.armDistM = 0;
+    state.armLastTs = null;
+    state.rideStopped = false;
+  }
+}
+
+// Run once the document is parsed. If it already is, run straight away.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
