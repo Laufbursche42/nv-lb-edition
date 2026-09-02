@@ -4,7 +4,7 @@ An alternative app for NAVEE e-scooters.
 
 > **This is a feasibility study.** It exists to show what a NAVEE scooter's Bluetooth protocol makes possible, not to be a finished product. Error-free operation is not promised and there is no warranty of any kind. Whatever you do with it, you do at your own risk. Read the [Disclaimer](#disclaimer--trademarks) before you install it.
 
-The app is distributed as an APK from the project's GitHub Releases page.
+Download the app: **[latest release](https://github.com/Laufbursche42/nv-lb-edition/releases/latest)** - install the `nv-lb-edition-vX.apk` from the assets there.
 
 ## Table of contents
 
@@ -80,7 +80,7 @@ Everything below is implemented and shipping in the app.
   - **Drive mode** - the gear / riding level.
   - **Eco / low-power mode** and the **display unit** (km/h or mph on the scooter's own screen).
 - **A "?" help popup on the settings** that need one.
-- **Model line and picker** - the connected model is detected from the scooter's serial and shown at the top of the settings. If it is wrong or has not been read yet, a dropdown lets you pick the model by hand.
+- **Model line** - the connected model is detected automatically from the scooter's serial and shown at the top of the settings.
 - **The shown state comes from the scooter**, not from the phone: the live parameter report drives every control, so what you see is what the scooter currently reports.
 - **The firmware has the last word.** The app sends the command and shows what comes back. A function your model or its firmware does not support stays without effect; the app does not pretend otherwise.
 

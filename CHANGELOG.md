@@ -16,9 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.2
+
+- **Removed the manual model dropdown.** Model detection is automatic from the serial pid on every connect, so the picker was redundant. The region test panel keys off the auto-detected model only.
+
 ## 1.0.1
 
-- **Model detection with a manual picker.** The connected model is read from the scooter's serial and shown in the settings; a dropdown corrects a wrong or missing detection.
+- **Automatic model detection.** The connected model is read from the scooter's serial and shown in the settings. (1.0.1 also shipped a manual dropdown; it was taken out again in 1.0.2.)
 - **Region write** on non-XT5 models - writes a two-letter region code to test a more permissive region. It is hard-blocked on the XT5 family (decided by the real hardware, not the picker) and asks for confirmation, because the screen goes dark and the scooter usually restarts.
 - **Accepted state is now shown.** The immobilizer, cruise control, traction control and zero-start quick toggles colour in when the scooter reports the function active. Before this they never highlighted even when the scooter had accepted the command.
 - **Zero-start quick toggle** lights up whenever a non-default kick-off level is set.

@@ -265,10 +265,6 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 
   <div id="model-banner">
     <div class="model-line"><span data-i18n="settings.model.label">Model:</span> <span id="model-name">-</span></div>
-    <div class="model-line model-pick">
-      <span data-i18n="settings.model.pick">Falsch erkannt? Modell wählen:</span>
-      <select class="set-ctrl" id="model-select"></select>
-    </div>
   </div>
 
   <!-- Scooter connection + settings -->
@@ -2564,36 +2560,22 @@ function naveeRealModel() { return naveeModelFromPid(liveRaw().pid || ''); }
 function naveeRegionAllowed() { const m = naveeRealModel(); return !!m && !naveeIsXT(m); }
 
 let _lastModelKey = null;   // kept so applyLang() can force one refresh of the model line
-let _modelSelectFilled = false;
 
-// Fill the manual override dropdown once: an "Auto" entry plus every distinct model name, sorted.
-function populateModelSelect() {
-  const sel = document.getElementById('model-select');
-  if (!sel || _modelSelectFilled) return;
-  const names = Array.from(new Set(Object.values(NAVEE_MODELS))).sort((a, b) => a.localeCompare(b));
-  const auto = document.createElement('option');
-  auto.value = ''; auto.setAttribute('data-i18n', 'settings.model.auto'); auto.textContent = 'Auto (erkannt)';
-  sel.appendChild(auto);
-  for (const nm of names) { const o = document.createElement('option'); o.value = nm; o.textContent = nm; sel.appendChild(o); }
-  sel.addEventListener('change', () => { state.modelOverride = sel.value || ''; applyModelUi(liveRaw().btName); });
-  _modelSelectFilled = true;
-}
+// No manual picker: the model is detected automatically from the serial pid on every connect. Kept as
+// a no-op so applyLang() can still call it.
+function populateModelSelect() {}
 
 function applyModelUi(btName) {
   const d = liveRaw();
-  const auto = naveeModelFromPid(d.pid || '');             // '' if pid unknown / not read yet
-  const override = state.modelOverride || '';              // '' = follow auto-detection
-  const eff = override || auto;                            // effective model name
+  const model = naveeModelFromPid(d.pid || '');            // detected from the serial pid; '' if unknown
   const nameEl = document.getElementById('model-name');
-  if (nameEl) nameEl.textContent = eff || (btName || '').trim() || '-';
-  const sel = document.getElementById('model-select');
-  if (sel && sel.value !== override) sel.value = override; // keep the picker in sync
-  applyModelPanels(eff);
+  if (nameEl) nameEl.textContent = model || (btName || '').trim() || '-';
+  applyModelPanels(model);
 }
 
-// Show/hide model-specific panels. The region test panel shows for any non-XT model (effective =
-// override or auto). The write itself is separately gated on the REAL pid (naveeRegionAllowed), so an
-// override can never arm it on an XT5.
+// Show/hide model-specific panels from the auto-detected model. The region test panel shows for any
+// non-XT model; the write itself is separately gated on the real pid (naveeRegionAllowed), so it can
+// never run on an XT5.
 function applyModelPanels(modelName) {
   const rp = document.getElementById('region-panel');
   if (rp) rp.style.display = (modelName && !naveeIsXT(modelName)) ? '' : 'none';
