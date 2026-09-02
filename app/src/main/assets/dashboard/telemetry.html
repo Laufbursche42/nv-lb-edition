@@ -263,6 +263,13 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <button class="icon-btn" id="btn-close-settings" data-i18n="settings.close.symbol">&#10005;</button>
   </div>
 
+  <div id="update-banners">
+    <button type="button" id="upd-app" class="update-banner is-hidden">
+      <span class="ub-text"><span data-i18n="settings.update.app.available">New app version available</span> <b id="upd-app-ver"></b></span>
+      <span class="ub-go" data-i18n="settings.update.app.action">Download &amp; install -&gt;</span>
+    </button>
+  </div>
+
   <div id="model-banner">
     <div class="model-line"><span data-i18n="settings.model.label">Model:</span> <span id="model-name">-</span></div>
   </div>
@@ -3428,9 +3435,44 @@ function initFold() {
 
 /* ── Event Wiring ─────────────────────────────────────────── */
 
+/* Update notification: a newer app version from the GitHub release. App APK only - no firmware here. */
+const updState = { app: { available: false } };
+
+function updInit() {
+  if (typeof LB === 'undefined') return;
+  // checkUpdates fetches the latest app release from GitHub and pushes it back via __onAppUpdate.
+  try { if (LB.checkUpdates) LB.checkUpdates(); } catch (e) {}
+  refreshUpdateUi();
+}
+
+window.__onAppUpdate = function(info) {
+  try { updState.app = (typeof info === 'string') ? JSON.parse(info) : (info || { available: false }); }
+  catch (e) { updState.app = { available: false }; }
+  refreshUpdateUi();
+};
+
+function refreshUpdateUi() {
+  const appAvail = !!(updState.app && updState.app.available);
+  const setShow = (id, on) => showEl(document.getElementById(id), on);
+  setShow('update-banners', appAvail);
+  setShow('upd-app', appAvail);
+  const appVer = document.getElementById('upd-app-ver');
+  if (appVer) appVer.textContent = updState.app.version ? ('(' + updState.app.version + ')') : '';
+}
+
+function ptDownloadApp() {
+  const a = updState.app;
+  if (!a || !a.url) { showToast(t('msg2.update.toast.none')); return; }
+  if (typeof LB === 'undefined' || !LB.downloadAndInstallApk) { showToast(t('msg.app.only.in.app')); return; }
+  showToast(t('msg2.update.toast.downloading'));
+  try { LB.downloadAndInstallApk(a.url); } catch (e) { showToast(t('msg2.update.toast.failed')); }
+}
+
 function wireEvents() {
   // Connect icon in the topbar: open the Connect page (scan / connect / disconnect).
   document.getElementById('btn-connect').addEventListener('click', openConnectPage);
+  // App-update banner in the settings: download the new APK and open the installer.
+  { const e = document.getElementById('upd-app'); if (e) e.addEventListener('click', ptDownloadApp); }
   document.getElementById('btn-connect-back').addEventListener('click', closeConnectPage);
   document.getElementById('btn-scan').addEventListener('click', startScan);
   document.getElementById('btn-disconnect').addEventListener('click', doDisconnect);
@@ -3699,6 +3741,7 @@ function init() {
   initLang();      // before anything renders, so the first paint is in the rider's language
   wireEvents();
   populateModelSelect();
+  updInit();       // check for a newer app release and show the banner if there is one
   recoverStuckRides();
   renderRoutes();
   initNavBanner();

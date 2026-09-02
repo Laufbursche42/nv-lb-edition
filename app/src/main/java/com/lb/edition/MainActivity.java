@@ -323,6 +323,129 @@ public class MainActivity extends Activity {
         }
     }
 
+    // -- App-update helpers (used by the LB.checkUpdates / downloadAndInstallApk bridge) --
+    // App APK only: NAVEE firmware is never written over Bluetooth, so there is no firmware path here.
+
+    private static final String APK_UPDATE_NAME = "nv-lb-edition-update.apk";
+
+    /** Enqueue the APK download into the public Downloads folder via DownloadManager (visible file +
+     *  progress notification), then open the installer once it completes. */
+    private void startApkDownload(String url) {
+        try {
+            final android.app.DownloadManager dm =
+                    (android.app.DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            if (dm == null) { toast("Download service unavailable"); return; }
+            android.app.DownloadManager.Request req =
+                    new android.app.DownloadManager.Request(Uri.parse(url));
+            req.setTitle("nv-lb-edition update");
+            req.setDescription("Downloading the app update");
+            req.setMimeType("application/vnd.android.package-archive");
+            req.setNotificationVisibility(
+                    android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            req.setDestinationInExternalPublicDir(
+                    android.os.Environment.DIRECTORY_DOWNLOADS, APK_UPDATE_NAME);
+            final long id = dm.enqueue(req);
+            toast("Downloading update to your Downloads folder...");
+            pollApkDownload(dm, id, 0);
+        } catch (Throwable t) {
+            Log.e(TAG, "startApkDownload failed", t);
+            toast("Download failed: " + t.getMessage());
+        }
+    }
+
+    /** Poll the download until it finishes, then open the installer. Polling is more reliable than the
+     *  ACTION_DOWNLOAD_COMPLETE broadcast, which some ROMs (e.g. MIUI) do not deliver to app receivers. */
+    private void pollApkDownload(final android.app.DownloadManager dm, final long id, final int tries) {
+        if (tries > 900) return;   // ~7.5 min ceiling
+        int status = -1;
+        try (android.database.Cursor c =
+                     dm.query(new android.app.DownloadManager.Query().setFilterById(id))) {
+            if (c != null && c.moveToFirst()) {
+                int col = c.getColumnIndex(android.app.DownloadManager.COLUMN_STATUS);
+                if (col >= 0) status = c.getInt(col);
+            }
+        } catch (Throwable ignored) {}
+        if (status == android.app.DownloadManager.STATUS_SUCCESSFUL) { installDownloadedApk(dm, id); return; }
+        if (status == android.app.DownloadManager.STATUS_FAILED) { toast("Download failed"); return; }
+        new android.os.Handler(getMainLooper()).postDelayed(
+                () -> pollApkDownload(dm, id, tries + 1), 500);
+    }
+
+    /** Launch the package installer for the finished download (with a FileProvider fallback URI). */
+    private void installDownloadedApk(android.app.DownloadManager dm, long id) {
+        try {
+            Uri uri = dm.getUriForDownloadedFile(id);
+            if (uri == null) {
+                File f = new File(android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_DOWNLOADS), APK_UPDATE_NAME);
+                if (f.exists()) uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", f);
+            }
+            if (uri == null) { toast("Downloaded to your Downloads folder - open it there to install"); return; }
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(uri, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Throwable t) {
+            Log.e(TAG, "install after download failed", t);
+            toast("Downloaded to your Downloads folder - open it there to install");
+        }
+    }
+
+    private void toast(String msg) {
+        try { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); } catch (Throwable ignored) {}
+    }
+
+    private String installedVersionName() {
+        try {
+            return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Throwable t) {
+            return "0";
+        }
+    }
+
+    /** true when dotted version {@code latest} is strictly greater than {@code installed} (e.g. 1.0.2 > 1.0.1). */
+    private static boolean isNewerVersion(String latest, String installed) {
+        try {
+            String[] la = latest.split("\\.");
+            String[] ia = installed.split("\\.");
+            int n = Math.max(la.length, ia.length);
+            for (int i = 0; i < n; i++) {
+                int lv = i < la.length ? parseIntSafe(la[i]) : 0;
+                int iv = i < ia.length ? parseIntSafe(ia[i]) : 0;
+                if (lv != iv) return lv > iv;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    private static int parseIntSafe(String s) {
+        try { return Integer.parseInt(s.replaceAll("[^0-9]", "")); } catch (Throwable t) { return 0; }
+    }
+
+    private String httpGetText(String url) throws Exception {
+        return new String(httpGetBytes(url), StandardCharsets.UTF_8);
+    }
+
+    /** Simple HTTP(S) GET into memory, used for the small GitHub release JSON. */
+    private byte[] httpGetBytes(String urlStr) throws Exception {
+        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(urlStr).openConnection();
+        try {
+            c.setRequestProperty("User-Agent", "lb-edition");
+            c.setRequestProperty("Accept", "application/vnd.github+json, */*");
+            c.setConnectTimeout(15000);
+            c.setReadTimeout(60000);
+            c.setInstanceFollowRedirects(true);
+            try (InputStream in = c.getInputStream(); ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+                return bos.toByteArray();
+            }
+        } finally {
+            c.disconnect();
+        }
+    }
+
     /**
      * The "LB" JavaScript bridge. Forwards to the native BLE layer and the SRT streaming module.
      * Every method is null/exception-safe - nothing throws across the bridge.
@@ -567,6 +690,66 @@ public class MainActivity extends Activity {
             } catch (Throwable t) {
                 return "";
             }
+        }
+
+        // -- App update --
+
+        /** Fetch the latest app release from GitHub and push it to window.__onAppUpdate. Network runs off
+         *  the main thread. Never throws. App version only - NAVEE firmware is not distributed here. */
+        @JavascriptInterface
+        public void checkUpdates() {
+            new Thread(() -> {
+                String result = "{\"available\":false}";
+                try {
+                    JSONObject rel = new JSONObject(httpGetText(
+                            "https://api.github.com/repos/Laufbursche42/nv-lb-edition/releases/latest"));
+                    String tag = rel.optString("tag_name", "");
+                    String latest = tag.startsWith("v") ? tag.substring(1) : tag;
+                    String apkUrl = "";
+                    org.json.JSONArray assets = rel.optJSONArray("assets");
+                    if (assets != null) {
+                        for (int i = 0; i < assets.length(); i++) {
+                            JSONObject a = assets.optJSONObject(i);
+                            if (a == null) continue;
+                            if (a.optString("name", "").toLowerCase().endsWith(".apk")) {
+                                apkUrl = a.optString("browser_download_url", "");
+                                break;
+                            }
+                        }
+                    }
+                    boolean newer = !apkUrl.isEmpty() && isNewerVersion(latest, installedVersionName());
+                    JSONObject o = new JSONObject();
+                    o.put("available", newer);
+                    o.put("version", latest);
+                    o.put("url", apkUrl);
+                    result = o.toString();
+                } catch (Throwable t) {
+                    Log.e(TAG, "checkUpdates failed", t);
+                }
+                final String r = result;
+                runJs("(function(){try{if(window.__onAppUpdate)window.__onAppUpdate(" + r + ");}catch(e){}})();");
+            }).start();
+        }
+
+        /** Download the app APK into the public Downloads folder via the system DownloadManager, then open
+         *  the installer when it finishes. Prompts for the install permission first if it is not granted. */
+        @JavascriptInterface
+        public void downloadAndInstallApk(final String url) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
+                runOnUiThread(() -> {
+                    try {
+                        Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                Uri.parse("package:" + getPackageName()));
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                        toast("Allow installs for this app, then tap download again");
+                    } catch (Throwable t) {
+                        Log.e(TAG, "unknown-sources prompt failed", t);
+                    }
+                });
+                return;
+            }
+            runOnUiThread(() -> startApkDownload(url));
         }
 
         /** Toggle immersive full-screen (persisted; survives restarts). Persist the pref, then let

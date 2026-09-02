@@ -6,7 +6,7 @@ This is free, source-available software provided "as is" without any warranty of
 
 ### Privacy
 
-Laufbursche Edition is offline-first: it collects nothing and sends no telemetry to the authors or to NAVEE. It talks only to your scooter over Bluetooth and - only on your explicit action - to the OpenStreetMap / BRouter servers for offline map downloads or to the SRT server you configure. There is no account, no login and no in-app update check. Full details: [PRIVACY.md](https://github.com/Laufbursche42/nv-lb-edition/blob/main/PRIVACY.md).
+Laufbursche Edition is offline-first: it collects nothing and sends no telemetry to the authors or to NAVEE. It talks only to your scooter over Bluetooth, to GitHub on start to check for a newer app version, and - only on your explicit action - to the OpenStreetMap / BRouter servers for offline map downloads or to the SRT server you configure. There is no account and no login. Full details: [PRIVACY.md](https://github.com/Laufbursche42/nv-lb-edition/blob/main/PRIVACY.md).
 
 ### Trademarks
 

@@ -16,7 +16,7 @@ This app requests only the permissions it needs to function. The list below matc
 
 ## Network and services
 
-- **INTERNET** - download offline maps, routing data and POI databases on your explicit action, plus send the SRT screen stream to your own server. Nothing else uses it.
+- **INTERNET** - download offline maps, routing data and POI databases on your explicit action, send the SRT screen stream to your own server, and check GitHub for a newer app version on start.
 - **FOREGROUND_SERVICE** - run long-running jobs (map download, ride logging, navigation, screen streaming) as a foreground service so they keep running with the screen off.
 - **FOREGROUND_SERVICE_MEDIA_PROJECTION** - the foreground-service type that lets screen streaming run as a foreground service.
 - **FOREGROUND_SERVICE_DATA_SYNC** - the foreground-service type for the offline map download, so a large download keeps running with the screen off.
@@ -25,12 +25,12 @@ This app requests only the permissions it needs to function. The list below matc
 - **POST_NOTIFICATIONS** - show the download, ride-logging, navigation or streaming progress notification.
 - **WAKE_LOCK** - keep the CPU awake during a background download.
 - **ACCESS_WIFI_STATE** - keep Wi-Fi awake during a background download.
+- **REQUEST_INSTALL_PACKAGES** - open the Android installer for an app update you chose to download by tapping the update banner. The app only ever installs its own APK from its GitHub releases; it installs nothing on its own.
 
 ## Permissions this app does NOT request
 
 For clarity, since some scooter apps do ask for these:
 
-- No **REQUEST_INSTALL_PACKAGES** - the app has no way to install anything on your phone.
 - No storage permissions - maps, rides and logs live in the app's own app-specific directories, and saving a GPX file into your Downloads folder goes through MediaStore, which needs no permission from Android 10 (minSdk 29) on.
 - No camera, microphone, contacts, phone or account permissions.
 

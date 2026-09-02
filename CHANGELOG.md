@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.3
+
+- **In-app app update restored.** The app checks GitHub for a newer release on start and shows a banner in the settings; tapping it downloads the APK and opens the installer. This is the app's own update - not scooter firmware, which the app never writes. It had been removed together with the firmware-OTA cleanup in an earlier build, but it is a generic feature every build should keep, so it is back.
+- Fixed the FileProvider Downloads path so the update installer's fallback can open the downloaded APK.
+- Corrected PERMISSIONS.md and the GitHub release footer, which had wrongly stated that the app requests no install permission and runs no update check.
+
 ## 1.0.2
 
 - **Removed the manual model dropdown.** Model detection is automatic from the serial pid on every connect, so the picker was redundant. The region test panel keys off the auto-detected model only.

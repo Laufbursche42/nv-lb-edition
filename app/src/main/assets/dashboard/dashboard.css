@@ -309,6 +309,14 @@ html, body {
   padding: 14px 16px; border-bottom: 1px solid var(--border);
 }
 .settings-topbar h2 { font-size: var(--fs-xl); font-weight: var(--fw-bold); }
+/* App-update banner: shown at the top of the settings when a newer release is on GitHub. */
+#update-banners { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 0; }
+#update-banners:empty { display: none; }
+.update-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--ble);
+  background: color-mix(in srgb, var(--ble) 14%, transparent); color: var(--text);
+  font-size: var(--fs-md); line-height: 1.35; cursor: pointer; }
+.update-banner .ub-go { color: var(--ble); font-weight: var(--fw-semibold); white-space: nowrap; }
 .settings-group { padding: 12px 16px; }
 .settings-group-title {
   font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--label);
