@@ -33,6 +33,7 @@ final class FrameParser {
     private Integer speed, mode, soc, range, totalMile, fault;
     private String region = "", serial = "", pid = "", configRaw = "";
     private Integer maxSpeed, limitSpeed, limitOn, startSpeed, lock, unit, breakSpeed, driveMode, cruise, tcs, eco;
+    private Integer tailLight, autoLight, drl;   // light switches from the 0x70 report (offsets 4/8/24)
     private Integer packMv, packMa, soh, temp, cycles;
     // realtime-only fields (0x90/0x91/0x92 push): charging + trip context, not in the 0x70/0x72 reads
     private Integer chargingState, batteryStatus, drivingStatus, tripMile, tripDuration, tripMax, tripAvg;
@@ -134,6 +135,9 @@ final class FrameParser {
         cruise = u8(p, 3);
         tcs = u8(p, 11);   // TCS / traction control (write opcode 0x5F)
         eco = u8(p, 32);   // low-power / eco mode (write opcode 0x6F sub 5)
+        tailLight = u8(p, 4);    // tail light (write opcode 0x54)
+        autoLight = u8(p, 8);    // auto headlight / light sensor (write opcode 0x57)
+        drl = u8(p, 24);         // daytime running light (write opcode 0x6D sub 3)
         if (settings != null) settings.applyReportFrom70(p);
     }
 
@@ -228,6 +232,7 @@ final class FrameParser {
             put(o, "maxSpeed", maxSpeed); put(o, "limitSpeed", limitSpeed); put(o, "limitOn", limitOn);
             put(o, "startSpeed", startSpeed); put(o, "lock", lock); put(o, "unit", unit);
             put(o, "breakSpeed", breakSpeed); put(o, "cruise", cruise); put(o, "tcs", tcs); put(o, "eco", eco);
+            put(o, "tailLight", tailLight); put(o, "autoLight", autoLight); put(o, "drl", drl);
             put(o, "packMv", packMv); put(o, "packMa", packMa); put(o, "soh", soh);
             put(o, "temp", temp); put(o, "cycles", cycles);
             put(o, "chargingState", chargingState); put(o, "batteryStatus", batteryStatus);

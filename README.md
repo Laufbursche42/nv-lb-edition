@@ -80,8 +80,9 @@ Everything below is implemented and shipping in the app.
   - **Immobilizer** - lock or unlock the scooter electronically.
   - **Cruise control** - on or off.
   - **Traction control (TCS)** - on or off.
-  - **Zero-start** - the kick-off level (0 to 5), from "start without kicking off" up to a firm push threshold.
+  - **Zero-start** - the kick-off level. On a USA-region scooter down to 0 (ride off without pushing); on other regions only 3 to 5, because the scooter's meter clamps the lower levels away, so they are hidden there.
   - **Drive mode** - the gear / riding level.
+  - **Light** - auto light (the headlight comes on while riding), daytime running light and tail light.
   - **Eco / low-power mode** and the **display unit** (km/h or mph on the scooter's own screen).
 - **A "?" help popup on the settings** that need one.
 - **Model line** - the connected model is detected automatically from the scooter's serial and shown at the top of the settings.

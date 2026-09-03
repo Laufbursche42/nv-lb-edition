@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.5
+
+- **Light controls.** A new Light section with auto light (the headlight comes on automatically while riding), a daytime running light switch and the tail light. Their state is read live from the scooter's report.
+- **Zero-start shown only where it works.** Riding off without pushing (levels 0-2) is a USA-region feature; the scooter's meter clamps those levels away elsewhere. The app now hides them, plus the zero-start quick button, on non-USA units, so it no longer offers a setting the scooter discards.
+- Named all four supported speed-release families in the README (XT5, UT5 Ultra X, E45/E60 Pro) and added an iOS pointer to the browser tool.
+
 ## 1.0.4
 
 - **Fault codes now show their meaning.** The scooter reports a single number when something is wrong. The app decodes it - the codes are BCD-encoded on the wire, so byte 0x21 is E9, not 33 - against the official NAVEE fault table, which is one shared table across all models, and shows the plain-text cause in English and German. Controller codes are cross-checked against the firmware; any code outside the table is shown raw and never guessed. It all runs on the phone, with no server lookup.

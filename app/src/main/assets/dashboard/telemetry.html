@@ -479,6 +479,24 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       Der aktuelle Zustand wird live vom Roller gelesen. Welche Funktionen dein Modell unterstützt, hängt von der Firmware ab; nicht unterstützte Schalter bleiben ohne Wirkung.
     </div>
 
+    <!-- Light switches: auto light 0x57 (plain toggle), daytime running light 0x6D sub 3, tail light
+         0x54. State comes from the live 0x70 report (offsets 8/24/4). -->
+    <div class="section-hdr sub-hdr" data-i18n="scooter.light.section.title">Licht</div>
+    <div class="settings-group pt-4">
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.alight.label">Auto-Licht</div><div class="settings-row-sublabel" data-i18n="scooter.alight.sub">Scheinwerfer schaltet automatisch beim Fahren ein</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-alight"><label class="toggle-label" for="ss-alight"></label></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.drl.label">Tagfahrlicht</div><div class="settings-row-sublabel" data-i18n="scooter.drl.sub">Wird gesendet und gespeichert; ob eine eigene Lampe leuchtet, hängt vom Modell ab</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-drl"><label class="toggle-label" for="ss-drl"></label></div>
+      </div>
+      <div class="settings-row no-bottom-rule">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.tail.label">Rücklicht</div><div class="settings-row-sublabel" data-i18n="scooter.tail.sub">Rücklicht ein oder aus</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-tail"><label class="toggle-label" for="ss-tail"></label></div>
+      </div>
+    </div>
+
     <!-- Speed release (drive mode 4 written with opcode 0x58). Deliberately a one-shot BUTTON, not
          a toggle: the gear byte lives in RAM, the scooter drops it on a mode-button press or a
          restart, and it cannot be read back, so a toggle would show a state that does not exist. -->
@@ -3109,11 +3127,22 @@ function initRideBanner() {
    Opcodes: immobilizer 0x51 (via LB.setLock), cruise 0x52, zero-start 0x6A, drive mode 0x58. */
 const NAVEE_CMD = { cruise: 0x52, zerostart: 0x6A, drivemode: 0x58, tcs: 0x5F, unit: 0x55 };
 const NAVEE_ECO = { cmd: 0x6F, sub: 5 };   // eco / low-power is a 0x6F sub-command, not a plain toggle
-// Start-off (kickstart) default level. 3 is the manufacturer default and the firmware's parked clamp
-// floor (values <3 are forced to 3 while parked). The quick button lights up whenever startSpeed
-// differs from this, so a set non-default level is visible even when zero-start (0) is unreachable
-// at standstill.
+// Start-off (kickstart) default level. 3 is the manufacturer default and the meter's clamp floor:
+// the meter's 0x6A handler (FUN_08014230, meter_decomp.c:22632) forces levels <3 up to 3 unless the
+// SKU region is USA (country byte 6/7/8). So the real zero-start (levels 0-2, ride off without kicking)
+// is USA-SKU only; on EU/other units the low levels are hidden because the meter never stores them.
 const NAVEE_STARTSPEED_DEFAULT = 3;
+
+// SKU region from the serial's area code (chars 8-9), mirroring the manufacturer app's skuVersion.
+// The exact area-code -> USA mapping is not fully proven in firmware, so this follows the web tool's
+// list (US/CN/RU = USA). Used only to hide zero-start levels 0-2 where the meter would clamp them.
+function naveeSkuOf(region) {
+  const r = (region || '').toUpperCase();
+  if (['IT', 'DE', 'NE'].includes(r)) return 'ITA';
+  if (['US', 'CN', 'RU'].includes(r)) return 'USA';
+  return 'EUR';
+}
+function naveeZeroStartFull() { return naveeSkuOf(liveRaw().region) === 'USA'; }
 function setRegionStatus(msg) { const el = document.getElementById('region-status'); if (el) el.textContent = msg; }
 // Raw NAVEE frame builders for the factory region write, sent via LB.sendRaw as a hex string. The
 // checksum is the sum of every byte from 0x55 through the last payload byte, & 0xFF. Normal/read frames
@@ -3177,8 +3206,14 @@ function prefillScooterSettings(live) {
   if (d.tcs === 0 || d.tcs === 1) setC('ss-tcs', d.tcs === 1);
   if (d.eco === 0 || d.eco === 1) setC('ss-eco', d.eco === 1);
   if (d.unit === 0 || d.unit === 1) setC('ss-unit', d.unit === 1);   // 1 = mph on the scooter display
+  if (d.autoLight === 0 || d.autoLight === 1) setC('ss-alight', d.autoLight === 1);
+  if (d.drl === 0 || d.drl === 1) setC('ss-drl', d.drl === 1);
+  if (d.tailLight === 0 || d.tailLight === 1) setC('ss-tail', d.tailLight === 1);
   // Zero-start / startup-speed level (0 = zero start, 1..5 = kick-off threshold).
   if (typeof d.startSpeed === 'number' && d.startSpeed >= 0 && d.startSpeed <= 5) setV('ss-zerostart', d.startSpeed);
+  // Levels 0-2 are USA-SKU only (the meter clamps them to 3 elsewhere); hide them on non-USA units.
+  const zsel = document.getElementById('ss-zerostart');
+  if (zsel) { const full = naveeZeroStartFull(); zsel.querySelectorAll('option').forEach(o => { if (parseInt(o.value, 10) < 3) o.hidden = !full; }); }
   // The select only carries the two modes the scooter accepts here (3 normal, 5 turbo). Anything
   // else the scooter reports (for example 4 after a speed release) has no option, so leave the
   // control alone rather than blanking it.
@@ -3235,6 +3270,22 @@ function wireScooterSettings() {
   if (dm) dm.addEventListener('change', e => {
     if (!naveeGuard()) return;
     pushSetting(NAVEE_CMD.drivemode, parseInt(e.target.value, 10) || 0);
+  });
+  const alight = document.getElementById('ss-alight');
+  if (alight) alight.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    pushSetting(0x57, e.target.checked ? 1 : 0);   // auto headlight, plain toggle
+  });
+  const tail = document.getElementById('ss-tail');
+  if (tail) tail.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    pushSetting(0x54, e.target.checked ? 1 : 0);   // tail light, plain toggle
+  });
+  const drl = document.getElementById('ss-drl');
+  if (drl) drl.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    // Daytime running light is a 0x6D sub-command (sub 3), like eco - not a plain single-byte opcode.
+    if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(0x6D, 3, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
   });
   wireSpeedRelease();
 }
@@ -3329,10 +3380,10 @@ function toggleDriveQuick(key) {
     pushSetting(NAVEE_CMD.tcs, (d.tcs === 1) ? 0 : 1);
   } else if (key === 'zerostart') {
     // Quick toggle: "on" = any non-default start-off level is set. Pressing it while on restores the
-    // default level; pressing it while off requests zero-start (level 0). The fine 0-5 choice is on the
-    // scooter-settings page. Note: parked, the firmware clamps <3 up to 3, so zero-start only takes
-    // while rolling / in mode 6-8 - but a level of 4 or 5 set on the settings page is reachable and
-    // will light the button.
+    // default level; pressing it while off requests zero-start (level 0). The fine choice is on the
+    // scooter-settings page. Note: the meter clamps levels <3 up to 3 unless the SKU region is USA, so
+    // this button is hidden on non-USA units (see reflectDriveQuick); a level of 4 or 5 set on the
+    // settings page is still reachable and will light the button.
     const on = (typeof d.startSpeed === 'number' && d.startSpeed !== NAVEE_STARTSPEED_DEFAULT);
     pushSetting(NAVEE_CMD.zerostart, on ? NAVEE_STARTSPEED_DEFAULT : 0);
   }
@@ -3356,6 +3407,9 @@ function reflectDriveQuick() {
   wrap.querySelectorAll('.dq-btn[data-dq]').forEach(btn => {
     btn.classList.toggle('active', connected && !!on[btn.dataset.dq]);
   });
+  // Zero-start (levels 0-2) is USA-SKU only; hide its quick button where the meter would clamp it away.
+  const zq = wrap.querySelector('.dq-btn[data-dq="zerostart"]');
+  if (zq) zq.style.display = naveeZeroStartFull() ? '' : 'none';
 }
 
 
