@@ -38,11 +38,15 @@ Laufbursche Edition (NAVEE) is a standalone, alternative Android app for NAVEE e
 
 The app is a fork of the author's app for another scooter platform, ported to the NAVEE protocol. Everything that was specific to that other platform was removed rather than carried over half-working; what is left is the part that has been checked against a NAVEE scooter.
 
+**Using an iPhone?** This app is Android only. On iOS there is a browser-based alternative that speaks the same protocol over Web Bluetooth: **[navee-unlock](https://laufbursche42.github.io/navee-unlock/)**, opened in the Bluefy browser. No install, same functions.
+
 ## Device support
 
 The app was built and checked against the **NAVEE XT5 family**. It connects to any scooter that advertises a Bluetooth name starting with `NAVEE` and speaks the same Bluetooth protocol.
 
 Other NAVEE models that use the same protocol are **expected** to work, but they are **not verified** - nobody has confirmed them on hardware. Treat anything outside the XT5 family as untested: the connection and the read-only pages are the likely case, while a setting your model does not implement is simply ignored by the scooter. Which functions a given unit supports depends on its firmware, so a switch that has no effect on your scooter means the firmware did not accept it, not that the app failed to send it.
+
+**Speed unlocking works on four families - others need flashing.** The flash-free speed release (drive mode 4, below) lifts the top speed on the four supported families: XT5 (Ultra, Pro, Max), UT5 Ultra X and E45/E60 Pro. On every other NAVEE model the speed cap sits in the scooter's own firmware, so raising it needs **patched firmware flashed to the scooter** - no Bluetooth setting reaches it. This was tried on a German NT5: it did not raise the speed. Reading the values and the everyday functions still work on those models; only the speed unlock needs the flash.
 
 ## Features
 
@@ -88,8 +92,8 @@ Everything below is implemented and shipping in the app.
 
 These change how fast the scooter runs. **On public roads they are not legal: they void the operating permit (ABE) and the insurance cover.** Use them on your own scooter, on private ground.
 
-- **Speed release** - one button (and a triple-tap on the km/h tile on the main screen) puts the XT5 family into its top drive mode, so the scooter runs at its built-in top speed instead of the restricted one. The firmware sets the actual figure, so it is a range rather than a number you dial in. Confirmed on the XT5 Ultra; the other XT5 models are expected but not yet ridden, and other models simply ignore it.
-- **Region** - on non-XT5 models a panel writes a two-letter region code (for example US or DE) to test whether a more permissive region raises the limit. It is **blocked on the XT5 family** and asks you to confirm first, because the screen goes dark for a moment and the scooter usually restarts. It only has an effect where the scooter accepts the write; on many units the real limit sits in firmware and the write does nothing.
+- **Speed release** - one button (and a triple-tap on the km/h tile on the main screen) puts the scooter into its top drive mode, so it runs at its built-in top speed instead of the restricted one. The firmware sets the actual figure, so it is a range rather than a number you dial in. Supported on four families (XT5 Ultra/Pro/Max, UT5 Ultra X, E45/E60 Pro); every other model simply ignores it.
+- **Region** - on non-XT5 models a panel writes a two-letter region code (for example US or DE) to test whether a more permissive region raises the limit. It is **blocked on the XT5 family** and asks you to confirm first, because the screen goes dark for a moment and the scooter usually restarts. It only has an effect where the scooter accepts the write; on the non-XT5 models the real limit sits in the firmware itself, so the write does nothing - confirmed on a German NT5, where it did not raise the speed. Lifting the speed there needs patched firmware, not this panel.
 
 The quickest way to the speed release is a hidden gesture: **triple-tap the km/h VCU tile** on the main screen. The tile turns red while the release is active; triple-tap it again to lock the speed back to normal.
 
