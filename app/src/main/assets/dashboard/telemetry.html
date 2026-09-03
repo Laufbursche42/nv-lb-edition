@@ -2623,15 +2623,32 @@ function closeScooterPage() {
 
 /* ── Error reports (active faults / warnings from live BLE data) ── */
 
-// Build the list of currently active faults. NAVEE reports ONE numeric fault code in its realtime
-// frame (0x90 byte 0); 0 means no fault. The per-code meaning is not documented, so the raw code is
-// shown instead of a guessed label - never claim a diagnosis the scooter did not give.
+// NAVEE fault codes are BCD-encoded on the wire (e.g. byte 0x21 -> BCD 21 = E9, NOT raw 33). Decode BCD
+// first, then look up this table. It is ONE shared table across all NAVEE models (verified identical on
+// 10 models from the official support site). Controller codes (10-45) are firmware-verified in the BLDC
+// fault register; battery codes (39, 50-61) come from the official support table (only F2/24 is also
+// device-confirmed, since the local BMS dump is an NT5). Keys are the BCD value, values the panel letter.
+const NAVEE_FAULTS = {
+  10: 'E1', 11: 'E2', 12: 'E3', 14: 'H3', 15: 'H4', 18: 'H5', 21: 'E9', 24: 'F2', 28: 'E4', 29: 'E5',
+  39: 'F1', 40: 'E6', 43: 'E7', 45: 'E8', 50: 'F3', 52: 'F4', 53: 'F5', 54: 'F6', 55: 'F7', 56: 'F8',
+  57: 'F9', 60: 'H1', 61: 'H2'
+};
+
+// Build the list of currently active faults. NAVEE reports ONE numeric fault code in its realtime frame
+// (0x90, first data byte); 0 means no fault. Known codes get their official meaning; any value outside
+// the shared table is shown raw as an unknown fault - never claim a diagnosis the scooter did not give.
 function collectErrors() {
   const d = liveRaw();
   const items = [];
-  const f = (typeof d.fault === 'number') ? d.fault : parseInt(d.fault, 10);
-  if (f && !isNaN(f)) {
-    items.push({ kind: 'fault', title: tf('msg2.error.navee.fault', { code: f }), sub: t('msg2.error.navee.fault.sub') });
+  const raw = (typeof d.fault === 'number') ? d.fault : parseInt(d.fault, 10);
+  if (raw && !isNaN(raw)) {
+    const bcd = ((raw >> 4) & 0x0F) * 10 + (raw & 0x0F);   // fault byte is BCD on the wire
+    const letter = NAVEE_FAULTS[bcd];
+    if (letter) {
+      items.push({ kind: 'fault', title: tf('msg2.error.navee.fault.known', { code: bcd, letter: letter }), sub: t('fault.' + bcd) });
+    } else {
+      items.push({ kind: 'fault', title: tf('msg2.error.navee.fault', { code: raw }), sub: t('msg2.error.navee.fault.sub') });
+    }
   }
   return items;
 }

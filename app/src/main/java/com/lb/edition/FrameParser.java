@@ -178,7 +178,7 @@ final class FrameParser {
     // only come from the polled 0x70/0x72 reads.
     private void decodeRealtime(int cmd, byte[] p) {
         if (cmd == 0x90) {                                   // homepage report
-            fault = rd(p, 0, 1, false);                      // warning code
+            fault = rd(p, 0, 1, false);                      // warning code, raw BCD byte (decoded to the shared table in the UI)
             mode = rd(p, 1, 1, false);                       // drive mode (display)
             Integer s = rd(p, 2, 1, false); if (s != null) soc = s;          // battery charge
             batteryStatus = rd(p, 3, 1, false);

@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.4
+
+- **Fault codes now show their meaning.** The scooter reports a single number when something is wrong. The app decodes it - the codes are BCD-encoded on the wire, so byte 0x21 is E9, not 33 - against the official NAVEE fault table, which is one shared table across all models, and shows the plain-text cause in English and German. Controller codes are cross-checked against the firmware; any code outside the table is shown raw and never guessed. It all runs on the phone, with no server lookup.
+- Documented the triple-tap speed-release gesture in the README, with a screenshot from the app.
+- Corrected two stale claims: the error-report help no longer says the code has no meaning, and the README no longer states there is no in-app update (there has been one since 1.0.3).
+
 ## 1.0.3
 
 - **In-app app update restored.** The app checks GitHub for a newer release on start and shows a banner in the settings; tapping it downloads the APK and opens the installer. This is the app's own update - not scooter firmware, which the app never writes. It had been removed together with the firmware-OTA cleanup in an earlier build, but it is a generic feature every build should keep, so it is back.

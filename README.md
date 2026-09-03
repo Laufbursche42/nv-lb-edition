@@ -91,9 +91,13 @@ These change how fast the scooter runs. **On public roads they are not legal: th
 - **Speed release** - one button (and a triple-tap on the km/h tile on the main screen) puts the XT5 family into its top drive mode, so the scooter runs at its built-in top speed instead of the restricted one. The firmware sets the actual figure, so it is a range rather than a number you dial in. Confirmed on the XT5 Ultra; the other XT5 models are expected but not yet ridden, and other models simply ignore it.
 - **Region** - on non-XT5 models a panel writes a two-letter region code (for example US or DE) to test whether a more permissive region raises the limit. It is **blocked on the XT5 family** and asks you to confirm first, because the screen goes dark for a moment and the scooter usually restarts. It only has an effect where the scooter accepts the write; on many units the real limit sits in firmware and the write does nothing.
 
+The quickest way to the speed release is a hidden gesture: **triple-tap the km/h VCU tile** on the main screen. The tile turns red while the release is active; triple-tap it again to lock the speed back to normal.
+
+<p align="center"><img src="screenshots/livetoggle.png" width="260" alt="Triple-tap the km/h VCU tile to release or re-lock the speed over Bluetooth"></p>
+
 ### Info & diagnostics
 
-- **Error reports** view - the scooter reports **one numeric fault code**. The meaning of the individual codes is not documented, so the app shows the **raw code** and does not translate it. A claim about what code N means would be a guess and there is none in this app.
+- **Error reports** view - the scooter reports **one numeric fault code**. The app decodes it against the official NAVEE fault table (one shared table across the models) and shows the plain-text cause, for example *E9 - controller and battery communication*. A code that is not in that table is shown **raw**, never guessed, and the whole lookup runs on the phone with no server.
 - **Scooter info page**, read-only and read live over Bluetooth: the **Bluetooth name**, the **serial number** and the five firmware versions the scooter reports - display/meter, controller (BLDC), BMS, screen and UWB. (The app version lives in the "Version Info & Disclaimer" entry, not here.)
 
 ### Battery info
@@ -143,8 +147,7 @@ Naming the gaps is part of being honest about a feasibility study:
 - **No firmware flashing, no OTA and no firmware files of any kind.** The app never writes firmware to the scooter and never downloads any.
 - **No arbitrary speed number.** The speed release commands the scooter's own built-in top speed; it does not let you dial in a figure the firmware would not otherwise reach.
 - **No identity or serial rename.**
-- **No in-app app update.** New versions are installed the same way as the first one.
-- **No fault-code dictionary.** The raw code is shown, nothing is invented around it.
+- **No guessed fault meanings.** Known codes are translated from the official NAVEE table; any code outside it is shown raw, never invented.
 - **No per-cell battery data, no dual-motor or motor-mode controls and no per-gear profile editor** - the NAVEE protocol as observed here does not offer them.
 
 ## Installing the app
