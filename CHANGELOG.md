@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.8
+
+- **Flash order fixed: controller first, display last.** The display/meter is the DFU gateway that relays every flash command to the target component. Flashing it first rebooted the gateway and left the controller (BLDC) unable to enter DFU ("no C" at block 0). The app now flashes the controller first and the display last - the same order the manufacturer app uses - so a two-part flash completes both components.
+
 ## 1.0.7
 
 - **Firmware flash reaches the controller.** After the last block the flasher now waits for the scooter's `rsq dfu_ok` result token, the way the manufacturer app does, rather than requiring a separate low-level acknowledgement the scooter does not always send. Previously the "no ACK for EOT" message could appear even after every block had transferred, which stopped the run after the meter and before the controller (BLDC) - so the speed patch, which lives in the controller, never got written.

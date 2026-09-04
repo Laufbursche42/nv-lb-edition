@@ -4015,7 +4015,7 @@ function fwHandoffToFlasher() {
   showToast(t('patch.toast.ready'));
 }
 
-/* ── Flasher page: flash the staged or a user-picked image, meter first then bldc ── */
+/* ── Flasher page: flash the staged or a user-picked image, bldc first then meter (gateway last) ── */
 function openFirmwarePage() {
   if (!fwState.running) {
     const cons = document.getElementById('fw-consent'); if (cons) cons.checked = false;
@@ -4039,9 +4039,12 @@ function fwResetProgress() {
   const log = document.getElementById('fw-log'); if (log) { log.textContent = ''; log.classList.add('is-hidden'); log.style.display = 'none'; }
 }
 function fwStagedList() {
+  // Meter is the DFU gateway: every dfu_start passes through it to the target component. Flashing it
+  // first reboots the gateway and the bldc can no longer enter DFU, so flash bldc first, meter last
+  // (the OEM queues meter last for the same reason).
   const out = [];
-  if (fwState.staged.meter) out.push({ kind: 'meter', name: fwState.staged.meter.name });
   if (fwState.staged.bldc) out.push({ kind: 'bldc', name: fwState.staged.bldc.name });
+  if (fwState.staged.meter) out.push({ kind: 'meter', name: fwState.staged.meter.name });
   return out;
 }
 function fwRenderStaged() {
