@@ -55,6 +55,7 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String TAG = "lbedition";
+    private static final int REQ_FW_FILE = 0x5F01;
     private static final int REQ_PERMS = 4711;
 
     private WebView webView;
@@ -67,6 +68,11 @@ public class MainActivity extends Activity {
     // Tracks the BLE connection state so ride-logging transitions fire exactly once per change.
     // Volatile: onState() may run on the BLE binder thread or the main thread.
     private volatile boolean rideConnected = false;
+
+    // Firmware images staged for the flasher: patched by the page or picked by the user. Either may be
+    // null. The flasher writes meter first, then bldc.
+    private volatile byte[] stagedMeter;
+    private volatile byte[] stagedBldc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -249,6 +255,24 @@ public class MainActivity extends Activity {
             } catch (Throwable t) {
                 Log.e(TAG, "ride live-data wiring failed", t);
             }
+        }
+
+        @Override
+        public void onFwProgress(String json) {
+            if (json == null) return;
+            runJs("(function(){try{if(window.__onFwProgress)window.__onFwProgress(" + json + ");}catch(e){}})();");
+        }
+
+        @Override
+        public void onFwLog(String line) {
+            runJs("(function(){try{if(window.__onFwLog)window.__onFwLog("
+                    + org.json.JSONObject.quote(line == null ? "" : line) + ");}catch(e){}})();");
+        }
+
+        @Override
+        public void onFwState(String json) {
+            if (json == null) return;
+            runJs("(function(){try{if(window.__onFwState)window.__onFwState(" + json + ");}catch(e){}})();");
         }
 
     };
@@ -995,6 +1019,241 @@ public class MainActivity extends Activity {
                 return gpxResult(false, name, "save");
             }
         }
+
+        // ── Firmware update ──
+
+        /** Download the stock firmware from {@code url} into Downloads, then push its bytes (base64) to
+         *  window.__onFwDownloaded so the page can patch it. Network runs off the main thread. */
+        @JavascriptInterface
+        public void fwDownloadPatch(final String url, final String kind) {
+            Log.i(TAG, "LB.fwDownloadPatch(" + kind + ", " + url + ")");
+            new Thread(() -> {
+                try {
+                    if (url == null || !(url.startsWith("http://") || url.startsWith("https://"))) {
+                        pushFwDownloaded(false, "", "url", null, kind);
+                        return;
+                    }
+                    byte[] bytes = httpGetBytes(url.trim());
+                    if (bytes == null || bytes.length == 0) { pushFwDownloaded(false, "", "empty", null, kind); return; }
+                    String name = fwNameFromUrl(url, "navee_" + kind + ".bin");
+                    String saved = saveBytesToDownloads(name, bytes);
+                    String b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP);
+                    pushFwDownloaded(true, saved != null ? saved : name, null, b64, kind);
+                } catch (Throwable t) {
+                    Log.e(TAG, "fwDownloadPatch failed", t);
+                    pushFwDownloaded(false, "", "download", null, kind);
+                }
+            }).start();
+        }
+
+        /** Save the patched image next to the original in Downloads and stage it for the flasher.
+         *  @param kind "meter" (target 1) or "bldc" (target 2). Pushes window.__onFwStaged. */
+        @JavascriptInterface
+        public void fwStagePatched(final String b64, final String name, final String kind) {
+            Log.i(TAG, "LB.fwStagePatched(" + name + ", " + kind + ")");
+            new Thread(() -> {
+                try {
+                    byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+                    if (bytes == null || bytes.length == 0) { pushFwStaged(false, "", "empty", kind); return; }
+                    String saved = saveBytesToDownloads(safeBinName(name), bytes);
+                    if ("bldc".equalsIgnoreCase(kind)) stagedBldc = bytes; else stagedMeter = bytes;
+                    pushFwStaged(true, saved != null ? saved : name, null, kind);
+                } catch (Throwable t) {
+                    Log.e(TAG, "fwStagePatched failed", t);
+                    pushFwStaged(false, "", "save", kind);
+                }
+            }).start();
+        }
+
+        /** Flash the staged patched image over BLE (progress via window.__onFwProgress/State/Log).
+         */
+        @JavascriptInterface
+        public void fwStartFlash(final String kind) {
+            Log.i(TAG, "LB.fwStartFlash(" + kind + ")");
+            try {
+                boolean bldc = "bldc".equalsIgnoreCase(kind);
+                byte[] img = bldc ? stagedBldc : stagedMeter;
+                if (img == null) {
+                    runJs("(function(){try{if(window.__onFwState)window.__onFwState({state:'failed',message:'Patch a firmware file first'});}catch(e){}})();");
+                    return;
+                }
+                if (ble != null) ble.startDfu(img, bldc ? 2 : 1, 0L);
+            } catch (Throwable t) {
+                Log.e(TAG, "fwStartFlash failed", t);
+            }
+        }
+
+        @JavascriptInterface
+        public void fwCancelFlash() {
+            Log.i(TAG, "LB.fwCancelFlash()");
+            try { if (ble != null) ble.cancelDfu(); } catch (Throwable t) { Log.e(TAG, "fwCancelFlash failed", t); }
+        }
+
+        @JavascriptInterface
+        public void fwClear() {
+            stagedMeter = null;
+            stagedBldc = null;
+        }
+
+        @JavascriptInterface
+        public boolean isFwActive() {
+            try { return ble != null && ble.isDfuActive(); } catch (Throwable t) { return false; }
+        }
+
+        /** Open the system file picker for a user-supplied .bin. Result arrives in onActivityResult. */
+        @JavascriptInterface
+        public void fwPickFile() {
+            Log.i(TAG, "LB.fwPickFile()");
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    startActivityForResult(i, REQ_FW_FILE);
+                } catch (Throwable t) { Log.e(TAG, "fwPickFile failed", t); }
+            });
+        }
+
+        /** Stage a user-supplied image as-is (no patch), routed by {@code kind} to meter or bldc. */
+        @JavascriptInterface
+        public void fwStageRaw(final String b64, final String name, final String kind) {
+            Log.i(TAG, "LB.fwStageRaw(" + name + ", " + kind + ")");
+            new Thread(() -> {
+                try {
+                    byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+                    if (bytes == null || bytes.length == 0) { pushFwStaged(false, "", "empty", kind); return; }
+                    if ("bldc".equalsIgnoreCase(kind)) stagedBldc = bytes; else stagedMeter = bytes;
+                    pushFwStaged(true, name, null, kind);
+                } catch (Throwable t) {
+                    Log.e(TAG, "fwStageRaw failed", t);
+                    pushFwStaged(false, "", "save", kind);
+                }
+            }).start();
+        }
+    }
+
+    private void pushFwDownloaded(boolean ok, String name, String error, String b64, String kind) {
+        try {
+            JSONObject o = new JSONObject();
+            o.put("ok", ok);
+            o.put("name", name == null ? "" : name);
+            o.put("kind", kind == null ? "" : kind);
+            if (error != null) o.put("error", error);
+            if (b64 != null) o.put("b64", b64);
+            final String s = o.toString();
+            runJs("(function(){try{if(window.__onFwDownloaded)window.__onFwDownloaded(" + s + ");}catch(e){}})();");
+        } catch (Throwable t) {
+            Log.e(TAG, "pushFwDownloaded failed", t);
+        }
+    }
+
+    private void pushFwStaged(boolean ok, String name, String error, String kind) {
+        try {
+            JSONObject o = new JSONObject();
+            o.put("ok", ok);
+            o.put("name", name == null ? "" : name);
+            o.put("kind", kind == null ? "" : kind);
+            if (error != null) o.put("error", error);
+            final String s = o.toString();
+            runJs("(function(){try{if(window.__onFwStaged)window.__onFwStaged(" + s + ");}catch(e){}})();");
+        } catch (Throwable t) {
+            Log.e(TAG, "pushFwStaged failed", t);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == REQ_FW_FILE && res == RESULT_OK && data != null) onFwFilePicked(data.getData());
+    }
+
+    /** Read a user-picked .bin off its content Uri and hand it to the page via window.__onFwPicked. */
+    private void onFwFilePicked(final Uri uri) {
+        if (uri == null) return;
+        new Thread(() -> {
+            try (InputStream in = getContentResolver().openInputStream(uri);
+                 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                if (in == null) { pushFwPicked(false, "", null); return; }
+                byte[] buf = new byte[8192]; int n;
+                while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+                byte[] bytes = bos.toByteArray();
+                if (bytes.length == 0) { pushFwPicked(false, "", null); return; }
+                String name = fwDisplayName(uri);
+                String b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP);
+                pushFwPicked(true, name, b64);
+            } catch (Throwable t) {
+                Log.e(TAG, "onFwFilePicked failed", t);
+                pushFwPicked(false, "", null);
+            }
+        }).start();
+    }
+
+    private void pushFwPicked(boolean ok, String name, String b64) {
+        try {
+            JSONObject o = new JSONObject();
+            o.put("ok", ok);
+            o.put("name", name == null ? "" : name);
+            if (b64 != null) o.put("b64", b64);
+            final String s = o.toString();
+            runJs("(function(){try{if(window.__onFwPicked)window.__onFwPicked(" + s + ");}catch(e){}})();");
+        } catch (Throwable t) {
+            Log.e(TAG, "pushFwPicked failed", t);
+        }
+    }
+
+    /** Best-effort display name for a content Uri (OpenableColumns), else the last path segment. */
+    private String fwDisplayName(Uri uri) {
+        try (android.database.Cursor c = getContentResolver().query(uri, null, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                int i = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (i >= 0) { String n = c.getString(i); if (n != null && !n.trim().isEmpty()) return safeBinName(n); }
+            }
+        } catch (Throwable ignored) {}
+        try { String p = uri.getLastPathSegment(); if (p != null) return safeBinName(p); } catch (Throwable ignored) {}
+        return "firmware.bin";
+    }
+
+    /** Byte write into the public Downloads collection (MediaStore). Returns the settled display name. */
+    private String saveBytesToDownloads(String name, byte[] bytes) {
+        ContentResolver cr = getContentResolver();
+        Uri item = null;
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(MediaStore.Downloads.DISPLAY_NAME, name);
+            cv.put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream");
+            cv.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            cv.put(MediaStore.Downloads.IS_PENDING, 1);
+            item = cr.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv);
+            if (item == null) return null;
+            OutputStream out = cr.openOutputStream(item);
+            if (out == null) { cr.delete(item, null, null); return null; }
+            try { out.write(bytes); out.flush(); } finally { out.close(); }
+            ContentValues done = new ContentValues();
+            done.put(MediaStore.Downloads.IS_PENDING, 0);
+            cr.update(item, done, null, null);
+            return gpxDisplayName(cr, item, name);
+        } catch (Throwable t) {
+            Log.e(TAG, "saveBytesToDownloads failed", t);
+            if (item != null) { try { cr.delete(item, null, null); } catch (Throwable ignored) {} }
+            return null;
+        }
+    }
+
+    /** Derive a .bin filename from a URL path, falling back to {@code fallback}. */
+    private static String fwNameFromUrl(String url, String fallback) {
+        try {
+            String path = Uri.parse(url).getLastPathSegment();
+            if (path != null && !path.trim().isEmpty()) return safeBinName(path);
+        } catch (Throwable ignored) {}
+        return fallback;
+    }
+
+    /** Keep the name inside Downloads and ending in .bin. */
+    private static String safeBinName(String raw) {
+        String s = raw == null ? "" : raw.trim().replaceAll("[\\\\/:*?\"<>|\\r\\n]", "_");
+        if (s.isEmpty()) s = "navee_firmware";
+        if (!s.toLowerCase(Locale.US).endsWith(".bin")) s = s + ".bin";
+        return s;
     }
 
     /** Downloads collection write through MediaStore. Needs no storage permission. */

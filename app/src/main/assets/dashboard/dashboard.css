@@ -566,14 +566,14 @@ html, body {
 /* The settings action button. .settings-btn is the reusable form; the id list is the same
    declaration for the buttons that predate the class. New buttons take the class. */
 .settings-btn,
-#btn-scooter-settings, #btn-connect-scooter, #btn-export-logs, #btn-error-reports, #btn-navigation, #btn-info, #btn-battery, #btn-firmware, #btn-whatsnew, #btn-version-info {
+#btn-scooter-settings, #btn-connect-scooter, #btn-export-logs, #btn-error-reports, #btn-navigation, #btn-info, #btn-battery, #btn-whatsnew, #btn-version-info {
   width: 100%; padding: 12px; border: 1px solid var(--border);
   background: var(--bg); color: var(--text); font-size: var(--fs-base); font-weight: var(--fw-semibold);
   border-radius: 9px; cursor: pointer; text-align: center;
   -webkit-tap-highlight-color: transparent;
 }
 .settings-btn:active,
-#btn-scooter-settings:active, #btn-connect-scooter:active, #btn-export-logs:active, #btn-error-reports:active, #btn-navigation:active, #btn-info:active, #btn-battery:active, #btn-firmware:active, #btn-whatsnew:active, #btn-version-info:active { background: var(--border); }
+#btn-scooter-settings:active, #btn-connect-scooter:active, #btn-export-logs:active, #btn-error-reports:active, #btn-navigation:active, #btn-info:active, #btn-battery:active, #btn-whatsnew:active, #btn-version-info:active { background: var(--border); }
 /* #btn-stream-start (good fill) + #btn-stream-stop (neutral) are styled by the shared action-button base. */
 #stream-url { color: var(--text); background: var(--bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 8px; font-family: monospace; }
@@ -582,22 +582,22 @@ html, body {
    Every sub-page is the same full-screen sheet that slides in from the right, so one shell
    carries all of them. #routes-scroller keeps its own block: it clips instead of scrolling. */
 #routes-page, #streaming-page,
-#connect-page, #scooter-page, #error-reports-page, #info-page, #battery-page, #firmware-page, #display-page {
+#connect-page, #scooter-page, #error-reports-page, #info-page, #battery-page, #firmware-page, #patcher-page, #display-page {
   position: fixed; inset: 0; z-index: 120; background: var(--bg);
   display: flex; flex-direction: column;
   transform: translateX(100%); transition: transform .28s cubic-bezier(.4,0,.2,1);
 }
 #routes-page.open, #streaming-page.open,
-#connect-page.open, #scooter-page.open, #error-reports-page.open, #info-page.open, #battery-page.open, #firmware-page.open, #display-page.open { transform: translateX(0); }
+#connect-page.open, #scooter-page.open, #error-reports-page.open, #info-page.open, #battery-page.open, #firmware-page.open, #patcher-page.open, #display-page.open { transform: translateX(0); }
 #streaming-scroller,
-#connect-scroller, #scooter-scroller, #error-reports-scroller, #info-scroller, #battery-scroller, #firmware-scroller, #display-scroller {
+#connect-scroller, #scooter-scroller, #error-reports-scroller, #info-scroller, #battery-scroller, #firmware-scroller, #patcher-scroller, #display-scroller {
   flex: 1; min-height: 0; overflow-y: auto; padding: var(--gap);
   display: flex; flex-direction: column; gap: 4px;
   padding-bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px) + 12px);
 }
 /* children must NOT shrink, otherwise the flex column squashes instead of scrolling */
 #routes-scroller > *, #streaming-scroller > *,
-#connect-scroller > *, #scooter-scroller > *, #error-reports-scroller > *, #info-scroller > *, #battery-scroller > *, #firmware-scroller > *, #display-scroller > * { flex-shrink: 0; }
+#connect-scroller > *, #scooter-scroller > *, #error-reports-scroller > *, #info-scroller > *, #battery-scroller > *, #firmware-scroller > *, #patcher-scroller > *, #display-scroller > * { flex-shrink: 0; }
 
 /* ── Battery Info page ── */
 .bat-health {
@@ -624,7 +624,7 @@ html, body {
    (12px pad, 9px radius, hairline border, base/bold type, transparent tap highlight); the thin
    variants below add only the colour + width differences (neutral / primary-fill / good-fill /
    danger-outline). */
-#btn-fw-pick, #btn-fw-start, #btn-fw-cancel,
+#btn-patcher-run, #btn-fw-file, #btn-fw-start, #btn-fw-cancel,
 #btn-scan, #btn-disconnect,
 #btn-stream-start, #btn-stream-stop,
 .gs-save-btn {
@@ -634,25 +634,52 @@ html, body {
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 /* Full-width action buttons (firmware / save); scan + stream sit in a flex row. */
-#btn-fw-pick, #btn-fw-start, #btn-fw-cancel, .gs-save-btn { width: 100%; }
-#btn-fw-pick, #btn-fw-start, #btn-fw-cancel { text-align: center; }
+#btn-patcher-run, #btn-fw-file, #btn-fw-start, #btn-fw-cancel, .gs-save-btn { width: 100%; }
+#btn-patcher-run, #btn-fw-file, #btn-fw-start, #btn-fw-cancel { text-align: center; }
 /* Variant: primary fill (also the selected motor-mode button and the accept button of the
    disclaimer, the one modal button that grants something rather than dismissing). */
-#btn-fw-start, #btn-scan, .gs-save-btn, #disclaimer-accept,
+#btn-fw-start, #btn-patcher-run, #btn-scan, .gs-save-btn, #disclaimer-accept,
 /* Variant: good fill (start streaming, Smart on). Must stay after the primary fill: the Smart
    button carries .mq-btn and .mq-smart at equal specificity, so the later rule decides. */
 #btn-stream-start,
-/* Variant: neutral card (firmware pick) */
-#btn-fw-pick { background: var(--card); color: var(--text); }
+/* Variant: neutral card (firmware file pick) */
+#btn-fw-file { background: var(--card); color: var(--text); }
 /* Variant: danger outline (cancel / disconnect) */
 #btn-fw-cancel, #btn-disconnect { background: var(--bg); color: var(--danger); border-color: var(--danger); }
 /* Disabled (firmware start, disclaimer accept before the box is ticked) */
-#btn-fw-start:disabled,
+#btn-fw-start:disabled, #btn-patcher-run:disabled,
 #disclaimer-accept:disabled { background: var(--border); color: var(--label); border-color: var(--border); cursor: default; }
 /* Pressed (streaming fades a touch lighter) */
-#btn-fw-pick:active, #btn-fw-start:active, #btn-fw-cancel:active,
+#btn-patcher-run:active, #btn-fw-file:active, #btn-fw-start:active, #btn-fw-cancel:active,
 #btn-scan:active, #btn-disconnect:active, .gs-save-btn:active { opacity: .75; }
 #btn-stream-start:active, #btn-stream-stop:active { opacity: .7; }
+
+/* Firmware update: URL field, picked-file summary, progress bar and flash log */
+#fw-url {
+  width: 100%; margin: 8px 0 4px; padding: 10px 12px; box-sizing: border-box;
+  border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--text);
+  font-size: var(--fs-md); font-family: monospace;
+}
+#fw-fileinfo { font-size: var(--fs-sm); line-height: 1.6; margin-top: 8px; }
+#fw-fileinfo .fw-row { display: flex; justify-content: space-between; gap: 10px; }
+#fw-fileinfo .fw-k { color: var(--label); flex-shrink: 0; white-space: nowrap; }
+#fw-fileinfo .fw-row > span:last-child { min-width: 0; text-align: right; overflow-wrap: anywhere; }
+.fw-verdict { margin-top: 10px; padding: 8px 10px; border-radius: 8px; font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
+.fw-verdict.ok  { background: color-mix(in srgb, var(--ble) 16%, transparent); color: var(--ble); }
+.fw-verdict.bad { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+.fw-badge { display: inline-block; min-width: 16px; text-align: center; padding: 1px 6px; border-radius: 999px; font-size: var(--fs-xs); font-weight: var(--fw-bold); }
+.fw-badge.ok { background: color-mix(in srgb, var(--ble) 22%, transparent); color: var(--ble); }
+.fw-badge.warn { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
+#fw-consent-wrap { margin: 4px 0 0; }
+.fw-bar { height: 12px; border-radius: 999px; background: var(--border); overflow: hidden; }
+#fw-bar-fill { height: 100%; width: 0; background: var(--ble); transition: width .25s ease; }
+#fw-progress-text { font-size: var(--fs-md); font-weight: var(--fw-semibold); text-align: center; margin: 6px 0; font-variant-numeric: tabular-nums; }
+#fw-phase { font-size: var(--fs-sm); color: var(--label); text-align: center; }
+#fw-log {
+  margin-top: 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--card); color: var(--label); font-family: monospace; font-size: var(--fs-xs);
+  line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto;
+}
 
 /* Error report rows */
 .err-item {

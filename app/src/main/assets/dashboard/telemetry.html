@@ -289,6 +289,10 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.battery.hint">Akkustand, Zustand und Eckdaten (Roller muss verbunden sein)</div>
     <button id="btn-navigation" data-i18n="settings.scooter.navigation.action">&#129517; Navigation</button>
     <div class="settings-row-sublabel note-gap" data-i18n="settings.scooter.navigation.hint">Open the navigation screen</div>
+    <button id="btn-fw-patcher" class="settings-btn" data-i18n="settings.firmware.patch.action">&#128295; Firmware Patcher</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.firmware.patch.hint">Passende Original-Firmware automatisch laden, entdrosseln und in den Ordner Downloads legen (Roller muss verbunden sein)</div>
+    <button id="btn-fw-flash" class="settings-btn" data-i18n="settings.firmware.update.action">&#9889; Firmware Update</button>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.firmware.update.hint">Gepatchte oder eigene Firmware über Bluetooth auf den Roller flashen (Roller muss verbunden sein)</div>
   </div>
 
   <!-- GPS: the recording settings and the recordings they produce belong together. -->
@@ -766,6 +770,75 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
   </div>
 </div>
 
+<!-- ── Firmware patcher page: detect model, auto-download the matching stock bins, patch, hand off ── -->
+<div id="patcher-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-patcher-back" aria-label="Back" data-i18n-aria="fw.nav.back.label" data-i18n="fw.nav.back.icon">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="patch.page.title">Firmware Patcher</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="patcher-scroller">
+    <div class="fw-warn" data-i18n="patch.warn.intro">
+      <b>Erst lesen.</b> Dieser Patcher lädt die zu deinem Roller passende Original-Firmware herunter, legt sie im Ordner Downloads ab und schreibt eine entdrosselte Kopie (Speed, Kickstart, Tempomat) daneben. Danach geht es weiter zum Firmware Update, wo du die gepatchte Datei flashen kannst. Nur eigenes Gerät auf Privatgelände.
+    </div>
+
+    <div class="settings-group pt-6">
+      <div class="settings-group-title" data-i18n="patch.section.model.title">Erkanntes Modell</div>
+      <div id="patch-model" class="settings-row-sublabel m-6-0-0" data-i18n="patch.model.wait">Roller verbinden, damit das Modell erkannt wird.</div>
+      <div id="patch-variants" class="is-hidden"></div>
+      <button id="btn-patcher-run" disabled data-i18n="patch.run.button">&#128229; Herunterladen und patchen</button>
+      <div class="settings-row-sublabel m-6-0-0" id="patch-run-hint" data-i18n="patch.run.hint">Roller verbinden, damit das Modell erkannt wird.</div>
+      <div id="patch-status" class="settings-row-sublabel m-6-0-0 is-hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Firmware update (flasher) page ────────────────── -->
+<div id="firmware-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-firmware-back" aria-label="Back" data-i18n-aria="fw.nav.back.label" data-i18n="fw.nav.back.icon">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="fw.page.title">Firmware Update</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="firmware-scroller">
+    <div class="fw-warn" data-i18n="fw.warn.intro">
+      <b>Erst lesen.</b> Diese Seite schreibt eine Firmware per Bluetooth auf den Roller. Während des Flashens den Roller eingeschaltet und in Reichweite lassen, die App im Vordergrund halten und den Roller nicht ausschalten. Wird der Vorgang unterbrochen, bleibt der Roller im Update-Modus und kann einfach neu geflasht werden. Nur eine Datei flashen, die zu deinem Roller passt.
+    </div>
+
+    <div class="settings-group pt-6">
+      <div class="settings-group-title" data-i18n="fw.section.file.title">Firmware</div>
+      <div class="settings-row-sublabel m-6-0-0" data-i18n="fw.file.hint">Die vom Patcher vorbereiteten Dateien liegen bereit. Du kannst auch eine eigene, fertige .bin wählen.</div>
+      <button id="btn-fw-file" data-i18n="fw.file.choose">&#128193; Eigene Datei wählen</button>
+      <div id="fw-fileinfo" data-i18n="fw.file.none">Keine Datei geladen.</div>
+    </div>
+
+    <div class="settings-group has-top-rule">
+      <label class="consent-row" id="fw-consent-wrap">
+        <input type="checkbox" id="fw-consent">
+        <span data-i18n="fw.consent.text">Ich habe den Hinweis gelesen und flashe auf eigenes Risiko.</span>
+      </label>
+      <div class="settings-row-sublabel m-6-0-0"><span class="link-ble" id="fw-consent-link" data-i18n="disclaimer.read.link">Haftungsausschluss lesen</span></div>
+      <button id="btn-fw-start" disabled data-i18n="fw.start.button">Flashen starten</button>
+      <div class="settings-row-sublabel m-6-0-0" id="fw-start-hint" data-i18n="fw.start.hint">
+        Firmware laden und den Roller verbinden, um das Flashen freizuschalten.
+      </div>
+
+      <div class="is-hidden mt-12" id="fw-progress-wrap">
+        <div class="fw-bar"><div id="fw-bar-fill"></div></div>
+        <div id="fw-progress-text" data-i18n="fw.progress.percent">0%</div>
+        <div id="fw-phase" data-i18n="fw.progress.phase.preparing">Vorbereiten</div>
+        <button class="mt-10" id="btn-fw-cancel" data-i18n="fw.cancel.button">Flashen abbrechen</button>
+      </div>
+
+      <div class="is-hidden" id="fw-log"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Version Info & Disclaimer modal ─────────────── -->
 <div id="verinfo-overlay">
   <div id="verinfo-box" role="dialog" aria-modal="true" aria-labelledby="verinfo-title">
@@ -824,6 +897,8 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 </div>
 
 <script src="i18n.js"></script>
+<script src="patcher.js"></script>
+<script src="fw_manifest.js"></script>
 <script>
 // The current language, declared first: everything below may look a string up.
 let lang = 'en';
@@ -3340,8 +3415,16 @@ function wireSpeedRelease() {
    a press of the mode button silently drops the release on the scooter side. */
 let _speedReleased = false;
 
+// Drive-mode gear byte for the speed release, per model. XT5 family: 4 open / 3 normal. NT5 Max
+// (every non-XT model here): 5 open / 2 throttled. Model comes from the hardware serial pid.
+function speedReleaseGear(on) {
+  const isXT = naveeIsXT(naveeRealModel());
+  if (isXT) return on ? 4 : 3;
+  return on ? 5 : 2;
+}
+
 function sendSpeedRelease(on) {
-  if (!pushSetting(NAVEE_CMD.drivemode, on ? 4 : 3)) return false;
+  if (!pushSetting(NAVEE_CMD.drivemode, speedReleaseGear(on))) return false;
   _speedReleased = !!on;
   setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
   return true;
@@ -3618,6 +3701,25 @@ function wireEvents() {
   });
   document.getElementById('btn-battery-back').addEventListener('click', closeBatteryPage);
 
+  // Firmware patcher: detect the model, auto-download the matching stock bins, patch, then hand off.
+  document.getElementById('btn-fw-patcher').addEventListener('click', () => {
+    closeSettings();
+    openPatcherPage();
+  });
+  document.getElementById('btn-patcher-back').addEventListener('click', closePatcherPage);
+  document.getElementById('btn-patcher-run').addEventListener('click', fwRunPatcher);
+  // Firmware update (flasher): flash a prepared or user-picked image over BLE (XMODEM-128 DFU).
+  document.getElementById('btn-fw-flash').addEventListener('click', () => {
+    closeSettings();
+    openFirmwarePage();
+  });
+  document.getElementById('btn-firmware-back').addEventListener('click', closeFirmwarePage);
+  document.getElementById('btn-fw-file').addEventListener('click', fwPickFile);
+  document.getElementById('btn-fw-start').addEventListener('click', fwStart);
+  document.getElementById('btn-fw-cancel').addEventListener('click', fwCancel);
+  document.getElementById('fw-consent').addEventListener('change', fwSyncStartEnabled);
+  document.getElementById('fw-consent-link').addEventListener('click', () => openDisclaimer('read'));
+
   document.getElementById('btn-open-display').addEventListener('click', () => {
     closeSettings();
     openDisplayPage();
@@ -3799,6 +3901,345 @@ function wireEvents() {
 }
 
 /* ── Initialisation ───────────────────────────────────────── */
+
+/* ── Firmware update (download stock -> patch -> XMODEM-128 DFU flash) ──────────
+   The download and the /sdcard/Download file IO happen natively (LB.fw*); the patch runs in the
+   WebView with the bundled engine (window.NVFW); the flash runs natively over BLE. Progress, log
+   and state come back via window.__onFw*. */
+const fwState = {
+  running: false, downloading: false,
+  model: null,                              // detected { state:'ok', id, name, meter, bldc }
+  pendingDownloads: [],                     // components left to download+patch this run
+  staged: { meter: null, bldc: null },      // { name } per component once written and staged
+  flashQueue: [], flashing: null,           // sequential meter -> bldc flash
+};
+
+/* ── Model detection from the live serial pid plus the running controller version ── */
+function fwModelEntry(id) {
+  const m = window.FW_MANIFEST && window.FW_MANIFEST.models[id];
+  if (!m) return { state: 'nomodel' };
+  return { state: 'ok', id: id, name: m.name, meter: m.comps.meter || null, bldc: m.comps.bldc || null };
+}
+function fwDetectModel() {
+  const M = window.FW_MANIFEST;
+  const pid4 = (liveRaw().pid || '').trim();
+  if (!M || !pid4) return { state: 'nomodel' };
+  const ids = (M.pidIndex && M.pidIndex[pid4]) || [];
+  if (!ids.length) return { state: 'unknown', pid: pid4 };
+  if (ids.length === 1) return fwModelEntry(ids[0]);
+  // pid4 collision: the running controller (bldc) version selects the variant.
+  const ver = (liveRaw().fwBldc || '').trim();
+  const hit = ids.find(id => { const b = M.models[id] && M.models[id].comps.bldc; return b && b.vn === ver; });
+  if (hit) return fwModelEntry(hit);
+  return { state: 'variants', ids: ids, pid: pid4 };
+}
+
+/* ── Patcher page: pick the matching stock bins, download, patch, hand off ──────── */
+function openPatcherPage() {
+  document.getElementById('patcher-page').classList.add('open');
+  const st = document.getElementById('patch-status'); if (st) { st.classList.add('is-hidden'); st.textContent = ''; }
+  renderPatcherModel();
+}
+function closePatcherPage() {
+  document.getElementById('patcher-page').classList.remove('open');
+}
+function renderPatcherModel(forcedId) {
+  const modelEl = document.getElementById('patch-model');
+  const varEl = document.getElementById('patch-variants');
+  const btn = document.getElementById('btn-patcher-run');
+  const hint = document.getElementById('patch-run-hint');
+  if (varEl) { varEl.classList.add('is-hidden'); varEl.innerHTML = ''; }
+  fwState.model = null;
+  if (!state.bleConnected) { modelEl.textContent = t('patch.model.connect'); btn.disabled = true; hint.textContent = ''; return; }
+  const det = forcedId ? fwModelEntry(forcedId) : fwDetectModel();
+  if (det.state === 'ok') {
+    fwState.model = det;
+    const parts = [];
+    if (det.meter) parts.push('Meter ' + det.meter.vn);
+    if (det.bldc) parts.push('Controller ' + det.bldc.vn);
+    modelEl.textContent = det.name + (parts.length ? ' (' + parts.join(', ') + ')' : '');
+    const flashable = !!(det.meter || det.bldc);
+    btn.disabled = !flashable;
+    hint.textContent = flashable ? t('patch.run.ready') : t('patch.run.nofw');
+    return;
+  }
+  if (det.state === 'variants') {
+    modelEl.textContent = t('patch.model.variant');
+    if (varEl) {
+      varEl.classList.remove('is-hidden');
+      det.ids.forEach(id => {
+        const m = window.FW_MANIFEST.models[id];
+        const b = document.createElement('button');
+        b.className = 'settings-btn';
+        b.style.marginTop = '8px';
+        b.textContent = m.name + ' - ' + t('patch.comp.bldc') + ' ' + (m.comps.bldc ? m.comps.bldc.vn : '?');
+        b.addEventListener('click', () => renderPatcherModel(id));
+        varEl.appendChild(b);
+      });
+    }
+    btn.disabled = true; hint.textContent = t('patch.run.pickvariant'); return;
+  }
+  modelEl.textContent = (det.state === 'unknown') ? tf('patch.model.unknown', { pid: det.pid }) : t('patch.model.none');
+  btn.disabled = true; hint.textContent = t('patch.run.unsupported');
+}
+function fwPatchStatus(msg) {
+  const el = document.getElementById('patch-status');
+  if (!el) return;
+  el.classList.remove('is-hidden'); el.textContent = msg;
+}
+function fwRunPatcher() {
+  if (fwState.running || fwState.downloading) { showToast(t('fw.hint.running'), 3000, 'err'); return; }
+  if (typeof LB === 'undefined' || !LB.fwDownloadPatch) { showToast(t('msg.app.only.in.app')); return; }
+  const det = fwState.model;
+  if (!det || det.state !== 'ok') { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
+  const comps = [];
+  if (det.meter) comps.push({ kind: 'meter', url: det.meter.url });
+  if (det.bldc) comps.push({ kind: 'bldc', url: det.bldc.url });
+  if (!comps.length) { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
+  fwState.staged = { meter: null, bldc: null };
+  fwState.pendingDownloads = comps.slice();
+  fwState.downloading = true;
+  document.getElementById('btn-patcher-run').disabled = true;
+  fwDownloadNext();
+}
+function fwDownloadNext() {
+  const next = fwState.pendingDownloads.shift();
+  if (!next) return;
+  fwPatchStatus(tf('patch.status.download', { kind: next.kind }));
+  try { LB.fwDownloadPatch(next.url, next.kind); }
+  catch (e) { fwState.downloading = false; document.getElementById('btn-patcher-run').disabled = false; showToast(tf('msg.error.generic', { e: e })); }
+}
+function fwHandoffToFlasher() {
+  closePatcherPage();
+  openFirmwarePage();
+  showToast(t('patch.toast.ready'));
+}
+
+/* ── Flasher page: flash the staged or a user-picked image, meter first then bldc ── */
+function openFirmwarePage() {
+  if (!fwState.running) {
+    const cons = document.getElementById('fw-consent'); if (cons) cons.checked = false;
+    fwResetProgress();
+  } else {
+    const pw = document.getElementById('fw-progress-wrap');
+    if (pw) { pw.classList.remove('is-hidden'); pw.style.display = 'block'; }
+  }
+  fwRenderStaged();
+  document.getElementById('firmware-page').classList.add('open');
+  fwSyncStartEnabled();
+}
+function closeFirmwarePage() {
+  document.getElementById('firmware-page').classList.remove('open');
+}
+function fwResetProgress() {
+  const bar = document.getElementById('fw-bar-fill'); if (bar) bar.style.width = '0%';
+  const pt = document.getElementById('fw-progress-text'); if (pt) pt.textContent = '0%';
+  const ph = document.getElementById('fw-phase'); if (ph) ph.textContent = t('fw.progress.phase.preparing');
+  const pw = document.getElementById('fw-progress-wrap'); if (pw) { pw.classList.add('is-hidden'); pw.style.display = 'none'; }
+  const log = document.getElementById('fw-log'); if (log) { log.textContent = ''; log.classList.add('is-hidden'); log.style.display = 'none'; }
+}
+function fwStagedList() {
+  const out = [];
+  if (fwState.staged.meter) out.push({ kind: 'meter', name: fwState.staged.meter.name });
+  if (fwState.staged.bldc) out.push({ kind: 'bldc', name: fwState.staged.bldc.name });
+  return out;
+}
+function fwRenderStaged() {
+  const info = document.getElementById('fw-fileinfo');
+  if (!info) return;
+  const list = fwStagedList();
+  if (!list.length) { info.textContent = t('fw.file.none'); return; }
+  info.innerHTML = list.map(x =>
+    '<div class="fw-row"><span class="fw-k">' + (x.kind === 'bldc' ? 'BLDC' : 'Meter') + '</span><span>' + escXML(x.name) + '</span></div>'
+  ).join('');
+}
+function fwPickFile() {
+  if (fwState.running) { showToast(t('fw.hint.running'), 3000, 'err'); return; }
+  if (typeof LB === 'undefined' || !LB.fwPickFile) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.fwPickFile(); } catch (e) { showToast(tf('msg.error.generic', { e: e })); }
+}
+window.__onFwPicked = function(arg) {
+  let m = arg; try { if (typeof arg === 'string') m = JSON.parse(arg); } catch (e) { m = null; }
+  if (!m || !m.ok) { showToast(t('fw.toast.pick_fail'), 3000, 'err'); return; }
+  let kind;
+  try {
+    const key = window.NVFW && window.NVFW.identify ? window.NVFW.identify(new Uint8Array(fwB64ToBuf(m.b64))) : null;
+    if (!key || !window.NVFW.IMAGES[key]) { showToast(t('fw.pick.unknown'), 4000, 'err'); return; }
+    kind = window.NVFW.IMAGES[key].kind === 'bldc' ? 'bldc' : 'meter';
+  } catch (e) { showToast(t('fw.pick.unknown'), 4000, 'err'); return; }
+  try { LB.fwStageRaw(m.b64, m.name, kind); } catch (e) { showToast(tf('msg.error.generic', { e: e })); }
+};
+
+// base64 <-> byte buffer for the patch hand-off across the native bridge.
+function fwB64ToBuf(b64) {
+  const bin = atob(b64), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8.buffer;
+}
+function fwBufToB64(u8) {
+  let s = ''; const chunk = 0x8000;
+  for (let i = 0; i < u8.length; i += chunk) s += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
+  return btoa(s);
+}
+function fwPatchedName(name) {
+  const dot = name.lastIndexOf('.');
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : '.bin';
+  return stem + '-patched' + ext;
+}
+
+window.__onFwDownloaded = function(arg) {
+  let m = arg; try { if (typeof arg === 'string') m = JSON.parse(arg); } catch (e) { m = null; }
+  const kind = (m && m.kind) || '';
+  if (!m || !m.ok) {
+    fwState.downloading = false;
+    fwPatchStatus(tf('patch.status.download_fail', { kind: kind }));
+    document.getElementById('btn-patcher-run').disabled = false;
+    return;
+  }
+  fwPatchStatus(tf('patch.status.patch', { kind: kind }));
+  let r;
+  try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64)); }
+  catch (e) {
+    fwState.downloading = false;
+    fwPatchStatus(t('fw.patch.error') + ' ' + (e && e.message ? e.message : e));
+    document.getElementById('btn-patcher-run').disabled = false;
+    return;
+  }
+  const patchedName = fwPatchedName(m.name);
+  try { LB.fwStagePatched(fwBufToB64(r.bytes), patchedName, r.kind); }
+  catch (e) { showToast(tf('msg.error.generic', { e: e })); }
+};
+
+window.__onFwStaged = function(arg) {
+  let m = arg; try { if (typeof arg === 'string') m = JSON.parse(arg); } catch (e) { m = null; }
+  if (!m || !m.ok) {
+    if (fwState.downloading) {
+      fwState.downloading = false;
+      fwPatchStatus(t('fw.toast.save_fail'));
+      document.getElementById('btn-patcher-run').disabled = false;
+    } else { showToast(t('fw.toast.save_fail'), 3000, 'err'); }
+    return;
+  }
+  const kind = (m.kind === 'bldc') ? 'bldc' : 'meter';
+  fwState.staged[kind] = { name: m.name };
+  // Patcher run in progress: pull the next component, else finish and hand off to the flasher.
+  if (fwState.downloading) {
+    if (fwState.pendingDownloads.length) { fwDownloadNext(); }
+    else {
+      fwState.downloading = false;
+      fwPatchStatus(t('patch.status.done'));
+      document.getElementById('btn-patcher-run').disabled = false;
+      fwHandoffToFlasher();
+    }
+  }
+  fwRenderStaged();
+  fwSyncStartEnabled();
+};
+
+function fwSyncStartEnabled() {
+  const btn = document.getElementById('btn-fw-start');
+  const hint = document.getElementById('fw-start-hint');
+  if (!btn) return;
+  const cons = document.getElementById('fw-consent');
+  const have = !!(fwState.staged.meter || fwState.staged.bldc);
+  let ok = true, msg = '';
+  if (fwState.running) { ok = false; msg = t('fw.hint.running'); }
+  else if (fwState.downloading) { ok = false; msg = t('fw.hint.downloading'); }
+  else if (!state.bleConnected) { ok = false; msg = t('fw.hint.connect_first'); }
+  else if (!have) { ok = false; msg = t('fw.hint.load_first'); }
+  else if (cons && !cons.checked) { ok = false; msg = t('fw.hint.consent'); }
+  else { msg = t('fw.hint.ready'); }
+  btn.disabled = !ok;
+  if (hint) hint.textContent = msg;
+}
+
+function fwStart() {
+  if (fwState.running) return;
+  const list = fwStagedList();
+  if (!list.length) { showToast(t('fw.hint.load_first'), 3000, 'err'); return; }
+  if (!state.bleConnected) { showToast(t('msg2.toast.connect_scooter_first'), 3000, 'err'); return; }
+  const cons = document.getElementById('fw-consent');
+  if (!cons || !cons.checked) { showToast(t('fw.hint.consent'), 3000, 'err'); return; }
+  document.getElementById('confirm-title').textContent = t('fw.confirm.title');
+  const warn = document.getElementById('confirm-warn');
+  if (warn) { warn.textContent = t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block'; }
+  document.getElementById('confirm-msg').textContent = tf('fw.confirm.body', { file: list.map(x => x.name).join(', ') });
+  document.getElementById('confirm-ok').textContent = t('fw.confirm.ok');
+  state.confirmCb = () => { fwState.flashQueue = list.map(x => x.kind); fwFlashNext(); };
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function fwFlashNext() {
+  const kind = fwState.flashQueue.shift();
+  if (!kind) return;
+  fwState.flashing = kind;
+  try { if (LB.fwStartFlash) LB.fwStartFlash(kind); }
+  catch (e) { showToast(tf('msg.error.generic', { e: e })); }
+}
+
+function fwCancel() {
+  document.getElementById('confirm-title').textContent = t('fw.cancel.title');
+  document.getElementById('confirm-msg').textContent = t('fw.cancel.body');
+  document.getElementById('confirm-ok').textContent = t('fw.cancel.ok');
+  state.confirmCb = () => { try { if (LB.fwCancelFlash) LB.fwCancelFlash(); } catch (e) {} };
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function fwLog(line) {
+  const log = document.getElementById('fw-log');
+  if (!log) return;
+  log.classList.remove('is-hidden'); log.style.display = 'block';
+  const atBottom = (log.scrollHeight - log.scrollTop - log.clientHeight) < 24;
+  log.textContent += (log.textContent ? '\n' : '') + line;
+  if (atBottom) log.scrollTop = log.scrollHeight;
+}
+window.__onFwLog = function(line) { try { fwLog('' + line); } catch (e) {} };
+
+function fwPhaseText(code) {
+  const map = { prepare: 'fw.progress.phase.preparing', enter: 'fw.progress.phase.enter',
+    flash: 'fw.progress.phase.flashing', finish: 'fw.progress.phase.finishing' };
+  return map[code] ? t(map[code]) : code;
+}
+
+window.__onFwProgress = function(arg) {
+  let p = arg; try { if (typeof arg === 'string') p = JSON.parse(arg); } catch (e) { return; }
+  if (!p) return;
+  const pct = Math.max(0, Math.min(100, parseInt(p.percent, 10) || 0));
+  const fill = document.getElementById('fw-bar-fill'); if (fill) fill.style.width = pct + '%';
+  const txt = document.getElementById('fw-progress-text');
+  if (txt) txt.textContent = p.count ? tf('fw.progress.block', { pct: pct, n: p.block, count: p.count }) : (pct + '%');
+  const ph = document.getElementById('fw-phase'); if (ph && p.phase) ph.textContent = fwPhaseText(p.phase);
+};
+
+window.__onFwState = function(arg) {
+  let s = arg; try { if (typeof arg === 'string') s = JSON.parse(arg); } catch (e) { return; }
+  if (!s) return;
+  const st = s.state || '';
+  if (st === 'running') {
+    fwState.running = true;
+    const pw = document.getElementById('fw-progress-wrap'); if (pw) { pw.classList.remove('is-hidden'); pw.style.display = 'block'; }
+    return;
+  }
+  if (st === 'success') {
+    // one component finished: drop it, then continue the queue or finish the run.
+    if (fwState.flashing) fwState.staged[fwState.flashing] = null;
+    fwState.flashing = null;
+    fwRenderStaged();
+    if (fwState.flashQueue.length) { fwResetProgress(); setTimeout(fwFlashNext, 1200); return; }
+    fwState.running = false;
+    showToast(t('fw.toast.success'));
+    try { if (LB.fwClear) LB.fwClear(); } catch (e) {}
+    fwSyncStartEnabled();
+    return;
+  }
+  fwState.running = false;
+  fwState.flashQueue = []; fwState.flashing = null;
+  if (st === 'failed') showToast(s.message === 'auth-rejected' ? t('fw.fail.bound') : (s.message || t('fw.toast.failed')), 6000, 'err');
+  else if (st === 'cancelled') showToast(s.message || t('fw.toast.cancelled'), 4000, 'err');
+  if (st === 'failed') { try { if (LB.fwClear) LB.fwClear(); } catch (e) {} fwState.staged = { meter: null, bldc: null }; }
+  fwRenderStaged();
+  fwSyncStartEnabled();
+};
 
 function init() {
   // Show the app version (read natively from the package) in the streaming build-info line.

@@ -76,6 +76,10 @@ final class BleManager {
         void onScanResults(String jsonArray);
         void onState(String json);
         void onLiveData(String json);
+        // Firmware-flash callbacks. json fields: progress {percent,block,count,phase}; state {state,message}.
+        void onFwProgress(String json);
+        void onFwLog(String line);
+        void onFwState(String json);
     }
 
     private final Context appCtx;
@@ -107,6 +111,9 @@ final class BleManager {
     // write serialisation
     private final ArrayDeque<byte[]> writeQueue = new ArrayDeque<>();
     private boolean writing = false;
+
+    // firmware flash: owns the write/notify path while running
+    private volatile NaveeDfuEngine dfu;
 
     BleManager(Context ctx, Listener listener) {
         this.appCtx = ctx.getApplicationContext();
@@ -383,10 +390,12 @@ final class BleManager {
         public void onCharacteristicChanged(BluetoothGatt g, BluetoothGattCharacteristic c) {
             try {
                 byte[] v = c.getValue();
-                if (v != null) {
-                    parser.onNotify(v);
-                    if (frameCount++ % 50 == 0) Log.i(TAG, "rx frames=" + frameCount + " last=" + v.length + "b");
-                }
+                if (v == null) return;
+                // During a flash the DFU engine owns b003 (XMODEM ACKs + text tokens, not 55 AA frames).
+                NaveeDfuEngine d = dfu;
+                if (d != null && d.isRunning()) { d.onNotify(v); return; }
+                parser.onNotify(v);
+                if (frameCount++ % 50 == 0) Log.i(TAG, "rx frames=" + frameCount + " last=" + v.length + "b");
             } catch (Throwable t) {
                 Log.e(TAG, "onCharacteristicChanged failed", t);
             }
@@ -516,6 +525,8 @@ final class BleManager {
         @Override
         public void run() {
             if (!connected) return;
+            // Pause telemetry reads/pushes while a flash owns the link.
+            if (isDfuActive()) { main.postDelayed(this, PUSH_INTERVAL_MS); return; }
             try {
                 if (listener != null) listener.onLiveData(parser.toJson());
             } catch (Throwable t) {
@@ -561,6 +572,7 @@ final class BleManager {
 
     private void drainWriteQueue() {
         if (!notifyReady) return;
+        if (isDfuActive()) return;   // the flash engine drives b002 directly while running
         byte[] frame;
         synchronized (writeQueue) {
             if (writing) return;
@@ -622,6 +634,103 @@ final class BleManager {
         enqueueWrite(CommandBuilder.read(0x72));   // battery telemetry
         enqueueWrite(CommandBuilder.read(0x73));   // firmware versions
     }
+
+    // ── Firmware flash (XMODEM-128 DFU) ──
+
+    boolean isDfuActive() {
+        NaveeDfuEngine d = dfu;
+        return d != null && d.isRunning();
+    }
+
+    /** Start flashing a patched image. target: 1 = meter, 2 = bldc. userId <= 0 = random 0x30 init. */
+    void startDfu(final byte[] image, final int target, final long userId) {
+        try {
+            if (isDfuActive()) return;
+            if (!connected || !notifyReady) {
+                if (listener != null) listener.onFwState("{\"state\":\"failed\",\"message\":\"Connect the scooter first\"}");
+                return;
+            }
+            stopPush();
+            final NaveeDfuEngine engine = new NaveeDfuEngine(dfuHost);
+            dfu = engine;
+            main.postDelayed(() -> { if (dfu == engine) engine.start(image, target, userId); }, 200);
+        } catch (Throwable t) {
+            Log.e(TAG, "startDfu failed", t);
+        }
+    }
+
+    void cancelDfu() {
+        try {
+            NaveeDfuEngine d = dfu;
+            if (d != null) d.cancel();
+        } catch (Throwable t) {
+            Log.e(TAG, "cancelDfu failed", t);
+        }
+    }
+
+    // Direct no-response write to b002 (the flash engine paces itself; the normal queue is bypassed).
+    private boolean doWriteDfu(byte[] frame) {
+        try {
+            BluetoothGatt g = gatt;
+            BluetoothGattCharacteristic wc = writeChar;
+            if (g == null || wc == null) return false;
+            wc.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+            wc.setValue(frame);
+            return g.writeCharacteristic(wc);
+        } catch (Throwable t) {
+            Log.e(TAG, "doWriteDfu failed", t);
+            return false;
+        }
+    }
+
+    private final NaveeDfuEngine.Host dfuHost = new NaveeDfuEngine.Host() {
+        @Override
+        public boolean write(byte[] frame) { return doWriteDfu(frame); }
+
+        @Override
+        public void setHighPriority(boolean high) {
+            try {
+                BluetoothGatt g = gatt;
+                if (g != null) g.requestConnectionPriority(high
+                        ? BluetoothGatt.CONNECTION_PRIORITY_HIGH
+                        : BluetoothGatt.CONNECTION_PRIORITY_BALANCED);
+            } catch (Throwable ignored) {}
+        }
+
+        @Override
+        public void progress(int percent, int block, int count, String phase) {
+            try {
+                JSONObject o = new JSONObject();
+                o.put("percent", percent);
+                o.put("block", block);
+                o.put("count", count);
+                if (phase != null) o.put("phase", phase);
+                if (listener != null) listener.onFwProgress(o.toString());
+            } catch (Throwable ignored) {}
+        }
+
+        @Override
+        public void log(String line) {
+            try { if (listener != null) listener.onFwLog(line == null ? "" : line); } catch (Throwable ignored) {}
+        }
+
+        @Override
+        public void state(String st, String message) {
+            try {
+                JSONObject o = new JSONObject();
+                o.put("state", st == null ? "" : st);
+                if (message != null) o.put("message", message);
+                if (listener != null) listener.onFwState(o.toString());
+            } catch (Throwable ignored) {}
+        }
+
+        @Override
+        public void finished(boolean success) {
+            dfu = null;
+            // Resume telemetry polling on the surviving connection.
+            if (connected && notifyReady) startPush();
+        }
+    };
 
     // ── State reporting ──
 
