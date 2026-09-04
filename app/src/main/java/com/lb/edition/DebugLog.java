@@ -38,6 +38,11 @@ import java.util.Locale;
 public final class DebugLog {
 
     private static final String TAG = "lbdebug";
+
+    /** When true, BleManager logs every TX/RX frame as hex (captured into the debug file via logcat).
+     *  Follows the debug-mode state: set on start(), cleared on stop(). */
+    public static volatile boolean WIRE = false;
+
     private static final String PREFS = "lb_prefs";
     private static final String KEY_DEBUG = "lb_debug";
     private static final String LOG_DIR = "logs";
@@ -117,6 +122,7 @@ public final class DebugLog {
             return;
         }
         running = true;
+        WIRE = true;
         writeLine("==== debug logging started " + tsFmt.format(new Date())
                 + " pid=" + android.os.Process.myPid() + " ====");
         thread = new Thread(this::captureLoop, "lb-debug-logcat");
@@ -129,6 +135,7 @@ public final class DebugLog {
     public synchronized void stop() {
         if (!running && writer == null) return;
         running = false;
+        WIRE = false;
         Process p;
         synchronized (lock) {
             p = proc;

@@ -1,18 +1,14 @@
 # Release build - fully automatic, no manual tagging.
 #
 # On every push to `main` that touches more than docs (see paths-ignore below) this builds a SIGNED
-# release APK and publishes a GitHub Release. The version series starts at 1.0.0 and the patch level
-# goes up by one for every release, so:
-#   first substantial push  -> v1.0.0
-#   next substantial push   -> v1.0.1
-#   ... and so on.
-# A push that only changes README/markdown/screenshots/CI/licence does NOT trigger this workflow,
-# so it neither builds nor bumps the version. Manual runs (Actions -> Run workflow) behave the same.
-#
-# The patch number is the count of GitHub Releases that already exist in this series, so it starts at
-# 0 (=> 1.0.0) and cannot drift; the Android versionCode is the workflow run number, which only ever
-# increases. Both are passed to Gradle with -PverName / -PverCode, so the number inside the APK
-# matches the release tag exactly.
+# release APK and publishes a GitHub Release. The version comes from the git commit count with the
+# EXACT same formula as app/build.gradle (versionName = major.minor.(commitCount - patchZeroAt),
+# versionCode = codeBase + commitCount, all read from version.properties), so a local build and the
+# published release always show the same number and can never drift apart.
+# A push that only changes README/markdown/screenshots/CI/licence does NOT trigger this workflow, so it
+# neither builds nor releases; those commits still raise the commit count, so the next real release
+# just carries the matching higher number. Manual runs (Actions -> Run workflow) behave the same.
+# The version/versionCode are passed to Gradle with -PverName / -PverCode and match the release tag.
 #
 # Required repository Secrets (Settings -> Secrets and variables -> Actions):
 #   KEYSTORE_BASE64    - the release keystore, base64-encoded (contents of keystore.base64.txt)
@@ -48,25 +44,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Compute the next version (series 1.0.x, patch = number of existing releases)
+      - name: Compute the version - app/src commits for the name, all commits for the code
         id: ver
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           MAJOR=$(sed -n 's/^major=//p' version.properties)
           MINOR=$(sed -n 's/^minor=//p' version.properties)
-          # Count releases already published in this MAJOR.MINOR series. The first release -> patch 0.
-          EXISTING=$(gh release list --repo "${{ github.repository }}" --limit 1000 \
-                      --json tagName --jq '[.[] | select(.tagName | startswith("v'"$MAJOR"'.'"$MINOR"'."))] | length' 2>/dev/null || echo 0)
-          PATCH="$EXISTING"
+          PATCH_ZERO_AT=$(sed -n 's/^patchZeroAt=//p' version.properties)
+          CODE_BASE=$(sed -n 's/^codeBase=//p' version.properties)
+          # versionName counts only app/src commits (identical to app/build.gradle), so docs/CI/config
+          # commits never bump it; the duplicate-tag guard below then skips a release that has no new app.
+          APP_COMMITS=$(git rev-list --count HEAD -- app/src)
+          ALL_COMMITS=$(git rev-list --count HEAD)
+          PATCH=$(( APP_COMMITS - PATCH_ZERO_AT ))
+          if [ "$PATCH" -lt 0 ]; then PATCH=0; fi
           VERSION="$MAJOR.$MINOR.$PATCH"
           TAG="v$VERSION"
-          # versionCode must only ever grow. The run number is monotonic per repo.
-          VCODE="${{ github.run_number }}"
+          # versionCode grows with every commit and never goes backwards.
+          VCODE=$(( CODE_BASE + ALL_COMMITS ))
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "vcode=$VCODE" >> "$GITHUB_OUTPUT"
-          echo "Next release: $TAG  (versionCode $VCODE, $EXISTING existing releases in series $MAJOR.$MINOR)"
+          echo "Version $TAG (versionCode $VCODE): $APP_COMMITS app/src commits, $ALL_COMMITS total - same as the local build"
 
       - name: Guard against a duplicate tag (re-run safety)
         id: exists

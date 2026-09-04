@@ -16,7 +16,7 @@ This app requests only the permissions it needs to function. The list below matc
 
 ## Network and services
 
-- **INTERNET** - download offline maps, routing data and POI databases on your explicit action, send the SRT screen stream to your own server, and check GitHub for a newer app version on start.
+- **INTERNET** - download offline maps, routing data and POI databases on your explicit action, download the model's stock firmware for the patcher on your explicit action, send the SRT screen stream to your own server, and check GitHub for a newer app version on start.
 - **FOREGROUND_SERVICE** - run long-running jobs (map download, ride logging, navigation, screen streaming) as a foreground service so they keep running with the screen off.
 - **FOREGROUND_SERVICE_MEDIA_PROJECTION** - the foreground-service type that lets screen streaming run as a foreground service.
 - **FOREGROUND_SERVICE_DATA_SYNC** - the foreground-service type for the offline map download, so a large download keeps running with the screen off.

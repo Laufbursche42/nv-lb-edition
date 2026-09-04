@@ -207,7 +207,14 @@ final class NaveeDfuEngine {
                 else { append(v); if (contains(rx, rxLen, new byte[]{0x6f,0x6b,0x0d})) { clearTimeout(); rxLen = 0; host.log("ble_key ok - waiting for C"); arm(ENTER_TIMEOUT_MS, () -> fail("scooter did not enter DFU (no C)")); } }
                 break;
             case XMODEM:      onXmodemNotify(v); break;
-            case EOT:         if (hasByte(v, ACK)) { clearTimeout(); beginFinish(); } break;
+            case EOT:
+                append(v);
+                // The real scooter does not always send a 0x06 EOT-ACK - it may send the result token
+                // straight away. Accept rsq dfu_ok/dfu_error here too, not only 0x06.
+                if (contains(rx, rxLen, ascii("dfu_error"))) { clearTimeout(); fail("scooter reported dfu_error"); }
+                else if (contains(rx, rxLen, ascii("dfu_ok"))) { clearTimeout(); succeed("done"); }
+                else if (hasByte(v, ACK)) { clearTimeout(); beginFinish(); }
+                break;
             case FINISH:      onFinishNotify(v); break;
             default: break;
         }
@@ -318,6 +325,7 @@ final class NaveeDfuEngine {
     private void beginEot() {
         state = St.EOT;
         eotTries = 0;
+        rxLen = 0;
         host.progress(100, blockCount, blockCount, "finish");
         sendEot();
     }
@@ -329,7 +337,9 @@ final class NaveeDfuEngine {
     }
 
     private void onEotTimeout() {
-        if (++eotTries >= EOT_RETRIES) { fail("no ACK for EOT"); return; }
+        // OEM does not require a 0x06 EOT-ACK; after a few EOT resends it just waits for the rsq result
+        // token. So stop resending and wait for rsq dfu_ok instead of failing with "no ACK for EOT".
+        if (++eotTries >= EOT_RETRIES) { beginFinish(); return; }
         sendEot();
     }
 

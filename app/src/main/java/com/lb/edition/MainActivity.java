@@ -244,6 +244,7 @@ public class MainActivity extends Activity {
         @Override
         public void onLiveData(String json) {
             if (json == null) return;
+            if (DebugLog.WIRE) logWireState(json);
             // Write the JSON string to localStorage['lb_live_data'] (dashboard's tickBLE reads it)
             // and also call window.__onBleData(json) if present.
             runJs("(function(){try{var d=" + json + ";var s=JSON.stringify(d);"
@@ -257,6 +258,24 @@ public class MainActivity extends Activity {
             }
         }
 
+        private String wireModel = null;   // last logged model key (pid/fwBldc/serial/region)
+        private String wireState = null;   // last logged speed-relevant state
+
+        // Surface the parsed model once and the speed-relevant state on every change, to the lbwire tag.
+        private void logWireState(String json) {
+            try {
+                org.json.JSONObject o = new org.json.JSONObject(json);
+                String model = "pid=" + o.optString("pid", "?") + " fwBldc=" + o.optString("fwBldc", "?")
+                        + " serial=" + o.optString("serial", "?") + " region=" + o.optString("region", "?");
+                if (!model.equals(wireModel)) { wireModel = model; Log.i("lbwire", "MODEL " + model); }
+                String state = "driveMode=" + o.opt("driveMode") + " maxSpeed=" + o.opt("maxSpeed")
+                        + " limitSpeed=" + o.opt("limitSpeed") + " limitOn=" + o.opt("limitOn")
+                        + " lock=" + o.opt("lock");
+                if (!state.equals(wireState)) { wireState = state; Log.i("lbwire", "STATE " + state); }
+            } catch (Throwable ignored) {
+            }
+        }
+
         @Override
         public void onFwProgress(String json) {
             if (json == null) return;
@@ -265,6 +284,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void onFwLog(String line) {
+            Log.i("lbfw", line == null ? "" : line);
             runJs("(function(){try{if(window.__onFwLog)window.__onFwLog("
                     + org.json.JSONObject.quote(line == null ? "" : line) + ");}catch(e){}})();");
         }
@@ -272,6 +292,7 @@ public class MainActivity extends Activity {
         @Override
         public void onFwState(String json) {
             if (json == null) return;
+            Log.i("lbfw", "state " + json);
             runJs("(function(){try{if(window.__onFwState)window.__onFwState(" + json + ");}catch(e){}})();");
         }
 
@@ -1077,9 +1098,32 @@ public class MainActivity extends Activity {
                     runJs("(function(){try{if(window.__onFwState)window.__onFwState({state:'failed',message:'Patch a firmware file first'});}catch(e){}})();");
                     return;
                 }
-                if (ble != null) ble.startDfu(img, bldc ? 2 : 1, 0L);
+                fwFlashWhenReady(img, bldc ? 2 : 1, bldc ? "bldc" : "meter", 0);
             } catch (Throwable t) {
                 Log.e(TAG, "fwStartFlash failed", t);
+            }
+        }
+
+        // The scooter can reboot and reconnect between components (meter then bldc). Wait up to ~30s
+        // for the BLE link to come back before flashing the next one, instead of failing on the drop.
+        private void fwFlashWhenReady(final byte[] img, final int target, final String kind, final int tries) {
+            try {
+                if (ble != null && ble.isReadyForDfu()) {
+                    Log.i("lbfw", "flashing " + kind + " target=" + target + " size=" + img.length + "b afterWaits=" + tries);
+                    ble.startDfu(img, target, 0L);
+                    return;
+                }
+                if (tries == 0) Log.i("lbfw", "waiting for BLE link before flashing " + kind);
+                if (tries >= 60) {   // 60 * 500ms = 30s
+                    Log.i("lbfw", "no BLE link for " + kind + " after 30s, giving up");
+                    runJs("(function(){try{if(window.__onFwState)window.__onFwState({state:'failed',message:'Scooter did not reconnect - start the " + kind + " flash again'});}catch(e){}})();");
+                    return;
+                }
+                new android.os.Handler(getMainLooper()).postDelayed(
+                        () -> fwFlashWhenReady(img, target, kind, tries + 1), 500);
+            } catch (Throwable t) {
+                Log.e(TAG, "fwFlashWhenReady failed", t);
+                runJs("(function(){try{if(window.__onFwState)window.__onFwState({state:'failed',message:'flash retry error'});}catch(e){}})();");
             }
         }
 

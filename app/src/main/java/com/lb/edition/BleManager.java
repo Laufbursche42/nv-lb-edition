@@ -49,6 +49,19 @@ import java.util.UUID;
 final class BleManager {
 
     private static final String TAG = "lbble";
+    private static final String WIRE_TAG = "lbwire";
+
+    private static final char[] HEX = "0123456789ABCDEF".toCharArray();
+
+    private static String hex(byte[] b) {
+        if (b == null) return "null";
+        StringBuilder sb = new StringBuilder(b.length * 3);
+        for (int i = 0; i < b.length; i++) {
+            if (i > 0) sb.append(' ');
+            sb.append(HEX[(b[i] >> 4) & 0xF]).append(HEX[b[i] & 0xF]);
+        }
+        return sb.toString();
+    }
 
     // CCCD descriptor (standard base).
     private static final UUID CCCD = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
@@ -135,6 +148,7 @@ final class BleManager {
     // Reachable for other components (the bridge) that want the parsed state directly.
     FrameParser parser() { return parser; }
     boolean isConnected() { return connected; }
+    boolean isReadyForDfu() { return connected && notifyReady && !isDfuActive(); }
 
     // ── Scan ──
 
@@ -394,6 +408,7 @@ final class BleManager {
                 // During a flash the DFU engine owns b003 (XMODEM ACKs + text tokens, not 55 AA frames).
                 NaveeDfuEngine d = dfu;
                 if (d != null && d.isRunning()) { d.onNotify(v); return; }
+                if (DebugLog.WIRE) Log.i(WIRE_TAG, "RX " + hex(v));
                 parser.onNotify(v);
                 if (frameCount++ % 50 == 0) Log.i(TAG, "rx frames=" + frameCount + " last=" + v.length + "b");
             } catch (Throwable t) {
@@ -600,6 +615,7 @@ final class BleManager {
                 wc.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
             }
             wc.setValue(frame);
+            if (DebugLog.WIRE) Log.i(WIRE_TAG, "TX " + hex(frame));
             return g.writeCharacteristic(wc);
         } catch (Throwable t) {
             Log.e(TAG, "doWrite failed", t);

@@ -100,6 +100,15 @@ The quickest way to the speed release is a hidden gesture: **triple-tap the km/h
 
 <p align="center"><img src="screenshots/livetoggle.png" width="260" alt="Triple-tap the km/h VCU tile to release or re-lock the speed over Bluetooth"></p>
 
+### Firmware patcher and flasher
+
+Two side-menu entries for the models where no Bluetooth setting can lift the limit, so the change has to sit in the firmware itself:
+
+- **Firmware Patcher** - detects the connected model and downloads that model's own official stock firmware by itself (there is no URL to type in). It then writes two files into your Downloads folder: the untouched original and an unlocked copy with the speed cap, kickstart and cruise limits patched and a fresh checksum. The patched file is handed straight to the flasher.
+- **Firmware Update** - the flasher. It writes the display/meter first and the controller (BLDC) second over Bluetooth, with a live progress log. You can also pick a finished `.bin` yourself instead of using the patcher's output.
+
+The stock firmware is fetched from NAVEE's own public storage as a plain download - no account and no user id are involved. Flashing is the highest-risk thing the app does: a wrong or interrupted write can brick a controller. Private ground, your own scooter, at your own risk.
+
 ### Info & diagnostics
 
 - **Error reports** view - the scooter reports **one numeric fault code**. The app decodes it against the official NAVEE fault table (one shared table across the models) and shows the plain-text cause, for example *E9 - controller and battery communication*. A code that is not in that table is shown **raw**, never guessed, and the whole lookup runs on the phone with no server.
@@ -149,7 +158,7 @@ The quickest way to the speed release is a hidden gesture: **triple-tap the km/h
 
 Naming the gaps is part of being honest about a feasibility study:
 
-- **No firmware flashing, no OTA and no firmware files of any kind.** The app never writes firmware to the scooter and never downloads any.
+- **No blind or automatic firmware push.** The flasher only writes a file you patched or picked yourself, on your explicit action, and the patcher fetches only the model's own official stock firmware - the app never pushes firmware on its own, never writes an unofficial blob and never flashes without you starting it.
 - **No arbitrary speed number.** The speed release commands the scooter's own built-in top speed; it does not let you dial in a figure the firmware would not otherwise reach.
 - **No identity or serial rename.**
 - **No guessed fault meanings.** Known codes are translated from the official NAVEE table; any code outside it is shown raw, never invented.

@@ -16,6 +16,17 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.7
+
+- **Firmware flash reaches the controller.** After the last block the flasher now waits for the scooter's `rsq dfu_ok` result token, the way the manufacturer app does, rather than requiring a separate low-level acknowledgement the scooter does not always send. Previously the "no ACK for EOT" message could appear even after every block had transferred, which stopped the run after the meter and before the controller (BLDC) - so the speed patch, which lives in the controller, never got written.
+- **Meter then controller flash reliably in sequence.** If the scooter reboots and reconnects between the two components, the app now waits up to 30 s for the link to come back and flashes the controller anyway, instead of aborting.
+- **The patcher covers every NT5 variant.** Meter and controller for NT5 Max (9301/9701), Max+ (9201), Turbo (11101) and Ultra (9401), plus the Ultra X meter (an older build with nothing to patch). Builds that share a board id are told apart by their version word, and each is re-sealed with the correct CRC.
+- **Debug log records the wire traffic and the flash.** With debug logging on, the log now carries the detected model (pid plus controller firmware version), every command and reply as hex, the drive-mode / speed-limit state whenever it changes, and each flash step with its result. That makes it possible to see exactly what the scooter does.
+
+## 1.0.6
+
+- **Firmware patcher and flasher.** Two new side-menu entries. The **Firmware Patcher** detects the connected model, downloads that model's own official stock firmware from NAVEE's public storage by itself (there is no URL to enter) and saves both the untouched original and an unlocked copy - speed cap, kickstart and cruise patched, with a fresh checksum - into Downloads, then hands the patched file to the flasher. The **Firmware Update** flasher writes the display/meter first and the controller (BLDC) second over Bluetooth with a live progress log, and can also flash a finished `.bin` you pick yourself. The whole DFU runs with no account and no user id. This brings back the firmware flashing that 1.0.0 had removed, now rebuilt for the NAVEE DFU (XMODEM over the NAVEE GATT service) rather than the `.hex` flashing that was stripped out then. Flashing is the highest-risk action in the app; it is for private ground and your own scooter.
+
 ## 1.0.5
 
 - **Light controls.** A new Light section with auto light (the headlight comes on automatically while riding), a daytime running light switch and the tail light. Their state is read live from the scooter's report.

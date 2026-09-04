@@ -60,7 +60,7 @@ def VERSION_MAJOR = versionProps.getProperty('major').toInteger()
 def VERSION_MINOR = versionProps.getProperty('minor').toInteger()
 def PATCH_ZERO_AT = versionProps.getProperty('patchZeroAt').toInteger()
 def VERSION_BASE = versionProps.getProperty('codeBase').toInteger()
-def gitCommitCount = {
+def gitCountAll = {
     try {
         def proc = ['git', 'rev-list', '--count', 'HEAD'].execute(null, rootProject.projectDir)
         def out = proc.text
@@ -70,8 +70,20 @@ def gitCommitCount = {
         return 0
     }
 }()
-def appVersionCode = VERSION_BASE + gitCommitCount
-def appVersionName = "${VERSION_MAJOR}.${VERSION_MINOR}.${Math.max(0, gitCommitCount - PATCH_ZERO_AT)}"
+def gitCountApp = {
+    try {
+        def proc = ['git', 'rev-list', '--count', 'HEAD', '--', 'app/src'].execute(null, rootProject.projectDir)
+        def out = proc.text
+        proc.waitFor()
+        return proc.exitValue() == 0 ? out.trim().toInteger() : 0
+    } catch (ignored) {
+        return 0
+    }
+}()
+// versionName counts only commits that touch app/, so a docs/CI/version-config commit does not bump the
+// shown version. versionCode counts every commit so it only ever grows and never blocks an install.
+def appVersionCode = VERSION_BASE + gitCountAll
+def appVersionName = "${VERSION_MAJOR}.${VERSION_MINOR}.${Math.max(0, gitCountApp - PATCH_ZERO_AT)}"
 
 // CI override: the release workflow decides the version (series starts at 1.0.0 and the patch level
 // goes up by one on every substantial push) and passes it in with -PverName / -PverCode, so the
@@ -89,8 +101,6 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        // One id per fork (scheme com.laufbursche.<XX>lbedition) so every brand variant plus the
-        // Teverun build (com.laufbursche.edition) installs side by side on the same phone.
         applicationId = 'com.laufbursche.nvlbedition'
         minSdk = 29   // Android 10: writing into Downloads goes through MediaStore, which needs it
         targetSdk = 36
