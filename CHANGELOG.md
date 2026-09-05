@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.10
+
+- **Gear changes no longer drop the speed unlock.** On a patched scooter the controller now latches the unlock: changing the drive mode or gear after unlocking keeps the full speed, and only an explicit lock command or a restart returns it to about 22 km/h. Before this, any mode change re-locked the scooter.
+- **The over-speed warning beep is silenced on patched firmware.** A de-restricted controller asserts an over-speed warning above its former limit, which the meter turned into a continuous beep past about 30 km/h. The patched meter suppresses that one warning tone while every real fault tone still sounds.
+- **Lock and unlock use two paths by model.** The XT5 family plus UT5, E45 and E60 keep their flash-free speed release unchanged. Every other model runs the capZ firmware and locks or unlocks over the drive-mode command; the app picks the path from the controller version marker, so no model loses its existing way.
+
 ## 1.0.9
 
 - **Lock and unlock the speed with a firmware patch (NT5 Max / 9301).** The patcher now builds controller firmware that boots throttled to about 22 km/h and can be opened to full speed (about 44) with the existing speed release, then re-locks itself to 22 on every restart. It never ships a permanently open firmware: the cap lives in RAM and is seeded at boot, so a reboot always returns to the throttled state. The patched firmware also reports its own version (controller 5.5.5.6, display 5.0.2.2), so Scooter Info shows that our build is on the scooter. This changes code inside the controller and has been verified statically; the first flash belongs on a recoverable unit.

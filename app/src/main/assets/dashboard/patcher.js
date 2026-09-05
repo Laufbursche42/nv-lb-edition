@@ -67,6 +67,10 @@ const IMAGES = {
     patches: [
       { off: 0x14bf3, from: [0xd2], to: [0xe0], id: 'kickstart' },
       { off: 0x14679, from: [0xd0], to: [0xe0], id: 'cruise' },
+      // Over-speed warn 'R' -> silent. The de-capped controller asserts an over-speed warn above its
+      // former limit; the meter turns any non-silent warn code into a continuous beep. 0x52('R') is the
+      // only non-silent letter, so storing 0x00 instead keeps the scooter quiet while real faults still beep.
+      { off: 0x1404e, from: [0x52], to: [0x00], id: 'beep-r-warn' },
       { off: 0x14d6e, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
     ],
   },
@@ -152,18 +156,18 @@ const IMAGES = {
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000bf40, crcOff: 0xb0, crcStock: 0x122b },
     reseal: bldcResealLz,
     patches: [
-      // capZ lock/unlock, boot-throttled. The region matcher writes the top-speed clamp at
+      // capZ lock/unlock, boot-throttled, latched. The region matcher writes the top-speed clamp at
       // 0x2000035a; NOP its two stores and drive capZ ourselves. An inline setter in the drive-frame
-      // block writes capZ = 400 (locked ~22 km/h), or 800 (open ~44) when the mode nibble is 5. A
-      // boot-init stub (reached by redirecting the boot thunk's literal) seeds capZ = 400 after
-      // scatterload and before main, so the scooter boots rideable at ~22, unlocks to ~44 on the
-      // app's speed release, and re-locks to ~22 on every reboot (RAM-volatile).
+      // block latches capZ: mode nibble 5 -> 800 (unlock ~44), nibble 6 -> 400 (lock ~22), any other
+      // nibble (gear change) leaves capZ untouched. A boot-init stub (reached by redirecting the boot
+      // thunk's literal) seeds capZ = 400 after scatterload and before main, so the scooter boots
+      // rideable at ~22, unlocks and locks on the app's command and re-locks on every reboot (RAM).
       { off: 0x4be4, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-a' },
       { off: 0x4c00, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-b' },
       { off: 0x7d14,
         from: [0x11, 0x78, 0x01, 0x29, 0x6b, 0xd1, 0x62, 0x49, 0x09, 0x78, 0x14, 0x29, 0x67, 0xd2, 0x19, 0x07, 0x09, 0x0f, 0x0b, 0x29, 0x00, 0xd0, 0x02, 0x21, 0x31, 0x70],
-        to:   [0x19, 0x07, 0x09, 0x0f, 0x13, 0x46, 0x9c, 0x3b, 0xc8, 0x26, 0x76, 0x00, 0x05, 0x29, 0x00, 0xd1, 0x76, 0x00, 0x1e, 0x80, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf],
-        id: 'capz-inline' },
+        to:   [0x19, 0x07, 0x09, 0x0f, 0x13, 0x46, 0x9c, 0x3b, 0xc8, 0x26, 0x76, 0x00, 0x06, 0x29, 0x02, 0xd0, 0x05, 0x29, 0x01, 0xd1, 0x76, 0x00, 0x1e, 0x80, 0x00, 0xbf],
+        id: 'capz-latch' },
       // boot-init: stub in reserved-vector free space seeds capZ = 400 (22 km/h) before main
       { off: 0x110,
         from: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

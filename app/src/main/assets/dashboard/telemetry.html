@@ -3415,9 +3415,12 @@ function wireSpeedRelease() {
    a press of the mode button silently drops the release on the scooter side. */
 let _speedReleased = false;
 
-// Drive-mode gear byte for the speed release, per model. XT5 family: 4 open / 3 normal. NT5 Max
-// (every non-XT model here): 5 open / 2 throttled. Model comes from the hardware serial pid.
+// Drive-mode gear byte. A scooter flashed with our capZ latch firmware (BLDC marker 5.5.5.6) unlocks
+// on 5 and locks on 6 - 6 is a non-gear value, so after unlocking the rider changes gears freely
+// without re-locking. Every unflashed model keeps its stock speed-release untouched: XT5 family
+// 4 open / 3 normal, the rest 5 open / 2 throttled.
 function speedReleaseGear(on) {
+  if ((liveRaw().fwBldc || '').trim() === '5556') return on ? 5 : 6;
   const isXT = naveeIsXT(naveeRealModel());
   if (isXT) return on ? 4 : 3;
   return on ? 5 : 2;
