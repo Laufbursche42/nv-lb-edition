@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.9
+
+- **Lock and unlock the speed with a firmware patch (NT5 Max / 9301).** The patcher now builds controller firmware that boots throttled to about 22 km/h and can be opened to full speed (about 44) with the existing speed release, then re-locks itself to 22 on every restart. It never ships a permanently open firmware: the cap lives in RAM and is seeded at boot, so a reboot always returns to the throttled state. The patched firmware also reports its own version (controller 5.5.5.6, display 5.0.2.2), so Scooter Info shows that our build is on the scooter. This changes code inside the controller and has been verified statically; the first flash belongs on a recoverable unit.
+
 ## 1.0.8
 
 - **Flash order fixed: controller first, display last.** The display/meter is the DFU gateway that relays every flash command to the target component. Flashing it first rebooted the gateway and left the controller (BLDC) unable to enter DFU ("no C" at block 0). The app now flashes the controller first and the display last - the same order the manufacturer app uses - so a two-part flash completes both components.
