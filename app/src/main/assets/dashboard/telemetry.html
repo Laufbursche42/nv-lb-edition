@@ -18,8 +18,6 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-<!-- Debug-mode banner: visible only while native debug logging is recording. -->
-<div class="debug-banner" id="debug-banner" data-i18n="dash.debug.banner">&#9888; DEBUG MODE ON: recording logs</div>
 <div id="app">
 
   <!-- ── Topbar ─────────────────────────────────────── -->
@@ -35,6 +33,9 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <button class="icon-btn" id="btn-settings" aria-label="Settings" data-i18n-aria="dash.topbar.settings" data-i18n="dash.topbar.settings.icon">&#9881;</button>
     </div>
   </div>
+
+  <!-- Debug-mode banner: shown just under the topbar while native debug logging records. -->
+  <div class="debug-banner" id="debug-banner" data-i18n="dash.debug.banner">&#9888; DEBUG MODE ON: recording logs</div>
 
   <!-- ── Scrollable Content ─────────────────────────── -->
   <div id="scroller">
@@ -68,15 +69,11 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <div class="hc-unit" data-i18n="dash.hero.gear.label">Gear</div>
         <div class="hc-tag is-hidden" id="gear-tag"></div>
       </div>
-      <div class="hero-cell">
-        <div class="hc-val" id="current-val">-</div>
-        <div class="hc-unit" data-i18n="dash.hero.current.unit">A Current</div>
-      </div>
     </div>
 
-    <!-- Live telemetry tiles: the values that change while riding. The first row is the drive
-         (power drawn, pack voltage, battery temperature), the second the trip context (range the
-         scooter reports, odometer, link quality). Settings-type values live in the grid below. -->
+    <!-- Live telemetry tiles: the values that change while riding, laid out two per row - drive
+         (power, pack voltage), battery (temperature, health) and distance (range the scooter
+         reports, odometer). Settings-type values live in the grid below. -->
     <div class="section-hdr sub-hdr">
       <span data-i18n="dash.tele.section">Antrieb &amp; Akku</span>
     </div>
@@ -97,8 +94,11 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
           <div class="tc-main"><span id="tl-temp">-</span></div>
           <div class="tc-unit" data-i18n="dash.tele.temp.unit">&deg;C</div>
         </div>
-      </div>
-      <div id="tele-row-2">
+        <div class="tele-cell">
+          <div class="tc-title" data-i18n="dash.tele.soh.title">AKKU-ZUSTAND</div>
+          <div class="tc-main"><span id="tl-soh">-</span></div>
+          <div class="tc-unit" data-i18n="dash.tele.soh.unit">%</div>
+        </div>
         <div class="tele-cell">
           <div class="tc-title" data-i18n="dash.tele.range.title">REICHWEITE</div>
           <div class="tc-main"><span id="tl-range">-</span></div>
@@ -108,11 +108,6 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
           <div class="tc-title" data-i18n="dash.tele.odo.title">GESAMT</div>
           <div class="tc-main"><span id="tl-odo">-</span></div>
           <div class="tc-unit" data-i18n="dash.tele.odo.unit">km</div>
-        </div>
-        <div class="tele-cell">
-          <div class="tc-title" data-i18n="dash.tele.soh.title">AKKU-ZUSTAND</div>
-          <div class="tc-main"><span id="tl-soh">-</span></div>
-          <div class="tc-unit" data-i18n="dash.tele.soh.unit">%</div>
         </div>
       </div>
     </div>
@@ -139,10 +134,13 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
       <div class="dg-row">
         <div class="dg-cell"><span class="dg-labwrap"><span class="dg-label" data-i18n="dash.grid.voltage">Voltage</span><button type="button" class="set-help" data-set-help="dg-volt" aria-label="What is this?" data-i18n-aria="dash.help.what" data-i18n="dash.help.icon">?</button></span><span class="dg-value" id="dg-volt">-</span></div>
-        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.battery.temp">Battery temp</span><span class="dg-value" id="dg-btemp">-</span></div>
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.current">Current</span><span class="dg-value" id="dg-current">-</span></div>
       </div>
       <div class="dg-row">
+        <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.battery.temp">Battery temp</span><span class="dg-value" id="dg-btemp">-</span></div>
         <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.battery.soh">Battery SOH</span><span class="dg-value" id="dg-soh">-</span></div>
+      </div>
+      <div class="dg-row one-col">
         <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.battery.cycles">Cycles</span><span class="dg-value" id="dg-cycles">-</span></div>
       </div>
       <div class="dg-row">
@@ -1234,6 +1232,9 @@ function parseBLE(raw) {
       soh:      num(d.soh),
       volt:     num(d.packMv) / 1000,
       current:  num(d.packMa) / 1000,
+      // packMa is omitted (not zeroed) when the frame does not carry it, so distinguish a real 0 A
+      // reading from "not delivered" - the grid shows the value only when it was actually sent.
+      currentValid: (typeof d.packMa === 'number'),
       gear:     (typeof d.driveMode === 'number') ? d.driveMode : (parseInt(d.driveMode) || 0),
       btemp:    num(d.temp),
       cycles:   num(d.cycles),
@@ -1518,7 +1519,7 @@ function updateBLEUI(data) {
   document.querySelector('.ble-drum .sd-unit').textContent = speedUnit();
   document.querySelector('.gps-drum .sd-unit').textContent = speedUnitGPS();
 
-  const DASH = ['ble-speed','soc-val','gear-val','current-val','dg-range','dg-max',
+  const DASH = ['ble-speed','soc-val','gear-val','dg-current','dg-range','dg-max',
     'dg-volt','dg-btemp','dg-soh','dg-cycles','dg-total','dg-single','dg-rssi','dg-err',
     'tl-power','tl-volt','tl-temp','tl-range','tl-odo','tl-soh',
     'dg-limit','dg-startspeed','dg-brake','dg-drivemode'];
@@ -1571,18 +1572,23 @@ function updateBLEUI(data) {
   setTxt('soc-val', Math.round(data.soc));
   setTxt('gear-val', data.gear);
   hideGearTag();
-  // Signed from the rider's point of view: pack draw reads negative and red, recuperation reads
-  // positive and green. The controller reports draw as positive, hence the flip.
-  const cur = data.current;
-  const curEl = document.getElementById('current-val');
-  if (curEl) {
-    const shown = -cur;
-    curEl.textContent = shown > 0 ? '+' + shown.toFixed(1) : shown.toFixed(1);
-    curEl.style.color = cur > 0 ? 'var(--danger)' : cur < 0 ? 'var(--good)' : 'var(--text)';
-  }
 
   // Grid
   setTxt('dg-volt', data.volt.toFixed(1) + ' V');
+  // Pack current as a battery-detail line (the NAVEE app shows it here too, not as a hero). Signed
+  // from the rider's point of view: draw reads negative and red, recuperation positive and green.
+  // Shown only when the frame actually carried a current reading (packMa present), else "-".
+  const curEl = document.getElementById('dg-current');
+  if (curEl) {
+    if (data.currentValid) {
+      const shown = -data.current;
+      curEl.textContent = (shown > 0 ? '+' + shown.toFixed(1) : shown.toFixed(1)) + ' A';
+      curEl.style.color = data.current > 0 ? 'var(--danger)' : data.current < 0 ? 'var(--good)' : 'var(--text)';
+    } else {
+      curEl.textContent = '-';
+      curEl.style.color = '';
+    }
+  }
   setTxt('dg-btemp', Math.round(data.btemp) + ' \u00b0C');
   const btEl = document.getElementById('dg-btemp'); if (btEl) btEl.style.color = tempColor(data.btemp);
   setTxt('dg-soh', Math.round(data.soh) + ' %');
@@ -1712,34 +1718,78 @@ function startRide() {
 
 function finalizeRide() {
   if (!state.currentRide) return;
-  state.currentRide.endTime = Date.now();
-  state.routes = loadRoutes().filter(r => r.id !== state.currentRide.id);
-  // Only save if ride has meaningful data
-  if (state.currentRide.points.length >= 2 || state.currentRide.dist > 0.01) {
-    state.routes.push({ ...state.currentRide });
-  }
-  saveRoutes(state.routes);
+  // The native RouteRecorderService owns the recorded track (it keeps logging GPS with the screen
+  // off, which a WebView geolocation watch cannot). This JS ride object is only the live overlay; it
+  // is NOT persisted. The finished native track is pulled in by importNativeRoutes() shortly after.
   state.currentRide = null;
   clearInterval(state.rideTimer);
   clearInterval(state.saveTimer);
   // GPS keeps running while connected (live speed on the main screen); it stops only on disconnect.
   renderRoutes();
   updateRideUI();
+  setTimeout(importNativeRoutes, 1500);
 }
 
-// Stop button for a live ride: finalize now and block auto-re-arm until the next reconnect.
+// Stop button for a live ride: stop native recording too and block auto-re-arm until the next reconnect.
 function stopLiveRide() {
   state.rideStopped = true;
+  try { if (typeof LB !== 'undefined' && LB.stopRouteRecording) LB.stopRouteRecording(); } catch (e) {}
   finalizeRide();
 }
 
-function periodicSaveRide() {
-  if (!state.currentRide) return;
-  // Save current ride as last element with endTime=0 (crash recovery)
-  state.routes = loadRoutes().filter(r => r.id !== state.currentRide.id);
-  state.routes.push({ ...state.currentRide, endTime: 0 });
-  saveRoutes(state.routes);
-  renderRoutes();
+// Durability is now the native recorder's job (flushes every fix to disk), so the old JS crash-save
+// is a no-op - keeping it avoids double-persisting the same ride.
+function periodicSaveRide() {}
+
+// Convert one finished native route ({id,start,end,points:[{lat,lon,alt,ts,speed}]}) into the saved
+// route schema, computing distance and cumulative altitude gain/loss the same way addPointToRide does.
+function buildRouteFromNative(nr) {
+  const src = (nr && Array.isArray(nr.points)) ? nr.points : [];
+  const route = { id: 'ride_' + nr.id, startTime: nr.start || nr.id, endTime: nr.end || nr.id,
+                  dist: 0, hmPlus: 0, hmMinus: 0, points: [] };
+  for (const p of src) {
+    const lat = +p.lat, lon = +p.lon;
+    if (!isFinite(lat) || !isFinite(lon)) continue;
+    const alt = (p.alt != null && isFinite(+p.alt)) ? +p.alt : 0;
+    const pt = { lat, lon, alt, ts: +p.ts || 0, speed: Math.round((+p.speed || 0) * 10) / 10 };
+    if (route.points.length > 0) {
+      const prev = route.points[route.points.length - 1];
+      route.dist = Math.round((route.dist + haversine(prev.lat, prev.lon, lat, lon)) * 100) / 100;
+      const dAlt = alt - prev.alt;
+      if (dAlt > 0.5) route.hmPlus = Math.round(route.hmPlus + dAlt);
+      else if (dAlt < -0.5) route.hmMinus = Math.round(route.hmMinus + Math.abs(dAlt));
+    }
+    route.points.push(pt);
+  }
+  return route;
+}
+
+// Pull every finished native GPS route into the saved-routes list. The native side hands them over
+// once (deleting its files), so this is safe to call repeatedly (app start, opening the routes list,
+// after a ride). This is what makes a full track appear even when it was recorded with the screen off.
+function importNativeRoutes() {
+  try {
+    if (typeof LB === 'undefined' || !LB.takeRecordedRoutes) return;
+    let arr;
+    try { arr = JSON.parse(LB.takeRecordedRoutes() || '[]'); } catch (e) { return; }
+    if (!Array.isArray(arr) || !arr.length) return;
+    const routes = loadRoutes();
+    let added = 0;
+    for (const nr of arr) {
+      const r = buildRouteFromNative(nr);
+      if (r.points.length >= 2 || r.dist > 0.01) { routes.push(r); added++; }
+    }
+    if (added) { saveRoutes(routes); state.routes = routes; renderRoutes(); }
+  } catch (e) {}
+}
+
+// Keep the native recorder's config in step with the dashboard (it cannot read localStorage).
+function syncGpsConfigToNative() {
+  try {
+    if (typeof LB !== 'undefined' && LB.setGpsRecordConfig) {
+      LB.setGpsRecordConfig(!!state.gpsAutoStart, Math.max(1, Math.round(state.gpsIntervalMs / 1000)));
+    }
+  } catch (e) {}
 }
 
 /* ── GPS Tracking ─────────────────────────────────────────── */
@@ -2154,6 +2204,7 @@ function loadSettings() {
   state.gpsIntervalMs = gpsIntSec * 1000;
   const gpsIntSel = document.getElementById('gps-interval-sel');
   if (gpsIntSel) gpsIntSel.value = String(gpsIntSec);
+  syncGpsConfigToNative();   // the native recorder mirrors this config
 
   // Fullscreen (native immersive mode; reflect the persisted native flag into the toggle).
   try {
@@ -3217,7 +3268,12 @@ function naveeSkuOf(region) {
   if (['US', 'CN', 'RU'].includes(r)) return 'USA';
   return 'EUR';
 }
-function naveeZeroStartFull() { return naveeSkuOf(liveRaw().region) === 'USA'; }
+// The meter clamps start-off levels 0-2 up to 3 unless the SKU region is USA (FUN_08014230). Our
+// kickstart firmware patch removes that clamp, so a patched meter accepts the low levels on any
+// region. A patched meter reports version 5.0.2.2 (fwMeter "5022"; stock is "3022"), so treat it
+// like a USA SKU and expose levels 0-2 / the quick button.
+function meterKickstartPatched() { return (liveRaw().fwMeter || '').trim() === '5022'; }
+function naveeZeroStartFull() { return naveeSkuOf(liveRaw().region) === 'USA' || meterKickstartPatched(); }
 function setRegionStatus(msg) { const el = document.getElementById('region-status'); if (el) el.textContent = msg; }
 // Raw NAVEE frame builders for the factory region write, sent via LB.sendRaw as a hex string. The
 // checksum is the sum of every byte from 0x55 through the last payload byte, & 0xFF. Normal/read frames
@@ -3501,8 +3557,8 @@ function reflectDriveQuick() {
 
 /* ── First-screen fold ────────────────────────────────────────
    Scale the fold so it fills exactly the visible height of the scroller: the rider sees speed,
-   battery, gear, current, motors and the quick toggles without scrolling, and everything after
-   it begins below the bottom edge.
+   battery, gear, the telemetry tiles and the quick toggles without scrolling, and everything
+   after it begins below the bottom edge.
 
    The inner block is laid out at 100/scale percent width and then scaled from its top-left, so
    the scaled result is exactly the scroller width. Height feeds back into width through text
@@ -3510,8 +3566,13 @@ function reflectDriveQuick() {
    on the right value. */
 
 const FOLD_MIN_SCALE = 0.55;   // below this the labels stop being readable, so allow a scroll instead
-const FOLD_MAX_SCALE = 1.5;    // above this the tiles look inflated on a tall screen
-const FOLD_BOTTOM_GAP = 5;     // breathing room between the last button row and the screen edge
+const FOLD_MAX_SCALE = 1.35;   // the font MAY grow to fill a tall screen, but only up to this cap.
+                               // Beyond the cap the leftover height is shared out as row spacing
+                               // (row-gap top-up), so text never balloons on a tall screen.
+const FOLD_BOTTOM_GAP = 10;    // breathing room between the last button row and the screen edge
+const FOLD_BASE_GAP = 10;      // the CSS --gap: the minimum row gap
+const FOLD_MAX_GAP = 34;       // the row gap never grows past this: tiles scale to fill, the leftover
+                               // tops up the gap only to here, so gaps stay a defined size not a void
 
 let _foldScale = 0;            // last applied factor, 0 = never fitted
 
@@ -3527,42 +3588,33 @@ function fitFold() {
   const avail = scroller.clientHeight - parseFloat(cs.paddingTop || '0') - FOLD_BOTTOM_GAP;
   if (!(avail > 0)) return;
 
-  // Measure the NATURAL content height with no forced height and no distribution, so the factor is
-  // computed from the real content, not from a layout a previous pass already stretched.
-  inner.style.height = '';
-  inner.style.justifyContent = '';
-
-  // offsetHeight is the LAYOUT height and ignores the transform, so the factor can be recomputed
-  // without first removing the one already applied.
+  // Measure the natural content height at the base row gap, then derive the scale factor. Scaling up
+  // is allowed (tiles grow to fill) but capped at FOLD_MAX_SCALE so the font never balloons.
   let scale = _foldScale || 1;
   let natural = 0;
   for (let pass = 0; pass < 2; pass++) {
     inner.style.width = (100 / scale) + '%';
+    inner.style.rowGap = FOLD_BASE_GAP + 'px';
     natural = inner.offsetHeight;
     if (!(natural > 0)) return;
     scale = Math.max(FOLD_MIN_SCALE, Math.min(FOLD_MAX_SCALE, avail / natural));
   }
 
-  // Oscillation guard: if the factor barely moved keep the old one, so a width rewrite cannot flip a
-  // text-wrap boundary and swing forever. Fall through so the fill logic still runs (avail may have
-  // changed even when the factor did not).
-  if (Math.abs(scale - _foldScale) >= 0.005) _foldScale = scale;
-  scale = _foldScale;
-
+  _foldScale = scale;
   inner.style.width = (100 / scale) + '%';
   inner.style.transform = 'scale(' + scale + ')';
-  // Fill the whole visible height. When the scaled content is shorter than avail - the factor hit its
-  // upper cap on a tall screen - stretch the inner block to avail/scale so the scaled result is
-  // exactly avail, and let the flex column space its rows out. That distributes the empty band as gaps
-  // between the tiles instead of leaving it all at the bottom. (No effect on child sizes, so the
-  // ResizeObserver watching the children does not re-fire.)
-  if (natural * scale < avail - 1) {
-    inner.style.height = (avail / scale) + 'px';
-    inner.style.justifyContent = 'space-between';
+  // After scaling the tiles, top up the row gap to fill the leftover height - but only up to
+  // FOLD_MAX_GAP, so on a very tall screen the gaps stay a defined size instead of opening into a
+  // void. Count only the visible rows (hidden tiles are not flex items).
+  let visible = 0;
+  for (let i = 0; i < inner.children.length; i++) {
+    if (inner.children[i].offsetParent !== null) visible++;
   }
-  // Claim at least the full height; when the content is taller than avail (min scale on a short
-  // screen) claim the scaled content height so #fold's overflow:hidden does not clip it.
-  fold.style.height = Math.round(Math.max(avail, natural * scale)) + 'px';
+  const boundaries = Math.max(1, visible - 1);
+  const leftover = Math.max(0, (avail / scale) - natural);          // unscaled px still to fill
+  const gap = Math.min(FOLD_MAX_GAP, FOLD_BASE_GAP + leftover / boundaries);
+  inner.style.rowGap = gap + 'px';
+  fold.style.height = Math.round(avail) + 'px';
 }
 
 /* Re-fit whenever the viewport or the fold's own content changes (a gear tag appearing, a
@@ -3825,9 +3877,11 @@ function wireEvents() {
     storage.set('lb_gps_auto', state.gpsAutoStart ? 'on' : 'off');
     if (!state.gpsAutoStart) {
       // Turning auto-tracking off stops the current RECORDING only - the live GPS speed keeps running.
+      try { if (typeof LB !== 'undefined' && LB.stopRouteRecording) LB.stopRouteRecording(); } catch (err) {}
       if (state.currentRide) finalizeRide();
       state.armDistM = 0;
     }
+    syncGpsConfigToNative();
   });
 
   // GPS recording interval: persist and apply live to the ongoing/next recording.
@@ -3836,6 +3890,7 @@ function wireEvents() {
     const sec = parseInt(e.target.value, 10) || 5;
     state.gpsIntervalMs = sec * 1000;
     storage.set('lb_gps_interval', String(sec));
+    syncGpsConfigToNative();
   });
 
   // Fullscreen toggle: hide/show the Android status bar via the native bridge (persisted natively).
@@ -4261,7 +4316,12 @@ function init() {
   populateModelSelect();
   updInit();       // check for a newer app release and show the banner if there is one
   recoverStuckRides();
+  importNativeRoutes();   // pull in any track the native recorder finished while the app was away
   renderRoutes();
+  // A track finished with the screen off is handed over once the app is visible again.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) { try { importNativeRoutes(); } catch (e) {} }
+  });
   initNavBanner();
   initRideBanner();
   initDisplayPage();

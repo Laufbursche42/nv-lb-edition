@@ -164,8 +164,8 @@ html, body {
 
 /* ── Hero Metrics ──────────────────────────────────────────── */
 /* Hero cells and motor cells are the same kind of tile row, so they share one grid. */
-#hero-row, #tele-row, #tele-row-2 {
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
+#hero-row, #tele-row {
+  display: grid; grid-template-columns: 1fr 1fr;
   gap: var(--gap);
 }
 .hero-cell {
@@ -188,7 +188,6 @@ html, body {
 }
 #soc-val { color: var(--good); }
 #gear-val { color: var(--warn); }
-#current-val { color: var(--text); }
 .gear-tag-eco   { background: #1EE89A22; color: var(--good); }
 .gear-tag-drive { background: #3DB8FF22; color: var(--gps); }
 .gear-tag-sport { background: #FF505022; color: var(--danger); }
@@ -414,7 +413,7 @@ html, body {
 }
 
 /* ── Motors ─────────────────────────────────────────────────── */
-/* #tele-row takes the three-column tile grid shared with #hero-row. */
+/* #tele-row takes the two-column tile grid shared with #hero-row. */
 .tele-cell {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 10px 8px;
@@ -849,11 +848,13 @@ select.set-ctrl { text-align: left; -webkit-appearance: none; appearance: none; 
   border: 1px solid var(--border); background: var(--bg); color: var(--text);
   font-family: monospace; font-size: var(--fs-md);
 }
+/* Debug banner: a compact pill in the normal flow, right under the topbar (not a full-width
+   fixed bar over the status/title bar). JS toggles display:block, so margin:auto centres it. */
 .debug-banner.debug-banner {
-  display: none; position: fixed; top: 0; left: 0; right: 0;
-  background: #c0392b; color: #fff; text-align: center; z-index: 9999;
-  font-size: var(--fs-sm); font-weight: var(--fw-bold); padding: 4px 8px;
-  letter-spacing: .3px;
+  display: none; margin: 6px auto 8px; width: fit-content; max-width: 92%;
+  background: #c0392b; color: #fff; text-align: center; z-index: 20;
+  font-size: var(--fs-sm); font-weight: var(--fw-bold); padding: 3px 14px;
+  letter-spacing: .3px; border-radius: 999px;
 }
 
 /* ── Language switch and the what-is-new modal ─────────────────────────────── */

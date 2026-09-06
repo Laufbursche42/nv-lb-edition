@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
     private BleManager ble;
     private DebugLog debugLog;
     private RideLogger rideLogger;
+    private RouteRecorder routeRecorder;
     private SharedPreferences prefs;
     // Auto-reconnect to the remembered scooter is attempted at most once per process.
     private boolean autoConnectTried = false;
@@ -98,6 +99,9 @@ public class MainActivity extends Activity {
 
         // Ride logging: native NDJSON ride recorder, driven from the BLE listener callbacks below.
         rideLogger = new RideLogger(getApplicationContext());
+        // GPS route recording: native foreground-service recorder that survives the screen going off,
+        // also driven from the BLE listener callbacks below.
+        routeRecorder = new RouteRecorder(getApplicationContext());
 
         // Debug logging: persistent across restarts (SharedPreferences key lb_debug).
         // Resume capture immediately if the user left it enabled.
@@ -158,6 +162,9 @@ public class MainActivity extends Activity {
         s.setLoadWithOverviewMode(true);
         s.setUseWideViewPort(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // Pin text zoom to 100% so the OS "font size" accessibility setting cannot inflate the
+        // dashboard text and overflow the fixed-height fold (fitFold measures in CSS px).
+        s.setTextZoom(100);
 
         // Pin the privileged WebView (it holds the LB firmware/BLE bridge) to the bundled dashboard.
         // Any attempt to navigate it elsewhere is cancelled, so no remote or attacker page can ever
@@ -235,6 +242,10 @@ public class MainActivity extends Activity {
                         if (nowConnected) rideLogger.onConnected();
                         else rideLogger.onDisconnected();
                     }
+                    if (routeRecorder != null) {
+                        if (nowConnected) routeRecorder.onConnected();
+                        else routeRecorder.onDisconnected();
+                    }
                 }
             } catch (Throwable t) {
                 Log.e(TAG, "ride state wiring failed", t);
@@ -256,10 +267,17 @@ public class MainActivity extends Activity {
             } catch (Throwable t) {
                 Log.e(TAG, "ride live-data wiring failed", t);
             }
+            // Feed the same snapshot to the GPS route recorder (arms the route after ~20 m of movement).
+            try {
+                if (routeRecorder != null) routeRecorder.onLiveData(json);
+            } catch (Throwable t) {
+                Log.e(TAG, "route live-data wiring failed", t);
+            }
         }
 
         private String wireModel = null;   // last logged model key (pid/fwBldc/serial/region)
         private String wireState = null;   // last logged speed-relevant state
+        private Integer wireFault = null;  // last logged fault/warn code (from the 0x90 homepage report)
 
         // Surface the parsed model once and the speed-relevant state on every change, to the lbwire tag.
         private void logWireState(String json) {
@@ -272,6 +290,11 @@ public class MainActivity extends Activity {
                         + " limitSpeed=" + o.opt("limitSpeed") + " limitOn=" + o.opt("limitOn")
                         + " lock=" + o.opt("lock");
                 if (!state.equals(wireState)) { wireState = state; Log.i("lbwire", "STATE " + state); }
+                Integer f = o.has("fault") ? o.optInt("fault") : null;
+                if (f != null && !f.equals(wireFault)) {
+                    wireFault = f;
+                    Log.i("lbwire", "FAULT " + f + " (0x" + Integer.toHexString(f) + ") speed=" + o.opt("speed") + " driveMode=" + o.opt("driveMode"));
+                }
             } catch (Throwable ignored) {
             }
         }
@@ -346,6 +369,11 @@ public class MainActivity extends Activity {
         try {
             // Safety net: finalize any active ride and stop the foreground service on teardown.
             if (rideLogger != null) rideLogger.onDisconnected();
+        } catch (Throwable ignored) {
+        }
+        try {
+            // Safety net: finalize any active route recording and stop its foreground service.
+            if (routeRecorder != null) routeRecorder.onDisconnected();
         } catch (Throwable ignored) {
         }
         try {
@@ -963,6 +991,45 @@ public class MainActivity extends Activity {
                 if (rideLogger != null) rideLogger.deleteAllRides();
             } catch (Throwable t) {
                 Log.e(TAG, "deleteAllRides bridge failed", t);
+            }
+        }
+
+        // ── GPS route recording (native foreground service) ──
+
+        /**
+         * Hand every FINISHED native GPS route to the dashboard as JSON and delete the files, so the
+         * WebView imports them into its recorded-routes list. Each: {@code {"id","start","end",
+         * "points":[{lat,lon,alt,ts,speed}]}}. The route being recorded right now is never returned.
+         * This is what lets a track survive the screen going off: the points are logged by the native
+         * foreground service, then picked up here whenever the dashboard is alive. "[]" if none.
+         */
+        @JavascriptInterface
+        public String takeRecordedRoutes() {
+            try {
+                return routeRecorder != null ? routeRecorder.takeRecordedRoutes() : "[]";
+            } catch (Throwable t) {
+                Log.e(TAG, "takeRecordedRoutes bridge failed", t);
+                return "[]";
+            }
+        }
+
+        /** Mirror the dashboard's GPS-recording config to the native recorder (auto-track + interval). */
+        @JavascriptInterface
+        public void setGpsRecordConfig(boolean autoTrack, int intervalSec) {
+            try {
+                if (routeRecorder != null) routeRecorder.setConfig(autoTrack, intervalSec);
+            } catch (Throwable t) {
+                Log.e(TAG, "setGpsRecordConfig bridge failed", t);
+            }
+        }
+
+        /** Stop button: end the native route recording and block re-arm until the next reconnect. */
+        @JavascriptInterface
+        public void stopRouteRecording() {
+            try {
+                if (routeRecorder != null) routeRecorder.stopRecording();
+            } catch (Throwable t) {
+                Log.e(TAG, "stopRouteRecording bridge failed", t);
             }
         }
 

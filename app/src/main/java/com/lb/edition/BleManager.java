@@ -555,6 +555,10 @@ final class BleManager {
             pushTicks++;
             long per = Math.max(1, PUSH_INTERVAL_MS);
             if (notifyReady) {
+                // Actively poll the homepage report so the warn/fault code is captured even when the
+                // scooter is not pushing 0x90 (it only pushes while riding). The warn code is data
+                // offset 0; the parser exposes it as fault and MainActivity logs it when it changes.
+                enqueueWrite(CommandBuilder.read(0x90));
                 if (pushTicks % Math.max(1, (2000 / per)) == 0) enqueueWrite(CommandBuilder.read(0x70));
                 if (pushTicks % Math.max(1, (5000 / per)) == 0) enqueueWrite(CommandBuilder.read(0x72));
             }

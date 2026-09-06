@@ -80,6 +80,14 @@
             android:exported="false"
             android:foregroundServiceType="connectedDevice"/>
 
+        <!-- Foreground service that records the GPS track of the current ride so the route survives
+             the screen going off (a WebView geolocation watch is throttled in the background).
+             Started only internally by RouteRecorder once the scooter has actually moved. -->
+        <service
+            android:name="com.lb.edition.RouteRecorderService"
+            android:exported="false"
+            android:foregroundServiceType="location"/>
+
         <!-- Foreground service that owns an active turn-by-turn navigation session (GPS + voice
              guidance) so navigation survives leaving the map screen and keeps announcing on the
              dashboard. Started only internally by NavActivity; stopped by the user (End). -->

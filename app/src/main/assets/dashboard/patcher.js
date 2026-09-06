@@ -67,10 +67,6 @@ const IMAGES = {
     patches: [
       { off: 0x14bf3, from: [0xd2], to: [0xe0], id: 'kickstart' },
       { off: 0x14679, from: [0xd0], to: [0xe0], id: 'cruise' },
-      // Over-speed warn 'R' -> silent. The de-capped controller asserts an over-speed warn above its
-      // former limit; the meter turns any non-silent warn code into a continuous beep. 0x52('R') is the
-      // only non-silent letter, so storing 0x00 instead keeps the scooter quiet while real faults still beep.
-      { off: 0x1404e, from: [0x52], to: [0x00], id: 'beep-r-warn' },
       { off: 0x14d6e, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
     ],
   },
@@ -86,6 +82,7 @@ const IMAGES = {
     patches: [
       { off: 0x14b9f, from: [0xd2], to: [0xe0], id: 'kickstart' },
       { off: 0x14631, from: [0xd0], to: [0xe0], id: 'cruise' },
+      { off: 0x14d1a, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
     ],
   },
 
@@ -100,6 +97,7 @@ const IMAGES = {
     patches: [
       { off: 0x14ba3, from: [0xd2], to: [0xe0], id: 'kickstart' },
       { off: 0x14635, from: [0xd0], to: [0xe0], id: 'cruise' },
+      { off: 0x14d1e, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
     ],
   },
 
