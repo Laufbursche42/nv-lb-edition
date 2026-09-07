@@ -16,6 +16,20 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.12
+
+- **Switchable speed patch for the whole NT / GT3 / ST performance line.** The firmware patcher now builds lock/unlock controller firmware for the NT5 family, NT3 (Pro, Max), GT3 (GT3, GT3 Max, GT3 Pro) and ST3 (ST3, ST3 Pro), not only the NT5 Max. Every build boots throttled to about 22 km/h, opens with the speed release and re-locks on each restart. Only the top gear changes; the lower gears and eco keep their stock feel. As before the cap lives in RAM and is seeded at boot, so it is never a permanently open firmware.
+- **The unlock now removes the cap fully.** Instead of a fixed ceiling the top gear opens to what the motor itself allows, well above the previous ~40. The ST3 Pro was raised to match. The real top speed is whatever the motor can hold, so a first flash belongs on a recoverable unit.
+- **The over-speed warning beep is silenced on the GT3 / ST3 and NT3 meters too**, the same way it already was on the NT5 meters. Real fault tones are unaffected on the models where a single warning tone could be isolated.
+- **Each patched build reports its own controller version** so Scooter Info shows that our firmware is on the scooter, and the app sends the matching lock/unlock command for it.
+- GT5 (Pro, Max) is not covered yet and the XT5 family stays flash-free (drive mode 4). These controller patches change code inside the controller and have been verified statically.
+
+## 1.0.11
+
+- **Native GPS route recording.** A foreground service records the ride as a GPX track and keeps logging with the screen off, so a locked phone in a pocket still captures the route. Recorded tracks import into the ride log.
+- **Dashboard fits one screen.** The main tiles are laid out two per row and scaled so the set fills a single screen without scrolling, and the pack current sits in the battery detail list the way the NAVEE app shows it, rather than as a large tile.
+- **Zero start appears on patched firmware.** The kickstart patch removes the region clamp, so the zero-start setting shows up once the patched firmware that accepts it is flashed.
+
 ## 1.0.10
 
 - **Gear changes no longer drop the speed unlock.** On a patched scooter the controller now latches the unlock: changing the drive mode or gear after unlocking keeps the full speed, and only an explicit lock command or a restart returns it to about 22 km/h. Before this, any mode change re-locked the scooter.
