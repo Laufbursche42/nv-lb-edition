@@ -46,11 +46,20 @@ The app was built and checked against the **NAVEE XT5 family**. It connects to a
 
 Other NAVEE models that use the same protocol are **expected** to work, but they are **not verified** - nobody has confirmed them on hardware. Treat anything outside the XT5 family as untested: the connection and the read-only pages are the likely case, while a setting your model does not implement is simply ignored by the scooter. Which functions a given unit supports depends on its firmware, so a switch that has no effect on your scooter means the firmware did not accept it, not that the app failed to send it.
 
-**Speed unlocking - two ways depending on the model.**
+**Speed unlocking - which models the patcher supports.** Two mechanisms, depending on the model:
 
-- **Flash-free (no firmware change).** The speed release (drive mode, below) lifts the top speed straight over Bluetooth on the XT5 family (Ultra, Pro, Max), UT5 Ultra X and E45 / E60 Pro. It is per-ride and reverts on a restart or a gear-button press.
-- **Switchable firmware patch (boots locked, unlock per ride).** On the NT and GT3 / ST performance line the speed cap sits in the controller's own firmware, so the patcher builds a controller firmware that boots throttled to about 22 km/h and opens the top gear with the same speed release, re-locking itself on every restart. Covered today: **NT5** (Max, Max+, Turbo, Ultra), **NT3** (Pro, Max), **GT3** (GT3, GT3 Max, GT3 Pro) and **ST3** (ST3, ST3 Pro). Only the top gear changes; the lower gears keep their stock feel.
-- **Not covered yet.** GT5 (Pro, Max): the controller side is ready but the display side still needs work, so it is not offered. Everything else (E-series, V-series and so on) can still read values and use the everyday functions; only the speed unlock is not built for those.
+- **Flash-free (no firmware change).** The speed release (drive mode, below) lifts the top speed straight over Bluetooth, per ride, and reverts on a restart or a gear-button press: **XT5** (Ultra, Pro, Max), **UT5 Ultra X**, **E45 / E60 Pro**.
+- **Switchable firmware patch (boots locked at about 22 km/h, unlock per ride, re-locks on restart).** On the NAVEE performance line the speed cap sits in the controller's own firmware, so the patcher builds a controller firmware whose top gear opens with the same speed release. Only the top gear changes; the lower gears keep their stock feel. Models the nv-lb-edition patcher supports today:
+
+  | Family | Models |
+  | --- | --- |
+  | **NT5** | Max, Max+, Turbo, Ultra |
+  | **NT3** | Pro, Max |
+  | **GT3** | GT3, GT3 Max, GT3 Pro |
+  | **ST3** | ST3, ST3 Pro |
+  | **GT5** | Pro |
+
+- **Not built yet.** **GT5 Max** - it shares the patched display firmware with the GT5 Pro, but its controller is a different build that still needs its own patch. Every other NAVEE model (E-series, V-series and the rest) can read values and use the everyday functions, but the speed patch is not built for it.
 
 If your scooter already runs a paid third-party speed tuning, you can return it to stock firmware and then flash this patcher's switchable lock/unlock instead. These controller patches change code inside the scooter and have been checked statically, not on every unit in the field - flash the first scooter of a model somewhere you can recover it, and read the Disclaimer.
 

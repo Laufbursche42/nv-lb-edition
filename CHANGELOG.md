@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.13
+
+- **GT5 Pro joins the switchable speed patch.** The patcher now builds lock/unlock controller firmware for the GT5 Pro as well, alongside the NT5, NT3, GT3 and ST3 families. It boots throttled to about 22 km/h, opens the top gear with the speed release and re-locks on every restart, exactly like the others; only the top gear changes. Reaching the GT5's controller meant reading its full display firmware: its control frame carries the drive mode in a different byte than the earlier models, and the display had to be taught to pass the unlock through for one frame while the handlebar gear button keeps working normally.
+- **GT5 Max is not built yet.** It shares the patched display firmware with the GT5 Pro, but its controller is a different build that still needs its own patch. Every other performance model (NT5, NT3, GT3 family, ST3, ST3 Pro, GT5 Pro) is covered.
+- The controller patch changes code inside the scooter and has been verified statically; a first flash belongs on a recoverable unit.
+
 ## 1.0.12
 
 - **Switchable speed patch for the whole NT / GT3 / ST performance line.** The firmware patcher now builds lock/unlock controller firmware for the NT5 family, NT3 (Pro, Max), GT3 (GT3, GT3 Max, GT3 Pro) and ST3 (ST3, ST3 Pro), not only the NT5 Max. Every build boots throttled to about 22 km/h, opens with the speed release and re-locks on each restart. Only the top gear changes; the lower gears and eco keep their stock feel. As before the cap lives in RAM and is seeded at boot, so it is never a permanently open firmware.
