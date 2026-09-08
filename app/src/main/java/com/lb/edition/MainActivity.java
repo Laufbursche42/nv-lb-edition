@@ -1113,7 +1113,7 @@ public class MainActivity extends Activity {
         /** Download the stock firmware from {@code url} into Downloads, then push its bytes (base64) to
          *  window.__onFwDownloaded so the page can patch it. Network runs off the main thread. */
         @JavascriptInterface
-        public void fwDownloadPatch(final String url, final String kind) {
+        public void fwDownloadPatch(final String url, final String kind, final String name) {
             Log.i(TAG, "LB.fwDownloadPatch(" + kind + ", " + url + ")");
             new Thread(() -> {
                 try {
@@ -1123,10 +1123,11 @@ public class MainActivity extends Activity {
                     }
                     byte[] bytes = httpGetBytes(url.trim());
                     if (bytes == null || bytes.length == 0) { pushFwDownloaded(false, "", "empty", null, kind); return; }
-                    String name = fwNameFromUrl(url, "navee_" + kind + ".bin");
-                    String saved = saveBytesToDownloads(name, bytes);
+                    // Prefer the readable name the page derives from model+component+version; fall back to the URL hex.
+                    String fname = (name != null && !name.trim().isEmpty()) ? safeBinName(name) : fwNameFromUrl(url, "navee_" + kind + ".bin");
+                    String saved = saveBytesToDownloads(fname, bytes);
                     String b64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP);
-                    pushFwDownloaded(true, saved != null ? saved : name, null, b64, kind);
+                    pushFwDownloaded(true, saved != null ? saved : fname, null, b64, kind);
                 } catch (Throwable t) {
                     Log.e(TAG, "fwDownloadPatch failed", t);
                     pushFwDownloaded(false, "", "download", null, kind);

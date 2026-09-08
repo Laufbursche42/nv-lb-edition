@@ -329,7 +329,7 @@ const IMAGES = {
 
   // BLDC 0.0.2.0, ST3 Pro (12501 / 3801, 02831 family). Switchable top-gear capZ latch, same mechanism
   // as bldc9301/9207. The top-gear cell 0x2000035a (drive modes 3+5) is driven per-frame from the drive
-  // nibble: 5 -> 692 (~35 km/h unlock), 6 -> 437 (22 km/h lock), any other nibble leaves it unchanged.
+  // nibble: 5 -> 1046 (~52 km/h unlock, full unclamp), 6 -> 437 (22 km/h lock), any other nibble leaves it unchanged.
   // The two capZ region-matcher stores are NOP'd and a boot stub seeds 437 (locked). Eco cell 0x20000358
   // and the lower gears stay stock. Magic 02831 + version word 00 00 02 00 also match V3 Pro (4201);
   // the size 0xd080 (plus stock CRC 0x4805) selects the two ST3 Pro builds and excludes it.

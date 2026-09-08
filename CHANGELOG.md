@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.16
+
+- **Readable firmware file names.** The patcher now saves the downloaded stock firmware and its patched copy under a readable name - model, component and version, for example `NT5_Max_bldc_0.0.0.6.bin` plus `NT5_Max_bldc_0.0.0.6-patched.bin` - instead of the cryptic hex name from the download URL. The original is the file without `-patched`; the patched copy carries `-patched`. Works for every supported model.
+
 ## 1.0.15
 
 - **Cruise control and zero start on the XT5 (Pro, Ultra, Max).** Cruise already works on the XT5 with no patch at all - the display firmware accepts and stores it unconditionally, so the app toggle takes effect flash-free (verified end to end across all three XT5 meters, which are byte-identical). Zero start (kickstart) needs one small display-firmware patch: stock firmware floors the low start levels 0 to 2 outside the USA region, and the patched XT5 meter opens levels 0 to 2 in every region while staying app-switchable. Speed on the XT5 stays flash-free as before (drive mode 4 over Bluetooth).

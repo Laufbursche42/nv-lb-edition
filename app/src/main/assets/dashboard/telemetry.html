@@ -4053,8 +4053,8 @@ function fwRunPatcher() {
   const det = fwState.model;
   if (!det || det.state !== 'ok') { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
   const comps = [];
-  if (det.meter) comps.push({ kind: 'meter', url: det.meter.url });
-  if (det.bldc) comps.push({ kind: 'bldc', url: det.bldc.url });
+  if (det.meter) comps.push({ kind: 'meter', url: det.meter.url, name: fwReadableName(det, 'meter', det.meter.vn) });
+  if (det.bldc) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
   if (!comps.length) { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
   fwState.staged = { meter: null, bldc: null };
   fwState.pendingDownloads = comps.slice();
@@ -4066,7 +4066,7 @@ function fwDownloadNext() {
   const next = fwState.pendingDownloads.shift();
   if (!next) return;
   fwPatchStatus(tf('patch.status.download', { kind: next.kind }));
-  try { LB.fwDownloadPatch(next.url, next.kind); }
+  try { LB.fwDownloadPatch(next.url, next.kind, next.name || ''); }
   catch (e) { fwState.downloading = false; document.getElementById('btn-patcher-run').disabled = false; showToast(tf('msg.error.generic', { e: e })); }
 }
 function fwHandoffToFlasher() {
@@ -4143,6 +4143,12 @@ function fwBufToB64(u8) {
   let s = ''; const chunk = 0x8000;
   for (let i = 0; i < u8.length; i += chunk) s += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
   return btoa(s);
+}
+// Readable Downloads name: <Model>_<meter|bldc>_<version>.bin (native falls back to the URL hex if empty).
+function fwReadableName(det, kind, vn) {
+  const model = (((det && det.name) || 'navee').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '')) || 'navee';
+  const ver = (vn || '').replace(/[^0-9A-Za-z.]+/g, '');
+  return model + '_' + kind + (ver ? '_' + ver : '') + '.bin';
 }
 function fwPatchedName(name) {
   const dot = name.lastIndexOf('.');
