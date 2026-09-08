@@ -20,7 +20,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 
 - **Cruise control and zero start now switch on across the NT3, GT3 and ST3 firmware too.** The meter firmware the patcher builds for NT3 (Pro, Max) and the GT3 / ST3 family (GT3, GT3 Max, GT3 Pro, ST3, ST3 Pro) now lets the app's cruise control and zero-start toggles actually take effect, the same way the NT5 meters already did. On those builds both were previously accepted but silently ignored. Only the guarding region gate is opened; nothing about the speed changes.
 - **GT5 Max controller is now built too.** The switchable speed patch now covers the GT5 Max as well, so the whole GT5 pair (Pro and Max) is done. It boots throttled to about 22 km/h, opens the top gear with the speed release and re-locks on every restart, exactly like the others.
-- On GT5 (Pro and Max) and the Ultra X zero start already worked without any patch. Their cruise control is decided in the controller rather than the meter, so these meter builds do not enable it yet; that path is being worked on separately.
+- On the GT5 (Pro and Max) the firmware does not region-gate cruise control or zero start at all, so the app's own toggles already take effect there without a patch; both were traced end to end through the meter frame builder and the controller. The Ultra X likewise starts from zero without a patch.
 - These controller and meter patches change code inside the scooter and have been verified statically; a first flash belongs on a recoverable unit.
 
 ## 1.0.13
