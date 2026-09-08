@@ -16,6 +16,11 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.15
+
+- **Cruise control and zero start on the XT5 (Pro, Ultra, Max).** Cruise already works on the XT5 with no patch at all - the display firmware accepts and stores it unconditionally, so the app toggle takes effect flash-free (verified end to end across all three XT5 meters, which are byte-identical). Zero start (kickstart) needs one small display-firmware patch: stock firmware floors the low start levels 0 to 2 outside the USA region, and the patched XT5 meter opens levels 0 to 2 in every region while staying app-switchable. Speed on the XT5 stays flash-free as before (drive mode 4 over Bluetooth).
+- **The patcher skips components it has no patch for.** On a model where only one component is patchable - like the XT5, whose controller stays flash-free - the patcher now patches the supported component and skips the rest cleanly, instead of stopping with an error.
+
 ## 1.0.14
 
 - **Cruise control and zero start now switch on across the NT3, GT3 and ST3 firmware too.** The meter firmware the patcher builds for NT3 (Pro, Max) and the GT3 / ST3 family (GT3, GT3 Max, GT3 Pro, ST3, ST3 Pro) now lets the app's cruise control and zero-start toggles actually take effect, the same way the NT5 meters already did. On those builds both were previously accepted but silently ignored. Only the guarding region gate is opened; nothing about the speed changes.

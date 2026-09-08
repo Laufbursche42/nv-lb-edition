@@ -4160,6 +4160,21 @@ window.__onFwDownloaded = function(arg) {
     document.getElementById('btn-patcher-run').disabled = false;
     return;
   }
+  // A component this patcher has no entry for (e.g. a model where only the meter is patchable, like the
+  // XT5 whose speed stays flash-free): skip it instead of aborting, so the supported component still goes
+  // through and the run hands off cleanly.
+  try {
+    const k = window.NVFW && window.NVFW.identify ? window.NVFW.identify(new Uint8Array(fwB64ToBuf(m.b64))) : null;
+    if (!k || !window.NVFW.IMAGES[k]) {
+      fwPatchStatus(tf('patch.status.skip', { kind: kind }));
+      if (fwState.pendingDownloads.length) { fwDownloadNext(); return; }
+      fwState.downloading = false;
+      document.getElementById('btn-patcher-run').disabled = false;
+      if (fwState.staged.meter || fwState.staged.bldc) { fwHandoffToFlasher(); }
+      else { fwPatchStatus(t('patch.run.nofw')); }
+      return;
+    }
+  } catch (e) { /* fall through: patchFirmware surfaces any real error below */ }
   fwPatchStatus(tf('patch.status.patch', { kind: kind }));
   let r;
   try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64)); }

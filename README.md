@@ -59,7 +59,7 @@ Other NAVEE models that use the same protocol are **expected** to work, but they
   | **ST3** | ST3, ST3 Pro |
   | **GT5** | Pro, Max |
 
-- **Cruise control and zero start.** The patched NT5, NT3, GT3 and ST3 meter firmware also makes the app's cruise-control and zero-start toggles take effect, which stock firmware region-gates and silently ignores. On the GT5 (Pro and Max) the firmware does not region-gate either one, so both already work without a patch.
+- **Cruise control and zero start.** The patched NT5, NT3, GT3 and ST3 meter firmware also makes the app's cruise-control and zero-start toggles take effect, which stock firmware region-gates and silently ignores. On the GT5 (Pro and Max) the firmware does not region-gate either one, so both already work without a patch. On the XT5 (Pro, Ultra, Max) cruise works flash-free as well; only zero start needs a small display-firmware patch.
 - **Everything else.** Every other NAVEE model (E-series, V-series and the rest) can read values and use the everyday functions, but the speed patch is not built for it.
 
 If your scooter already runs a paid third-party speed tuning, you can return it to stock firmware and then flash this patcher's switchable lock/unlock instead. These controller patches change code inside the scooter and have been checked statically, not on every unit in the field - flash the first scooter of a model somewhere you can recover it, and read the Disclaimer.

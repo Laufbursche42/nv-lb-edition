@@ -118,6 +118,23 @@ const IMAGES = {
     ],
   },
 
+  // Meter 3.0.2.0, byte-identical across XT5 Pro (5301), XT5 Ultra (5801) and XT5 Max (5901). 148480 bytes.
+  // Cruise (0x52) is already ungated on stock (the handler stores the flag unconditionally), so only zero-start
+  // needs a patch: a region floor forces low start levels 0-2 up to 3 unless the region is USA. Flipping the
+  // guard (bcs -> unconditional B) lets the app zero-start levels through in every region, still app-switchable.
+  // Speed stays flash-free (drive mode 4 over BLE); this meter patch is only for kickstart.
+  meterXT5: {
+    label: 'XT5 meter 3.0.2.0 (5301/5801/5901)',
+    kind: 'meter',
+    match: (u8) => u8.length === 0x24400 && bytesAt(u8, 0, ascii('T2202')) && beRead(u8, 0x13, 2) === 0xb37d,
+    verify: { size: 0x24400, crcOff: 0x13, crcStock: 0xb37d, lenOff: 0x10, lenStock: 0x024000 },
+    bodyBase: 0x400,
+    reseal: meterReseal,
+    patches: [
+      { off: 0x14a49, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bcs) -> unconditional, levels 0-2 accepted in every region
+    ],
+  },
+
   // Meter 2.0.4.6, byte-identical across ST3 Pro (12501/3801), ST3 (3701) and GT3 / GT3 Pro / GT3 Max
   // (3601/3401/3501/12601). 141312 bytes. The app drive-mode value (BLE 0x58, RAM cell 0x0020c664) is
   // normally clamped and never reaches the controller frame. A one-shot trampoline routes an app nibble
