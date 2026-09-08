@@ -3476,7 +3476,7 @@ let _speedReleased = false;
 // re-locking. The patched controllers report a distinct fwBldc marker: NT5 "5556", NT5 Max/Ultra 3553G
 // "0050"/"0055", ST3 Pro "5525", NT3 Pro "5557", GT3 Pro "5517", GT3 "5511", GT3 Max "6611", ST3 "7711".
 // Every unflashed model keeps its stock speed-release untouched: XT5 family 4 open / 3 normal, else 5/2.
-const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513'];
+const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811'];
 function speedReleaseGear(on) {
   if (PATCHED_LATCH_BLDC.includes((liveRaw().fwBldc || '').trim())) return on ? 5 : 6;
   const isXT = naveeIsXT(naveeRealModel());

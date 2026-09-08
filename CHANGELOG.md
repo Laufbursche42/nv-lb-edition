@@ -16,6 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.14
+
+- **Cruise control and zero start now switch on across the NT3, GT3 and ST3 firmware too.** The meter firmware the patcher builds for NT3 (Pro, Max) and the GT3 / ST3 family (GT3, GT3 Max, GT3 Pro, ST3, ST3 Pro) now lets the app's cruise control and zero-start toggles actually take effect, the same way the NT5 meters already did. On those builds both were previously accepted but silently ignored. Only the guarding region gate is opened; nothing about the speed changes.
+- **GT5 Max controller is now built too.** The switchable speed patch now covers the GT5 Max as well, so the whole GT5 pair (Pro and Max) is done. It boots throttled to about 22 km/h, opens the top gear with the speed release and re-locks on every restart, exactly like the others.
+- On GT5 (Pro and Max) and the Ultra X zero start already worked without any patch. Their cruise control is decided in the controller rather than the meter, so these meter builds do not enable it yet; that path is being worked on separately.
+- These controller and meter patches change code inside the scooter and have been verified statically; a first flash belongs on a recoverable unit.
+
 ## 1.0.13
 
 - **GT5 Pro joins the switchable speed patch.** The patcher now builds lock/unlock controller firmware for the GT5 Pro as well, alongside the NT5, NT3, GT3 and ST3 families. It boots throttled to about 22 km/h, opens the top gear with the speed release and re-locks on every restart, exactly like the others; only the top gear changes. Reaching the GT5's controller meant reading its full display firmware: its control frame carries the drive mode in a different byte than the earlier models, and the display had to be taught to pass the unlock through for one frame while the handlebar gear button keeps working normally.
