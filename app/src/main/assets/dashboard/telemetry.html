@@ -2712,6 +2712,38 @@ function naveeRealModel() { return naveeModelFromPid(liveRaw().pid || ''); }
 // serial or any XT model -> not allowed. Fail-safe: default deny.
 function naveeRegionAllowed() { const m = naveeRealModel(); return !!m && !naveeIsXT(m); }
 
+// Per-model live-control scope: pid -> [cruiseSettable, kickSettable]. Kept in lockstep with
+// navee-unlock's MODELS caps and derived from the firmware-verified support table. 1 = the firmware
+// honors the live toggle (works stock or the patch is present), 0 = proven absent (hide the control),
+// null = the meter body is unreadable (compressed/external-ROM) so it cannot be verified - show it, the
+// rider may still try. Only cruise (0x52) and zero-start (0x6A) are gated here; lock/drive-mode/unit are
+// universal.
+const NAVEE_CAPS = {
+  '2213':[null,null], '2314':[null,null], '2322':[1,0], '2326':[null,null], '2327':[null,null],
+  '2328':[null,null], '2329':[0,0], '2334':[1,0], '2345':[1,1], '2353':[null,null], '2401':[1,1],
+  '2402':[1,1], '2403':[1,1], '2416':[1,1], '2417':[1,0], '2418':[1,1], '2422':[1,0], '2435':[0,0],
+  '2436':[0,0], '2437':[1,0], '2438':[0,0], '2441':[1,1], '2442':[1,1], '2443':[1,1], '2449':[1,1],
+  '2504':[null,null], '2505':[null,null], '2506':[1,1], '2509':[1,1], '2515':[0,0], '2517':[1,1],
+  '2518':[1,1], '2519':[1,1], '2529':[1,1], '2536':[1,1], '2538':[1,1], '2543':[1,1], '2545':[1,1],
+  '2546':[1,1], '2547':[null,null], '2573':[1,1], '2585':[1,1], '2611':[1,1], '2612':[1,1],
+  '2614':[1,1], '2619':[null,null], '2620':[1,1], '2623':[null,null], '2634':[1,1], '2643':[1,1],
+  '2646':[null,null], '2657':[1,1], '2658':[1,1], '2701':[1,1], '2704':[1,1], '2707':[1,1],
+  '2714':[1,1], '2736':[null,null], '2739':[null,null], '2745':[1,1], '2753':[1,1], '2754':[1,1],
+  '2768':[0,0],
+};
+// [cruiseSettable, kickSettable] for the connected pid; unknown pid -> [null,null] (show, cannot verify).
+function naveeCaps() { const c = NAVEE_CAPS[(liveRaw().pid || '').trim()]; return c || [null, null]; }
+// Hide a live control only where the firmware PROVES it absent (cap===0). cap 1 or null -> shown. The
+// zero-start row also keeps its USA-SKU level gate elsewhere; here we only drop it when kick is absent.
+function naveeApplyCaps() {
+  const caps = naveeCaps();
+  const setRow = (id, show) => { const el = document.getElementById(id); const row = el && el.closest('.settings-row'); if (row) row.style.display = show ? '' : 'none'; };
+  setRow('ss-cruise', caps[0] !== 0);
+  setRow('ss-zerostart', caps[1] !== 0);
+  const cq = document.querySelector('#drive-quick .dq-btn[data-dq="cruise"]');
+  if (cq) cq.style.display = (caps[0] !== 0) ? '' : 'none';
+}
+
 let _lastModelKey = null;   // kept so applyLang() can force one refresh of the model line
 
 // No manual picker: the model is detected automatically from the serial pid on every connect. Kept as
@@ -3288,6 +3320,12 @@ function naveeFactoryHex(sub, payload) {
   const body = [0x55, 0xAA, 0x00, sub & 0xFF, payload.length & 0xFF, ...payload];
   return naveeHex([...body, naveeCk(body), 0xAE, 0xAD]);
 }
+// Normal (non-factory) frame with a multi-byte payload, ending FE FD (factory frames end AE AD instead).
+function naveeNormalHex(sub, payload) {
+  payload = (payload || []).map(x => x & 0xFF);
+  const body = [0x55, 0xAA, 0x00, sub & 0xFF, payload.length & 0xFF, ...payload];
+  return naveeHex([...body, naveeCk(body), 0xFE, 0xFD]);
+}
 function naveeSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // Region write via the factory 0xA2 config write, wrapped in line-test (0xA0 1 / 0xA0 0), exactly like
@@ -3478,7 +3516,7 @@ let _speedReleased = false;
 // re-locking. The patched controllers report a distinct fwBldc marker: NT5 "5556", NT5 Max/Ultra 3553G
 // "0050"/"0055", ST3 Pro "5525", NT3 Pro "5557", GT3 Pro "5517", GT3 "5511", GT3 Max "6611", ST3 "7711".
 // Every unflashed model keeps its stock speed-release untouched: XT5 family 4 open / 3 normal, else 5/2.
-const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811'];
+const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0090', '0099'];
 function speedReleaseGear(on) {
   if (PATCHED_LATCH_BLDC.includes((liveRaw().fwBldc || '').trim())) return on ? 5 : 6;
   const isXT = naveeIsXT(naveeRealModel());
@@ -3487,6 +3525,15 @@ function speedReleaseGear(on) {
 }
 
 function sendSpeedRelease(on) {
+  // UT5 Ultra X: its meter ignores drive-mode cmd 0x58 (no-op stub). The gear that trips the patched
+  // controller latch is set via cmd 0x6d (group 4 = gear, index 0). Gear 4 -> unlock, 3 -> lock.
+  if (naveeRealModel() === 'UT5 Ultra X') {
+    if (typeof LB === 'undefined' || !LB.sendRaw) { showToast(t('msg.app.only.in.app')); return false; }
+    LB.sendRaw(naveeNormalHex(0x6d, [0x04, 0x00, on ? 0x04 : 0x03]));
+    _speedReleased = !!on;
+    setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
+    return true;
+  }
   if (!pushSetting(NAVEE_CMD.drivemode, speedReleaseGear(on))) return false;
   _speedReleased = !!on;
   setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
@@ -3553,9 +3600,12 @@ function reflectDriveQuick() {
   wrap.querySelectorAll('.dq-btn[data-dq]').forEach(btn => {
     btn.classList.toggle('active', connected && !!on[btn.dataset.dq]);
   });
-  // Zero-start (levels 0-2) is USA-SKU only; hide its quick button where the meter would clamp it away.
+  // Zero-start (levels 0-2) is USA-SKU only; hide its quick button where the meter would clamp it away,
+  // and hide it entirely where the firmware has no zero-start at all (kick cap 0).
   const zq = wrap.querySelector('.dq-btn[data-dq="zerostart"]');
-  if (zq) zq.style.display = naveeZeroStartFull() ? '' : 'none';
+  if (zq) zq.style.display = (naveeCaps()[1] !== 0 && naveeZeroStartFull()) ? '' : 'none';
+  // Drop cruise/zero-start controls the connected model's firmware does not support.
+  naveeApplyCaps();
 }
 
 

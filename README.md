@@ -46,24 +46,63 @@ The app was built and checked against the **NAVEE XT5 family**. It connects to a
 
 Other NAVEE models that use the same protocol are **expected** to work, but they are **not verified** - nobody has confirmed them on hardware. Treat anything outside the XT5 family as untested: the connection and the read-only pages are the likely case, while a setting your model does not implement is simply ignored by the scooter. Which functions a given unit supports depends on its firmware, so a switch that has no effect on your scooter means the firmware did not accept it, not that the app failed to send it.
 
-**Speed unlocking - which models the patcher supports.** Two mechanisms, depending on the model:
+Two tables:- **Speed** - `patcher` a switchable lock/unlock controller patch (boots throttled to ~22 km/h, opens the top gear per ride, re-locks on restart); `flash-free` lifted over Bluetooth per ride, no flash; `no` no switchable cap on the controller; `no image` the manufacturer publishes no controller firmware for this model.
+- **Kick-start** / **Cruise** / **Warning beeps** - `patcher` region-gated on stock, our patch unlocks/silences it in every region; `stock` already works in every region with no patch; `no` not present in this firmware, or the meter body is external-ROM / compressed and cannot be reached.
 
-- **Flash-free (no firmware change).** The speed release (drive mode, below) lifts the top speed straight over Bluetooth, per ride, and reverts on a restart or a gear-button press: **XT5** (Ultra, Pro, Max), **UT5 Ultra X**, **E45 / E60 Pro**.
-- **Switchable firmware patch (boots locked at about 22 km/h, unlock per ride, re-locks on restart).** On the NAVEE performance line the speed cap sits in the controller's own firmware, so the patcher builds a controller firmware whose top gear opens with the same speed release. Only the top gear changes; the lower gears keep their stock feel. Models the nv-lb-edition patcher supports today:
+### Fully supported
 
-  | Family | Models |
-  | --- | --- |
-  | **NT5** | Max, Max+, Turbo, Ultra |
-  | **NT3** | Pro, Max |
-  | **GT3** | GT3, GT3 Max, GT3 Pro |
-  | **ST3** | ST3, ST3 Pro |
-  | **GT5** | Pro, Max |
+| Model | Speed | Kick-start | Cruise | Warning beeps |
+| --- | --- | --- | --- | --- |
+| NT5 Max, Max+, Turbo, Ultra | patcher | patcher | patcher | patcher |
+| NT3 Pro, Max | patcher | patcher | patcher | patcher |
+| GT3, GT3 Max, GT3 Pro | patcher | patcher | patcher | patcher |
+| ST3, ST3 Pro | patcher | patcher | patcher | patcher |
+| GT5 Pro, Max | patcher | stock | stock | patcher |
+| UT3 Max | patcher | stock | stock | patcher |
+| UT5 Max | patcher | patcher | patcher | patcher |
+| UT5 Ultra X | patcher | patcher | patcher | patcher |
+| S2 | patcher | patcher | patcher | patcher |
+| E20 Lite, E25 Go | patcher | patcher | patcher | patcher |
+| XT5 Pro, Ultra, Max | flash-free | patcher | stock | patcher |
+| ST5 Pro, ST5 Max | patcher | patcher | patcher | patcher |
 
-- **Cruise control and zero start.** The patched NT5, NT3, GT3 and ST3 meter firmware also makes the app's cruise-control and zero-start toggles take effect, which stock firmware region-gates and silently ignores. On the GT5 (Pro and Max) the firmware does not region-gate either one, so both already work without a patch. On the XT5 (Pro, Ultra, Max) cruise works flash-free as well; only zero start needs a small display-firmware patch.
-- **Pick what to patch, keep your beeps.** After it detects your model the patcher shows a checkbox per feature - speed, cruise, zero start plus the individual warning beeps - and writes only the ticked ones. Nothing is silenced by default, so the confirmation beep stays; you can silence the over-speed warning (all models) and, where the firmware allows, the alarm and startup/error melody. A private-ground / ABE disclaimer sits before the patch button, in the app and in the web patcher.
-- **Everything else.** Every other NAVEE model (E-series, V-series and the rest) can read values and use the everyday functions, but the speed patch is not built for it.
+### Not fully supported
+
+| Model | Speed | Kick-start | Cruise | Warning beeps |
+| --- | --- | --- | --- | --- |
+| G5, G5 Pro, G5 Max | patcher | stock | stock | no |
+| S40, S60 | patcher | no | stock | no |
+| V25 / V25i | patcher | no | no | no |
+| V50i Pro | patcher | no | no | no |
+| V45i | patcher | no | no | no |
+| N65i | patcher | no | no | no |
+| NT5 Ultra X | no image | stock | stock | patcher |
+| E45 / E60 Pro | no | patcher | patcher | patcher |
+| E20, E25 | no | no | patcher | patcher |
+| K100 Max | no | patcher | stock | patcher |
+| K100, K100 Pro | no | no | no | no |
+| Birdie 3, Birdie 3x | no | no | no | no |
+| V40i, V40i Pro | no | no | no | no |
+| V40i Pro II | no | no | stock | patcher |
+| V3 Pro | no | no | no | no |
+| N65i II (6001) | no | stock | stock | patcher |
+| N65i II (10701) | no | patcher | patcher | patcher |
+
+First flash of any model belongs on a unit you can recover; every patch is byte-verified and re-seals deterministically, the on-vehicle confirmation ride is still owed. Why the `no` speed cells cannot be flashed: E20 / E25 have a feasible controller latch but no fwBldc version marker in the image (the version lives in external parameter flash), so the app cannot recognise the patch - deferred. E45 / E60 Pro (top speed is a hard-wired flash constant), the K100 controllers (Cortex-M0, encrypted meter) and Birdie 3 / 3x (display bridge, no throttle) have no switchable cap. V40i / V40i Pro II / V3 Pro / N65i II are infeasible on the controller side (V3 Pro's mechanism is present but its motor constants cannot be finalised safely from static analysis). NT5 Ultra X ships no controller image at all, so its top speed cannot be raised; kick-start and cruise are already ungated in its meter (they work in every region without a patch) and its warning beeps are silenceable. ST5 Pro / Max hold their speed cap in the METER region gate, so speed is patched there directly - no controller image needed. A `no` in the kick-start / cruise / beep columns for the V-series and the K100 pair means those meter bodies are external-ROM-dispatched or compressed, not that the tool skipped them.
+
+- **Pick what to patch, keep your beeps.** After it detects your model the patcher shows a checkbox per feature - speed, cruise, zero start plus the individual warning beeps - and writes only the ticked ones. Nothing is silenced by default, so the confirmation beep stays. A private-ground / ABE disclaimer sits before the patch button, in the app and in the web patcher. Models shown as no across the board (V40i, V40i Pro II, V3 Pro, N65i II, the K100 controller side, Birdie) still read values and use the everyday functions; the EXO S Pro is not a scooter and is ignored.
 
 If your scooter already runs a paid third-party speed tuning, you can return it to stock firmware and then flash this patcher's switchable lock/unlock instead. These controller patches change code inside the scooter and have been checked statically, not on every unit in the field - flash the first scooter of a model somewhere you can recover it, and read the Disclaimer.
+
+## Restore the original firmware
+
+Undoing a patch is just flashing the manufacturer's own firmware back. There is nothing special to keep around beyond the stock `.bin`:
+
+1. Get the stock `.bin` for your model again - either the copy the tool saved next to the patched one, or re-download it from the download step (it is the manufacturer's unmodified image).
+2. Load that stock `.bin` into the patch step and leave **every feature checkbox unticked**. With nothing selected the tool applies no changes and only re-seals the image, so the output is **byte-identical to the manufacturer image**.
+3. Flash it. The scooter is now exactly as it shipped - the factory speed limit is back and the operating permit (ABE) applies again.
+
+You can flash a component (meter or controller) back to stock on its own; flash whichever one you had patched. If you are unsure, re-flash both stock images.
 
 ## Features
 
