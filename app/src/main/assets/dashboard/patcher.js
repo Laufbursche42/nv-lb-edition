@@ -68,7 +68,8 @@ const IMAGES = {
       { off: 0x14bf3, from: [0xd2], to: [0xe0], id: 'kickstart' },
       { off: 0x14679, from: [0xd0], to: [0xe0], id: 'cruise' },
       { off: 0x14d6e, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
-      { off: 0x1a2fa, from: [0x10, 0xb5], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer output gate -> bx lr, all tones off
+      { off: 0x15de4, from: [0xff, 0xf7, 0xef, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15e58, from: [0xff, 0xf7, 0xb5, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
     ],
   },
 
@@ -84,7 +85,8 @@ const IMAGES = {
       { off: 0x14b9f, from: [0xd2], to: [0xe0], id: 'kickstart' },
       { off: 0x14631, from: [0xd0], to: [0xe0], id: 'cruise' },
       { off: 0x14d1a, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
-      { off: 0x1a152, from: [0x10, 0xb5], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer output gate -> bx lr, all tones off
+      { off: 0x15da2, from: [0xff, 0xf7, 0x07, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15e1c, from: [0xff, 0xf7, 0xa9, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
     ],
   },
 
@@ -100,7 +102,9 @@ const IMAGES = {
       { off: 0x14ba3, from: [0xd2], to: [0xe0], id: 'kickstart' },
       { off: 0x14635, from: [0xd0], to: [0xe0], id: 'cruise' },
       { off: 0x14d1e, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
-      { off: 0x1a22e, from: [0x10, 0xb5], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer output gate -> bx lr, all tones off
+      { off: 0x15da6, from: [0xff, 0xf7, 0x07, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15e48, from: [0xff, 0xf7, 0x95, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
+      { off: 0x15e8c, from: [0xff, 0xf7, 0x96, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // startup/error melody bl -> nop
     ],
   },
 
@@ -114,7 +118,9 @@ const IMAGES = {
     bodyBase: 0x400,
     reseal: meterReseal,
     patches: [
-      { off: 0x19d9e, from: [0x10, 0xb5], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer output gate -> bx lr, all tones off
+      { off: 0x182f6, from: [0xfd, 0xf7, 0x93, 0xfb], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15ba8, from: [0xff, 0xf7, 0xfd, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
+      { off: 0x15c14, from: [0xff, 0xf7, 0xea, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // startup/error melody bl -> nop
     ],
   },
 
@@ -132,6 +138,11 @@ const IMAGES = {
     reseal: meterReseal,
     patches: [
       { off: 0x14a49, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bcs) -> unconditional, levels 0-2 accepted in every region
+      { off: 0x15b3e, from: [0xff, 0xf7, 0x4f, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15b5e, from: [0xff, 0xf7, 0x3f, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed2' }, // over-speed 2nd bl -> nop
+      { off: 0x15b8c, from: [0xcb, 0xf7, 0x8c, 0xd9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
+      { off: 0x15be4, from: [0xff, 0xf7, 0xfd, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm2' }, // find-me/alarm 2nd bl -> nop
+      { off: 0x15c50, from: [0xff, 0xf7, 0xea, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // startup/error melody bl -> nop
     ],
   },
 
@@ -155,7 +166,11 @@ const IMAGES = {
         from: [0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff],
         to:   [0x96,0xf8,0x48,0x00, 0x05,0x28, 0x05,0xd0, 0x06,0x28, 0x03,0xd0, 0x05,0xf0,0x0f,0x00, 0xec,0xf7,0xbb,0xbe, 0x00,0x21, 0x86,0xf8,0x48,0x10, 0xec,0xf7,0xb6,0xbe],
         id: 'drivemode-cave' }, // one-shot: app nibble 5/6 -> byte3 + sentinel reset, else stock meter gear
-      { off: 0xd6a2, from: [0x02, 0x28], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer-on gate -> bx lr, all tones off
+      { off: 0xd92c, from: [0xff, 0xf7, 0xb9, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0xd986, from: [0x23, 0x20], to: [0x01, 0x20], id: 'beep-alarm' }, // alarm tone param -> minimal
+      { off: 0xd75c, from: [0xff, 0xf7, 0xa1, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // melody beep 1 -> nop
+      { off: 0xd77a, from: [0xff, 0xf7, 0x92, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody2' }, // melody beep 2 -> nop
+      { off: 0xd7aa, from: [0xff, 0xf7, 0x7a, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody3' }, // melody beep 3 -> nop
       { off: 0xf14e, from: [0x06, 0xd0], to: [0x08, 0xe0], id: 'cruise' }, // cruise-engage mode gate (beq mode==3) -> unconditional, flag follows app toggle in all modes
       { off: 0xf374, from: [0x03, 0xd3], to: [0x05, 0xd3], id: 'kickstart' }, // zero-start low clamp (bcc to =3 store) retargeted past it, levels 0-2 pass through
     ],
@@ -172,7 +187,7 @@ const IMAGES = {
     patches: [
       { off: 0x13f09, from: [0xd0], to: [0xe0], id: 'kickstart' }, // region gate on zero-start levels 0-2 (beq) -> unconditional
       { off: 0x14743, from: [0xd0], to: [0xe0], id: 'cruise' }, // cruise-engage region gate (beq) -> unconditional
-      { off: 0x19186, from: [0x10, 0xb5], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer gate -> bx lr, all tones off
+      { off: 0x155a2, from: [0xc1, 0xd9], to: [0xc1, 0xe7], id: 'beep-overspeed' }, // over-speed bls -> unconditional b (skip tone)
     ],
   },
 
@@ -187,7 +202,10 @@ const IMAGES = {
     patches: [
       { off: 0x13f19, from: [0xd0], to: [0xe0], id: 'kickstart' }, // region gate on zero-start levels 0-2 (beq) -> unconditional
       { off: 0x14753, from: [0xd0], to: [0xe0], id: 'cruise' }, // cruise-engage region gate (beq) -> unconditional
-      { off: 0x191ca, from: [0x10, 0xb5], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer gate -> bx lr, all tones off
+      { off: 0x153ca, from: [0xff, 0xf7, 0xae, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x155b6, from: [0x07, 0x21], to: [0x02, 0xe0], id: 'beep-overspeed2' }, // over-speed 2nd gate -> branch past tone
+      { off: 0x152b6, from: [0xff, 0xf7, 0x38, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
+      { off: 0x1516e, from: [0x04, 0xf0, 0x12, 0xf8], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // startup/error melody bl -> nop
     ],
   },
 
@@ -207,7 +225,8 @@ const IMAGES = {
       { off: 0x23300, from: [0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff], to: [0x00,0x28,0x02,0xd0,0x06,0x28,0x00,0xd0,0x03,0x20,0xf0,0xf7,0x65,0xbd], id: 'intake-cave' }, // keep 0 and 6, else Normal 3; back to shared strb
       { off: 0x12c66, from: [0x2d, 0x07, 0x2d, 0x0f], to: [0x10, 0xf0, 0x5b, 0xbb], id: 'builder-detour' }, // byte3 nibble compute -> builder one-shot cave
       { off: 0x23320, from: [0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff], to: [0x60,0x7f,0x05,0x28,0x05,0xd0,0x06,0x28,0x05,0xd0,0x2d,0x07,0x2d,0x0f,0xef,0xf7,0x9c,0xbc,0x05,0x25,0x00,0xe0,0x06,0x25,0x00,0x20,0x60,0x77,0xef,0xf7,0x95,0xbc], id: 'builder-cave' }, // app 5/6 -> byte3 one frame + self-clear, else physical gear
-      { off: 0x189ae, from: [0x10, 0xb5], to: [0x70, 0x47], id: 'beep-silence' }, // buzzer gate -> bx lr, all tones off
+      { off: 0x14ef0, from: [0x02, 0xd0], to: [0x00, 0xbf], id: 'beep-overspeed' }, // over-speed beq -> nop (skip tone)
+      { off: 0x14e84, from: [0xff, 0xf7, 0x5b, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
     ],
   },
 
@@ -552,10 +571,32 @@ function verifyStock(u8, spec) {
   return null;
 }
 
-// Apply one patch set with per-row expected-byte verification.
-function applyPatches(u8, patches) {
+// Map a patch id to the user-facing feature it belongs to. Speed is a bundle (every latch/boot/detour/
+// matcher id); cruise/kickstart are single flips; beep-* are the per-tone silences; version markers ride
+// along whenever the component is otherwise patched (they advertise that our firmware is on the scooter).
+function featureOf(id) {
+  if (id === 'cruise') return 'cruise';
+  if (id === 'kickstart') return 'kickstart';
+  if (id.indexOf('beep-overspeed') === 0) return 'beep-overspeed'; // multi-site tones fold to one feature
+  if (id.indexOf('beep-alarm') === 0) return 'beep-alarm';
+  if (id.indexOf('beep-melody') === 0) return 'beep-melody';
+  if (id.indexOf('beep-') === 0) return id; // beep-silence legacy or any other single beep patch
+  if (id.indexOf('version-marker') === 0) return 'marker';
+  return 'speed';
+}
+
+// Apply a patch set with per-row expected-byte verification. `selected` (array of feature tags) restricts
+// which features are applied; null/undefined applies every patch (backward compatible). A version marker is
+// applied only when at least one non-marker patch of the set was applied, so it never lands on an otherwise
+// untouched image.
+function applyPatches(u8, patches, selected) {
+  const want = selected ? new Set(selected) : null;
+  const anyNonMarker = patches.some(p => featureOf(p.id) !== 'marker' && (!want || want.has(featureOf(p.id))));
   const applied = [];
   for (const p of patches) {
+    const feat = featureOf(p.id);
+    const apply = feat === 'marker' ? (!want || anyNonMarker) : (!want || want.has(feat));
+    if (!apply) continue;
     for (let i = 0; i < p.from.length; i++) {
       const cur = u8[p.off + i] & 0xFF;
       if (cur !== (p.from[i] & 0xFF)) {
@@ -570,9 +611,22 @@ function applyPatches(u8, patches) {
   return applied;
 }
 
+// Distinct user-selectable features an identified stock image supports (markers excluded), for the UI to
+// build its checkboxes. Returns null for an unrecognised image.
+function imageFeatures(u8) {
+  const key = identify(u8);
+  if (!key) return null;
+  const feats = [];
+  for (const p of IMAGES[key].patches) {
+    const f = featureOf(p.id);
+    if (f !== 'marker' && feats.indexOf(f) < 0) feats.push(f);
+  }
+  return { image: key, kind: IMAGES[key].kind, features: feats };
+}
+
 // Take the stock .bin (ArrayBuffer), return the patched+resealed image. Throws on an unrecognised,
 // wrong or already-patched image (never returns a damaged file).
-function patchFirmware(arrayBuffer) {
+function patchFirmware(arrayBuffer, selected) {
   const u8 = new Uint8Array(arrayBuffer.slice(0)); // copy: never mutate the caller's buffer
   const key = identify(u8);
   if (!key) throw new Error('Unrecognised firmware - not a known NAVEE NT5 meter or BLDC image.');
@@ -581,7 +635,7 @@ function patchFirmware(arrayBuffer) {
   const bad = verifyStock(u8, spec);
   if (bad) throw new Error(bad);
 
-  const applied = applyPatches(u8, spec.patches);
+  const applied = applyPatches(u8, spec.patches, selected);
   spec.reseal(u8);
 
   return {
@@ -595,8 +649,8 @@ function patchFirmware(arrayBuffer) {
 }
 
 if (typeof window !== 'undefined') {
-  window.NVFW = { patchFirmware, identify, crc16Xmodem, IMAGES };
+  window.NVFW = { patchFirmware, identify, imageFeatures, crc16Xmodem, IMAGES };
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { patchFirmware, identify, crc16Xmodem, beRead, beWrite, IMAGES };
+  module.exports = { patchFirmware, identify, imageFeatures, featureOf, crc16Xmodem, beRead, beWrite, IMAGES };
 }

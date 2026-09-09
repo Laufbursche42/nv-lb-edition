@@ -786,6 +786,8 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div class="settings-group-title" data-i18n="patch.section.model.title">Erkanntes Modell</div>
       <div id="patch-model" class="settings-row-sublabel m-6-0-0" data-i18n="patch.model.wait">Roller verbinden, damit das Modell erkannt wird.</div>
       <div id="patch-variants" class="is-hidden"></div>
+      <div id="patch-features" class="is-hidden"></div>
+      <div id="patch-disclaimer" class="fw-warn is-hidden"></div>
       <button id="btn-patcher-run" disabled data-i18n="patch.run.button">&#128229; Herunterladen und patchen</button>
       <div class="settings-row-sublabel m-6-0-0" id="patch-run-hint" data-i18n="patch.run.hint">Roller verbinden, damit das Modell erkannt wird.</div>
       <div id="patch-status" class="settings-row-sublabel m-6-0-0 is-hidden"></div>
@@ -3970,6 +3972,7 @@ const fwState = {
   running: false, downloading: false,
   model: null,                              // detected { state:'ok', id, name, meter, bldc }
   pendingDownloads: [],                     // components left to download+patch this run
+  selected: null,                           // chosen feature tags for this run (null = all)
   staged: { meter: null, bldc: null },      // { name } per component once written and staged
   flashQueue: [], flashing: null,           // sequential meter -> bldc flash
 };
@@ -4010,6 +4013,7 @@ function renderPatcherModel(forcedId) {
   const hint = document.getElementById('patch-run-hint');
   if (varEl) { varEl.classList.add('is-hidden'); varEl.innerHTML = ''; }
   fwState.model = null;
+  hidePatchFeatures();
   if (!state.bleConnected) { modelEl.textContent = t('patch.model.connect'); btn.disabled = true; hint.textContent = ''; return; }
   const det = forcedId ? fwModelEntry(forcedId) : fwDetectModel();
   if (det.state === 'ok') {
@@ -4018,6 +4022,7 @@ function renderPatcherModel(forcedId) {
     if (det.meter) parts.push('Meter ' + det.meter.vn);
     if (det.bldc) parts.push('Controller ' + det.bldc.vn);
     modelEl.textContent = det.name + (parts.length ? ' (' + parts.join(', ') + ')' : '');
+    renderPatchFeatures(det);
     const flashable = !!(det.meter || det.bldc);
     btn.disabled = !flashable;
     hint.textContent = flashable ? t('patch.run.ready') : t('patch.run.nofw');
@@ -4047,15 +4052,62 @@ function fwPatchStatus(msg) {
   if (!el) return;
   el.classList.remove('is-hidden'); el.textContent = msg;
 }
+// Feature checkboxes on the patcher page: which features the detected model can take, plus the selection.
+function patchFeatureList(det) {
+  const feats = [];
+  if (det.bldc && !naveeIsXT(det.name)) feats.push('speed');
+  if (det.meter) feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
+  return feats;
+}
+function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v === k ? f : v; }
+function selectedPatchFeatures() {
+  return Array.from(document.querySelectorAll('#patch-features input[type=checkbox]:checked')).map(c => c.value);
+}
+function hidePatchFeatures() {
+  const b = document.getElementById('patch-features'); if (b) b.classList.add('is-hidden');
+  const d = document.getElementById('patch-disclaimer'); if (d) d.classList.add('is-hidden');
+}
+function renderPatchFeatures(det) {
+  const box = document.getElementById('patch-features');
+  const disc = document.getElementById('patch-disclaimer');
+  if (box) {
+    box.innerHTML = '';
+    const feats = patchFeatureList(det);
+    if (!feats.length) { box.classList.add('is-hidden'); }
+    else {
+      box.classList.remove('is-hidden');
+      const head = document.createElement('div');
+      head.className = 'settings-group-title'; head.textContent = t('patch.features.title');
+      box.appendChild(head);
+      for (const f of feats) {
+        const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '4px 0';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f;
+        cb.checked = f.indexOf('beep') !== 0; // performance features on by default; tone silences off (keep all tones)
+        lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + patchFeatureLabel(f)));
+        box.appendChild(lab);
+      }
+    }
+  }
+  if (disc) {
+    const de = (window.I18N.de && window.I18N.de['patch.disclaimer']) || '';
+    const en = (window.I18N.en && window.I18N.en['patch.disclaimer']) || '';
+    disc.textContent = de + (de && en ? '  ' : '') + en;
+    disc.classList.remove('is-hidden');
+  }
+}
 function fwRunPatcher() {
   if (fwState.running || fwState.downloading) { showToast(t('fw.hint.running'), 3000, 'err'); return; }
   if (typeof LB === 'undefined' || !LB.fwDownloadPatch) { showToast(t('msg.app.only.in.app')); return; }
   const det = fwState.model;
   if (!det || det.state !== 'ok') { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
+  fwState.selected = selectedPatchFeatures();
+  const sel = fwState.selected;
+  const wantsSpeed = sel.indexOf('speed') >= 0;      // the only bldc-side feature
+  const wantsMeter = sel.some(f => f !== 'speed');   // any meter-side feature (cruise/kickstart/beep-*)
   const comps = [];
-  if (det.meter) comps.push({ kind: 'meter', url: det.meter.url, name: fwReadableName(det, 'meter', det.meter.vn) });
-  if (det.bldc) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
-  if (!comps.length) { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
+  if (det.meter && wantsMeter) comps.push({ kind: 'meter', url: det.meter.url, name: fwReadableName(det, 'meter', det.meter.vn) });
+  if (det.bldc && wantsSpeed) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
+  if (!comps.length) { showToast(t('patch.run.noselection'), 3000, 'err'); return; }
   fwState.staged = { meter: null, bldc: null };
   fwState.pendingDownloads = comps.slice();
   fwState.downloading = true;
@@ -4183,11 +4235,22 @@ window.__onFwDownloaded = function(arg) {
   } catch (e) { /* fall through: patchFirmware surfaces any real error below */ }
   fwPatchStatus(tf('patch.status.patch', { kind: kind }));
   let r;
-  try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64)); }
+  try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64), fwState.selected); }
   catch (e) {
     fwState.downloading = false;
     fwPatchStatus(t('fw.patch.error') + ' ' + (e && e.message ? e.message : e));
     document.getElementById('btn-patcher-run').disabled = false;
+    return;
+  }
+  if (!r.applied.length) {
+    // no selected feature applies to this component (e.g. speed unchecked -> nothing to do on the bldc):
+    // skip staging it so an unpatched stock image is never flashed.
+    fwPatchStatus(tf('patch.status.skip', { kind: kind }));
+    if (fwState.pendingDownloads.length) { fwDownloadNext(); return; }
+    fwState.downloading = false;
+    document.getElementById('btn-patcher-run').disabled = false;
+    if (fwState.staged.meter || fwState.staged.bldc) { fwHandoffToFlasher(); }
+    else { fwPatchStatus(t('patch.run.nofw')); }
     return;
   }
   const patchedName = fwPatchedName(m.name);

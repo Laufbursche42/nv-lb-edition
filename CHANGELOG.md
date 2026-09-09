@@ -16,6 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.17
+
+- **Choose what to patch.** The patcher now shows a checkbox per feature after it detects your model - speed unlock, cruise control, zero start (kick-start), and the individual beep silences - in both the app and the web patcher. Only the ticked features are written; the rest of the firmware stays stock. Works for every supported model.
+- **The beeps are back by default.** The old patch silenced the whole buzzer, which also killed the confirmation blip when you toggle a setting. Now nothing is silenced unless you tick it, so the confirmation beep returns. You can silence the over-speed warning on its own (available on every model), and where the firmware allows it, the find-me / alarm tone and the startup / error melody, each as its own checkbox. The confirmation blip is always kept.
+- **Disclaimer before patching.** A bilingual note now sits right before the patch button in both tools: private ground only, speed unlock voids the road approval (ABE), and the scooter may then no longer be used in public road traffic.
+- **XT5 in the patcher.** The XT5 (Pro, Ultra, Max) is now offered in the patcher for zero start plus its beep options; speed stays flash-free (drive mode 4) and cruise already works on stock, so the patcher does not touch the XT5 controller.
+
 ## 1.0.16
 
 - **Readable firmware file names.** The patcher now saves the downloaded stock firmware and its patched copy under a readable name - model, component and version, for example `NT5_Max_bldc_0.0.0.6.bin` plus `NT5_Max_bldc_0.0.0.6-patched.bin` - instead of the cryptic hex name from the download URL. The original is the file without `-patched`; the patched copy carries `-patched`. Works for every supported model.
