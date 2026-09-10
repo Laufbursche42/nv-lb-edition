@@ -8,16 +8,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Spoken navigation phrases in the phone's language. The on-screen guidance stays English; only the
- * voice output is localized. Supported EU languages have a full phrase set - any other language falls
- * back to English. The pronunciation is the phone's own TTS voice for that language (Android manages
- * that voice download); if the voice is not installed, {@link TtsHelper} falls back to whatever voice
- * is present.
- *
- * <p>Phrase slots per language: 0 turn-left, 1 turn-right, 2 sharp-left, 3 sharp-right, 4 continue,
- * 5 far template ("%s" = the maneuver), 6 near template, 7 arrive.</p>
- */
+/** Localized spoken navigation phrases per language, falling back to English. */
 final class NavVoice {
 
     private static final Map<String, String[]> T = new HashMap<>();

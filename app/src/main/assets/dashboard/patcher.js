@@ -1,7 +1,5 @@
 'use strict';
-// NAVEE firmware patcher. Loads a stock .bin, identifies the NT5 variant, checks it against a
-// fingerprint, applies the byte-table patches and re-seals the image with a fresh CRC. A wrong
-// or already-patched image is refused, not modified. Raw .bin, CRC-16/XMODEM.
+// NAVEE firmware patcher.
 
 // CRC-16/XMODEM: poly 0x1021, init 0x0000, non-reflected, big-endian on the wire.
 function crc16Xmodem(bytes, start, end) {
@@ -73,8 +71,6 @@ function bldcResealCrc32K100(u8) {
 }
 
 // Each entry: recognise the image, verify it is untouched stock, re-seal it, patch it.
-// Board magics and the T2202 meter tag are shared within a family, so BLDC entries pin the exact
-// build by the 4-byte version word @0x80 and meter entries by size plus the stock CRC @0x13.
 const IMAGES = {
 
   // Meter 3.0.2.2, NT5 Max (9301 / 9701). 150528 bytes. Carries kickstart plus cruise.
@@ -129,14 +125,7 @@ const IMAGES = {
     ],
   },
 
-  // Meter 3.0.1.6, NT5 Ultra X (9501). 148480 bytes. The top speed is capped METER-side here (this model
-  // ships no controller image): the 0x51 drive-frame builder FUN_080131b0 feeds the speed selector
-  // FUN_08013140, whose inlined region gate at 0x08013150 keeps the provisioned CONFIG_SPEED for regions
-  // 6/7/8, clamps region 9 to 20 km/h and zeroes the rest. Forcing the region read to 6 (movs r2,#6) keeps
-  // the unrestricted speed in every region - the same effect as the ST5 / UT5 Max region unlock, just an
-  // inlined gate instead of a separate leaf. Cruise (0x52) and zero-start (0x6a) are ungated stock (cruise
-  // leaf FUN_08014528 stores+forwards with no region compare; zero-start leaf FUN_08014a14 only upper-clamps
-  // to 5), so they need no patch.
+  // Meter 3.0.1.6, NT5 Ultra X (9501).
   meterUltraX: {
     label: 'NT5 Ultra X meter 3.0.1.6',
     kind: 'meter',
@@ -152,11 +141,7 @@ const IMAGES = {
     ],
   },
 
-  // Meter 3.0.2.0, byte-identical across XT5 Pro (5301), XT5 Ultra (5801) and XT5 Max (5901). 148480 bytes.
-  // Cruise (0x52) is already ungated on stock (the handler stores the flag unconditionally), so only zero-start
-  // needs a patch: a region floor forces low start levels 0-2 up to 3 unless the region is USA. Flipping the
-  // guard (bcs -> unconditional B) lets the app zero-start levels through in every region, still app-switchable.
-  // Speed stays flash-free (drive mode 4 over BLE); this meter patch is only for kickstart.
+  // Meter 3.0.2.0, byte-identical across XT5 Pro (5301), XT5 Ultra (5801) and XT5 Max (5901).
   meterXT5: {
     label: 'XT5 meter 3.0.2.0 (5301/5801/5901)',
     kind: 'meter',
@@ -174,13 +159,7 @@ const IMAGES = {
     ],
   },
 
-  // Meter 2.0.4.6, byte-identical across ST3 Pro (12501/3801), ST3 (3701) and GT3 / GT3 Pro / GT3 Max
-  // (3601/3401/3501/12601). 141312 bytes. The app drive-mode value (BLE 0x58, RAM cell 0x0020c664) is
-  // normally clamped and never reaches the controller frame. A one-shot trampoline routes an app nibble
-  // of 5 or 6 into control-frame byte3 for a single frame (then self-clears via a sentinel write of 0),
-  // so the app can trip the bldc latch while the physical gear button keeps normal control. Only
-  // meaningful paired with a matching bldc latch (currently just bldcST3Pro); the app must offer the
-  // patcher to supported models only, since this meter alone does nothing without the paired bldc.
+  // Meter 2.0.4.6, byte-identical across ST3 Pro (12501/3801), ST3 (3701) and GT3 / GT3 Pro / GT3 Max (3601/3401/3501/12601).
   meterST3GT3: {
     label: 'ST3/GT3 meter 2.0.4.6',
     kind: 'meter',
@@ -237,10 +216,7 @@ const IMAGES = {
     ],
   },
 
-  // Meter 1.0.0.4, GT5 Pro / GT5 Max (8401/8501, byte-identical). 144384 bytes. The drive mode rides in
-  // control-frame byte3 = (mode&0xf)|0x30 (builder FUN_08012b3e). A one-shot forward routes an app nibble
-  // of 5 or 6 into byte3 for a single frame (then self-clears), and the intake is taught to keep app-6
-  // (lock) distinct from Normal (drive mode 3). Only meaningful paired with the GT5 Pro bldc latch.
+  // Meter 1.0.0.4, GT5 Pro / GT5 Max (8401/8501, byte-identical).
   meterGT5: {
     label: 'GT5 meter 1.0.0.4',
     kind: 'meter',
@@ -258,11 +234,7 @@ const IMAGES = {
     ],
   },
 
-  // BLDC 9701 (bldc 0.0.1.0, NT5 Max). Switchable top-gear latch. The control-frame drive-mode nibble
-  // (5=unlock ~40, 6=lock ~22) drives the shared top-speed cell 0x20000350, read by modes 3 and 5 (the
-  // default and boost forms of the same top gear). Boot seeds 440 (locked) via a cave trampoline that
-  // still calls the real region-init. Lower gears (modes 1/2, walk) keep their stock cells.
-  // Magic collides with 9401; the version word @0x80 (00 00 01 00) splits them.
+  // BLDC 9701 (bldc 0.0.1.0, NT5 Max).
   bldc9701: {
     label: 'NT5 Max BLDC 0.0.1.0 (9701)',
     kind: 'bldc',
@@ -283,11 +255,7 @@ const IMAGES = {
     ],
   },
 
-  // BLDC 9401 (bldc 0.0.0.5, NT5 Ultra). Same SZMC-3553G structure as 9701; the switchable top-gear
-  // latch is ported with 9401's own offsets. The drive-mode nibble (5=unlock ~40, 6=lock ~22) drives the
-  // shared top cell 0x20000350, read by modes 3 and 5. Boot seeds 440 (locked) via a cave trampoline
-  // that still calls the real region-init. Lower gears (modes 1/2, walk) keep their stock cells.
-  // Magic collides with 9701; version word @0x80 (00 00 00 05) splits them.
+  // BLDC 9401 (bldc 0.0.0.5, NT5 Ultra).
   bldc9401: {
     label: 'NT5 Ultra BLDC 0.0.0.5 (9401)',
     kind: 'bldc',
@@ -318,13 +286,7 @@ const IMAGES = {
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000bf40, crcOff: 0xb0, crcStock: 0x122b },
     reseal: bldcResealLz,
     patches: [
-      // capZ lock/unlock, boot-throttled, latched, TOP GEAR ONLY. The region matcher writes the
-      // top-speed clamp into the top-gear cell 0x2000035a (modes 3/5) and the eco cell 0x20000358
-      // (mode 2); NOP both pairs of matcher stores and drive the cells ourselves. The boot stub seeds
-      // the top-gear capZ = 400 and pins the eco cell to a fixed 400 (~20 km/h) so the eco gear no
-      // longer tracks capZ. An inline setter in the drive-frame block latches only the top gear's capZ:
-      // mode nibble 5 -> 800 (unlock ~40), nibble 6 -> 440 (lock ~22), any other nibble (gear change)
-      // leaves it untouched. So only the top gear changes with lock/unlock; eco stays ~20, walk ~6.
+      // capZ lock/unlock, boot-throttled, latched, TOP GEAR ONLY.
       { off: 0x4be4, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-a' },
       { off: 0x4c00, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-b' },
       { off: 0x4bda, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'eco-nop-matcher-a' },
@@ -353,9 +315,7 @@ const IMAGES = {
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000ba88, crcOff: 0xb0, crcStock: 0xcaa9 },
     reseal: bldcResealLz,
     patches: [
-      // Unified capZ top-gear latch, sibling of bldc9301 (v07 offsets). Top gear = modes 3/5 read capZ
-      // 0x2000035a; eco = mode 2 reads 0x20000358. NOP both matcher store pairs, seed both cells
-      // throttled at boot, latch nibble 5 -> capZ 800 (~40 unlock) / 6 -> 440 (~22 lock) on capZ only.
+      // Unified capZ top-gear latch, sibling of bldc9301 (v07 offsets).
       { off: 0x4b4a, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'eco-nop-matcher-a' },
       { off: 0x4b54, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-a' },
       { off: 0x4b64, from: [0x13, 0x80], to: [0x00, 0xbf], id: 'eco-nop-matcher-b' },
@@ -374,12 +334,7 @@ const IMAGES = {
     ],
   },
 
-  // BLDC 0.0.2.0, ST3 Pro (12501 / 3801, 02831 family). Switchable top-gear capZ latch, same mechanism
-  // as bldc9301/9207. The top-gear cell 0x2000035a (drive modes 3+5) is driven per-frame from the drive
-  // nibble: 5 -> 1046 (~52 km/h unlock, full unclamp), 6 -> 437 (22 km/h lock), any other nibble leaves it unchanged.
-  // The two capZ region-matcher stores are NOP'd and a boot stub seeds 437 (locked). Eco cell 0x20000358
-  // and the lower gears stay stock. Magic 02831 + version word 00 00 02 00 also match V3 Pro (4201);
-  // the size 0xd080 (plus stock CRC 0x4805) selects the two ST3 Pro builds and excludes it.
+  // BLDC 0.0.2.0, ST3 Pro (12501 / 3801, 02831 family).
   bldcST3Pro: {
     label: 'ST3 Pro BLDC 0.0.2.0 (12501/3801)',
     kind: 'bldc',
@@ -403,9 +358,7 @@ const IMAGES = {
     ],
   },
 
-  // NT3 Pro BLDC 0.0.0.7 (12401), 02831 capZ latch. Top-gear cell 0x20000362 (modes 3+5): per-frame nibble
-  // 5 -> 1046 (full unclamp, motor-limited), 6 -> 437 (22 km/h lock); boot seeds 437 (locked).
-  // Eco/lower gears stock. size+CRC pinned so same-version SKUs stay distinct. fwBldc marker "5557".
+  // NT3 Pro BLDC 0.0.0.7 (12401), 02831 capZ latch.
   bldcNT3Pro: {
     label: 'NT3 Pro BLDC 0.0.0.7 (12401)',
     kind: 'bldc',
@@ -423,9 +376,7 @@ const IMAGES = {
     ],
   },
 
-  // NT3 Max BLDC 0.0.1.0 (12701), 02831 capZ latch. Top-gear cell 0x20000362 (modes 3+5): per-frame nibble
-  // 5 -> 1046 (full unclamp, motor-limited), 6 -> 437 (22 km/h lock); boot seeds 437 (locked).
-  // Eco/lower gears stock. version word 0100 shared -> CRC pinned. fwBldc marker "5515".
+  // NT3 Max BLDC 0.0.1.0 (12701), 02831 capZ latch.
   bldcNT3Max: {
     label: 'NT3 Max BLDC 0.0.1.0 (12701)',
     kind: 'bldc',
@@ -443,9 +394,7 @@ const IMAGES = {
     ],
   },
 
-  // GT3 Pro BLDC 0.0.1.7 (3401/12601), 02831 capZ latch. Top-gear cell 0x20000356 (modes 3+5): per-frame nibble
-  // 5 -> 1046 (full unclamp, motor-limited), 6 -> 437 (22 km/h lock); boot seeds 437 (locked).
-  // Eco/lower gears stock. size+CRC pinned so same-version SKUs stay distinct. fwBldc marker "5517".
+  // GT3 Pro BLDC 0.0.1.7 (3401/12601), 02831 capZ latch.
   bldcGT3Pro: {
     label: 'GT3 Pro BLDC 0.0.1.7 (3401/12601)',
     kind: 'bldc',
@@ -463,9 +412,7 @@ const IMAGES = {
     ],
   },
 
-  // GT3 BLDC 0.0.1.1 (3501), 02831 capZ latch. Top-gear cell 0x20000332 (modes 3+5): per-frame nibble
-  // 5 -> 1046 (full unclamp, motor-limited), 6 -> 437 (22 km/h lock); boot seeds 437 (locked).
-  // Eco/lower gears stock. size+CRC pinned so same-version SKUs stay distinct. fwBldc marker "5511".
+  // GT3 BLDC 0.0.1.1 (3501), 02831 capZ latch.
   bldcGT3_0101: {
     label: 'GT3 BLDC 0.0.1.1 (3501)',
     kind: 'bldc',
@@ -483,9 +430,7 @@ const IMAGES = {
     ],
   },
 
-  // GT3 Max BLDC 0.0.1.1 (3601), 02831 capZ latch. Top-gear cell 0x20000332 (modes 3+5): per-frame nibble
-  // 5 -> 1046 (full unclamp, motor-limited), 6 -> 437 (22 km/h lock); boot seeds 437 (locked).
-  // Eco/lower gears stock. size+CRC pinned so same-version SKUs stay distinct. fwBldc marker "6611".
+  // GT3 Max BLDC 0.0.1.1 (3601), 02831 capZ latch.
   bldcGT3Max_0101: {
     label: 'GT3 Max BLDC 0.0.1.1 (3601)',
     kind: 'bldc',
@@ -503,9 +448,7 @@ const IMAGES = {
     ],
   },
 
-  // ST3 BLDC 0.0.1.1 (3701), 02831 capZ latch. Top-gear cell 0x20000332 (modes 3+5): per-frame nibble
-  // 5 -> 1046 (full unclamp, motor-limited), 6 -> 437 (22 km/h lock); boot seeds 437 (locked).
-  // Eco/lower gears stock. size+CRC pinned so same-version SKUs stay distinct. fwBldc marker "7711".
+  // ST3 BLDC 0.0.1.1 (3701), 02831 capZ latch.
   bldcST3_0101: {
     label: 'ST3 BLDC 0.0.1.1 (3701)',
     kind: 'bldc',
@@ -523,11 +466,7 @@ const IMAGES = {
     ],
   },
 
-  // BLDC 0.0.1.3, GT5 Pro (8401), 02831 capZ latch on the byte3 drive mode. Frame byte3 = (mode&0xf)|0x30;
-  // a per-frame detour reads byte3 and drives capZ 0x20000352 (nibble 5 -> 1046 unlock, 6 -> 437 lock,
-  // else unchanged); the two capZ matcher stores are NOP'd and a boot stub seeds 437 (locked). Paired
-  // meter = meterGT5. Size 0xd080 + version word 00 00 01 03 + CRC 0x274a pin the exact GT5 Pro build.
-  // GT5 Max (8501) shares the meter but has a different bldc (crc 0xffaa) - not built here. fwBldc "5513".
+  // BLDC 0.0.1.3, GT5 Pro (8401), 02831 capZ latch on the byte3 drive mode.
   bldcGT5Pro: {
     label: 'GT5 Pro BLDC 0.0.1.3 (8401)',
     kind: 'bldc',
@@ -551,11 +490,7 @@ const IMAGES = {
     ],
   },
 
-  // BLDC 0.0.1.1, GT5 Max (8501), 02831 capZ latch on the byte3 drive mode (same method as GT5 Pro, GT5
-  // Max offsets). capZ 0x20000352; nibble 5 -> 1046 unlock, 6 -> 437 lock, else unchanged; matcher stores
-  // NOP'd, boot stub seeds 437 (locked). Shares meterGT5 with the GT5 Pro. Size 0xd080 + version word
-  // 00 00 01 01 + CRC 0xffaa pin it (GT5 Pro is CRC 0x274a; version word 0101 also on 0xb880 GT3/ST3, but
-  // those are size 0xb880, so no cross-match). fwBldc marker "8811".
+  // BLDC 0.0.1.1, GT5 Max (8501), 02831 capZ latch on the byte3 drive mode (same method as GT5 Pro, GT5 Max offsets).
   bldcGT5Max: {
     label: 'GT5 Max BLDC 0.0.1.1 (8501)',
     kind: 'bldc',
@@ -1194,9 +1129,7 @@ function verifyStock(u8, spec) {
   return null;
 }
 
-// Map a patch id to the user-facing feature it belongs to. Speed is a bundle (every latch/boot/detour/
-// matcher id); cruise/kickstart are single flips; beep-* are the per-tone silences; version markers ride
-// along whenever the component is otherwise patched (they advertise that our firmware is on the scooter).
+// Map a patch id to the user-facing feature it belongs to.
 function featureOf(id) {
   if (id.indexOf('cruise') === 0) return 'cruise'; // cruise + cruise-region3 fold to one feature
   if (id.indexOf('kickstart') === 0) return 'kickstart';
@@ -1208,10 +1141,7 @@ function featureOf(id) {
   return 'speed';
 }
 
-// Apply a patch set with per-row expected-byte verification. `selected` (array of feature tags) restricts
-// which features are applied; null/undefined applies every patch (backward compatible). A version marker is
-// applied only when at least one non-marker patch of the set was applied, so it never lands on an otherwise
-// untouched image.
+// Apply a patch set with per-row expected-byte verification.
 function applyPatches(u8, patches, selected) {
   const want = selected ? new Set(selected) : null;
   const anyNonMarker = patches.some(p => featureOf(p.id) !== 'marker' && (!want || want.has(featureOf(p.id))));

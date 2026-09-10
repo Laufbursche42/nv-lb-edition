@@ -20,21 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * In-app debug logger for the standalone NAVEE Edition app.
- *
- * <p>When enabled it records this process's own native logs (every {@code Log.*} call, including the
- * {@code lbble}/{@code lbedition} BLE tags) by running {@code logcat --pid=<self>} on a background
- * thread and appending each line to a rotating file at
- * {@code getExternalFilesDir("logs")/navee-debug.log}. JS-forwarded lines (from {@code LB.log(...)})
- * are appended via {@link #append(String)} with a timestamp and a {@code JS:} prefix.
- *
- * <p>The enabled state is persisted in {@link android.content.SharedPreferences} under the key
- * {@code lb_debug}, so debug mode survives app restarts. The file is capped at ~2 MB; on reaching the
- * cap it is rotated in place, keeping the most recent tail.
- *
- * <p>Every public method is null/exception-safe and never throws to the caller.
- */
+/** In-app debug logger: captures this process's logcat to a rotating ~2 MB file. */
 public final class DebugLog {
 
     private static final String TAG = "lbdebug";

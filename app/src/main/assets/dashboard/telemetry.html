@@ -7,10 +7,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<!-- Styling may only come from a file next to this page, never from the document
-     itself. The page is loaded from file:///android_asset, where 'self' matches
-     nothing, so the file: scheme is the source that works here. Scripts are not
-     restricted: the page carries its own inline script. -->
+<!-- CSP: styles from file: scheme only; inline script allowed. -->
 <meta http-equiv="Content-Security-Policy"
       content="style-src file:; object-src 'none'; base-uri 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -40,9 +37,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
   <!-- ── Scrollable Content ─────────────────────────── -->
   <div id="scroller">
 
-    <!-- Everything down to the drive-mode toggles is the "fold": it is scaled by fitFold() to
-         fill exactly one screen, so a rider never has to scroll for the live values. The
-         sections after the fold start below the bottom edge and are reached by swiping up. -->
+    <!-- Fold: scaled by fitFold() to fill one screen. -->
     <div id="fold">
      <div id="fold-inner">
 
@@ -71,9 +66,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
     </div>
 
-    <!-- Live telemetry tiles: the values that change while riding, laid out two per row - drive
-         (power, pack voltage), battery (temperature, health) and distance (range the scooter
-         reports, odometer). Settings-type values live in the grid below. -->
+    <!-- Live telemetry tiles, two per row. -->
     <div class="section-hdr sub-hdr">
       <span data-i18n="dash.tele.section">Antrieb &amp; Akku</span>
     </div>
@@ -240,10 +233,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
   <button type="button" id="nav-end" aria-label="End navigation" data-i18n-aria="routes.turn.end.label" data-i18n="routes.turn.end.icon">✕</button>
 </div>
 
-<!-- Ride banner: the single thing that shows on the main screen while a ride records. It floats
-     over the fold and starts just above the "Motors" heading, and the rider can drag it anywhere.
-     Deliberately a sibling of #app, not a child of the fold: a transformed ancestor would become
-     the containing block for a fixed element and the banner would ride along with the scaling. -->
+<!-- Ride banner: draggable, sibling of #app to avoid fold transform. -->
 <div id="ride-banner">
   <span id="rb-dot" aria-hidden="true"></span>
   <div id="rb-texts">
@@ -499,9 +489,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
     </div>
 
-    <!-- Speed release (drive mode 4 written with opcode 0x58). Deliberately a one-shot BUTTON, not
-         a toggle: the gear byte lives in RAM, the scooter drops it on a mode-button press or a
-         restart, and it cannot be read back, so a toggle would show a state that does not exist. -->
+    <!-- Speed release: drive mode 4 via 0x58, one-shot button. -->
     <div class="section-hdr sub-hdr" data-i18n="scooter.tune.section.title">Speed-Freischaltung</div>
     <div class="settings-group pt-4">
       <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.intro">
@@ -524,11 +512,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
     </div>
 
-    <!-- Region test panel: rewrites the region letters in the config block via the factory 0xA2 write
-         (wrapped in line-test), the same path navee-unlock uses. Shown for any NON-XT model. The write
-         is additionally gated on the REAL hardware pid (naveeRegionAllowed), so it can NEVER run on an
-         XT5 even if the model dropdown is overridden. Deep, risky write: the display goes dark during
-         line-test and the exit likely resets the scooter. Own device only, private ground. -->
+    <!-- Region test panel: 0xA2 factory write, non-XT only, gated on naveeRegionAllowed. -->
     <div id="region-panel" style="display:none">
       <div class="section-hdr sub-hdr" data-i18n="scooter.region.section.title">Region / Land (Test)</div>
       <div class="settings-group pt-4">
@@ -614,8 +598,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       Identity and firmware versions read live from the scooter (BLE). No server involved.
     </div>
     <div class="settings-group pt-4">
-      <!-- Identity read from the scooter. The Bluetooth advertised name IS the full FIN.
-           Both rows are read-only and refresh from lb_live_data on the 1 s render loop. -->
+      <!-- Identity read-only, refreshed from lb_live_data. -->
       <div class="settings-row">
         <div class="settings-row-left">
           <div class="settings-row-label" data-i18n="info.scooter.fin.label">FIN / Bluetooth Name</div>
@@ -852,9 +835,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
   </div>
 </div>
 
-<!-- ── Liability disclaimer: accepted once on the first start, readable any time after.
-     One box, two modes: "accept" shows the tick box and the accept button and cannot be
-     dismissed; "read" shows the same text with a close button. -->
+<!-- Liability disclaimer: accept mode on first start, read mode after. -->
 <div id="disclaimer-overlay">
   <div id="disclaimer-box" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title">
     <h3 id="disclaimer-title" data-i18n="disclaimer.title">Please read this first</h3>
@@ -903,9 +884,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 // The current language, declared first: everything below may look a string up.
 let lang = 'en';
 
-/* ═══════════════════════════════════════════════════════════
-   NAVEE LB - Telemetry  (full implementation)
-   ═══════════════════════════════════════════════════════════ */
+/* NAVEE LB - Telemetry */
 
 'use strict';
 
@@ -1008,9 +987,7 @@ function gpxFilename(ts) {
   return `navee_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}.gpx`;
 }
 
-/* Elements start hidden through the .is-hidden class, never an inline style, because the content
-   security policy rejects a style attribute in the markup. Clearing an inline display therefore
-   does not reveal anything: the class has to go too. */
+/* Toggle both the .is-hidden class and inline display. */
 function showEl(el, on) {
   if (!el) return;
   el.classList.toggle('is-hidden', !on);
@@ -1050,11 +1027,7 @@ const state = {
   confirmCb: null,
 };
 
-/* ── Display settings (per-theme colours) ─────────────────────
-   Tile colour, page background and text brightness, stored separately for dark and light. The
-   values are written as inline custom properties on :root, which outrank both the :root and the
-   [data-theme="light"] blocks in the stylesheet, so applyDisplay() has to run again on every
-   theme switch to swap in the other theme's set. */
+/* Display settings: per-theme colours as inline :root custom properties. */
 
 const DISPLAY_KEY = 'lb_display_custom';
 const DISPLAY_DEFAULTS = {
@@ -1076,9 +1049,7 @@ function saveDisplayCfg(cfg) {
   try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(cfg)); } catch (e) {}
 }
 
-/* Text and label colours are derived from the brightness slider rather than picked, so a rider
-   cannot land on text that is invisible against their own background. Hue and saturation stay at
-   the theme's own values; only lightness moves. */
+/* Derive text/label colours from the brightness slider (lightness only). */
 function displayTextColors(theme, lum) {
   const v = Math.max(0, Math.min(100, Number(lum)));
   if (theme === 'dark') {
@@ -1089,9 +1060,7 @@ function displayTextColors(theme, lum) {
   return { text: `hsl(226 43% ${l}%)`, label: `hsl(226 43% ${l}%)` };
 }
 
-/* The coloured readouts. The slider dims these the same way the brightness slider dims the plain
-   text, so a night rider can take the glare out of the whole screen and not just the white parts.
-   Hue and saturation are kept; only lightness moves towards the background. */
+/* Coloured readouts, dimmed by the brightness slider (lightness only). */
 const DISPLAY_ACCENTS = {
   dark:  { value: '#BCEB39', ble: '#B8F020', gps: '#3DB8FF', good: '#1EE89A', btnfill: '#B8F020', warn: '#FFAA18', danger: '#FF5050' },
   light: { value: '#2FEBA2', ble: '#2A6A00', gps: '#005AA0', good: '#2FEBA2', btnfill: '#2FEBA2', warn: '#A05800', danger: '#CC2020' }
@@ -1126,9 +1095,7 @@ function applyDisplay() {
   root.style.setProperty('--text', t.text);
   root.style.setProperty('--label', t.label);
 
-  // The same slider dims the coloured readouts: one brightness control for the whole screen.
-  // 100 leaves the palette exactly as designed; lower values pull every coloured readout towards
-  // the background, dark mode downwards and light mode upwards.
+  // Dim the coloured readouts towards the background by the brightness slider.
   const a = Math.max(0, Math.min(100, Number(c.lum)));
   const k = 0.35 + 0.65 * (a / 100);
   const base = DISPLAY_ACCENTS[theme];
@@ -1557,9 +1524,7 @@ function updateBLEUI(data) {
   // Auto-arm a ride once the scooter has actually moved ~20 m (keeps GPS off while parked).
   try { maybeArmRide(data); } catch (e) {}
 
-  // Speed. The VCU tile turns red while the speed release is active (triple-tap toggles it). The
-  // scooter never reports the gear byte back, so this shows what THIS session last sent - a mode
-  // button press or a restart on the scooter clears the release without telling the app.
+  // Speed. VCU tile turns red while the speed release is active.
   setTxt('ble-speed', convSpeed(data.speed));
   {
     const spEl = document.getElementById('ble-speed');
@@ -1577,9 +1542,7 @@ function updateBLEUI(data) {
 
   // Grid
   setTxt('dg-volt', data.volt.toFixed(1) + ' V');
-  // Pack current as a battery-detail line (the NAVEE app shows it here too, not as a hero). Signed
-  // from the rider's point of view: draw reads negative and red, recuperation positive and green.
-  // Shown only when the frame actually carried a current reading (packMa present), else "-".
+  // Pack current, rider-signed (draw red, recuperation green); "-" when absent.
   const curEl = document.getElementById('dg-current');
   if (curEl) {
     if (data.currentValid) {
@@ -1640,19 +1603,13 @@ function tickBLE() {
 
 function onBLEConnectionChange(nowConnected) {
   if (nowConnected) {
-    // Live GPS speed on the main screen runs the WHOLE time you are connected - it is independent
-    // of ride recording. The ride itself only arms (starts recording points) once the scooter has
-    // actually travelled ARM_DISTANCE_M (maybeArmRide).
+    // Live GPS speed runs the whole time connected, independent of ride recording.
     startGPSWatch();
     state.armDistM = 0;
     state.armLastTs = null;
     state.rideStopped = false;
   } else {
-    // BLE dropped (manual disconnect or the scooter powered off - same thing): always finalize
-    // the ride and stop GPS. The speed release does not survive on the scooter either, so drop
-    // the flag rather than showing a release that is no longer in effect.
-    _speedReleased = false;
-    try { setTxt('tune-status', t('scooter.tune.status.idle')); } catch (e) {}
+    // BLE dropped: finalize the ride and stop GPS. Release flag stays (persisted).
     finalizeRide();
     stopGPSWatch();
     state.armDistM = 0;
@@ -1681,9 +1638,7 @@ function saveRoutes(routes) {
 
 const ARM_DISTANCE_M = 20;   // auto-start a ride after this much real movement (metres)
 
-// While connected, integrate the scooter's own reported speed to detect genuine movement and
-// auto-start (arm) a ride once ARM_DISTANCE_M has been covered. Measuring from the scooter (not
-// GPS) means GPS stays off while parked-but-connected.
+// Integrate the scooter's reported speed and arm a ride after ARM_DISTANCE_M.
 function maybeArmRide(data) {
   if (!state.gpsAutoStart) return;                      // ride auto-tracking master switch
   if (state.currentRide || state.rideStopped) return;   // already riding or stopped this session
@@ -1720,9 +1675,7 @@ function startRide() {
 
 function finalizeRide() {
   if (!state.currentRide) return;
-  // The native RouteRecorderService owns the recorded track (it keeps logging GPS with the screen
-  // off, which a WebView geolocation watch cannot). This JS ride object is only the live overlay; it
-  // is NOT persisted. The finished native track is pulled in by importNativeRoutes() shortly after.
+  // Native RouteRecorderService owns the track; this JS ride is only the live overlay.
   state.currentRide = null;
   clearInterval(state.rideTimer);
   clearInterval(state.saveTimer);
@@ -1766,9 +1719,7 @@ function buildRouteFromNative(nr) {
   return route;
 }
 
-// Pull every finished native GPS route into the saved-routes list. The native side hands them over
-// once (deleting its files), so this is safe to call repeatedly (app start, opening the routes list,
-// after a ride). This is what makes a full track appear even when it was recorded with the screen off.
+// Pull finished native GPS routes into the saved-routes list (safe to call repeatedly).
 function importNativeRoutes() {
   try {
     if (typeof LB === 'undefined' || !LB.takeRecordedRoutes) return;
@@ -1835,9 +1786,7 @@ function onGPSSuccess(pos) {
   const lon = Math.round(coords.longitude * 1e6) / 1e6;
   const alt = coords.altitude != null ? Math.round(coords.altitude * 10) / 10 : null;
   const ts  = pos.timestamp || Date.now();
-  // Prefer the GPS Doppler speed (coords.speed) - most accurate source. Some devices/WebViews
-  // never report it; fall back to distance/time from the previous fix so the readout still
-  // tracks reality instead of dropping to 0.
+  // Prefer GPS Doppler speed; fall back to distance/time from the previous fix.
   let spd;
   if (coords.speed != null && coords.speed >= 0) {
     spd = coords.speed * 3.6; // m/s -> km/h
@@ -1862,10 +1811,7 @@ function onGPSSuccess(pos) {
   document.getElementById('dg-alt').textContent = alt != null ? `${alt} m` : '-';
   document.getElementById('dg-gps').textContent = t('msg.gps.fix');
 
-  // Record point to current ride, throttled to the configured GPS interval. watchPosition fires
-  // as fast as the OS reports; we only store a point once at least state.gpsIntervalMs have passed
-  // since the last recorded point. Reading state.gpsIntervalMs live means changing the interval
-  // takes effect for the ongoing recording without re-arming the watch.
+  // Record a point, throttled to state.gpsIntervalMs.
   if (state.currentRide && state.bleConnected) {
     const pts = state.currentRide.points;
     const last = pts.length ? pts[pts.length - 1] : null;
@@ -1932,9 +1878,7 @@ function updateRideUI() {
 
 /* ── Route Rendering ──────────────────────────────────────── */
 
-// One-time crash recovery at startup: an app kill mid-ride leaves the 10 s autosave in lb_routes
-// with endTime === 0, which then renders forever as "LIVE". Finalize any such orphan (no ride is
-// active at startup) and drop rides that never gathered real data.
+// Startup crash recovery: finalize orphan rides (endTime 0) and drop empty ones.
 function recoverStuckRides() {
   try {
     const routes = loadRoutes();
@@ -2051,8 +1995,7 @@ function makeRouteItem(route, live) {
 
 /* ── Show route on our offline map ────────────────────────── */
 
-/* Display a recorded ride on the app's own offline Mapsforge map (NavActivity) instead of
-   an external Google Maps intent. Passes the route's {lat, lon} points to the native bridge. */
+/* Show a recorded ride on the app's offline Mapsforge map via the native bridge. */
 function showRouteOnOurMap(route) {
   const src = (route && route.points) ? route.points : [];
   if (src.length === 0) { showToast(t('msg.route.nopoints')); return; }
@@ -2226,10 +2169,7 @@ function loadSettings() {
 
 /* ── SRT streaming (native module via the LB bridge) ──────────── */
 
-/* Store the URL encrypted at rest (RC4 stream cipher, synchronous so it always
-   works in the local webview - crypto.subtle is not available there). The key lives
-   in the app (no user password), so this is encryption at rest: the storage DB no
-   longer holds plaintext, but it is not protection against reverse-engineering. */
+/* RC4 key for at-rest URL encryption (fallback when the native Keystore is absent). */
 const SRT_KEY = [
   0x8f,0x2a,0x71,0x3c,0x9e,0x14,0xb5,0x60, 0xd7,0x22,0x4e,0xa9,0x63,0x1f,0x88,0xc0,
   0x35,0xf7,0x1b,0x6d,0x40,0x2c,0x91,0x5a, 0x0e,0xb8,0x77,0xd3,0x64,0xaf,0x19,0x52
@@ -2355,10 +2295,7 @@ function closeSettings() {
 }
 
 /* ── Language ──────────────────────────────────────────────── */
-//
-// English is the base language, German a translation layer in i18n.js. A key that
-// is missing in German falls back to English, so a half-finished translation shows
-// wording rather than a raw key. The rider's choice wins over the device language.
+// English base, German overlay in i18n.js; missing keys fall back to English.
 
 function t(key) {
   const cat = window.I18N || {};
@@ -2430,9 +2367,7 @@ function initLang() {
 }
 
 /* ── What is new ───────────────────────────────────────────── */
-//
-// Opens by itself once per version and on demand from the settings. The version
-// the rider has already seen is remembered, so an update shows the modal again.
+// Opens once per version and on demand; the seen version is remembered.
 
 function appVersionString() {
   try {
@@ -2682,10 +2617,7 @@ function liveRaw() {
   catch (e) { return {}; }
 }
 
-/* -- Model line + manual picker --
-   Detect the connected NAVEE model from the serial pid (0x74 report), show it in the settings banner,
-   and offer a manual override dropdown for the case where auto-detection is wrong or the serial has not
-   been read yet. The pid -> model map is the full fleet map from the reverse-engineering work. */
+/* pid -> model map, detected from the serial pid. */
 const NAVEE_MODELS = {
   '2213':'N65i','2314':'V25/V25i','2322':'S40','2326':'V3 Pro','2327':'V25 Pro/V25i Pro',
   '2328':'V40i/V40i Pro','2329':'V50i Pro','2334':'S60','2345':'ST3 Pro','2353':'P50',
@@ -2712,12 +2644,7 @@ function naveeRealModel() { return naveeModelFromPid(liveRaw().pid || ''); }
 // serial or any XT model -> not allowed. Fail-safe: default deny.
 function naveeRegionAllowed() { const m = naveeRealModel(); return !!m && !naveeIsXT(m); }
 
-// Per-model live-control scope: pid -> [cruiseSettable, kickSettable]. Kept in lockstep with
-// navee-unlock's MODELS caps and derived from the firmware-verified support table. 1 = the firmware
-// honors the live toggle (works stock or the patch is present), 0 = proven absent (hide the control),
-// null = the meter body is unreadable (compressed/external-ROM) so it cannot be verified - show it, the
-// rider may still try. Only cruise (0x52) and zero-start (0x6A) are gated here; lock/drive-mode/unit are
-// universal.
+// Per-model scope: pid -> [cruiseSettable, kickSettable]; 1 = honored, 0 = absent, null = unverifiable.
 const NAVEE_CAPS = {
   '2213':[null,null], '2314':[null,null], '2322':[1,0], '2326':[null,null], '2327':[null,null],
   '2328':[null,null], '2329':[0,0], '2334':[1,0], '2345':[1,1], '2353':[null,null], '2401':[1,1],
@@ -2758,9 +2685,7 @@ function applyModelUi(btName) {
   applyModelPanels(model);
 }
 
-// Show/hide model-specific panels from the auto-detected model. The region test panel shows for any
-// non-XT model; the write itself is separately gated on the real pid (naveeRegionAllowed), so it can
-// never run on an XT5.
+// Show/hide model-specific panels; region panel shows for non-XT models only.
 function applyModelPanels(modelName) {
   const rp = document.getElementById('region-panel');
   if (rp) rp.style.display = (modelName && !naveeIsXT(modelName)) ? '' : 'none';
@@ -2801,20 +2726,14 @@ function closeScooterPage() {
 
 /* ── Error reports (active faults / warnings from live BLE data) ── */
 
-// NAVEE fault codes are BCD-encoded on the wire (e.g. byte 0x21 -> BCD 21 = E9, NOT raw 33). Decode BCD
-// first, then look up this table. It is ONE shared table across all NAVEE models (verified identical on
-// 10 models from the official support site). Controller codes (10-45) are firmware-verified in the BLDC
-// fault register; battery codes (39, 50-61) come from the official support table (only F2/24 is also
-// device-confirmed, since the local BMS dump is an NT5). Keys are the BCD value, values the panel letter.
+// Fault table: BCD value -> panel letter (decode BCD before lookup).
 const NAVEE_FAULTS = {
   10: 'E1', 11: 'E2', 12: 'E3', 14: 'H3', 15: 'H4', 18: 'H5', 21: 'E9', 24: 'F2', 28: 'E4', 29: 'E5',
   39: 'F1', 40: 'E6', 43: 'E7', 45: 'E8', 50: 'F3', 52: 'F4', 53: 'F5', 54: 'F6', 55: 'F7', 56: 'F8',
   57: 'F9', 60: 'H1', 61: 'H2'
 };
 
-// Build the list of currently active faults. NAVEE reports ONE numeric fault code in its realtime frame
-// (0x90, first data byte); 0 means no fault. Known codes get their official meaning; any value outside
-// the shared table is shown raw as an unknown fault - never claim a diagnosis the scooter did not give.
+// Build the active fault list from the single realtime fault code (0 = none).
 function collectErrors() {
   const d = liveRaw();
   const items = [];
@@ -3209,9 +3128,7 @@ function initNavBanner() {
   b.addEventListener('pointercancel', drop);
 }
 
-/* ── Ride banner ──────────────────────────────────────────────
-   The one indicator on the main screen while a ride records. Floats over the fold, starts just
-   above the "Motors" heading and can be dragged anywhere; the dragged spot is remembered. */
+/* ── Ride banner: draggable, position remembered ── */
 
 const RIDE_BANNER_KEY = 'lb_ride_banner_pos';
 
@@ -3282,36 +3199,24 @@ function initRideBanner() {
   b.addEventListener('pointercancel', drop);
 }
 
-/* -- NAVEE scooter settings (single-opcode writes) --
-   Each control writes immediately over BLE; the live 0x70 parameter report drives the shown state.
-   Opcodes: immobilizer 0x51 (via LB.setLock), cruise 0x52, zero-start 0x6A, drive mode 0x58. */
+/* NAVEE scooter settings: cruise 0x52, zero-start 0x6A, drive mode 0x58, tcs 0x5F, unit 0x55. */
 const NAVEE_CMD = { cruise: 0x52, zerostart: 0x6A, drivemode: 0x58, tcs: 0x5F, unit: 0x55 };
 const NAVEE_ECO = { cmd: 0x6F, sub: 5 };   // eco / low-power is a 0x6F sub-command, not a plain toggle
-// Start-off (kickstart) default level. 3 is the manufacturer default and the meter's clamp floor:
-// the meter's 0x6A handler (FUN_08014230, meter_decomp.c:22632) forces levels <3 up to 3 unless the
-// SKU region is USA (country byte 6/7/8). So the real zero-start (levels 0-2, ride off without kicking)
-// is USA-SKU only; on EU/other units the low levels are hidden because the meter never stores them.
+// Start-off default level; meter clamps levels <3 up to 3 unless the SKU region is USA.
 const NAVEE_STARTSPEED_DEFAULT = 3;
 
-// SKU region from the serial's area code (chars 8-9), mirroring the manufacturer app's skuVersion.
-// The exact area-code -> USA mapping is not fully proven in firmware, so this follows the web tool's
-// list (US/CN/RU = USA). Used only to hide zero-start levels 0-2 where the meter would clamp them.
+// SKU region from the serial area code; US/CN/RU = USA.
 function naveeSkuOf(region) {
   const r = (region || '').toUpperCase();
   if (['IT', 'DE', 'NE'].includes(r)) return 'ITA';
   if (['US', 'CN', 'RU'].includes(r)) return 'USA';
   return 'EUR';
 }
-// The meter clamps start-off levels 0-2 up to 3 unless the SKU region is USA (FUN_08014230). Our
-// kickstart firmware patch removes that clamp, so a patched meter accepts the low levels on any
-// region. A patched meter reports version 5.0.2.2 (fwMeter "5022"; stock is "3022"), so treat it
-// like a USA SKU and expose levels 0-2 / the quick button.
+// A kickstart-patched meter (fwMeter "5022") accepts levels 0-2 on any region.
 function meterKickstartPatched() { return (liveRaw().fwMeter || '').trim() === '5022'; }
 function naveeZeroStartFull() { return naveeSkuOf(liveRaw().region) === 'USA' || meterKickstartPatched(); }
 function setRegionStatus(msg) { const el = document.getElementById('region-status'); if (el) el.textContent = msg; }
-// Raw NAVEE frame builders for the factory region write, sent via LB.sendRaw as a hex string. The
-// checksum is the sum of every byte from 0x55 through the last payload byte, & 0xFF. Normal/read frames
-// end FE FD; the undocumented factory frames (cmd >= 0xA0) end AE AD. Mirrors navee-unlock exactly.
+// Raw NAVEE frame builders; checksum = sum of bytes & 0xFF, normal frames end FE FD, factory AE AD.
 function naveeCk(b) { let s = 0; for (const x of b) s = (s + x) & 0xFF; return s; }
 function naveeHex(b) { return b.map(x => (x & 0xFF).toString(16).padStart(2, '0')).join(''); }
 function naveeReadFrameHex(cmd) { const body = [0x55, 0xAA, 0x00, cmd & 0xFF]; return naveeHex([...body, naveeCk(body), 0xFE, 0xFD]); }
@@ -3328,9 +3233,7 @@ function naveeNormalHex(sub, payload) {
 }
 function naveeSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// Region write via the factory 0xA2 config write, wrapped in line-test (0xA0 1 / 0xA0 0), exactly like
-// navee-unlock.writeRegionCode. HARD-GATED on the real hardware pid: refuses on XT5, on an unknown pid
-// and when the serial/config block has not been read - a dropdown override cannot bypass this.
+// Region write via factory 0xA2 in line-test; hard-gated on the real pid (naveeRegionAllowed).
 async function naveeWriteRegion(code) {
   code = (code || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
   if (code.length !== 2) { setRegionStatus(t('scooter.region.status.badcode')); return; }
@@ -3385,9 +3288,7 @@ function prefillScooterSettings(live) {
   // Levels 0-2 are USA-SKU only (the meter clamps them to 3 elsewhere); hide them on non-USA units.
   const zsel = document.getElementById('ss-zerostart');
   if (zsel) { const full = naveeZeroStartFull(); zsel.querySelectorAll('option').forEach(o => { if (parseInt(o.value, 10) < 3) o.hidden = !full; }); }
-  // The select only carries the two modes the scooter accepts here (3 normal, 5 turbo). Anything
-  // else the scooter reports (for example 4 after a speed release) has no option, so leave the
-  // control alone rather than blanking it.
+  // The select only carries modes 3 and 5; leave it alone for any other reported value.
   if (typeof d.driveMode === 'number') {
     const dm = document.getElementById('ss-drivemode');
     if (dm && dm.options && Array.prototype.some.call(dm.options, o => String(o.value) === String(d.driveMode))) {
@@ -3461,12 +3362,7 @@ function wireScooterSettings() {
   wireSpeedRelease();
 }
 
-/* -- Speed release: drive mode 4 (opcode 0x58) --
-   0x58 writes the gear byte straight into controller RAM with no auth and no lock gate. Mode 4 makes
-   the meter emit its SKU speed instead of the country-filtered one, which the controller then honours.
-   The value itself is fixed by the scooter's SKU byte, so there is nothing to enter. The byte does not
-   survive a mode-button press or a restart, and it cannot be read back - hence a button plus a status
-   line rather than a toggle, and a confirmation before anything is sent. */
+/* Speed release: drive mode 4 via 0x58, one-shot with confirm. */
 function wireSpeedRelease() {
   const send = document.getElementById('tune-send');
   if (send) send.addEventListener('click', () => {
@@ -3486,8 +3382,7 @@ function wireSpeedRelease() {
     if (!naveeGuard()) return;
     if (sendSpeedRelease(false)) showToast(t('msg2.navee.tune.restored'), 3000);
   });
-  // Region test panel: the factory 0xA2 region write. Hard-gated on the REAL pid (never XT5, never an
-  // unknown model) plus a confirm dialog, because it enters line-test and likely resets the scooter.
+  // Region test panel: factory 0xA2 write, gated on the real pid plus a confirm dialog.
   const regionSend = document.getElementById('region-send');
   if (regionSend) regionSend.addEventListener('click', () => {
     if (!naveeGuard()) return;
@@ -3505,17 +3400,11 @@ function wireSpeedRelease() {
   });
 }
 
-/* Send the release (drive mode 4) or the normal mode (3) and remember which one went out.
-   The scooter cannot report the gear byte back, so this session flag is the only state there is:
-   it drives the tile colour and is deliberately cleared on every disconnect, because a restart or
-   a press of the mode button silently drops the release on the scooter side. */
-let _speedReleased = false;
+// Last release state; persisted so the triple-tap keeps its direction across restart/reload.
+let _speedReleased = (function () { try { return storage.get('lb_speedreleased') === '1'; } catch (e) { return false; } })();
+function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb_speedreleased', on ? '1' : '0'); } catch (e) {} }
 
-// Drive-mode gear byte. A scooter flashed with our latch firmware unlocks the top gear on 5 and locks
-// it on 6 - 6 is a non-gear value, so after unlocking the rider changes gears freely without
-// re-locking. The patched controllers report a distinct fwBldc marker: NT5 "5556", NT5 Max/Ultra 3553G
-// "0050"/"0055", ST3 Pro "5525", NT3 Pro "5557", GT3 Pro "5517", GT3 "5511", GT3 Max "6611", ST3 "7711".
-// Every unflashed model keeps its stock speed-release untouched: XT5 family 4 open / 3 normal, else 5/2.
+// Drive-mode gear byte: patched latch firmware uses 5 unlock / 6 lock; stock XT5 4/3, else 5/2.
 const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0090', '0099', '1118', '7776'];
 function speedReleaseGear(on) {
   if (PATCHED_LATCH_BLDC.includes((liveRaw().fwBldc || '').trim())) return on ? 5 : 6;
@@ -3530,19 +3419,17 @@ function sendSpeedRelease(on) {
   if (naveeRealModel() === 'UT5 Ultra X') {
     if (typeof LB === 'undefined' || !LB.sendRaw) { showToast(t('msg.app.only.in.app')); return false; }
     LB.sendRaw(naveeNormalHex(0x6d, [0x04, 0x00, on ? 0x04 : 0x03]));
-    _speedReleased = !!on;
+    setSpeedReleasedFlag(on);
     setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
     return true;
   }
   if (!pushSetting(NAVEE_CMD.drivemode, speedReleaseGear(on))) return false;
-  _speedReleased = !!on;
+  setSpeedReleasedFlag(on);
   setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
   return true;
 }
 
-/* Hidden gesture on the VCU speed tile: triple-tap toggles the speed release. Same gesture and the
-   same 700 ms window as before; on a NAVEE it drives drive mode 4 instead of the other platform's
-   lock command. The tile turns red while the release is active. */
+/* Triple-tap the VCU tile (700 ms window) toggles the speed release. */
 let _vcuTapCount = 0, _vcuTapTimer = null;
 
 function onVcuTileTap() {
@@ -3572,11 +3459,7 @@ function toggleDriveQuick(key) {
   } else if (key === 'tcs') {
     pushSetting(NAVEE_CMD.tcs, (d.tcs === 1) ? 0 : 1);
   } else if (key === 'zerostart') {
-    // Quick toggle: "on" = any non-default start-off level is set. Pressing it while on restores the
-    // default level; pressing it while off requests zero-start (level 0). The fine choice is on the
-    // scooter-settings page. Note: the meter clamps levels <3 up to 3 unless the SKU region is USA, so
-    // this button is hidden on non-USA units (see reflectDriveQuick); a level of 4 or 5 set on the
-    // settings page is still reachable and will light the button.
+    // Toggle between the default start-off level and zero-start (level 0).
     const on = (typeof d.startSpeed === 'number' && d.startSpeed !== NAVEE_STARTSPEED_DEFAULT);
     pushSetting(NAVEE_CMD.zerostart, on ? NAVEE_STARTSPEED_DEFAULT : 0);
   }
@@ -3609,20 +3492,10 @@ function reflectDriveQuick() {
 }
 
 
-/* ── First-screen fold ────────────────────────────────────────
-   Scale the fold so it fills exactly the visible height of the scroller: the rider sees speed,
-   battery, gear, the telemetry tiles and the quick toggles without scrolling, and everything
-   after it begins below the bottom edge.
-
-   The inner block is laid out at 100/scale percent width and then scaled from its top-left, so
-   the scaled result is exactly the scroller width. Height feeds back into width through text
-   wrapping, so the factor is computed twice; the second pass is what makes narrow phones land
-   on the right value. */
+/* First-screen fold: scale it to fill the scroller's visible height (factor computed twice). */
 
 const FOLD_MIN_SCALE = 0.55;   // below this the labels stop being readable, so allow a scroll instead
-const FOLD_MAX_SCALE = 1.35;   // the font MAY grow to fill a tall screen, but only up to this cap.
-                               // Beyond the cap the leftover height is shared out as row spacing
-                               // (row-gap top-up), so text never balloons on a tall screen.
+const FOLD_MAX_SCALE = 1.35;   // scale-up cap; leftover height goes to row spacing instead
 const FOLD_BOTTOM_GAP = 10;    // breathing room between the last button row and the screen edge
 const FOLD_BASE_GAP = 10;      // the CSS --gap: the minimum row gap
 const FOLD_MAX_GAP = 34;       // the row gap never grows past this: tiles scale to fill, the leftover
@@ -3657,9 +3530,7 @@ function fitFold() {
   _foldScale = scale;
   inner.style.width = (100 / scale) + '%';
   inner.style.transform = 'scale(' + scale + ')';
-  // After scaling the tiles, top up the row gap to fill the leftover height - but only up to
-  // FOLD_MAX_GAP, so on a very tall screen the gaps stay a defined size instead of opening into a
-  // void. Count only the visible rows (hidden tiles are not flex items).
+  // Top up the row gap to fill leftover height, capped at FOLD_MAX_GAP; count visible rows only.
   let visible = 0;
   for (let i = 0; i < inner.children.length; i++) {
     if (inner.children[i].offsetParent !== null) visible++;
@@ -3671,9 +3542,7 @@ function fitFold() {
   fold.style.height = Math.round(avail) + 'px';
 }
 
-/* Re-fit whenever the viewport or the fold's own content changes (a gear tag appearing, a
-   longer translation, rotation, the keyboard opening). Coalesced into one animation frame so a
-   burst of mutations costs one measurement. */
+/* Re-fit on viewport/content change, coalesced into one animation frame. */
 let _foldPending = false;
 function scheduleFitFold() {
   if (_foldPending) return;
@@ -4014,10 +3883,7 @@ function wireEvents() {
 
 /* ── Initialisation ───────────────────────────────────────── */
 
-/* ── Firmware update (download stock -> patch -> XMODEM-128 DFU flash) ──────────
-   The download and the /sdcard/Download file IO happen natively (LB.fw*); the patch runs in the
-   WebView with the bundled engine (window.NVFW); the flash runs natively over BLE. Progress, log
-   and state come back via window.__onFw*. */
+/* Firmware update: download+IO native (LB.fw*), patch in the WebView (NVFW), flash native over BLE. */
 const fwState = {
   running: false, downloading: false,
   model: null,                              // detected { state:'ok', id, name, meter, bldc }
@@ -4201,9 +4067,7 @@ function fwResetProgress() {
   const log = document.getElementById('fw-log'); if (log) { log.textContent = ''; log.classList.add('is-hidden'); log.style.display = 'none'; }
 }
 function fwStagedList() {
-  // Meter is the DFU gateway: every dfu_start passes through it to the target component. Flashing it
-  // first reboots the gateway and the bldc can no longer enter DFU, so flash bldc first, meter last
-  // (the OEM queues meter last for the same reason).
+  // Meter is the DFU gateway, so flash bldc first, meter last.
   const out = [];
   if (fwState.staged.bldc) out.push({ kind: 'bldc', name: fwState.staged.bldc.name });
   if (fwState.staged.meter) out.push({ kind: 'meter', name: fwState.staged.meter.name });
@@ -4268,9 +4132,7 @@ window.__onFwDownloaded = function(arg) {
     document.getElementById('btn-patcher-run').disabled = false;
     return;
   }
-  // A component this patcher has no entry for (e.g. a model where only the meter is patchable, like the
-  // XT5 whose speed stays flash-free): skip it instead of aborting, so the supported component still goes
-  // through and the run hands off cleanly.
+  // Skip a component this patcher has no entry for instead of aborting the run.
   try {
     const k = window.NVFW && window.NVFW.identify ? window.NVFW.identify(new Uint8Array(fwB64ToBuf(m.b64))) : null;
     if (!k || !window.NVFW.IMAGES[k]) {

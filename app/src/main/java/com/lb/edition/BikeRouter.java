@@ -25,20 +25,7 @@ import btools.router.OsmTrack;
 import btools.router.RoutingContext;
 import btools.router.RoutingEngine;
 
-/**
- * Offline BICYCLE routing via BRouter (btools).
- *
- * <p>BRouter routes over small, per-region {@code .rd5} segment files (5°×5° tiles) that are
- * downloaded on demand inside the app - no multi-GB pre-built graph. The shipped trekking bike
- * profile ({@code assets/brouter/trekking.brf}) gives {@code highway=motorway|motorway_link} a
- * cost factor of 10000, i.e. motorways/trunk are effectively excluded.
- *
- * <p>Data layout under {@code getExternalFilesDir("nav")}:
- * <ul>
- *   <li>{@code segments/E5_N45.rd5 …} - downloaded routing segments</li>
- *   <li>{@code profiles/trekking.brf}, {@code profiles/lookups.dat} - copied from assets</li>
- * </ul>
- */
+/** Offline bicycle routing via BRouter (btools) over on-demand 5°×5° .rd5 segment tiles. */
 final class BikeRouter {
 
     /** Base URL for BRouter routing segments (5°×5° tiles). ODbL OpenStreetMap data. */
@@ -59,23 +46,12 @@ final class BikeRouter {
 
     // ─────────────────────────────────────────────── profile / assets ──
 
-    /**
-     * Copies the bundled default ("trekking") BRouter profile + lookup table into {@code profileDir}
-     * and returns the profile file. Backward-compatible overload.
-     */
+    /** Copies the default "trekking" profile + lookup into profileDir, returns the profile file. */
     static File ensureProfile(Context ctx, File profileDir) throws IOException {
         return ensureProfile(ctx, profileDir, "trekking");
     }
 
-    /**
-     * Copies the bundled BRouter profile {@code brouter/<profileBase>.brf} + lookup table into
-     * {@code profileDir} (once each) and returns the {@code <profileBase>.brf} file.
-     * {@code lookups.dat} MUST sit next to the {@code .brf} - BRouter reads it from the profile's
-     * parent directory.
-     *
-     * @param profileBase profile base name without extension, e.g. {@code "trekking"},
-     *                    {@code "shortest"} or {@code "quiet"}.
-     */
+    /** Copies profile brouter/<profileBase>.brf + lookups.dat into profileDir, returns the .brf file. */
     static File ensureProfile(Context ctx, File profileDir, String profileBase) throws IOException {
         if (!profileDir.exists() && !profileDir.mkdirs() && !profileDir.isDirectory()) {
             throw new IOException("cannot create " + profileDir);
@@ -87,19 +63,7 @@ final class BikeRouter {
         return brf;
     }
 
-    /**
-     * Copies the bundled asset {@code assetPath} to {@code dest} when {@code dest} is missing OR its
-     * bytes differ from the current bundled asset.
-     *
-     * <p>The content check is what makes the route-profile selector actually work: a plain
-     * copy-if-missing keeps serving the STALE {@code .brf}/{@code lookups.dat} left in the profiles
-     * dir by a previous app version, so after an update that ships new or rewritten profiles the
-     * three selections (trekking/shortest/quiet) could all resolve to identical old content and
-     * switching the profile would change nothing about the computed route. Re-copying only when the
-     * content actually differs keeps the on-disk profile in lock-step with the bundled one without
-     * needlessly touching {@code lookups.dat}'s timestamp (which would thrash BRouter's profile
-     * cache). The profile assets are tiny (tens of KB), so reading them fully is cheap.
-     */
+    /** Copies asset to dest when dest is missing or its bytes differ from the bundled asset. */
     private static void copyAssetIfChanged(Context ctx, String assetPath, File dest) throws IOException {
         byte[] asset = readAll(ctx.getAssets().open(assetPath));
         if (dest.isFile() && dest.length() == asset.length && Arrays.equals(readFile(dest), asset)) {
@@ -146,10 +110,7 @@ final class BikeRouter {
         return lonPart + "_" + latPart;
     }
 
-    /**
-     * All segment tile names covering the bounding box of the two points, expanded by
-     * {@code marginDeg} so a route bulging outside the direct box is still covered.
-     */
+    /** Tile names covering the two points' bounding box, expanded by marginDeg. */
     static List<String> tilesFor(double lat1, double lon1, double lat2, double lon2, double marginDeg) {
         double minLat = Math.min(lat1, lat2) - marginDeg;
         double maxLat = Math.max(lat1, lat2) + marginDeg;
@@ -165,21 +126,14 @@ final class BikeRouter {
         return tiles;
     }
 
-    /**
-     * All segment tile names covering the given bounding box, expanded by {@code marginDeg}. Handy
-     * for pre-fetching routing data for a whole downloaded map area (whose bbox comes from the
-     * {@code .map} header).
-     */
+    /** Tile names covering the given bounding box, expanded by marginDeg. */
     static List<String> tilesFor(BoundingBox bb, double marginDeg) {
         return tilesFor(bb.minLatitude, bb.minLongitude, bb.maxLatitude, bb.maxLongitude, marginDeg);
     }
 
     // ─────────────────────────────────────────────── routing ──
 
-    /**
-     * Computes a bike route start → end over the segments present in {@code segmentDir}, using the
-     * profile at {@code profileFile}. Runs synchronously - call from a worker thread.
-     */
+    /** Computes a bike route start->end over segmentDir using profileFile. Runs synchronously. */
     static RouteResult route(File segmentDir, File profileFile,
                              double fromLat, double fromLon, double toLat, double toLon)
             throws RoutingException {

@@ -6,13 +6,7 @@ package com.lb.edition;
 
 import java.util.TimeZone;
 
-/**
- * Builds outgoing NAVEE frames.
- *   Read : 55 AA 00 <cmd> <cksum> FE FD                       (no length byte)
- *   Write: 55 AA 00 <cmd> <len> <payload...> <cksum> FE FD    (len counts payload only)
- *   Factory: same as write but the trailer is AE AD instead of FE FD (0xA0/0xA2/0xB9/0xBE).
- * cksum = (sum of every byte from 0x55 through the last payload byte) & 0xFF.
- */
+/** Builds outgoing NAVEE frames (read/write/factory); cksum = sum of all bytes through payload & 0xFF. */
 final class CommandBuilder {
 
     private CommandBuilder() {}

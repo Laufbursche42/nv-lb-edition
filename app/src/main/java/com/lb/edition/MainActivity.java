@@ -42,16 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Host activity: a full-screen WebView that renders the offline dashboard
- * (file:///android_asset/dashboard/telemetry.html) and exposes a "LB" JavaScript
- * bridge for BLE, settings, motor control and SRT streaming.
- *
- * The bridge forwards to the native BLE layer (BleManager / FrameParser / CommandBuilder) and to
- * the com.lb.srt streaming module. Live telemetry is pushed back to the WebView as localStorage
- * ['lb_live_data'] (plus window.__onBleData); scan results via window.__onBleScan; connection state
- * via window.__onBleState. Every bridge method is null/exception-safe and never throws across JS.
- */
+/** Full-screen WebView dashboard host exposing the "LB" JS bridge for BLE, settings and SRT streaming. */
 public class MainActivity extends Activity {
 
     private static final String TAG = "lbedition";
@@ -85,9 +76,7 @@ public class MainActivity extends Activity {
         webView = new WebView(this);
         setContentView(webView);
 
-        // Full-screen (immersive) is user-toggleable and persisted; default OFF. When off, the
-        // Android status bar (battery / clock / notifications) shows and content sits below it.
-        // Delegated to UiChrome so every screen (main + native) shares the exact same inset logic.
+        // Apply persisted immersive full-screen (default off) via shared UiChrome.
         prefs = getSharedPreferences("lb", MODE_PRIVATE);
         UiChrome.applyFullscreen(this);
 
@@ -148,11 +137,7 @@ public class MainActivity extends Activity {
         s.setDatabaseEnabled(true);
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
-        // The dashboard is a self-contained bundled asset page; it never needs to read other local
-        // files or make cross-origin requests FROM the file:// origin. Keeping these OFF means that
-        // even if a scripting bug ever landed on the page, it could not fetch("file:///...") to exfil
-        // local data or reach the network cross-origin. (Both default to false on modern WebView; set
-        // explicitly so the hardening is not silently lost on an older engine.)
+        // Block file:// cross-origin and file reads from the page.
         s.setAllowFileAccessFromFileURLs(false);
         s.setAllowUniversalAccessFromFileURLs(false);
         s.setMediaPlaybackRequiresUserGesture(false);
@@ -166,9 +151,7 @@ public class MainActivity extends Activity {
         // dashboard text and overflow the fixed-height fold (fitFold measures in CSS px).
         s.setTextZoom(100);
 
-        // Pin the privileged WebView (it holds the LB firmware/BLE bridge) to the bundled dashboard.
-        // Any attempt to navigate it elsewhere is cancelled, so no remote or attacker page can ever
-        // inherit the JS bridge. External links are handled explicitly by LB.openUrl, not here.
+        // Pin the WebView to the bundled dashboard; cancel any other navigation.
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -519,10 +502,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    /**
-     * The "LB" JavaScript bridge. Forwards to the native BLE layer and the SRT streaming module.
-     * Every method is null/exception-safe - nothing throws across the bridge.
-     */
+    /** The "LB" JavaScript bridge to the native BLE layer and SRT module; every method is exception-safe. */
     private class LbBridge {
 
         /** End the active turn-by-turn navigation session (stops the foreground service). */
@@ -665,11 +645,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        /**
-         * Show a recorded ride on the native offline map (instead of Google Maps). Opens
-         * {@link NavActivity} in display-only mode with the track passed as a JSON array of
-         * {@code {lat, lon}} points.
-         */
+        /** Show a recorded ride on the native offline map (track as JSON array of {lat, lon}). */
         @JavascriptInterface
         public void showRouteOnMap(final String pointsJson) {
             Log.i(TAG, "LB.showRouteOnMap(" + (pointsJson == null ? 0 : pointsJson.length()) + " chars)");
@@ -847,10 +823,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        /**
-         * Persist the app theme so the native screens (NavActivity / MapDownloadActivity chrome)
-         * follow the dashboard's light/dark toggle. Stored in the "lb" prefs, default true (dark).
-         */
+        /** Persist the app theme (dark/light) for the native screens. */
         @JavascriptInterface
         public void setTheme(boolean dark) {
             try {
@@ -957,10 +930,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        /**
-         * @return a JSON array string of the (at most 3) newest rides, newest first. Each entry:
-         * {@code {"id","start","end","durationSec","distanceKm","samples"}}. "[]" if none.
-         */
+        /** @return JSON array of the newest rides (at most 3, newest first), or "[]". */
         @JavascriptInterface
         public String listRides() {
             try {
@@ -996,13 +966,7 @@ public class MainActivity extends Activity {
 
         // ── GPS route recording (native foreground service) ──
 
-        /**
-         * Hand every FINISHED native GPS route to the dashboard as JSON and delete the files, so the
-         * WebView imports them into its recorded-routes list. Each: {@code {"id","start","end",
-         * "points":[{lat,lon,alt,ts,speed}]}}. The route being recorded right now is never returned.
-         * This is what lets a track survive the screen going off: the points are logged by the native
-         * foreground service, then picked up here whenever the dashboard is alive. "[]" if none.
-         */
+        /** @return JSON of finished GPS routes (deleting their files), excluding the active one; "[]" if none. */
         @JavascriptInterface
         public String takeRecordedRoutes() {
             try {
@@ -1087,14 +1051,7 @@ public class MainActivity extends Activity {
             });
         }
 
-        /**
-         * Write GPX text into the phone's public Downloads folder. Synchronous so the page can
-         * report the real outcome instead of assuming one.
-         *
-         * @return JSON {@code {"ok":true,"name":"<file actually written>"}} or
-         * {@code {"ok":false,"name":"<requested>","error":"<code>"}} with code "downloads"
-         * (no access to the folder), "createfile", "writer" or "save".
-         */
+        /** Write GPX text into Downloads; @return JSON {ok,name[,error]}. */
         @JavascriptInterface
         public String saveGpxToDownloads(final String fileName, final String content) {
             final String name = safeGpxName(fileName);

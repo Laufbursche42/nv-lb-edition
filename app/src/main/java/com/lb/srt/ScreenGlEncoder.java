@@ -23,13 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-/**
- * Captures a Surface (fed by MediaProjection) into an OpenGL texture and re-draws it into
- * an H.264 encoder input surface at a FIXED frame rate. Redrawing on a timer - even when the
- * screen is static and MediaProjection delivers no new frames - guarantees a real constant
- * fps / constant bitrate stream, which the MTK encoder's KEY_REPEAT_PREVIOUS_FRAME_AFTER does
- * NOT provide. Shaders are embedded here as strings, so no res/raw resources are needed.
- */
+/** Draws a MediaProjection texture into an H.264 encoder surface at a fixed fps for constant-bitrate output. */
 public class ScreenGlEncoder implements android.graphics.SurfaceTexture.OnFrameAvailableListener {
 
     public interface Callback {
@@ -154,9 +148,7 @@ public class ScreenGlEncoder implements android.graphics.SurfaceTexture.OnFrameA
                 EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, System.nanoTime());
                 boolean swapped = EGL14.eglSwapBuffers(eglDisplay, eglSurface);
                 draws++;
-                // Force frequent keyframes. A static screen compresses P-frames to ~0, so CBR
-                // starves and the bitrate collapses. Regular keyframes give CBR real data to
-                // fill, holding a constant bitrate even on a frozen screen.
+                // Force frequent keyframes to hold CBR on a static screen.
                 if (draws % KEYFRAME_EVERY == 0) requestKeyframe();
                 if (draws % 60 == 1) Log.i(TAG, "gl draws=" + draws + " swap=" + swapped + " err=" + EGL14.eglGetError());
 

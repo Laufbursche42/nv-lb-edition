@@ -32,28 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Native ride recorder. Records one file per ride as compact NDJSON so the data is written
- * incrementally to disk (an app kill loses at most the current minute) and the ride metadata is
- * derived at read time - there is no fragile "finalize write".
- *
- * <p>Arming / sampling / finalizing (driven by {@link MainActivity} from the BLE callbacks):
- * <ul>
- *   <li>{@link #onConnected()} begins a potential session (state reset, not yet armed; no writing).
- *   <li>{@link #onLiveData(String)} keeps the latest telemetry snapshot; the FIRST time logging is
- *       enabled, the link is connected and speed &gt; 0 the ride arms: it records the start time,
- *       creates the ride file, starts {@link RideLoggerService} and writes the first sample (t=0).
- *   <li>While armed a 60 s timer (main looper {@link Handler}) appends the latest snapshot, so
- *       samples land at t=0, 60 s, 120 s … measured from first movement.
- *   <li>{@link #onDisconnected()} - or turning the toggle off mid-ride - finalizes the ride
- *       (stops the timer + foreground service) and resets the session.
- * </ul>
- *
- * <p>Storage: {@code getExternalFilesDir("rides")/ride-<startEpochMs>.ndjson}, one compact JSON
- * object per line, flushed immediately. All ride files are kept until deleted from the app.
- *
- * <p>Every public method is null/exception-safe and never throws across the JS bridge.
- */
+/** Native ride recorder: one NDJSON file per ride, arms on first movement, samples every 60 s. */
 public final class RideLogger {
 
     private static final String TAG = "lbridelog";
@@ -64,11 +43,7 @@ public final class RideLogger {
     private static final long SAMPLE_INTERVAL_MS = 60_000L;   // one sample per minute after arming
 
 
-    // Headline CSV columns emitted first (when present), before the rest in alphabetical order.
-    // Each name must match a FrameParser.toJson() key. A name that matches nothing is silently
-    // ignored here and the real column drops back into the alphabetical block.
-    // NAVEE snapshot keys (FrameParser.toJson) - lower-case soc, driveMode instead of gear, pack
-    // voltage/current instead of a single power figure.
+    // Headline CSV columns emitted first (when present), then the rest alphabetically.
     private static final String[] CSV_HEADLINE = {"speed", "soc", "driveMode", "packMv", "packMa", "soh"};
 
     private final Context appCtx;
@@ -103,8 +78,7 @@ public final class RideLogger {
                 appCtx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                         .edit().putBoolean(KEY_ENABLED, on).apply();
             }
-            // Turning off mid-ride: close out the current ride now.
-            // Turning on: arming happens naturally on the next moving snapshot.
+            // Turning off mid-ride closes out the current ride now.
             if (!on) finalizeRide();
         } catch (Throwable t) {
             Log.e(TAG, "setEnabled failed", t);
@@ -170,9 +144,7 @@ public final class RideLogger {
             armed = true;
             // First sample immediately (t=0).
             writeSample(latestSnapshot);
-            // Keep the process foreground so BLE + the 60 s sampling survive the screen going off.
             startService();
-            // Subsequent samples every 60 s, measured from first movement.
             main.postDelayed(sampleTask, SAMPLE_INTERVAL_MS);
             Log.i(TAG, "ride armed: " + f.getName());
         } catch (Throwable t) {
@@ -198,11 +170,7 @@ public final class RideLogger {
         if (json == null) return;
         Writer w = writer;
         if (w == null) return;
-        // Enrich each NDJSON line with the canonical field names + SI units the LEAT desktop tool reads
-        // (its KPI bar is hard-wired to these keys). The JSON and CSV exports are built from this NDJSON,
-        // so they inherit the fields automatically. The live dashboard JSON is not touched. packMa is
-        // already rider-frame positive = discharge (see FrameParser.decodeBattery + the dashboard), which
-        // is exactly LEAT's convention, so current/power carry the value straight through, no sign flip.
+        // Enrich each NDJSON line with the canonical field names + SI units the LEAT desktop tool reads.
         String line = json;
         try {
             JSONObject o = new JSONObject(json);
@@ -270,10 +238,7 @@ public final class RideLogger {
 
     // ── Ride listing / export (called from the JS bridge) ──
 
-    /**
-     * @return a JSON array string, newest first, of all recorded rides. Each entry:
-     * {@code {"id","start","end","durationSec","distanceKm","samples"}}. "[]" if none.
-     */
+    /** @return JSON array string, newest first, of all recorded rides ("[]" if none). */
     public synchronized String listRides() {
         try {
             File dir = ridesDir();
@@ -292,11 +257,7 @@ public final class RideLogger {
         }
     }
 
-    /**
-     * Build an export file for the given ride {@code id} ("csv" or "json") under
-     * {@code cacheDir/exports} and return it or null if the ride is unknown / the export fails.
-     * MainActivity launches the share sheet on the returned file.
-     */
+    /** Build a csv/json export for a ride under cacheDir/exports; null if unknown or on failure. */
     public synchronized File exportRide(String id, String format) {
         try {
             String safe = safeId(id);
@@ -320,11 +281,7 @@ public final class RideLogger {
         }
     }
 
-    /**
-     * Delete one recorded ride by {@code id}. The id is validated all-digits via {@link #safeId}
-     * and resolved through the path-traversal guard before removal. No-op for an unknown / invalid
-     * id. Exception-safe.
-     */
+    /** Delete one recorded ride by id (no-op for an unknown or invalid id). */
     public synchronized void deleteRide(String id) {
         try {
             String safe = safeId(id);
@@ -380,8 +337,7 @@ public final class RideLogger {
         for (String n : names) if (!scalarKeys.contains(n)) nameCols.add(n);
         Set<String> nameColSet = new HashSet<>(nameCols);
 
-        // Column order: ts, headline scalars (when present), then the rest alphabetically. No tsISO
-        // column: LEAT would read it as a constant time-series. ts alone (Unix ms) is the time axis.
+        // Column order: ts, headline scalars (when present), then the rest alphabetically.
         List<String> cols = new ArrayList<>();
         cols.add("ts");
         Set<String> placed = new HashSet<>();
@@ -398,8 +354,7 @@ public final class RideLogger {
         });
         cols.addAll(rest);
 
-        // Per-cell voltages (mV) arrive as a JSONArray (cellMv), which the scalar scan above skips.
-        // Flatten them into cell1_mV..cellN_mV columns so the CSV carries every battery cell too.
+        // Flatten cellMv into cell1_mV..cellN_mV columns.
         int maxCells = 0;
         for (JSONObject o : samples) {
             JSONArray cm = o.optJSONArray("cellMv");
@@ -412,9 +367,7 @@ public final class RideLogger {
             cellIdx.put(cn, c - 1);
         }
 
-        // try-with-resources guarantees the writer (and its underlying stream) is always closed.
-        // No UTF-8 BOM: LEAT would then fail to recognise the ts column and the time axis breaks. The
-        // file is plain UTF-8 starting with the "ts," header.
+        // Plain UTF-8, no BOM, starting with the "ts," header.
         try (Writer w = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(out, false), "UTF-8"))) {
             StringBuilder sb = new StringBuilder();

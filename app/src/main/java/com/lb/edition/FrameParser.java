@@ -12,12 +12,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Parses incoming NAVEE frames and maintains the telemetry model that {@link #toJson()} serialises
- * for the WebView dashboard. NAVEE frames are variable length: 55 AA <flag> <cmd> <len> <errcode>
- * <data...> <cksum> FE FD (factory replies end AE AD). len counts errcode + data; the decoded data
- * block starts at byte[6]. Multi-byte battery/telemetry fields are little-endian.
- */
+/** Parses NAVEE frames (55 AA flag cmd len err data cksum FE FD) into the telemetry model for toJson(). */
 final class FrameParser {
 
     private static final String TAG = "lbparse";
@@ -65,10 +60,7 @@ final class FrameParser {
             if (start > 0) { System.arraycopy(rx, start, rx, 0, rxLen - start); rxLen -= start; }
             int cmd = (rxLen > 3) ? (rx[3] & 0xFF) : -1;
             int end = -1;
-            // Preferred: trust the length byte. Frame = 55 AA <flag> <cmd> <len> <len bytes> <ck> t1 t2,
-            // so the trailer sits at index 8+len-1. Jumping there means a payload that happens to contain
-            // an FE FD (or AE AD) byte pair can no longer truncate the report - the bug that intermittently
-            // nulled the high 0x70 offsets (tcs@11, maxSpeed@25, driveMode@26).
+            // Trust the length byte: trailer sits at index 8+len-1.
             if (rxLen >= 5) {
                 int total = 8 + (rx[4] & 0xFF);
                 if (rxLen >= total) {
@@ -168,18 +160,14 @@ final class FrameParser {
         if (serial.length() >= 10) region = serial.substring(8, 10);
         Matcher m = Pattern.compile("[A-Za-z]?(\\d{4})").matcher(serial);
         pid = m.find() ? m.group(1) : "";
-        // Raw config block (first 17 bytes) as lowercase hex, for the NT5 region read-modify-write:
-        // the region letters live at bytes 8-9 and are rewritten via the factory 0xA2 config write.
+        // Raw config block (first 17 bytes) as lowercase hex.
         int n = Math.min(17, p.length);
         StringBuilder cr = new StringBuilder(n * 2);
         for (int i = 0; i < n; i++) { int v = p[i] & 0xFF; cr.append(HEXCH[v >> 4]).append(HEXCH[v & 0xF]); }
         configRaw = cr.toString();
     }
 
-    // Realtime push frames. Offsets verified against the manufacturer app BleHandler (cases 144/145/146)
-    // and DeviceHomePageInfo / DeviceSubPageInfo. All fields little-endian. These frames carry the
-    // fast-changing values live; the slow ones (SOH, cycles, temperature, cruise, drive mode, limits)
-    // only come from the polled 0x70/0x72 reads.
+    // Realtime push frames (0x90/0x91/0x92), all fields little-endian.
     private void decodeRealtime(int cmd, byte[] p) {
         if (cmd == 0x90) {                                   // homepage report
             fault = rd(p, 0, 1, false);                      // warning code, raw BCD byte (decoded to the shared table in the UI)
@@ -241,8 +229,7 @@ final class FrameParser {
             o.put("fwMeter", fwMeter); o.put("fwBldc", fwBldc); o.put("fwBms", fwBms);
             o.put("fwScreen", fwScreen); o.put("fwUwb", fwUwb);
             o.put("rssi", rssi); o.put("btName", btName == null ? "" : btName);
-            // Freshness stamp: the dashboard's parseBLE() treats a snapshot without a numeric ts as
-            // invalid and isFresh(ts) drives the connected/disconnected UI, so every push carries one.
+            // Freshness stamp used by the dashboard's isFresh(ts).
             o.put("ts", System.currentTimeMillis());
             return o.toString();
         } catch (Throwable t) {

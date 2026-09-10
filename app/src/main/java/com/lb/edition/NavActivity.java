@@ -92,36 +92,13 @@ import org.mapsforge.poi.storage.PoiPersistenceManager;
 import org.mapsforge.poi.storage.PointOfInterest;
 import org.mapsforge.poi.storage.WhitelistPoiCategoryFilter;
 
-/**
- * Offline turn-by-turn BICYCLE navigation on OpenStreetMap data - with everything downloadable
- * from inside the app (no adb, no manual data steps).
- *
- * <ul>
- *   <li><b>Maps</b>: Mapsforge {@code .map} offline vector maps, downloaded per EU country via
- *       {@link MapDownloadActivity} into {@code getExternalFilesDir("nav")/maps/}. The active map
- *       is chosen there and rendered here.</li>
- *   <li><b>Routing</b>: BRouter (bike/trekking profile, avoids motorways) over small
- *       {@code .rd5} segment tiles downloaded on demand into {@code nav/segments/}.</li>
- *   <li><b>POIs</b> (optional): camping + charging overlays read from the country's {@code .poi}
- *       database - downloaded via "Get POI" on the offline-maps screen (next to the {@code .map}) or
- *       side-loaded - if one is present; otherwise the toggles are hidden.</li>
- * </ul>
- *
- * A consistent fixed-height top app bar is always visible (see {@link NavUi}). When no map is
- * installed the screen is never a dead-end: it shows the header plus a clear message and a
- * "Download maps" button. All OSM data is ODbL - the "© OpenStreetMap contributors" attribution
- * is always visible.
- */
+/** Offline turn-by-turn bicycle navigation on OpenStreetMap data (maps, BRouter routing, POI overlays). */
 public class NavActivity extends Activity {
 
     private static final String TAG = "lbnav";
     private static final int REQ_LOC = 5120;
 
-    /**
-     * Intent extra carrying a recorded ride as a JSON array of {@code {lat, lon}} points. When set,
-     * {@link NavActivity} opens in DISPLAY-ONLY mode: it draws the track and fits the map to it,
-     * with no routing or destination required.
-     */
+    /** Intent extra: recorded ride as a JSON array of {lat, lon} points; opens in display-only mode. */
     public static final String EXTRA_TRACK = "track";
 
     // Central Europe - the initial map centre until the first GPS fix arrives.
@@ -197,11 +174,7 @@ public class NavActivity extends Activity {
     private TextView banner;
     private long lastPoiReloadAt = 0L;
 
-    // ── App-theme (chrome) palette ──
-    // Chosen once in onCreate from the "lb" pref "theme_dark". ONLY the surrounding Activity UI
-    // (input bars, profile buttons, banner, next-turn card, backgrounds, text) follows this; the
-    // offline map keeps its OWN dark/light toggle (see mapDark / resolveRenderTheme), so map tiles
-    // and overlays (route line, markers) are never recolored here.
+    // Chrome palette, chosen once in onCreate from pref "theme_dark" (map has its own toggle).
     private int cBg;        // screen background
     private int cBar;       // translucent input / control bar over the map
     private int cBanner;    // near-opaque overlay bar (bottom banner, next-turn card)
@@ -337,12 +310,7 @@ public class NavActivity extends Activity {
         return a == null ? b == null : a.equals(b);
     }
 
-    /**
-     * Choose the chrome colour palette from the persisted app theme ("lb" pref "theme_dark",
-     * default dark). Dark keeps the existing look; light swaps in a readable light palette. Called
-     * once at the very start of onCreate, before any view is built. The map render theme is
-     * independent (see mapDark) and is NOT affected here.
-     */
+    /** Resolve the chrome colour palette from pref "theme_dark" (default dark). */
     private void initTheme() {
         boolean dark = getSharedPreferences("lb", MODE_PRIVATE).getBoolean("theme_dark", true);
         if (dark) {
@@ -419,16 +387,7 @@ public class NavActivity extends Activity {
         return poiFile != null && poiFile.isFile() && poiFile.length() > 0;
     }
 
-    /**
-     * GPS-based automatic map selection. If the ACTIVE offline map does not cover the current
-     * location but another downloaded map does, switch to that map - persist the choice and rebuild
-     * the screen - so the correct country map loads automatically as the rider crosses a border,
-     * with no manual "Use" tap. Overlapping maps that both cover the point keep the current one (no
-     * thrash) and switching is skipped during active turn-by-turn navigation so an in-progress
-     * session is never yanked out from under the rider.
-     *
-     * @return {@code true} if a switch was triggered (the activity is being recreated).
-     */
+    /** Switch to a downloaded map covering {@code here} if the active one does not; true if switched. */
     private boolean maybeAutoSelectMap(LatLong here) {
         if (mapsDir == null || here == null || navigating) return false;
         // Active map already covers us → keep it (also the common single-map case).
@@ -562,8 +521,7 @@ public class NavActivity extends Activity {
         content.addView(mapView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        // ── Route input: a Start row and a Destination row. Each field has a "Here" button that
-        //    inserts the current GPS position; an empty Start means "use my current position". ──
+        // Route input: Start and Destination rows, each with a pin button for the current position.
         int p = dp(6);
 
         // Start row: [Start input .......................] [📍] - the pin fills the field with my GPS.
@@ -608,11 +566,7 @@ public class NavActivity extends Activity {
         destHere.setOnClickListener(v -> useCurrentLocation(dest));
         destRow.addView(destHere);
 
-        // Action row (above the "Route:" profile selector): [Route] [Start] [Center], three text
-        // buttons in the same segmented look as the three profile buttons. "Route" computes the route
-        // from the Start / Destination fields; "Start" enters active turn-by-turn navigation and stays
-        // hidden until a route exists; "Center" recenters the map on the current position and resumes
-        // auto-follow.
+        // Action row: [Route] [Start] [Center].
         LinearLayout actionRow = new LinearLayout(this);
         actionRow.setOrientation(LinearLayout.HORIZONTAL);
         actionRow.setBackgroundColor(cBar);
@@ -715,11 +669,7 @@ public class NavActivity extends Activity {
         topContainer.addView(profileDesc);
         updateProfileDesc();
 
-        // POI toggle row - only shown when a POI database is present (hidden gracefully otherwise).
-        // Two toggles only (Camping / Charging): they always fit side by side and each shows ALL
-        // sites of its kind. No socket sub-filter - roughly half of OSM charging stations carry no
-        // socket:* tag at all, so a Schuko/Type2 filter would silently hide most real stations.
-        // The socket type, when known, is shown on tap.
+        // POI toggle row (Camping / Charging), shown only when a POI database is present.
         if (hasPoi()) {
             LinearLayout chips = new LinearLayout(this);
             chips.setOrientation(LinearLayout.HORIZONTAL);
@@ -798,9 +748,7 @@ public class NavActivity extends Activity {
         t.setMinHeight(0);
         t.setMinimumHeight(0);
         t.setPadding(dp(6), dp(3), dp(6), dp(3));
-        // Flat segmented look matching the route-profile buttons: cBorder when off, cAccent when on.
-        // A state-driven background + text color restyle the toggle on check, so callers keep their
-        // own OnCheckedChangeListener purely for behaviour (no styling code needed there).
+        // Flat segmented look: cBorder when off, cAccent when on, state-driven.
         StateListDrawable bg = new StateListDrawable();
         bg.addState(new int[]{android.R.attr.state_checked}, new ColorDrawable(cAccent));
         bg.addState(new int[0], new ColorDrawable(cBorder));
@@ -815,12 +763,7 @@ public class NavActivity extends Activity {
         return t;
     }
 
-    /**
-     * One segment of the route-preference control - equal-width, restyled by {@link #styleSeg}.
-     * Kept deliberately compact (small text, tight padding, no default 48dp button min-height) so
-     * the three segments read as a small, unobtrusive segmented row consistent with the app's other
-     * small controls.
-     */
+    /** One equal-width, compact segment of the route-preference control (restyled by styleSeg). */
     private Button segButton(String label) {
         Button b = new Button(this);
         b.setAllCaps(false);
@@ -840,13 +783,7 @@ public class NavActivity extends Activity {
         return b;
     }
 
-    /**
-     * A compact, icon-only action button (a single pictogram) sized to sit next to a full-width input
-     * field without crowding it. Same flat look as {@link #segButton} - no oversized platform min-size,
-     * {@code cBorder} background, {@code cText} glyph - but it hugs its content instead of stretching.
-     * The label is a pictogram, so {@code description} carries the meaning for accessibility and as a
-     * long-press tooltip.
-     */
+    /** A compact icon-only action button; {@code description} is its accessibility label and tooltip. */
     private Button iconButton(String glyph, String description) {
         Button b = new Button(this);
         b.setAllCaps(false);
@@ -873,11 +810,7 @@ public class NavActivity extends Activity {
         return b;
     }
 
-    /**
-     * Persist the chosen routing profile and refresh the selector. If a destination is already set,
-     * immediately recompute the route with the new profile (no second tap on "Route" needed); if no
-     * destination is set yet, just remember the selection for the next route.
-     */
+    /** Persist the chosen routing profile, refresh the selector, and re-route if a destination is set. */
     private void selectProfile(String base) {
         if (base.equals(routeProfile)) return; // no change → nothing to recompute
         routeProfile = base;
@@ -960,9 +893,7 @@ public class NavActivity extends Activity {
             }
         });
 
-        // A user drag/pan disables auto-follow, so the map no longer snaps back to the GPS position
-        // on the next fix. The "⌖ Center" button re-enables following. Returning false lets the
-        // MapView still handle the pan gesture itself.
+        // A user drag/pan disables auto-follow (re-enabled by Center); false lets MapView still pan.
         mapView.setOnTouchListener((v, ev) -> {
             if (ev.getActionMasked() == MotionEvent.ACTION_MOVE) followMode = false;
             return false;
@@ -984,17 +915,7 @@ public class NavActivity extends Activity {
         mapView.setZoomLevel(START_ZOOM);
     }
 
-    /**
-     * The render theme for the tile layer:
-     * <ol>
-     *   <li>Dark map enabled → the bundled dark theme at {@code assets/render/dark.xml}, loaded as an
-     *       {@link AssetsRenderTheme}. It is force-parsed here so a malformed theme falls back to
-     *       {@link InternalRenderTheme#OSMARENDER} instead of leaving a blank map.</li>
-     *   <li>Else an external theme dropped at {@code nav/theme.xml}, if present.</li>
-     *   <li>Else the bundled Mapsforge DEFAULT theme, which labels place=town from zoom 8 and
-     *       place=village from zoom 12 (unlike OSMARENDER, which only names towns from zoom 12).</li>
-     * </ol>
-     */
+    /** Tile render theme: bundled dark.xml if dark on, else external nav/theme.xml, else DEFAULT. */
     private XmlRenderTheme resolveRenderTheme() {
         if (mapDark) {
             try {
@@ -1018,16 +939,11 @@ public class NavActivity extends Activity {
         } catch (Throwable t) {
             Log.w(TAG, "external theme load failed, using bundled", t);
         }
-        // DEFAULT is the bundled Mapsforge theme; unlike OSMARENDER it labels place=town from
-        // zoom 8 and place=village from zoom 12, so moderately sized towns are named at mid zoom,
-        // not only when fully zoomed in.
+        // Bundled Mapsforge DEFAULT theme (labels towns from zoom 8, villages from zoom 12).
         return InternalRenderTheme.DEFAULT;
     }
 
-    /**
-     * Add the compact dark-map toggle (a sun/moon glyph) to the right side of the title bar, just
-     * left of the "Maps" action. It reflects and toggles the persisted {@code map_dark} preference.
-     */
+    /** Add the dark-map sun/moon toggle to the title bar (reflects/toggles pref "map_dark"). */
     private void addDarkMapToggleToHeader(LinearLayout header) {
         if (header == null) return;
         mapDark = getSharedPreferences("nav", MODE_PRIVATE).getBoolean("map_dark", false);
@@ -1061,10 +977,7 @@ public class NavActivity extends Activity {
         toast(mapDark ? "Dark map on" : "Dark map off");
     }
 
-    /**
-     * Add the compact voice-guidance toggle (a speaker glyph) to the title bar, next to the dark-map
-     * icon. It reflects and toggles the persisted {@code voice_on} preference (default on).
-     */
+    /** Add the voice-guidance speaker toggle to the title bar (reflects/toggles pref "voice_on"). */
     private void addVoiceToggleToHeader(LinearLayout header) {
         if (header == null) return;
         voiceOn = getSharedPreferences("nav", MODE_PRIVATE).getBoolean("voice_on", true);
@@ -1114,10 +1027,7 @@ public class NavActivity extends Activity {
 
     // ─────────────────────────────────────────────── recorded-ride display ──
 
-    /**
-     * Draw a recorded ride (JSON array of {@code {lat, lon}}) as a polyline and fit the map to it.
-     * Display-only: auto-follow is disabled so the fitted view is not yanked to the GPS position.
-     */
+    /** Draw a recorded ride (JSON {lat, lon} array) as a polyline and fit the map to it (display-only). */
     private void showRecordedTrack(String json) {
         try {
             if (mapView == null) return;
@@ -1332,10 +1242,7 @@ public class NavActivity extends Activity {
         worker.execute(() -> routeFlow(fLat, fLon, tLat, tLon, prof));
     }
 
-    /**
-     * Worker thread: make sure the BRouter profile + the {@code .rd5} segments covering the route
-     * area are present (downloading any that are missing, with progress in the banner), then route.
-     */
+    /** Worker thread: ensure the BRouter profile and route-area .rd5 segments are present, then route. */
     private void routeFlow(double fLat, double fLon, double tLat, double tLon, String profileBase) {
         try {
             File profile = BikeRouter.ensureProfile(getApplicationContext(), profileDir, profileBase);
@@ -1363,12 +1270,7 @@ public class NavActivity extends Activity {
         }
     }
 
-    /**
-     * Worker thread: download any {@code .rd5} tiles in {@code tiles} that are missing from
-     * {@code segmentsDir}, showing progress in the banner. A 404 (e.g. an all-sea tile) is skipped.
-     *
-     * @return {@code false} if cancelled via {@link #routeCancel}, else {@code true}.
-     */
+    /** Worker thread: download missing .rd5 tiles (404 skipped); false if cancelled via routeCancel. */
     private boolean ensureSegments(List<String> tiles) throws IOException {
         List<String> missing = new ArrayList<>();
         for (String t : tiles) {
@@ -1393,7 +1295,7 @@ public class NavActivity extends Activity {
                                     + (tot > 0 ? "/" + NavDownloader.humanBytes(tot) : "") + ")");
                         }, routeCancel);
             } catch (NavDownloader.HttpException he) {
-                // 404 → no segment for this tile (e.g. all sea) - skip it, keep going.
+                // 404 = no segment for this tile (e.g. all sea); skip it.
                 if (he.code == 404) {
                     Log.i(TAG, "no BRouter segment for " + tile + " (skipping)");
                 } else {
@@ -1468,10 +1370,7 @@ public class NavActivity extends Activity {
         }
     }
 
-    /**
-     * Precompute cumulative distances and maneuver anchors for the live banner. BRouter returns
-     * geometry only, so turns are derived from bearing changes along the polyline.
-     */
+    /** Precompute cumulative distances and maneuver anchors (turns derived from bearing changes). */
     private void buildGuidance(List<LatLong> pts) {
         routePts = pts;
         int n = pts.size();
@@ -1709,9 +1608,7 @@ public class NavActivity extends Activity {
 
         enterNavUi();
 
-        // Hand the route to the shared session and start the foreground service, which now OWNS the
-        // GPS, the guidance and the voice - so navigation survives leaving this screen and keeps
-        // announcing on the dashboard. This screen becomes a view that draws the published state.
+        // Hand the route to the shared session and start the foreground service (owns GPS/guidance/voice).
         pushRouteToSession();
         NavSession.begin();
         NavSession.addListener(navListener);
@@ -1876,12 +1773,7 @@ public class NavActivity extends Activity {
         return "↑"; // continue straight
     }
 
-    /**
-     * Speak the next maneuver as the rider approaches it. Two thresholds, each fired at most once per
-     * maneuver: a heads-up at ~200 m ("In 200 meters, …") and a cue at the turn (~30 m, "… now"), plus
-     * a single arrival announcement near the end. Spoken in the phone's language via {@link NavVoice}
-     * (the on-screen card stays English); no-op when voice is off.
-     */
+    /** Speak the next maneuver: a ~200 m heads-up and a ~30 m cue (each once), plus an arrival cue. */
     private void announce(int maneuverKey, int mi, String instruction, double distToNext, double remaining) {
         if (!voiceOn || tts == null || !tts.isReady() || navVoice == null) return;
 
@@ -2020,9 +1912,7 @@ public class NavActivity extends Activity {
         String name = hit.poi.getName();
         if (name == null || name.trim().isEmpty()) name = "(unnamed)";
 
-        // Curated, human-readable detail view. We deliberately do NOT dump every raw OSM tag - many
-        // are noise (wikidata refs, normalized_name, source, wheelchair, ...) that only confuse. We
-        // surface the handful of fields a rider cares about and render the website as a clickable link.
+        // Curated detail view: only rider-relevant fields, website rendered as a clickable link.
         StringBuilder html = new StringBuilder();
         html.append(String.format(Locale.US, "%.5f, %.5f", hit.poi.getLatitude(), hit.poi.getLongitude()));
 

@@ -15,11 +15,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/**
- * Shared UI building blocks for the navigation screens so the top app bar is IDENTICAL and the
- * SAME fixed height everywhere ({@link NavActivity} and {@link MapDownloadActivity}). Matches the
- * dashboard look: dark bar, back button, centred bold title.
- */
+/** Shared UI building blocks for the navigation screens' top app bar. */
 final class NavUi {
 
     // Palette mirrors the dashboard design tokens (telemetry.html --card / --border / --text …).
@@ -48,22 +44,12 @@ final class NavUi {
     /** Fixed app-bar height in dp - the SAME on every navigation screen. */
     static final int HEADER_H_DP = 56;
 
-    /**
-     * Left/right zone width (dp). The back arrow and the balancing right-hand zone share this width
-     * so the centred title lands in the exact middle of the bar - identical to the dashboard's
-     * sub-pages, whose {@code .tb-title} sits between a 40px back button and a 40px right spacer.
-     */
+    /** Left/right zone width (dp) that balances the centred title. */
     static final int SIDE_W_DP = 48;
 
     private NavUi() {}
 
-    /**
-     * Builds the fixed-height top app bar so it matches the dashboard sub-page headers
-     * (telemetry.html {@code #topbar} / {@code .tb-title}): a dark bar, a left back arrow that
-     * finishes the activity and a CENTRED bold title at the dashboard's weight/size/colour
-     * (16sp / bold / {@code --text}). When {@code onMaps} is non-null a right-hand "Maps" text
-     * button is kept; otherwise a same-width spacer keeps the title perfectly centred.
-     */
+    /** Builds the fixed-height top app bar with back arrow, centred title and optional "Maps" button. */
     static LinearLayout header(final Activity a, String title, final Runnable onMaps) {
         boolean dark = isDark(a);
         int cBar = dark ? BAR_BG : BAR_BG_L;

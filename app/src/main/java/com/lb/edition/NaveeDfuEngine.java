@@ -11,14 +11,7 @@ import android.util.Log;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
-/**
- * NAVEE XMODEM-128 firmware flash over the normal control GATT (service d0ff, write b002,
- * notify b003). Text handshake (dfu_start / ble_rand / ble_key), then 128-byte XMODEM blocks
- * with a CRC-16/XMODEM per block, EOT and the rsq result token.
- *
- * The engine runs entirely on the main looper: {@link #onNotify} re-posts there, so no locking.
- * Every b003 notification is routed here by {@link BleManager} while a flash is running.
- */
+/** NAVEE XMODEM-128 firmware flash over the control GATT; runs entirely on the main looper. */
 final class NaveeDfuEngine {
 
     private static final String TAG = "lbdfu";
@@ -337,8 +330,7 @@ final class NaveeDfuEngine {
     }
 
     private void onEotTimeout() {
-        // OEM does not require a 0x06 EOT-ACK; after a few EOT resends it just waits for the rsq result
-        // token. So stop resending and wait for rsq dfu_ok instead of failing with "no ACK for EOT".
+        // After EOT_RETRIES resends, stop and wait for the rsq result token instead of failing.
         if (++eotTries >= EOT_RETRIES) { beginFinish(); return; }
         sendEot();
     }

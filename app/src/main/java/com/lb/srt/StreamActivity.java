@@ -10,11 +10,7 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
 import android.util.Log;
 
-/**
- * Transparent activity: requests the MediaProjection permission and starts the
- * StreamService with the result. MainActivity launches it from the LB.startStream
- * bridge method. Intent extra "url" = full SRT push URL.
- */
+/** Transparent activity that requests MediaProjection permission and starts StreamService with the URL. */
 public class StreamActivity extends Activity {
 
     private static final String TAG = "lbsrt";

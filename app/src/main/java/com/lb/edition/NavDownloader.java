@@ -12,17 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Resumable HTTP(S) file download with progress reporting and cancellation.
- *
- * <p>Used to fetch offline navigation data directly inside the app - Mapsforge {@code .map}
- * vector maps and BRouter {@code .rd5} routing segments - with no adb / manual steps. Pure
- * {@link HttpURLConnection}, no third-party HTTP library.
- *
- * <p>The file is streamed to {@code <dest>.part} first; on success it is renamed to {@code dest}.
- * A leftover {@code .part} is resumed with an HTTP {@code Range} request, so a cancelled or
- * interrupted download can be continued rather than restarted.
- */
+/** Resumable HTTP(S) download with progress and cancellation, streamed via a .part file. */
 final class NavDownloader {
 
     /** Progress callback: {@code done} and {@code total} bytes ({@code total} <= 0 if unknown). */
@@ -46,13 +36,7 @@ final class NavDownloader {
 
     private NavDownloader() {}
 
-    /**
-     * Downloads {@code url} into {@code dest}, resuming a partial {@code <dest>.part} when possible.
-     *
-     * @param cancel optional flag; set {@code true} from another thread to abort (leaves the
-     *               {@code .part} file in place so the download can resume later).
-     */
-    /** Absolute sanity ceiling for one download (the largest EU country .map files are a few GB). */
+    /** Absolute sanity ceiling for one download. */
     private static final long MAX_DOWNLOAD_BYTES = 12L * 1024 * 1024 * 1024;   // 12 GB
 
     static void download(String url, File dest, Progress cb, AtomicBoolean cancel) throws IOException {
@@ -67,9 +51,7 @@ final class NavDownloader {
         File meta = PathGuard.childOf(baseDir, dest.getName() + ".part.meta");   // stored ETag/Last-Modified
         long have = part.exists() ? part.length() : 0L;
         String validator = have > 0 ? readLine(meta) : null;
-        // Never resume without a validator to pin the remote file version: if the file changed on the
-        // mirror (maps are regenerated regularly), appending new bytes at the old offset would splice
-        // two different files into a corrupt result. Restart cleanly instead.
+        // Never resume without a validator to pin the remote file version; restart clean instead.
         if (have > 0 && validator == null) { part.delete(); meta.delete(); have = 0; }
 
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();

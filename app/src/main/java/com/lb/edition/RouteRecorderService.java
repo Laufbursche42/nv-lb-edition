@@ -32,20 +32,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
-/**
- * Foreground LOCATION service that records a GPS route to a file for the duration of one ride,
- * independent of the WebView. This is what makes route recording survive the screen going off: a
- * WebView {@code navigator.geolocation.watchPosition} is throttled/frozen in the background, so the
- * track would otherwise stop after a couple hundred metres. Here the native {@link LocationManager}
- * keeps delivering fixes while the service is foreground, and each fix is appended as one NDJSON line.
- *
- * <p>Lifecycle is owned by {@link RouteRecorder}: it starts this service (passing the target file and
- * the point interval) once the scooter has actually moved, and stops it when the scooter disconnects.
- * The file is one compact JSON object per line - {@code {"lat","lon","alt","ts","speed"}} - flushed
- * immediately, so an app kill loses at most the last fix. {@link RouteRecorder#takeRecordedRoutes()}
- * hands finished files to the dashboard, which imports them into its recorded-routes list. This runs
- * alongside the telemetry-only RideLoggerService (a separate CONNECTED_DEVICE foreground service).
- */
+/** Foreground location service that appends each GPS fix as one NDJSON line to the ride's route file. */
 public final class RouteRecorderService extends Service {
 
     private static final String TAG = "lbroutesvc";

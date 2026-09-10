@@ -4,15 +4,7 @@
 
 package com.lb.edition;
 
-/**
- * Pure turn-by-turn guidance math. Given the flattened route (parallel lat/lon arrays, cumulative
- * distances and maneuver anchors) plus the current position, it works out the nearest route point,
- * whether we are off-route, the next maneuver, the distance to it and the distance remaining.
- *
- * <p>No Android / UI / TTS / Mapsforge dependencies, so the exact same logic runs inside
- * {@link NavigationService} (off the map screen) and could be unit-tested. This is a byte-for-byte
- * lift of the algorithm that used to live in {@code NavActivity.updateNavigation}.
- */
+/** Pure turn-by-turn guidance math: nearest point, off-route, next maneuver and distances. */
 final class NavGuidance {
 
     private NavGuidance() {}
@@ -33,9 +25,7 @@ final class NavGuidance {
         double remainingM;     // metres to the destination
     }
 
-    /**
-     * @return null if the route is empty / invalid.
-     */
+    /** @return null if the route is empty / invalid. */
     static Fix compute(double lat, double lon,
                        double[] lats, double[] lons, double[] cumDist,
                        int[] maneuverIdx, String[] maneuverText) {

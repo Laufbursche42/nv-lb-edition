@@ -29,16 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Foreground service that downloads an offline Mapsforge {@code .map} map file so the transfer keeps
- * running when the screen locks or the app is backgrounded (an in-activity {@code ExecutorService}
- * gets throttled / killed on screen-off).
- *
- * <p>One download at a time. Progress is exposed to {@link MapDownloadActivity} through static
- * observable state plus an optional {@link Listener} and to the user through an ongoing progress
- * notification with a Cancel action. A partial wake lock and a high-perf Wi-Fi lock are held for the
- * duration so the OS keeps the CPU and radio alive while the screen is off.
- */
+/** Foreground service that downloads one offline map/routing file at a time, surviving screen-off. */
 public class MapDownloadService extends Service {
 
     private static final String TAG = "lbmapdlsvc";
@@ -79,8 +70,7 @@ public class MapDownloadService extends Service {
     private static volatile Listener listener;
     static void setListener(Listener l) { listener = l; }
 
-    // Route writes to the observable static MAP-download state through static setters (a static
-    // method writing a static field is fine; a direct write from an instance method is not).
+    // Static setters for the observable MAP-download state.
     private static void setActiveBase(String v) { activeBase = v; }
     private static void setDone(long v) { done = v; }
     private static void setTotal(long v) { total = v; }
@@ -126,10 +116,7 @@ public class MapDownloadService extends Service {
         }
         final String display = displayExtra != null ? displayExtra : base;
 
-        // Path-traversal guard: derive the destination from OUR OWN maps dir plus the country base
-        // name and verify it stays inside that dir (PathGuard.childOf), instead of trusting the raw
-        // absolute EXTRA_DEST. This yields the same file the activity computed, but a crafted base
-        // name can never escape getExternalFilesDir("nav")/maps.
+        // Path-traversal guard: derive the dest from our maps dir + base name, never the raw EXTRA_DEST.
         final File navExt = getExternalFilesDir("nav");
         if (navExt == null) {
             Log.e(TAG, "no external files dir; cannot download");
@@ -223,12 +210,7 @@ public class MapDownloadService extends Service {
 
     // ─────────────────────────────────────────────── routing-data download ──
 
-    /**
-     * Start a foreground download of the BRouter {@code .rd5} routing tiles named in
-     * {@link #EXTRA_TILES} into {@code nav/segments}. Reuses the same foreground notification +
-     * Wi-Fi/wake locks as the map download so the transfer survives screen-off / backgrounding /
-     * a view change (a 404 = an all-sea tile with no data is skipped).
-     */
+    /** Start a foreground download of the EXTRA_TILES BRouter .rd5 tiles into nav/segments. */
     private int startRoutingDownload(Intent intent) {
         // One operation at a time (map or routing).
         if (activeBase != null || routingActive) {

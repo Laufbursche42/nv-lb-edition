@@ -1,21 +1,6 @@
 'use strict';
 
-// Every string the rider sees, in both languages.
-//
-// English is the base language: an English value is the wording the interface was
-// written in. German is a translation layer on top. A key describes what a string
-// means, never how it is worded, so a rewording never forces a key change.
-//
-// Keys are dotted and lowercase, area first: settings.display.theme, fw.file.choose.
-// A value may hold a placeholder in braces, {n}, which the page fills in. A leading
-// symbol entity such as &#9888; belongs to the string and stays in both languages.
-//
-// A key missing from de falls back to en, so a half-finished translation shows
-// English rather than a raw key.
-//
-// Markup carries the key in data-i18n, data-i18n-aria, data-i18n-ph, data-i18n-title
-// or data-i18n-alt. The script reaches a string with t(key), a list with tList(key)
-// and a string with placeholders with tf(key, values).
+// UI strings in en and de; de falls back to en. Accessed via t/tList/tf.
 
 window.I18N = {
   en: {

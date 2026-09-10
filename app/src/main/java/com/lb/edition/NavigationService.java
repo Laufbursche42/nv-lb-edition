@@ -26,19 +26,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
-/**
- * Foreground service that OWNS an active turn-by-turn navigation session: it keeps GPS running,
- * evaluates guidance ({@link NavGuidance}), speaks voice directions ({@link TtsHelper} /
- * {@link NavVoice}) and publishes the current {@link NavSession.State} - independent of whether
- * {@link NavActivity} or the dashboard is on screen. That is why navigation survives switching pages
- * and why the voice keeps announcing while you are on the main screen.
- *
- * <p>The service does NOT re-route itself. While NavActivity is visible it observes the off-route
- * flag and re-routes (updating {@link NavSession}); off the map screen an off-route rider just sees
- * "Recalculating" until they rejoin the route or reopen the map. Started by NavActivity on Start,
- * stopped only by an explicit End (the notification action or the Stop button) - never by leaving a
- * screen.
- */
+/** Foreground service running the turn-by-turn nav session (GPS, guidance, voice, NavSession state). */
 public final class NavigationService extends Service {
 
     private static final String TAG = "lbnavsvc";

@@ -17,28 +17,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 
-/**
- * Native lifecycle owner for GPS route recording, so a recorded ride survives the screen going off
- * (a WebView geolocation watch does not - it is throttled in the background). Mirrors {@link RideLogger}'s
- * arm/finalize model but records the GPS TRACK, not the telemetry snapshots:
- *
- * <ul>
- *   <li>{@link #onConnected()} resets the session.
- *   <li>{@link #onLiveData(String)} integrates the scooter's own reported speed; once ~20 m of real
- *       movement has been covered (and auto-track is on) the ride ARMS: a route file is created and
- *       {@link RouteRecorderService} starts logging GPS fixes in the foreground.
- *   <li>{@link #onDisconnected()} finalizes: the foreground service stops; the finished file waits to
- *       be imported.
- * </ul>
- *
- * <p>{@link #takeRecordedRoutes()} hands every finished route (all but the one being recorded now) to
- * the dashboard as JSON and deletes the files, so the WebView imports them into its recorded-routes
- * list. Config (auto-track on/off + point interval) is mirrored from the dashboard via
- * {@link #setConfig(boolean, int)} because the native side cannot read the WebView's localStorage.
- * The arm speed uses NAVEE's telemetry key "speed" (km/h), the same key FrameParser.toJson() emits.
- *
- * <p>Every public method is null/exception-safe and never throws across the JS bridge.
- */
+/** Native lifecycle owner for GPS route recording; arms on movement and hands finished tracks to the dashboard. */
 public final class RouteRecorder {
 
     private static final String TAG = "lbroute";
@@ -189,11 +168,7 @@ public final class RouteRecorder {
 
     // Import (called from the JS bridge)
 
-    /**
-     * @return a JSON array of every FINISHED route (all but the one recording now), newest first, each
-     * {@code {"id","start","end","points":[{lat,lon,alt,ts,speed}]}}, then DELETES those files. The
-     * dashboard turns each into a saved route. "[]" if none. The active recording is never returned.
-     */
+    /** Return finished routes as JSON (newest first) and delete their files; "[]" if none. */
     public synchronized String takeRecordedRoutes() {
         try {
             File dir = routesDir();

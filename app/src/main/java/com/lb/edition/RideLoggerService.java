@@ -18,14 +18,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
-/**
- * Foreground service that runs only during an active armed ride (started by {@link RideLogger} when
- * a ride arms; stopped on disconnect / finalize / toggle-off). It keeps the process in the
- * foreground so BLE and the 60 s ride sampling stay alive with the screen off.
- *
- * <p>Shows a small ongoing low-importance notification. Foreground service type is
- * {@code connectedDevice} (the scooter is a connected BLE device); the service is not exported.
- */
+/** Foreground service that keeps BLE and ride sampling alive during an armed ride. */
 public final class RideLoggerService extends Service {
 
     private static final String TAG = "lbridesvc";

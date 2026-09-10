@@ -4,12 +4,7 @@
 
 package com.lb.edition;
 
-/**
- * NAVEE current-settings snapshot, populated from the 0x70 parameter report. There is NO full-state
- * serialisation frame: NAVEE settings are written as single-byte
- * opcodes (immobilizer 0x51, cruise 0x52, gear/drive-mode 0x58, start speed 0x6A, region 0x6F ...),
- * so this class only mirrors the reported values so the dashboard can show the current toggle state.
- */
+/** Current-settings snapshot, populated from the 0x70 parameter report. */
 final class SettingsState {
 
     volatile Integer lock, unit, startSpeed, limitSpeed, limitOn, maxSpeed, driveMode, breakSpeed, cruise, tcs, eco;

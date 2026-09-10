@@ -31,20 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Native BLE layer for the NAVEE scooter (proprietary 55 AA frames over a d0ff GATT service). Using
- * a NATIVE Android BLE connection here (rather than Web Bluetooth) is the whole point of this app:
- * Samsung Knox / Auto Blocker and the Xiaomi BLE stack silently block Web Bluetooth GATT connects,
- * while the native BluetoothGatt path with the proper runtime permissions works.
- *
- * Flow: scan by name prefix "NAVEE", connect GATT, discover the d0ff service, take the b002 write and
- * b003 notify characteristics, enable notifications (local + CCCD), then run one post-connect routine
- * (time sync + status reads). The account userId auth (0x30) is OPTIONAL - the meter dispatches every
- * normal command with no auth gate (verified in firmware), so lock/cruise/gear/kickstart/region plus
- * the status reads all work without it.
- *
- * All public entry points are null/exception-safe so nothing ever throws across the JS bridge.
- */
+/** Native BLE layer for the NAVEE scooter (55 AA frames over the d0ff GATT service). */
 @SuppressLint("MissingPermission")
 final class BleManager {
 
@@ -454,12 +441,7 @@ final class BleManager {
         requestMtuThenNotify(g);
     }
 
-    /** Ask for the same ATT MTU the manufacturer app negotiates before it opens the notify channel.
-     *  The stock app does connect -> 100 ms -> requestMtu(148) -> MTU success -> 100 ms -> notify.
-     *  Our frames are far below that, but a 0x70 parameter report is longer than the 20 payload
-     *  bytes of the default MTU, so without this it arrives split across notifications. The parser
-     *  reassembles either way; matching the stock negotiation keeps a report in one packet.
-     *  onMtuChanged drives the next step; the timeout is the fallback for stacks that never call it. */
+    /** Request MTU 148 then open the notify channel; timeout is the fallback if onMtuChanged never fires. */
     private void requestMtuThenNotify(BluetoothGatt g) {
         if (mtuStepDone) return;
         boolean started = false;
@@ -514,8 +496,7 @@ final class BleManager {
             if (deviceName != null && !deviceName.isEmpty()) ed.putString("last_device_name", deviceName);
             ed.apply();
         } catch (Throwable ignored) {}
-        // The advertised name IS the NAVEE identity the dashboard shows as the model line and on the
-        // info page; nothing else ever sets parser.btName, so seed it here from the scan name.
+        // Seed parser.btName from the scan name.
         try { if (parser != null) parser.btName = (deviceName == null) ? "" : deviceName; } catch (Throwable ignored) {}
         pushState("connected");
         startPush();
@@ -548,16 +529,11 @@ final class BleManager {
                 Log.e(TAG, "push failed", t);
             }
             try { if (gatt != null) gatt.readRemoteRssi(); } catch (Throwable ignored) {}
-            // Poll the two reads whose values are NOT in the realtime push: 0x70 (cruise, drive mode,
-            // limits, start speed, brake, TCS, unit) every ~2 s and 0x72 (SOH, temperature, cycles)
-            // every ~5 s. Without this those stay frozen at the connect-time snapshot. lock, range,
-            // pack voltage/current and speed come live in 0x90/0x92 and are not re-polled here.
+            // Poll 0x70 every ~2 s and 0x72 every ~5 s (not in the realtime push).
             pushTicks++;
             long per = Math.max(1, PUSH_INTERVAL_MS);
             if (notifyReady) {
-                // Actively poll the homepage report so the warn/fault code is captured even when the
-                // scooter is not pushing 0x90 (it only pushes while riding). The warn code is data
-                // offset 0; the parser exposes it as fault and MainActivity logs it when it changes.
+                // Poll 0x90 so the warn/fault code is captured even when not riding.
                 enqueueWrite(CommandBuilder.read(0x90));
                 if (pushTicks % Math.max(1, (2000 / per)) == 0) enqueueWrite(CommandBuilder.read(0x70));
                 if (pushTicks % Math.max(1, (5000 / per)) == 0) enqueueWrite(CommandBuilder.read(0x72));

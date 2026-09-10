@@ -37,17 +37,7 @@ import java.util.concurrent.Executors;
 import org.mapsforge.core.model.BoundingBox;
 import org.mapsforge.map.reader.MapFile;
 
-/**
- * In-app offline map download manager (Priority 1).
- *
- * <p>Lists EU countries and downloads the ready-made Mapsforge {@code .map} offline vector map for
- * each - directly over HTTPS with a progress bar - into
- * {@code getExternalFilesDir("nav")/maps/<country>.map}. No adb, no manual data steps. Shows the
- * downloaded size, lets the user pick the ACTIVE map used by {@link NavActivity} and delete maps.
- *
- * <p>Source mirror: the Mapsforge download mirror at hs-esslingen.de (per-country v5 europe maps).
- * All data © OpenStreetMap contributors (ODbL).
- */
+/** In-app offline map download manager: lists countries, downloads/selects/deletes Mapsforge maps. */
 public class MapDownloadActivity extends Activity {
 
     private static final String TAG = "lbmapdl";
@@ -123,14 +113,10 @@ public class MapDownloadActivity extends Activity {
     // Computes the tile list off the UI thread before handing it to the foreground service.
     private final ExecutorService routingWorker = Executors.newSingleThreadExecutor();
 
-    // Single active download at a time (keeps bandwidth + UI simple). The download itself runs in
-    // MapDownloadService (a foreground service) so it survives screen-off / backgrounding; this
-    // local mirror of the active country is kept in sync by the service listener.
+    // Active download country; mirrored from MapDownloadService by the listener.
     private volatile String activeBase = null;
 
-    // ── App-theme (chrome) palette ──
-    // Chosen once in onCreate from the "lb" pref "theme_dark" so this screen's chrome follows the
-    // dashboard's light/dark toggle. No map is rendered here, so nothing map-related is affected.
+    // ── App-theme (chrome) palette, chosen in onCreate from pref "theme_dark". ──
     private int cBg;      // screen background
     private int cCard;    // country / routing card background
     private int cText;    // primary text
@@ -269,11 +255,7 @@ public class MapDownloadActivity extends Activity {
         return getSharedPreferences("nav", MODE_PRIVATE);
     }
 
-    /**
-     * Choose the chrome colour palette from the persisted app theme ("lb" pref "theme_dark",
-     * default dark). Dark keeps the existing look (the NavUi dashboard tokens); light swaps in a
-     * readable light palette. Called once at the start of onCreate, before any view is built.
-     */
+    /** Set the chrome colour palette from pref "theme_dark" (default dark). */
     private void initTheme() {
         boolean dark = getSharedPreferences("lb", MODE_PRIVATE).getBoolean("theme_dark", true);
         if (dark) {
@@ -498,8 +480,7 @@ public class MapDownloadActivity extends Activity {
             r.delete.setVisibility(partial ? View.VISIBLE : View.GONE);
         }
 
-        // POI (camping + charging): offered once the country map is installed; hidden while a download
-        // runs on this row. The tiny .poi sits next to the .map so NavActivity picks it up automatically.
+        // POI button: shown once the map is installed and no download runs on this row.
         boolean poiExists = r.poiFile != null && r.poiFile.isFile() && r.poiFile.length() > 0;
         if (exists && !active) {
             r.poi.setVisibility(View.VISIBLE);
@@ -518,11 +499,7 @@ public class MapDownloadActivity extends Activity {
 
     // ─────────────────────────────────────────────── routing-data card ──
 
-    /**
-     * The "Routing data" card shown ABOVE the country list. Bike routing uses BRouter {@code .rd5}
-     * segment tiles; here they can be pre-downloaded (for every offline map already installed) and
-     * deleted, instead of only trickling in on-route inside {@link NavActivity}.
-     */
+    /** Build the "Routing data" card for pre-downloading/deleting BRouter .rd5 tiles. */
     private View buildRoutingCard() {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
@@ -631,15 +608,13 @@ public class MapDownloadActivity extends Activity {
 
         routingProgress.setVisibility(View.GONE);
         routingDownloadBtn.setText("Download routing data");
-        // Enabled as soon as at least one country map exists - routing tiles are derived from a
-        // downloaded map's bounding box, so a map must come first.
+        // Enabled once at least one country map exists (tiles derive from a map's bbox).
         routingDownloadBtn.setEnabled(anyMap);
         routingDeleteBtn.setVisibility(count > 0 ? View.VISIBLE : View.GONE);
         if (anyMap) {
             routingStatus.setVisibility(View.GONE);
         } else {
-            // Make it obvious WHY the button is disabled - a clear, visible reason, not just a
-            // greyed-out button. Highlighted (accent) so the user sees the next step to take.
+            // Accent hint explaining why the button is disabled.
             routingStatus.setVisibility(View.VISIBLE);
             routingStatus.setTextColor(cAccent);
             routingStatus.setText("Download a country map first, then routing data for it.");
@@ -674,12 +649,7 @@ public class MapDownloadActivity extends Activity {
         }
     }
 
-    /**
-     * Start the routing-data download. The tile list is computed off the UI thread from the
-     * downloaded maps' bounding boxes; the actual {@code .rd5} download then runs in
-     * {@link MapDownloadService} (a FOREGROUND SERVICE) so it survives the app being backgrounded
-     * or this view being left - exactly like the map download.
-     */
+    /** Start the routing-data download: compute the tile list off-thread, then hand it to the service. */
     private void startRoutingDownload() {
         if (MapDownloadService.activeBase != null || activeBase != null) {
             toast("A download is already running");
@@ -701,12 +671,7 @@ public class MapDownloadActivity extends Activity {
         routingWorker.execute(() -> prepareAndStartRoutingService(maps));
     }
 
-    /**
-     * Worker thread: read each downloaded map's bbox from its {@code .map} header, compute the union
-     * of covering BRouter tiles, keep only the ones still missing locally, then hand that tile list
-     * to {@link MapDownloadService} for a foreground download. (Reading the small map headers is
-     * quick; the long-running transfer is what the service keeps alive across backgrounding.)
-     */
+    /** Worker: compute the missing BRouter tiles from the maps' bboxes, then start the service. */
     private void prepareAndStartRoutingService(List<File> maps) {
         final ArrayList<String> tiles = new ArrayList<>();
         boolean readAny = false;
@@ -822,8 +787,7 @@ public class MapDownloadActivity extends Activity {
         r.status.setText("Connecting…");
     }
 
-    /** Download this country's POI database (camping + charging) next to its map, via the shared
-     *  foreground service. Progress shows on the row + in the notification; the .poi files are small. */
+    /** Download this country's POI database next to its map via the shared foreground service. */
     private void startPoiDownload(final Row r) {
         if (MapDownloadService.activeBase != null || activeBase != null) {
             toast("A download is already running");
@@ -900,10 +864,7 @@ public class MapDownloadActivity extends Activity {
         } catch (Throwable ignored) { }
     }
 
-    // NOTE: BOTH the map download AND the routing-data download now run in MapDownloadService and
-    // must survive this Activity being destroyed (screen lock / backgrounding / view change) -
-    // cancel is explicit via each Cancel button. Only the short-lived tile-list compute executor is
-    // shut down here; it must NOT touch the running foreground download.
+    // Only shut down the tile-list compute executor; downloads run in the service and are unaffected.
     @Override
     protected void onDestroy() {
         try {

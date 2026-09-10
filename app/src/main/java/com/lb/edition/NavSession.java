@@ -6,16 +6,7 @@ package com.lb.edition;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Process-wide holder for the ACTIVE navigation session so it survives switching between the
- * dashboard ({@link MainActivity} / WebView) and the map ({@link NavActivity}).
- *
- * <p>The foreground {@link NavigationService} owns the runtime (GPS, guidance, voice) and publishes
- * a {@link State} snapshot here on every fix; {@link NavActivity} and {@link MainActivity} observe
- * it to draw the map card and the dashboard banner respectively. Exactly one session is active at a
- * time. The flattened route is stored here too so re-opening NavActivity can redraw the line without
- * re-routing.
- */
+/** Process-wide holder for the active navigation session and its route snapshot. */
 final class NavSession {
 
     private NavSession() {}
@@ -55,7 +46,7 @@ final class NavSession {
         void onNavState(State s);
     }
 
-    // ── Active route (set by NavActivity on Start / after a reroute; read to redraw on reopen) ──
+    // Active route, redrawn on reopen.
     static volatile double[] lats;
     static volatile double[] lons;
     static volatile double[] cumDist;

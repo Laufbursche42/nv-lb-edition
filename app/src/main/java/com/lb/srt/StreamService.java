@@ -30,12 +30,7 @@ import com.pedro.srt.srt.SrtClient;
 
 import java.nio.ByteBuffer;
 
-/**
- * Foreground service: MediaProjection captures the screen into a GL texture, ScreenGlEncoder
- * re-draws it at a CONSTANT 30 fps and H.264-encodes it and the frames are pushed straight
- * into RootEncoder's SrtClient. The constant redraw is what keeps the stream alive at a real
- * bitrate even when the screen is a still image.
- */
+/** Foreground service that screen-captures, H.264-encodes at constant fps and pushes to an SRT client. */
 public class StreamService extends Service implements ConnectChecker, ScreenGlEncoder.Callback {
 
     private static final String TAG = "lbsrt";
@@ -65,12 +60,7 @@ public class StreamService extends Service implements ConnectChecker, ScreenGlEn
 
     @Override public IBinder onBind(Intent i) { return null; }
 
-    /**
-     * Redact an SRT push URL for logging: drop the query string (which carries {@code streamid} and
-     * {@code passphrase}) and any {@code user:pass@} userinfo, keeping only scheme + host[:port]. The
-     * raw URL is sensitive (SrtCrypto exists to protect it at rest) and DebugLog captures this
-     * process's logcat into a shareable file, so it must never be logged verbatim.
-     */
+    /** Redact an SRT URL for logging: keep scheme + host[:port], strip userinfo and query. */
     static String redact(String url) {
         if (url == null) return "null";
         String s = url;
@@ -123,8 +113,7 @@ public class StreamService extends Service implements ConnectChecker, ScreenGlEn
                 w = dm.widthPixels; h = dm.heightPixels; dpi = dm.densityDpi;
             }
         } catch (Throwable t) { Log.e(TAG, "metrics", t); }
-        // H.264 encoder caps a frame at 2560x1440 -> scale the portrait screen to fit, keep
-        // aspect, align to 16.
+        // Scale screen to fit the 2560x1440 encoder cap, keep aspect, align to 16.
         final int MAX_LONG = 1440, MAX_SHORT = 2560;
         int lo = Math.min(w, h), hi = Math.max(w, h);
         if (hi > MAX_LONG) { lo = (int) ((long) lo * MAX_LONG / hi); hi = MAX_LONG; }

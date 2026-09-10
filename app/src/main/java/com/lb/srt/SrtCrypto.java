@@ -16,20 +16,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-/**
- * Hardware-backed encryption for the SRT streaming URL.
- *
- * The AES-256-GCM key lives in the Android Keystore under alias "lb_srt_key" and is
- * generated on first use. Because the key material never leaves the device's secure
- * hardware (TEE/StrongBox where available) and is non-exportable, a stored value cannot
- * be decrypted off-device even if someone extracts it from the APK or app storage. This
- * replaces the old RC4-with-embedded-key scheme, whose key shipped inside the binary.
- *
- * Stored format: "k1:" + Base64(iv[12] || ciphertext+tag), NO_WRAP. The "k1:" prefix lets
- * the JS layer distinguish new values from legacy RC4 values and fall back accordingly.
- *
- * Requires API 23+. All operations are wrapped in try/catch and return null on any failure.
- */
+/** Keystore-backed AES-256-GCM encryption for the SRT URL; stored as "k1:" + Base64(iv||ct+tag). */
 public final class SrtCrypto {
 
     private static final String KEYSTORE = "AndroidKeyStore";
@@ -42,11 +29,7 @@ public final class SrtCrypto {
     private SrtCrypto() {
     }
 
-    /**
-     * Encrypts the given plaintext with the hardware-backed key.
-     *
-     * @return "k1:" + Base64(iv[12] + AES-GCM ciphertext+tag) or null on failure.
-     */
+    /** Encrypts plaintext; returns "k1:"-prefixed value or null on failure. */
     public static String encrypt(String plain) {
         try {
             SecretKey key = getOrCreateKey();
@@ -63,11 +46,7 @@ public final class SrtCrypto {
         }
     }
 
-    /**
-     * Decrypts a value produced by {@link #encrypt(String)}.
-     *
-     * @return plaintext or null if the input is not "k1:" prefixed or on failure.
-     */
+    /** Decrypts a "k1:"-prefixed value; returns plaintext or null. */
     public static String decrypt(String stored) {
         try {
             if (stored == null || !stored.startsWith(PREFIX)) {

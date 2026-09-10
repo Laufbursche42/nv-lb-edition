@@ -14,27 +14,14 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-/** Applies the app-wide immersive full-screen preference (SharedPreferences "lb" / key "fullscreen",
- *  default OFF) to any Activity, matching MainActivity so every screen looks identical. When off, the
- *  Android status bar (battery, clock, notifications) is shown AND the content is pushed below it.
- *
- *  The window is ALWAYS edge-to-edge (setDecorFitsSystemWindows(false)) on every screen and we are the
- *  single source of truth for the system-bar insets: we apply them as padding on the activity content
- *  root (android.R.id.content) ourselves. Never letting the framework fit/consume the insets keeps the
- *  behaviour pixel-identical across content types - the WebView dashboard AND the native Nav/Download
- *  screens - instead of the framework double- or zero-ing the inset differently per view type.
- *
- *  The insets listener reads the CURRENT fullscreen pref on every pass, so toggling the preference and
- *  calling this method again re-applies the correct padding immediately. */
+/** Applies the immersive full-screen preference to any Activity, managing system-bar insets as padding. */
 final class UiChrome {
     private UiChrome() {}
 
     // Marker so the OnApplyWindowInsetsListener is only installed once per content view.
     private static final String INSET_TAG = "lb_inset_listener";
 
-    /** The app's dark title-bar colour - matches telemetry.html {@code --card} (the WebView topbar
-     *  background) AND {@link NavUi#BAR_BG} (the native header). The system status/navigation bars are
-     *  tinted to this so the status-bar strip visually continues into the app title bar with no seam. */
+    /** Dark title-bar colour; system bars are tinted to this. */
     static final int BAR_COLOR = 0xFF111420;
 
     static void applyFullscreen(final Activity a) {
@@ -47,11 +34,7 @@ final class UiChrome {
             // status-bar behaviour is identical on the WebView and the native activities.
             WindowCompat.setDecorFitsSystemWindows(w, false);
 
-            // Tint the system bars to the app's dark title-bar colour with LIGHT icons, so the
-            // status-bar strip looks like a seamless continuation of the title bar (not a separate
-            // bar). setStatusBar/NavigationBarColor covers older APIs; on Android 15+ (targetSdk 35+)
-            // those are ignored under enforced edge-to-edge, so the content-view background below is
-            // what actually tints the strip (a view's background is drawn across its padding region).
+            // Tint the system bars to the dark title-bar colour with light icons.
             try {
                 w.setStatusBarColor(BAR_COLOR);
                 w.setNavigationBarColor(BAR_COLOR);
@@ -66,11 +49,7 @@ final class UiChrome {
                 c.show(WindowInsetsCompat.Type.systemBars());
             }
 
-            // Manage padding on the content view so the app sits below the status bar when fullscreen
-            // is off (and edge-to-edge when it is on). This listener is the SINGLE source of truth for
-            // the top/bottom inset - it CONSUMES the insets so no child (the WebView, whose CSS would
-            // otherwise re-add env(safe-area-inset-*)) can double them into a "huge bar". Install once;
-            // it reads the pref live so a later toggle is handled by requestApplyInsets() below.
+            // Manage content-view padding for the system-bar insets; install listener once.
             final View content = a.findViewById(android.R.id.content);
             if (content != null) {
                 // The status/nav-bar strips are the content view's OWN top/bottom padding, so its

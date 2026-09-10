@@ -10,17 +10,7 @@ import android.util.Log;
 
 import java.util.Locale;
 
-/**
- * Thin wrapper around the device's built-in {@link TextToSpeech} engine for spoken bike-navigation
- * guidance. It speaks the text it is given (localized by {@link NavVoice} to the phone's language)
- * using whatever voice data is ALREADY installed on the phone - it never triggers an install /
- * download flow and never prompts the user to fetch voice data.
- *
- * <p>On init it tries the preferred locale (the phone language chosen by {@link NavVoice}); if that
- * voice data is missing/unsupported it falls back to {@link Locale#US}, then the device default, so it
- * still speaks with whatever voice is present. If nothing works it degrades silently to on-screen
- * guidance only ({@link #isReady()} stays {@code false}).</p>
- */
+/** Wraps built-in TextToSpeech using only already-installed voice data. */
 final class TtsHelper {
 
     private static final String TAG = "lbnav";
@@ -36,8 +26,7 @@ final class TtsHelper {
                     return;
                 }
                 try {
-                    // Prefer the phone-language voice (matching NavVoice's chosen text language); if it
-                    // is not installed, fall back to US English, then the device default. Never prompt.
+                    // Try preferred locale, then US, then device default.
                     if (trySet(preferred) || trySet(Locale.US) || trySet(Locale.getDefault())) {
                         ready = true;
                     } else {
