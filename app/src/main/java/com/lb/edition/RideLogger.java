@@ -191,12 +191,38 @@ public final class RideLogger {
         }
     };
 
+    // Round to 3 decimals so the derived SI values stay compact in the log.
+    private static double round3(double v) { return Math.round(v * 1000.0) / 1000.0; }
+
     private void writeSample(String json) {
         if (json == null) return;
         Writer w = writer;
         if (w == null) return;
+        // Enrich each NDJSON line with the canonical field names + SI units the LEAT desktop tool reads
+        // (its KPI bar is hard-wired to these keys). The JSON and CSV exports are built from this NDJSON,
+        // so they inherit the fields automatically. The live dashboard JSON is not touched. packMa is
+        // already rider-frame positive = discharge (see FrameParser.decodeBattery + the dashboard), which
+        // is exactly LEAT's convention, so current/power carry the value straight through, no sign flip.
+        String line = json;
         try {
-            w.write(json);   // one compact JSON object per line (NDJSON)
+            JSONObject o = new JSONObject(json);
+            if (o.has("speed"))    o.put("realSpeed", o.optDouble("speed"));
+            if (o.has("soc"))      o.put("SOC", o.optDouble("soc"));
+            boolean haveV = o.has("packMv"), haveA = o.has("packMa");
+            double volPack = haveV ? o.optDouble("packMv") / 1000.0 : 0.0;   // mV -> V
+            double current = haveA ? o.optDouble("packMa") / 1000.0 : 0.0;   // mA -> A (discharge positive)
+            if (haveV) o.put("VolPack", round3(volPack));
+            if (haveA) o.put("current", round3(current));
+            if (haveV && haveA) o.put("power", round3(volPack * current / 1000.0));   // V*A -> kW
+            if (o.has("tripMile")) o.put("singleMile", o.optDouble("tripMile"));
+            if (o.has("tripAvg"))  o.put("avgSpeed", o.optDouble("tripAvg"));
+            if (o.has("tripMax"))  o.put("maxSpeed", o.optDouble("tripMax"));
+            line = o.toString();
+        } catch (Throwable t) {
+            line = json;   // defensive: on any parse error write the original line unchanged
+        }
+        try {
+            w.write(line);   // one compact JSON object per line (NDJSON)
             w.write('\n');
             w.flush();       // flush immediately so an app kill loses at most this minute
         } catch (Throwable t) {
@@ -318,15 +344,11 @@ public final class RideLogger {
     private void writeJson(List<JSONObject> samples, long id, File out) {
         Writer w = null;
         try {
-            JSONObject meta = metaFrom(samples, id);
-            meta.put("fin", finOf(samples));
+            // LEAT reads a bare top-level array of sample objects; a {meta,samples} wrapper makes it abort.
             JSONArray arr = new JSONArray();
             for (JSONObject o : samples) arr.put(o);
-            JSONObject root = new JSONObject();
-            root.put("meta", meta);
-            root.put("samples", arr);
             w = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(out, false), "UTF-8"));
-            w.write(root.toString());
+            w.write(arr.toString());
             w.flush();
         } catch (Throwable t) {
             Log.e(TAG, "writeJson failed", t);
@@ -358,10 +380,10 @@ public final class RideLogger {
         for (String n : names) if (!scalarKeys.contains(n)) nameCols.add(n);
         Set<String> nameColSet = new HashSet<>(nameCols);
 
-        // Column order: ts, tsISO, headline scalars (when present), then the rest alphabetically.
+        // Column order: ts, headline scalars (when present), then the rest alphabetically. No tsISO
+        // column: LEAT would read it as a constant time-series. ts alone (Unix ms) is the time axis.
         List<String> cols = new ArrayList<>();
         cols.add("ts");
-        cols.add("tsISO");
         Set<String> placed = new HashSet<>();
         placed.add("ts");
         for (String h : CSV_HEADLINE) {
@@ -391,11 +413,10 @@ public final class RideLogger {
         }
 
         // try-with-resources guarantees the writer (and its underlying stream) is always closed.
-        // The UTF-8 BOM is written as the U+FEFF character (it encodes to EF BB BF) so spreadsheets
-        // render the degree sign and other units correctly.
+        // No UTF-8 BOM: LEAT would then fail to recognise the ts column and the time axis breaks. The
+        // file is plain UTF-8 starting with the "ts," header.
         try (Writer w = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(out, false), "UTF-8"))) {
-            w.write('\uFEFF');
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < cols.size(); i++) {
                 if (i > 0) sb.append(',');
@@ -417,7 +438,6 @@ public final class RideLogger {
                     String col = cols.get(i);
                     String cell;
                     if ("ts".equals(col)) cell = ts > 0 ? Long.toString(ts) : "";
-                    else if ("tsISO".equals(col)) cell = ts > 0 ? isoOf(ts) : "";
                     else if (nameColSet.contains(col)) cell = nvals.containsKey(col) ? nvals.get(col) : "";
                     else if (cellIdx.containsKey(col)) {
                         JSONArray cm = o.optJSONArray("cellMv");
@@ -472,15 +492,6 @@ public final class RideLogger {
         } catch (JSONException ignored) {
         }
         return meta;
-    }
-
-    private static String finOf(List<JSONObject> samples) {
-        String fin = "";
-        for (JSONObject o : samples) {
-            String bn = o.optString("btName", "");
-            if (bn != null && !bn.isEmpty()) fin = bn;
-        }
-        return fin;
     }
 
     // ── File / parsing helpers ──
@@ -590,14 +601,6 @@ public final class RideLogger {
                 || s.charAt(0) == ' ' || s.charAt(s.length() - 1) == ' ';
         if (!quote) return s;
         return "\"" + s.replace("\"", "\"\"") + "\"";
-    }
-
-    private static String isoOf(long ms) {
-        try {
-            return java.time.Instant.ofEpochMilli(ms).toString();
-        } catch (Throwable t) {
-            return "";
-        }
     }
 
     /** Road speed of a snapshot; "speed" is the only key FrameParser emits for it. */
