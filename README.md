@@ -61,34 +61,34 @@ Two tables:- **Speed** - `patcher` a switchable lock/unlock controller patch (bo
 | UT3 Max | patcher | stock | stock | patcher |
 | UT5 Max | patcher | patcher | patcher | patcher |
 | UT5 Ultra X | patcher | patcher | patcher | patcher |
+| NT5 Ultra X | patcher | stock | stock | patcher |
 | S2 | patcher | patcher | patcher | patcher |
+| G5, G5 Pro, G5 Max | patcher | stock | stock | patcher |
 | E20 Lite, E25 Go | patcher | patcher | patcher | patcher |
 | XT5 Pro, Ultra, Max | flash-free | patcher | stock | patcher |
 | ST5 Pro, ST5 Max | patcher | patcher | patcher | patcher |
+| K100 Max | patcher | patcher | stock | patcher |
+| N65i II (10701) | patcher | patcher | patcher | patcher |
 
 ### Not fully supported
 
 | Model | Speed | Kick-start | Cruise | Warning beeps |
 | --- | --- | --- | --- | --- |
-| G5, G5 Pro, G5 Max | patcher | stock | stock | no |
-| S40, S60 | patcher | no | stock | no |
+| S40, S60 | patcher | no | stock | patcher |
 | V25 / V25i | patcher | no | no | no |
 | V50i Pro | patcher | no | no | no |
 | V45i | patcher | no | no | no |
 | N65i | patcher | no | no | no |
-| NT5 Ultra X | no image | stock | stock | patcher |
+| V40i, V40i Pro | patcher | no | no | no |
+| V40i Pro II | patcher | no | stock | patcher |
+| V3 Pro | patcher | no | no | no |
 | E45 / E60 Pro | no | patcher | patcher | patcher |
 | E20, E25 | no | no | patcher | patcher |
-| K100 Max | no | patcher | stock | patcher |
 | K100, K100 Pro | no | no | no | no |
 | Birdie 3, Birdie 3x | no | no | no | no |
-| V40i, V40i Pro | no | no | no | no |
-| V40i Pro II | no | no | stock | patcher |
-| V3 Pro | no | no | no | no |
 | N65i II (6001) | no | stock | stock | patcher |
-| N65i II (10701) | no | patcher | patcher | patcher |
 
-First flash of any model belongs on a unit you can recover; every patch is byte-verified and re-seals deterministically, the on-vehicle confirmation ride is still owed. Why the `no` speed cells cannot be flashed: E20 / E25 have a feasible controller latch but no fwBldc version marker in the image (the version lives in external parameter flash), so the app cannot recognise the patch - deferred. E45 / E60 Pro (top speed is a hard-wired flash constant), the K100 controllers (Cortex-M0, encrypted meter) and Birdie 3 / 3x (display bridge, no throttle) have no switchable cap. V40i / V40i Pro II / V3 Pro / N65i II are infeasible on the controller side (V3 Pro's mechanism is present but its motor constants cannot be finalised safely from static analysis). NT5 Ultra X ships no controller image at all, so its top speed cannot be raised; kick-start and cruise are already ungated in its meter (they work in every region without a patch) and its warning beeps are silenceable. ST5 Pro / Max hold their speed cap in the METER region gate, so speed is patched there directly - no controller image needed. A `no` in the kick-start / cruise / beep columns for the V-series and the K100 pair means those meter bodies are external-ROM-dispatched or compressed, not that the tool skipped them.
+First flash of any model belongs on a unit you can recover; every patch is byte-verified and re-seals deterministically, the on-vehicle confirmation ride is still owed. The V-series controllers (V25 / V25i, V50i Pro, V45i, N65i, V40i / V40i Pro, V40i Pro II, V3 Pro) take the switchable capZ speed latch, so their speed is `patcher`; their kick-start / cruise / beep cells read `no` because those meter bodies are external-ROM-dispatched or compressed and cannot be reached. NT5 Ultra X caps its top speed in the meter (this model ships no controller image), so speed is patched there directly. K100 Max gets a permanent controller top-speed unlock (its own MM32 CRC32 seal), and the N65i II (10701) controller takes the full capZ latch. The remaining speed `no` cells: E20 / E25 have a feasible controller latch but no fwBldc version marker in the image (deferred); N65i II (6001) has the capZ mechanism but no free code space to place a switchable latch (byte-proven); E45 / E60 Pro have no confirmed switchable patch yet; the K100 / K100 Pro controllers and Birdie 3 / 3x (display bridge, no throttle) have no usable path. ST5 Pro / Max hold their speed cap in the METER region gate, so speed is patched there directly.
 
 - **Pick what to patch, keep your beeps.** After it detects your model the patcher shows a checkbox per feature - speed, cruise, zero start plus the individual warning beeps - and writes only the ticked ones. Nothing is silenced by default, so the confirmation beep stays. A private-ground / ABE disclaimer sits before the patch button, in the app and in the web patcher. Models shown as no across the board (V40i, V40i Pro II, V3 Pro, N65i II, the K100 controller side, Birdie) still read values and use the everyday functions; the EXO S Pro is not a scooter and is ignored.
 
