@@ -89,9 +89,7 @@ final class NaveeDfuEngine {
 
     boolean isRunning() { return running; }
 
-    // ST3 Pro (pid 2345) only: that model tears the BLE link down ~10 s into a flash (status 19).
-    // When resumable, a mid-flash disconnect pauses instead of failing; resume() re-runs the enter
-    // handshake and continues XMODEM from the last acked block. Every other model flashes as before.
+    // ST3 Pro (pid 2345) only: reconnect mid-flash and resume from the last acked block; off elsewhere.
     private boolean resumable = false;
     private boolean resuming = false;
     void setResumable(boolean r) { resumable = r; }
@@ -420,9 +418,7 @@ final class NaveeDfuEngine {
         return aesEcb(key16, rand16);
     }
 
-    // AES-128-ECB is fixed by the NAVEE challenge-response: the scooter encrypts one 16-byte block and
-    // compares. It is a single block, so ECB's block-pattern weakness does not apply; changing the mode
-    // would break auth. (CodeQL flags the algorithm here; this is protocol-mandated, not a free choice.)
+    // AES-128-ECB is fixed by the NAVEE challenge (one 16-byte block); changing it breaks auth.
     private static byte[] aesEcb(byte[] key16, byte[] block16) {
         try {
             Cipher c = Cipher.getInstance("AES/ECB/NoPadding");

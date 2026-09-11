@@ -260,8 +260,6 @@ public final class RideLogger {
     /** Build a csv/json export for a ride under cacheDir/exports; null if unknown or on failure. */
     public synchronized File exportRide(String id, String format) {
         try {
-            // Parse the id to a number and rebuild every file name from that long. No string derived
-            // from the caller reaches a path, so traversal is impossible by construction.
             long rid = parseId(id);
             if (rid <= 0) return null;
             File src = PathGuard.childOf(ridesDir(), "ride-" + rid + ".ndjson");
@@ -567,11 +565,7 @@ public final class RideLogger {
         }
     }
 
-    /**
-     * Parse an all-digit ride id (an epoch-ms value) to a positive long, or 0 if it is not a plain
-     * positive number. Callers rebuild the file name from the returned long, so no caller-supplied
-     * string ever reaches a path - traversal is impossible by construction.
-     */
+    /** All-digit ride id to a positive long (0 if invalid). Callers build file names from the long, not the string. */
     private static long parseId(String id) {
         if (id == null) return 0L;
         String s = id.trim();

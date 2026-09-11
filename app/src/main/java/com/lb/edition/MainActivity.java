@@ -143,8 +143,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        // The page is served from file:///android_asset and never opens file:// or content:// URLs,
-        // so deny both. android_asset / android_res stay reachable regardless of setAllowFileAccess.
+        // Page is local android_asset only; deny file:// and content:// (assets still load).
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         // Block file:// cross-origin and file reads from the page.

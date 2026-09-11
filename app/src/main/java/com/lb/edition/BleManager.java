@@ -354,8 +354,7 @@ final class BleManager {
                 notifyReady = false;
                 stopPush();
 
-                // ST3 Pro only: a drop mid-flash pauses the engine and reconnects fast to resume,
-                // instead of failing. Every other model (or a non-resumable flash) falls through as before.
+                // ST3 Pro only: pause + fast reconnect to resume; other models fall through as before.
                 NaveeDfuEngine d = dfu;
                 boolean resumeThis = d != null && d.isRunning() && d.isResumable() && desiredAddress != null;
                 if (resumeThis && ++dfuResumeTries > DFU_RESUME_MAX_TRIES) {
