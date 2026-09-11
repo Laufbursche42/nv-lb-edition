@@ -151,6 +151,9 @@ final class FrameParser {
         fwUwb = ascii(p, 16, 4);
     }
 
+    /** Product id parsed from the serial (0x74), e.g. "2345" = ST3 Pro. Empty until the serial arrives. */
+    String pid() { return pid; }
+
     private static final char[] HEXCH = "0123456789abcdef".toCharArray();
 
     private void decodeSN(byte[] p) {

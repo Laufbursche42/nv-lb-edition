@@ -89,6 +89,37 @@ final class NaveeDfuEngine {
 
     boolean isRunning() { return running; }
 
+    // ST3 Pro (pid 2345) only: that model tears the BLE link down ~10 s into a flash (status 19).
+    // When resumable, a mid-flash disconnect pauses instead of failing; resume() re-runs the enter
+    // handshake and continues XMODEM from the last acked block. Every other model flashes as before.
+    private boolean resumable = false;
+    private boolean resuming = false;
+    void setResumable(boolean r) { resumable = r; }
+    boolean isResumable() { return resumable; }
+    boolean isPaused() { return running && timeout == null && state != St.IDLE; }
+
+    /** Link dropped mid-flash: stop the block timeout so we do not fail, keep the cursor for resume(). */
+    void pause() {
+        main.post(() -> {
+            if (!running || !resumable) return;
+            clearTimeout();
+            host.log("link dropped at block " + blockIndex + "/" + blockCount + " - pausing for reconnect");
+        });
+    }
+
+    /** Reconnected: re-open the b003 gate (auth) and re-enter DFU, then continue XMODEM from blockIndex. */
+    void resume() {
+        main.post(() -> {
+            if (!running || !resumable) return;
+            resuming = true;
+            rxLen = 0;
+            blockRetries = 0;
+            host.setHighPriority(true);
+            host.log("reconnected - resuming DFU from block " + blockIndex + "/" + blockCount);
+            beginAuth();
+        });
+    }
+
     /** Begin a flash. target: 1 = meter, 2 = bldc. userId <= 0 selects a random id for the 0x30 init. */
     void start(final byte[] img, final int targetN, final long uid) {
         main.post(() -> {
@@ -251,10 +282,19 @@ final class NaveeDfuEngine {
 
     private void beginXmodem() {
         state = St.XMODEM;
-        blockIndex = 0;
-        seq = 1;
+        if (resuming) {
+            // Continue where the drop happened. seq(blockIndex) = (blockIndex % 255) + 1, matching advanceBlock().
+            resuming = false;
+            seq = (blockIndex % 255) + 1;
+            int pct = (int) Math.round(blockIndex * 100.0 / blockCount);
+            host.log("resume at block " + blockIndex + " (seq " + seq + ") - bootloader must accept this block, else it restarted");
+            host.progress(pct, blockIndex, blockCount, "flash");
+        } else {
+            blockIndex = 0;
+            seq = 1;
+            host.progress(0, 0, blockCount, "flash");
+        }
         blockRetries = 0;
-        host.progress(0, 0, blockCount, "flash");
         sendBlock();
     }
 

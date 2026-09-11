@@ -115,6 +115,13 @@ final class BleManager {
     // firmware flash: owns the write/notify path while running
     private volatile NaveeDfuEngine dfu;
 
+    // ST3 Pro (pid 2345) tears the BLE link down mid-flash; only that model gets DFU resume.
+    private static final String DFU_RESUME_PID = "2345";
+    private static final long DFU_RESUME_DELAY_MS = 800;   // fast reconnect while a resumable flash is paused
+    private static final int DFU_RESUME_MAX_TRIES = 8;
+    private volatile boolean dfuResumePending = false;
+    private int dfuResumeTries = 0;
+
     BleManager(Context ctx, Listener listener) {
         this.appCtx = ctx.getApplicationContext();
         this.listener = listener;
@@ -346,9 +353,27 @@ final class BleManager {
                 connected = false;
                 notifyReady = false;
                 stopPush();
+
+                // ST3 Pro only: a drop mid-flash pauses the engine and reconnects fast to resume,
+                // instead of failing. Every other model (or a non-resumable flash) falls through as before.
+                NaveeDfuEngine d = dfu;
+                boolean resumeThis = d != null && d.isRunning() && d.isResumable() && desiredAddress != null;
+                if (resumeThis && ++dfuResumeTries > DFU_RESUME_MAX_TRIES) {
+                    Log.i(TAG, "DFU resume gave up after " + DFU_RESUME_MAX_TRIES + " reconnect tries");
+                    resumeThis = false;
+                    dfuResumePending = false;
+                    try { d.cancel(); } catch (Throwable ignored) {}
+                }
+
                 closeGatt();
                 pushState("disconnected");
-                if (desiredAddress != null) {
+
+                if (resumeThis) {
+                    dfuResumePending = true;
+                    try { d.pause(); } catch (Throwable ignored) {}
+                    Log.i(TAG, "DFU resume: reconnect in " + DFU_RESUME_DELAY_MS + " ms (try " + dfuResumeTries + ")");
+                    main.postDelayed(() -> { if (desiredAddress != null) connect(desiredAddress); }, DFU_RESUME_DELAY_MS);
+                } else if (desiredAddress != null) {
                     long delay = reconnectDelay;
                     Log.i(TAG, "scheduling reconnect in " + delay + " ms (backoff)");
                     reconnectDelay = Math.min(reconnectDelay * 2, RECONNECT_MAX_MS);
@@ -499,6 +524,15 @@ final class BleManager {
         // Seed parser.btName from the scan name.
         try { if (parser != null) parser.btName = (deviceName == null) ? "" : deviceName; } catch (Throwable ignored) {}
         pushState("connected");
+
+        // ST3 Pro DFU resume: skip telemetry/time-sync and hand the reconnected link back to the flash engine.
+        NaveeDfuEngine d = dfu;
+        if (dfuResumePending && d != null && d.isRunning() && d.isResumable()) {
+            dfuResumePending = false;
+            try { d.resume(); } catch (Throwable t) { Log.e(TAG, "DFU resume failed", t); }
+            return;
+        }
+
         startPush();
         drainWriteQueue();
         afterConnect();
@@ -649,6 +683,15 @@ final class BleManager {
             stopPush();
             final NaveeDfuEngine engine = new NaveeDfuEngine(dfuHost);
             dfu = engine;
+            dfuResumePending = false;
+            dfuResumeTries = 0;
+            // Only the ST3 Pro (pid 2345) gets reconnect-and-resume; other models flash as before.
+            String pid = null;
+            try { pid = parser.pid(); } catch (Throwable ignored) {}
+            if (DFU_RESUME_PID.equals(pid)) {
+                engine.setResumable(true);
+                Log.i(TAG, "DFU resume enabled for pid " + pid + " (ST3 Pro)");
+            }
             main.postDelayed(() -> { if (dfu == engine) engine.start(image, target, userId); }, 200);
         } catch (Throwable t) {
             Log.e(TAG, "startDfu failed", t);
@@ -723,6 +766,8 @@ final class BleManager {
         @Override
         public void finished(boolean success) {
             dfu = null;
+            dfuResumePending = false;
+            dfuResumeTries = 0;
             // Resume telemetry polling on the surviving connection.
             if (connected && notifyReady) startPush();
         }
