@@ -184,6 +184,40 @@ public class MainActivity extends Activity {
 
     // ── Java -> JS bridge (all on the UI thread) ──
 
+    // Data is handed to the page through the LB bridge (pull), never concatenated into the JS that
+    // evaluateJavascript runs, so no untrusted value reaches that sink. Handlers get the same values.
+    private final java.util.concurrent.ConcurrentHashMap<String, String> jsPayloads = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.concurrent.atomic.AtomicLong jsSeq = new java.util.concurrent.atomic.AtomicLong();
+
+    private String stageJs(String payload) {
+        String token = "p" + jsSeq.incrementAndGet();
+        jsPayloads.put(token, payload == null ? "" : payload);
+        if (jsPayloads.size() > 256) jsPayloads.clear();   // page not pulling: drop rather than leak
+        return token;
+    }
+
+    /** window.<handler>(obj): obj is the parsed JSON payload. handler + token are constants, not data. */
+    private void pushObj(String handler, String jsonPayload) {
+        String t = stageJs(jsonPayload);
+        runJs("(function(){try{var raw=LB.__pull('" + t + "');if(raw==null)return;"
+                + "var p=JSON.parse(raw);if(window." + handler + ")window." + handler + "(p);}catch(e){}})();");
+    }
+
+    /** window.<handler>(str): the raw string payload. */
+    private void pushStr(String handler, String strPayload) {
+        String t = stageJs(strPayload);
+        runJs("(function(){try{var p=LB.__pull('" + t + "');"
+                + "if(p!=null&&window." + handler + ")window." + handler + "(p);}catch(e){}})();");
+    }
+
+    /** Live data: mirror to localStorage['lb_live_data'] then window.__onBleData(str), as before. */
+    private void pushBleData(String json) {
+        String t = stageJs(json);
+        runJs("(function(){try{var s=LB.__pull('" + t + "');if(s==null)return;"
+                + "try{localStorage.setItem('lb_live_data',s);}catch(e){}"
+                + "if(window.__onBleData){window.__onBleData(s);}}catch(e){}})();");
+    }
+
     private void runJs(final String js) {
         if (webView == null || js == null) return;
         webView.post(() -> {
@@ -208,7 +242,7 @@ public class MainActivity extends Activity {
                 o.put("turnArrow", s.turnArrow);
                 o.put("distToTurnM", s.distToTurnM);
                 o.put("remainingM", s.remainingM);
-                runJs("(function(){try{if(window.__onNav)window.__onNav(" + o + ");}catch(e){}})();");
+                pushObj("__onNav", o.toString());
             } catch (Throwable ignored) {
             }
         }
@@ -218,13 +252,13 @@ public class MainActivity extends Activity {
         @Override
         public void onScanResults(String jsonArray) {
             if (jsonArray == null) return;
-            runJs("(function(){try{if(window.__onBleScan)window.__onBleScan(" + jsonArray + ");}catch(e){}})();");
+            pushObj("__onBleScan", jsonArray);
         }
 
         @Override
         public void onState(String json) {
             if (json == null) return;
-            runJs("(function(){try{if(window.__onBleState)window.__onBleState(" + json + ");}catch(e){}})();");
+            pushObj("__onBleState", json);
             // Drive the ride logger on connect/disconnect transitions (fires once per change).
             try {
                 boolean nowConnected = new JSONObject(json).optBoolean("connected", false);
@@ -248,11 +282,8 @@ public class MainActivity extends Activity {
         public void onLiveData(String json) {
             if (json == null) return;
             if (DebugLog.WIRE) logWireState(json);
-            // Write the JSON string to localStorage['lb_live_data'] (dashboard's tickBLE reads it)
-            // and also call window.__onBleData(json) if present.
-            runJs("(function(){try{var d=" + json + ";var s=JSON.stringify(d);"
-                    + "try{localStorage.setItem('lb_live_data',s);}catch(e){}"
-                    + "if(window.__onBleData){try{window.__onBleData(s);}catch(e){}}}catch(e){}})();");
+            // Mirror to localStorage['lb_live_data'] (dashboard's tickBLE reads it) + window.__onBleData.
+            pushBleData(json);
             // Feed the latest snapshot to the ride logger (arms/samples the ride).
             try {
                 if (rideLogger != null) rideLogger.onLiveData(json);
@@ -294,21 +325,20 @@ public class MainActivity extends Activity {
         @Override
         public void onFwProgress(String json) {
             if (json == null) return;
-            runJs("(function(){try{if(window.__onFwProgress)window.__onFwProgress(" + json + ");}catch(e){}})();");
+            pushObj("__onFwProgress", json);
         }
 
         @Override
         public void onFwLog(String line) {
             Log.i("lbfw", line == null ? "" : line);
-            runJs("(function(){try{if(window.__onFwLog)window.__onFwLog("
-                    + org.json.JSONObject.quote(line == null ? "" : line) + ");}catch(e){}})();");
+            pushStr("__onFwLog", line == null ? "" : line);
         }
 
         @Override
         public void onFwState(String json) {
             if (json == null) return;
             Log.i("lbfw", "state " + json);
-            runJs("(function(){try{if(window.__onFwState)window.__onFwState(" + json + ");}catch(e){}})();");
+            pushObj("__onFwState", json);
         }
 
     };
@@ -513,6 +543,12 @@ public class MainActivity extends Activity {
 
     /** The "LB" JavaScript bridge to the native BLE layer and SRT module; every method is exception-safe. */
     private class LbBridge {
+
+        /** The page pulls a staged payload by token. Returning a value here is not a JS execution sink. */
+        @JavascriptInterface
+        public String __pull(String token) {
+            return token == null ? null : jsPayloads.remove(token);
+        }
 
         /** End the active turn-by-turn navigation session (stops the foreground service). */
         @JavascriptInterface
@@ -785,7 +821,7 @@ public class MainActivity extends Activity {
                     Log.e(TAG, "checkUpdates failed", t);
                 }
                 final String r = result;
-                runJs("(function(){try{if(window.__onAppUpdate)window.__onAppUpdate(" + r + ");}catch(e){}})();");
+                pushObj("__onAppUpdate", r);
             }).start();
         }
 
@@ -1150,8 +1186,10 @@ public class MainActivity extends Activity {
                 if (tries == 0) Log.i("lbfw", "waiting for BLE link before flashing " + kind);
                 if (tries >= 60) {   // 60 * 500ms = 30s
                     Log.i("lbfw", "no BLE link for " + kind + " after 30s, giving up");
-                    String kindSafe = String.valueOf(kind).replaceAll("[^A-Za-z0-9]", "");
-                    runJs("(function(){try{if(window.__onFwState)window.__onFwState({state:'failed',message:'Scooter did not reconnect - start the " + kindSafe + " flash again'});}catch(e){}})();");
+                    JSONObject st = new JSONObject();
+                    st.put("state", "failed");
+                    st.put("message", "Scooter did not reconnect - start the " + kind + " flash again");
+                    pushObj("__onFwState", st.toString());
                     return;
                 }
                 new android.os.Handler(getMainLooper()).postDelayed(
@@ -1220,7 +1258,7 @@ public class MainActivity extends Activity {
             if (error != null) o.put("error", error);
             if (b64 != null) o.put("b64", b64);
             final String s = o.toString();
-            runJs("(function(){try{if(window.__onFwDownloaded)window.__onFwDownloaded(" + s + ");}catch(e){}})();");
+            pushObj("__onFwDownloaded", s);
         } catch (Throwable t) {
             Log.e(TAG, "pushFwDownloaded failed", t);
         }
@@ -1234,7 +1272,7 @@ public class MainActivity extends Activity {
             o.put("kind", kind == null ? "" : kind);
             if (error != null) o.put("error", error);
             final String s = o.toString();
-            runJs("(function(){try{if(window.__onFwStaged)window.__onFwStaged(" + s + ");}catch(e){}})();");
+            pushObj("__onFwStaged", s);
         } catch (Throwable t) {
             Log.e(TAG, "pushFwStaged failed", t);
         }
@@ -1274,7 +1312,7 @@ public class MainActivity extends Activity {
             o.put("name", name == null ? "" : name);
             if (b64 != null) o.put("b64", b64);
             final String s = o.toString();
-            runJs("(function(){try{if(window.__onFwPicked)window.__onFwPicked(" + s + ");}catch(e){}})();");
+            pushObj("__onFwPicked", s);
         } catch (Throwable t) {
             Log.e(TAG, "pushFwPicked failed", t);
         }

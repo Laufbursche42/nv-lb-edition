@@ -4,7 +4,7 @@ queries:
   - uses: security-extended
 
 # Only permanent by-design constants are excluded. Bug-class rules stay active; their real hits are
-# fixed in the source, the two unavoidable ones (AES-ECB, JSON evaluateJavascript) are dismissed per alert.
+# fixed in the source, and the one unavoidable case (the protocol-mandated AES-ECB) is dismissed per alert.
 query-filters:
   - exclude:
       id: java/android/missing-certificate-pinning        # third-party https hosts we do not control
