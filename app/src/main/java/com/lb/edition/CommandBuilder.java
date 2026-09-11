@@ -19,7 +19,7 @@ final class CommandBuilder {
 
     /** Read frame: 55 AA 00 <cmd> <ck> FE FD. */
     static byte[] read(int cmd) {
-        byte[] body = {(byte) 0x55, (byte) 0xAA, 0x00, (byte) cmd};
+        byte[] body = {(byte) 0x55, (byte) 0xAA, 0x00, (byte) (cmd & 0xFF)};
         return finish(body, false);
     }
 
@@ -30,7 +30,7 @@ final class CommandBuilder {
         if (payload.length > 0xFF) throw new IllegalArgumentException("payload too long: " + payload.length);
         byte[] body = new byte[5 + payload.length];
         body[0] = (byte) 0x55; body[1] = (byte) 0xAA; body[2] = 0x00;
-        body[3] = (byte) cmd; body[4] = (byte) payload.length;
+        body[3] = (byte) (cmd & 0xFF); body[4] = (byte) (payload.length & 0xFF);
         System.arraycopy(payload, 0, body, 5, payload.length);
         return finish(body, false);
     }
@@ -41,7 +41,7 @@ final class CommandBuilder {
         if (payload.length > 0xFF) throw new IllegalArgumentException("payload too long: " + payload.length);
         byte[] body = new byte[5 + payload.length];
         body[0] = (byte) 0x55; body[1] = (byte) 0xAA; body[2] = 0x00;
-        body[3] = (byte) cmd; body[4] = (byte) payload.length;
+        body[3] = (byte) (cmd & 0xFF); body[4] = (byte) (payload.length & 0xFF);
         System.arraycopy(payload, 0, body, 5, payload.length);
         return finish(body, true);
     }

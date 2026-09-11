@@ -40,6 +40,12 @@ final class BleManager {
 
     private static final char[] HEX = "0123456789ABCDEF".toCharArray();
 
+    /** Strip CR/LF so a crafted device name / address cannot forge extra log lines. */
+    private static String logSafe(String s) {
+        if (s == null) return "null";
+        return s.replace('\r', ' ').replace('\n', ' ');
+    }
+
     private static String hex(byte[] b) {
         if (b == null) return "null";
         StringBuilder sb = new StringBuilder(b.length * 3);
@@ -267,7 +273,7 @@ final class BleManager {
             if (deviceName == null || deviceName.isEmpty()) {
                 try { String n = dev.getName(); if (n != null) deviceName = n; } catch (Throwable ignored) {}
             }
-            Log.i(TAG, "connect() -> " + desiredAddress + " name=" + deviceName);
+            Log.i(TAG, "connect() -> " + logSafe(desiredAddress) + " name=" + logSafe(deviceName));
             pushState("connecting");
             gatt = dev.connectGatt(appCtx, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
         } catch (Throwable t) {

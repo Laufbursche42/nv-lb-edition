@@ -548,7 +548,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void connect(String addr) {
             try {
-                Log.i(TAG, "LB.connect(" + addr + ")");
+                Log.i(TAG, "LB.connect(" + logSafe(addr) + ")");
                 if (ble != null) ble.connect(addr);
             } catch (Throwable t) {
                 Log.e(TAG, "connect bridge failed", t);
@@ -559,7 +559,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void connect(String addr, String name) {
             try {
-                Log.i(TAG, "LB.connect(" + addr + ", " + name + ")");
+                Log.i(TAG, "LB.connect(" + logSafe(addr) + ", " + logSafe(name) + ")");
                 if (ble != null) ble.connect(addr, name);
             } catch (Throwable t) {
                 Log.e(TAG, "connect bridge failed", t);
@@ -669,7 +669,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void startStream(String url) {
-            Log.i(TAG, "LB.startStream(" + url + ")");
+            Log.i(TAG, "LB.startStream(" + logSafe(url) + ")");
             try {
                 if (url == null || url.trim().isEmpty()) {
                     Log.w(TAG, "startStream: empty url, ignoring");
@@ -729,7 +729,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void log(String s) {
-            Log.i(TAG, "LB.log: " + s);
+            Log.i(TAG, "LB.log: " + logSafe(s));
             try {
                 if (debugLog != null && debugLog.isEnabled()) debugLog.append(s);
             } catch (Throwable ignored) {
@@ -955,7 +955,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void deleteRide(String id) {
             try {
-                Log.i(TAG, "LB.deleteRide(" + id + ")");
+                Log.i(TAG, "LB.deleteRide(" + logSafe(id) + ")");
                 if (rideLogger != null) rideLogger.deleteRide(id);
             } catch (Throwable t) {
                 Log.e(TAG, "deleteRide bridge failed", t);
@@ -1010,7 +1010,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void openUrl(final String url) {
             try {
-                Log.i(TAG, "LB.openUrl(" + url + ")");
+                Log.i(TAG, "LB.openUrl(" + logSafe(url) + ")");
                 if (url == null) return;
                 final String u = url.trim();
                 if (!u.startsWith("http://") && !u.startsWith("https://")) return;
@@ -1031,7 +1031,7 @@ public class MainActivity extends Activity {
         /** Export a ride ("csv"/"json") and share it via the system chooser. No-op if id is unknown. */
         @JavascriptInterface
         public void exportRide(final String id, final String format) {
-            Log.i(TAG, "LB.exportRide(" + id + ", " + format + ")");
+            Log.i(TAG, "LB.exportRide(" + logSafe(id) + ", " + logSafe(format) + ")");
             runOnUiThread(() -> {
                 try {
                     File f = rideLogger != null ? rideLogger.exportRide(id, format) : null;
@@ -1065,7 +1065,7 @@ public class MainActivity extends Activity {
         public String saveGpxToDownloads(final String fileName, final String content) {
             final String name = safeGpxName(fileName);
             try {
-                Log.i(TAG, "LB.saveGpxToDownloads(" + name + ")");
+                Log.i(TAG, "LB.saveGpxToDownloads(" + logSafe(name) + ")");
                 if (content == null) return gpxResult(false, name, "save");
                 return saveGpxViaMediaStore(name, content);
             } catch (Throwable t) {
