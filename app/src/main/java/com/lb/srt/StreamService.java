@@ -63,7 +63,8 @@ public class StreamService extends Service implements ConnectChecker, ScreenGlEn
     /** Redact an SRT URL for logging: keep scheme + host[:port], strip userinfo and query. */
     static String redact(String url) {
         if (url == null) return "null";
-        String s = url;
+        // Strip CR/LF first so a crafted url cannot forge extra log lines.
+        String s = url.replace('\r', ' ').replace('\n', ' ');
         int ss = s.indexOf("//");
         int at = s.indexOf('@');
         if (ss >= 0 && at > ss) s = s.substring(0, ss + 2) + "[redacted]@" + s.substring(at + 1);

@@ -1,0 +1,36 @@
+name: "nv-lb-edition CodeQL config"
+
+# Runs the same deep query set as before.
+queries:
+  - uses: security-extended
+
+# By-design findings that are intentional design decisions for this app, excluded so the run stays
+# actionable. Everything else (path-injection, log-injection, weak-numeric-cast, ...) stays active,
+# and the code fixes for those live in the source, not here.
+query-filters:
+  # AES-128-ECB is mandated by the NAVEE DFU challenge-response (a single 16-byte block, so ECB's
+  # block-pattern weakness does not apply). Changing the mode would break auth.
+  - exclude:
+      id: java/weak-cryptographic-algorithm
+
+  # The update JSON, routing tiles and map/POI files come from third-party https hosts we do not
+  # control (api.github.com, brouter.de, the Mapsforge mirror at hs-esslingen.de). Pinning their
+  # certificates would break every download when they rotate, with no way for us to react in time.
+  - exclude:
+      id: java/android/missing-certificate-pinning
+
+  # The dashboard is a local-only hybrid UI: the WebView loads exclusively file:///android_asset
+  # content and the WebViewClient cancels any other navigation, so the LB bridge, JavaScript and the
+  # JSON pushed via evaluateJavascript are only ever reachable by first-party code. No remote page
+  # exists to abuse them.
+  - exclude:
+      id: java/android/webview-addjavascriptinterface
+  - exclude:
+      id: java/android/websettings-javascript-enabled
+  - exclude:
+      id: java/xss
+
+  # Intentional in-app self-updater: it downloads the signed release APK over https and hands it to
+  # the system package installer, which asks the user to confirm. There is no silent install.
+  - exclude:
+      id: java/android/arbitrary-apk-installation

@@ -46,6 +46,14 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private static final String TAG = "lbedition";
+
+    /** Strip CR/LF (and cap length) so bridge-supplied strings cannot forge extra log lines. */
+    private static String logSafe(String s) {
+        if (s == null) return "null";
+        String out = s.replace('\r', ' ').replace('\n', ' ');
+        return out.length() > 512 ? out.substring(0, 512) + "..." : out;
+    }
+
     private static final int REQ_FW_FILE = 0x5F01;
     private static final int REQ_PERMS = 4711;
 
@@ -135,8 +143,10 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
+        // The page is served from file:///android_asset and never opens file:// or content:// URLs,
+        // so deny both. android_asset / android_res stay reachable regardless of setAllowFileAccess.
+        s.setAllowFileAccess(false);
+        s.setAllowContentAccess(false);
         // Block file:// cross-origin and file reads from the page.
         s.setAllowFileAccessFromFileURLs(false);
         s.setAllowUniversalAccessFromFileURLs(false);
@@ -1071,7 +1081,7 @@ public class MainActivity extends Activity {
          *  window.__onFwDownloaded so the page can patch it. Network runs off the main thread. */
         @JavascriptInterface
         public void fwDownloadPatch(final String url, final String kind, final String name) {
-            Log.i(TAG, "LB.fwDownloadPatch(" + kind + ", " + url + ")");
+            Log.i(TAG, "LB.fwDownloadPatch(" + logSafe(kind) + ", " + logSafe(url) + ")");
             new Thread(() -> {
                 try {
                     if (url == null || !(url.startsWith("http://") || url.startsWith("https://"))) {
@@ -1096,7 +1106,7 @@ public class MainActivity extends Activity {
          *  @param kind "meter" (target 1) or "bldc" (target 2). Pushes window.__onFwStaged. */
         @JavascriptInterface
         public void fwStagePatched(final String b64, final String name, final String kind) {
-            Log.i(TAG, "LB.fwStagePatched(" + name + ", " + kind + ")");
+            Log.i(TAG, "LB.fwStagePatched(" + logSafe(name) + ", " + logSafe(kind) + ")");
             new Thread(() -> {
                 try {
                     byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
@@ -1115,7 +1125,7 @@ public class MainActivity extends Activity {
          */
         @JavascriptInterface
         public void fwStartFlash(final String kind) {
-            Log.i(TAG, "LB.fwStartFlash(" + kind + ")");
+            Log.i(TAG, "LB.fwStartFlash(" + logSafe(kind) + ")");
             try {
                 boolean bldc = "bldc".equalsIgnoreCase(kind);
                 byte[] img = bldc ? stagedBldc : stagedMeter;
@@ -1141,7 +1151,8 @@ public class MainActivity extends Activity {
                 if (tries == 0) Log.i("lbfw", "waiting for BLE link before flashing " + kind);
                 if (tries >= 60) {   // 60 * 500ms = 30s
                     Log.i("lbfw", "no BLE link for " + kind + " after 30s, giving up");
-                    runJs("(function(){try{if(window.__onFwState)window.__onFwState({state:'failed',message:'Scooter did not reconnect - start the " + kind + " flash again'});}catch(e){}})();");
+                    String kindSafe = String.valueOf(kind).replaceAll("[^A-Za-z0-9]", "");
+                    runJs("(function(){try{if(window.__onFwState)window.__onFwState({state:'failed',message:'Scooter did not reconnect - start the " + kindSafe + " flash again'});}catch(e){}})();");
                     return;
                 }
                 new android.os.Handler(getMainLooper()).postDelayed(
@@ -1186,7 +1197,7 @@ public class MainActivity extends Activity {
         /** Stage a user-supplied image as-is (no patch), routed by {@code kind} to meter or bldc. */
         @JavascriptInterface
         public void fwStageRaw(final String b64, final String name, final String kind) {
-            Log.i(TAG, "LB.fwStageRaw(" + name + ", " + kind + ")");
+            Log.i(TAG, "LB.fwStageRaw(" + logSafe(name) + ", " + logSafe(kind) + ")");
             new Thread(() -> {
                 try {
                     byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);

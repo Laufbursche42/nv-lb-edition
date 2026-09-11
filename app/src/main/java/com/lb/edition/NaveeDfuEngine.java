@@ -420,6 +420,9 @@ final class NaveeDfuEngine {
         return aesEcb(key16, rand16);
     }
 
+    // AES-128-ECB is fixed by the NAVEE challenge-response: the scooter encrypts one 16-byte block and
+    // compares. It is a single block, so ECB's block-pattern weakness does not apply; changing the mode
+    // would break auth. (CodeQL flags the algorithm here; this is protocol-mandated, not a free choice.)
     private static byte[] aesEcb(byte[] key16, byte[] block16) {
         try {
             Cipher c = Cipher.getInstance("AES/ECB/NoPadding");

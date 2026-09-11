@@ -26,6 +26,8 @@ final class CommandBuilder {
     /** Write frame: 55 AA 00 <cmd> <len> <payload...> <ck> FE FD. */
     static byte[] write(int cmd, byte[] payload) {
         if (payload == null) payload = new byte[0];
+        // The length field is a single byte; reject anything that would truncate on the cast.
+        if (payload.length > 0xFF) throw new IllegalArgumentException("payload too long: " + payload.length);
         byte[] body = new byte[5 + payload.length];
         body[0] = (byte) 0x55; body[1] = (byte) 0xAA; body[2] = 0x00;
         body[3] = (byte) cmd; body[4] = (byte) payload.length;
@@ -36,6 +38,7 @@ final class CommandBuilder {
     /** Factory frame (AE AD trailer). */
     static byte[] factory(int cmd, byte[] payload) {
         if (payload == null) payload = new byte[0];
+        if (payload.length > 0xFF) throw new IllegalArgumentException("payload too long: " + payload.length);
         byte[] body = new byte[5 + payload.length];
         body[0] = (byte) 0x55; body[1] = (byte) 0xAA; body[2] = 0x00;
         body[3] = (byte) cmd; body[4] = (byte) payload.length;

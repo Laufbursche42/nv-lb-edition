@@ -260,9 +260,11 @@ public final class RideLogger {
     /** Build a csv/json export for a ride under cacheDir/exports; null if unknown or on failure. */
     public synchronized File exportRide(String id, String format) {
         try {
-            String safe = safeId(id);
-            if (safe == null) return null;
-            File src = PathGuard.childOf(ridesDir(), "ride-" + safe + ".ndjson");
+            // Parse the id to a number and rebuild every file name from that long. No string derived
+            // from the caller reaches a path, so traversal is impossible by construction.
+            long rid = parseId(id);
+            if (rid <= 0) return null;
+            File src = PathGuard.childOf(ridesDir(), "ride-" + rid + ".ndjson");
             if (!src.isFile()) return null;
             File outDir = new File(appCtx.getCacheDir(), EXPORT_DIR);
             if (!outDir.exists() && !outDir.mkdirs()) {
@@ -270,10 +272,10 @@ public final class RideLogger {
                 return null;
             }
             boolean csv = "csv".equalsIgnoreCase(format);
-            File out = PathGuard.childOf(outDir, "ride-" + safe + (csv ? ".csv" : ".json"));
+            File out = PathGuard.childOf(outDir, "ride-" + rid + (csv ? ".csv" : ".json"));
             List<JSONObject> samples = readSamples(src);
             if (csv) writeCsv(samples, out);
-            else writeJson(samples, parseLongSafe(safe), out);
+            else writeJson(samples, rid, out);
             return (out.isFile() && out.length() > 0) ? out : null;
         } catch (Throwable t) {
             Log.e(TAG, "exportRide failed", t);
@@ -284,9 +286,9 @@ public final class RideLogger {
     /** Delete one recorded ride by id (no-op for an unknown or invalid id). */
     public synchronized void deleteRide(String id) {
         try {
-            String safe = safeId(id);
-            if (safe == null) return;
-            File f = PathGuard.childOf(ridesDir(), "ride-" + safe + ".ndjson");
+            long rid = parseId(id);
+            if (rid <= 0) return;
+            File f = PathGuard.childOf(ridesDir(), "ride-" + rid + ".ndjson");
             if (!f.isFile()) return;
             if (!f.delete()) {
                 Log.w(TAG, "deleteRide: could not delete " + f.getName());
@@ -565,24 +567,20 @@ public final class RideLogger {
         }
     }
 
-    /** Accept only an all-digit ride id (prevents path traversal via the file name). */
-    private static String safeId(String id) {
-        if (id == null) return null;
+    /**
+     * Parse an all-digit ride id (an epoch-ms value) to a positive long, or 0 if it is not a plain
+     * positive number. Callers rebuild the file name from the returned long, so no caller-supplied
+     * string ever reaches a path - traversal is impossible by construction.
+     */
+    private static long parseId(String id) {
+        if (id == null) return 0L;
         String s = id.trim();
-        if (s.isEmpty()) return null;
+        if (s.isEmpty() || s.length() > 18) return 0L;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (c < '0' || c > '9') return null;
+            if (c < '0' || c > '9') return 0L;
         }
-        return s;
-    }
-
-    private static long parseLongSafe(String s) {
-        try {
-            return Long.parseLong(s.trim());
-        } catch (Throwable t) {
-            return 0L;
-        }
+        try { return Long.parseLong(s); } catch (Throwable t) { return 0L; }
     }
 
     private static double round2(double v) {
