@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
     }
 
     private static final int REQ_FW_FILE = 0x5F01;
+    private static final int REQ_AUTH_LOG = 0x5F02;
     private static final int REQ_PERMS = 4711;
 
     private WebView webView;
@@ -569,6 +570,20 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean hasAccountId() {
             return ble != null && ble.hasAccountId();
+        }
+
+        /** Pick an Android Bluetooth HCI snoop log / bug report and recover the account id from it. */
+        @JavascriptInterface
+        public void pickAuthLog() {
+            Log.i(TAG, "LB.pickAuthLog()");
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    startActivityForResult(i, REQ_AUTH_LOG);
+                } catch (Throwable t) { Log.e(TAG, "pickAuthLog failed", t); }
+            });
         }
 
         /** End the active turn-by-turn navigation session (stops the foreground service). */
@@ -1303,6 +1318,29 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
         if (req == REQ_FW_FILE && res == RESULT_OK && data != null) onFwFilePicked(data.getData());
+        if (req == REQ_AUTH_LOG && res == RESULT_OK && data != null) onAuthLogPicked(data.getData());
+    }
+
+    /** Read a picked HCI snoop log, recover the account id from the OEM 0x30 frame and store it. */
+    private void onAuthLogPicked(final Uri uri) {
+        if (uri == null) return;
+        new Thread(() -> {
+            long id = 0;
+            try (InputStream in = getContentResolver().openInputStream(uri);
+                 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+                if (in != null) {
+                    byte[] buf = new byte[8192]; int n;
+                    while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+                    id = AuthLog.extractUserId(bos.toByteArray());
+                }
+            } catch (Throwable t) {
+                Log.e(TAG, "onAuthLogPicked failed", t);
+            }
+            final boolean ok = id > 0;
+            if (ok && ble != null) ble.setAccountId(id);
+            // Boolean literal only, never data - safe to place in the evaluateJavascript argument.
+            runJs("(function(){try{if(window.__onAuthLogResult)window.__onAuthLogResult(" + (ok ? "true" : "false") + ");}catch(e){}})();");
+        }).start();
     }
 
     /** Read a user-picked .bin off its content Uri and hand it to the page via window.__onFwPicked. */

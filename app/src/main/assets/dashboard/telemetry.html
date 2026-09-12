@@ -294,6 +294,9 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="settings-row-sublabel note-gap" id="account-id-status" data-i18n="settings.account.status.none">No account ID stored</div>
     <button id="btn-account-save" class="settings-btn" data-i18n="settings.account.save">Save account ID</button>
     <button id="btn-account-clear" class="settings-btn" data-i18n="settings.account.clear">Remove account ID</button>
+    <div class="settings-group-title mt-14" data-i18n="settings.account.log.title">Get the account ID from a Bluetooth log (Android)</div>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.account.log.steps">1. Settings &gt; Developer options &gt; turn on "Enable Bluetooth HCI snoop log". 2. Fully close the NAVEE app, then open it and connect to the scooter once. 3. Create a bug report (Developer options &gt; Bug report) or locate the btsnoop_hci.log file. 4. Tap the button below and pick that file. The app reads the account ID out of it. Nothing is uploaded, it stays on the phone.</div>
+    <button id="btn-account-log" class="settings-btn" data-i18n="settings.account.log.pick">Import from Bluetooth log</button>
   </div>
 
   <!-- GPS: the recording settings and the recordings they produce belong together. -->
@@ -2211,6 +2214,17 @@ function clearAccountId() {
   refreshAccountIdUI();
 }
 
+function importAccountIdFromLog() {
+  if (typeof LB === 'undefined' || !LB.pickAuthLog) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.pickAuthLog(); } catch (e) {}
+}
+
+// Native calls this after the user picked a Bluetooth log; ok = account ID was recovered and stored.
+window.__onAuthLogResult = function (ok) {
+  showToast(t(ok ? 'settings.account.log.ok' : 'settings.account.log.none'));
+  refreshAccountIdUI();
+};
+
 /* ── SRT streaming (native module via the LB bridge) ──────────── */
 
 /* RC4 key for at-rest URL encryption (fallback when the native Keystore is absent). */
@@ -3737,6 +3751,7 @@ function wireEvents() {
   });
   document.getElementById('btn-account-save').addEventListener('click', saveAccountId);
   document.getElementById('btn-account-clear').addEventListener('click', clearAccountId);
+  document.getElementById('btn-account-log').addEventListener('click', importAccountIdFromLog);
   document.getElementById('btn-firmware-back').addEventListener('click', closeFirmwarePage);
   document.getElementById('btn-fw-file').addEventListener('click', fwPickFile);
   document.getElementById('btn-fw-start').addEventListener('click', fwStart);
