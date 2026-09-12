@@ -550,6 +550,27 @@ public class MainActivity extends Activity {
             return token == null ? null : jsPayloads.remove(token);
         }
 
+        /** Store the account id (bound-scooter auth). Digits only; empty clears it. Kept Keystore-encrypted. */
+        @JavascriptInterface
+        public void setAccountId(String id) {
+            try {
+                String d = id == null ? "" : id.replaceAll("[^0-9]", "");
+                if (ble != null) ble.setAccountId(d.isEmpty() ? 0L : Long.parseLong(d));
+            } catch (Throwable t) { Log.e(TAG, "setAccountId failed", t); }
+        }
+
+        /** Remove the stored account id. */
+        @JavascriptInterface
+        public void clearAccountId() {
+            try { if (ble != null) ble.clearAccountId(); } catch (Throwable ignored) {}
+        }
+
+        /** Whether an account id is stored. The value itself is never returned to the page. */
+        @JavascriptInterface
+        public boolean hasAccountId() {
+            return ble != null && ble.hasAccountId();
+        }
+
         /** End the active turn-by-turn navigation session (stops the foreground service). */
         @JavascriptInterface
         public void endNav() {

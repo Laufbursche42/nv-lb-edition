@@ -283,6 +283,19 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="settings-row-sublabel note-gap" data-i18n="settings.firmware.update.hint">Gepatchte oder eigene Firmware über Bluetooth auf den Roller flashen (Roller muss verbunden sein)</div>
   </div>
 
+  <!-- Bound-scooter account id (advanced). Stored Keystore-encrypted in the app, never in the page. -->
+  <div class="settings-group has-top-rule">
+    <div class="settings-group-title" data-i18n="settings.account.group.title">Bound scooter (advanced)</div>
+    <div class="settings-row-sublabel note-gap" data-i18n="settings.account.intro">Some scooters (e.g. NAVEE ST3 Pro) are bound to a NAVEE account and close the Bluetooth link after about ten seconds unless the app authenticates. Enter the account ID to keep the link open, which is needed for flashing.</div>
+    <div class="settings-row-sublabel note-gap"><b data-i18n="settings.account.notid">This is NOT the NAVEE ID you can see in the NAVEE app. It is the internal account binding ID.</b></div>
+    <div class="settings-input-row">
+      <input type="password" inputmode="numeric" id="account-id-input" class="settings-input" autocomplete="off" data-i18n-ph="settings.account.placeholder" placeholder="Account ID (digits only)">
+    </div>
+    <div class="settings-row-sublabel note-gap" id="account-id-status" data-i18n="settings.account.status.none">No account ID stored</div>
+    <button id="btn-account-save" class="settings-btn" data-i18n="settings.account.save">Save account ID</button>
+    <button id="btn-account-clear" class="settings-btn" data-i18n="settings.account.clear">Remove account ID</button>
+  </div>
+
   <!-- GPS: the recording settings and the recordings they produce belong together. -->
   <div class="settings-group has-top-rule">
     <div class="settings-group-title" data-i18n="settings.gps.group.title">GPS recording</div>
@@ -2165,6 +2178,37 @@ function loadSettings() {
 
   // Debug mode: read the persisted native flag to set the toggle and show/hide the banner.
   syncDebugUI();
+
+  // Account ID (bound scooters): reflect whether one is stored. The value itself is never read back.
+  refreshAccountIdUI();
+}
+
+// The account ID lives only in the app's Keystore-encrypted store, never in the page or localStorage.
+function refreshAccountIdUI() {
+  const status = document.getElementById('account-id-status');
+  const input = document.getElementById('account-id-input');
+  let has = false;
+  try { has = typeof LB !== 'undefined' && LB.hasAccountId && LB.hasAccountId(); } catch (e) {}
+  if (status) {
+    status.setAttribute('data-i18n', has ? 'settings.account.status.set' : 'settings.account.status.none');
+    status.textContent = t(has ? 'settings.account.status.set' : 'settings.account.status.none');
+  }
+  if (input) input.value = '';
+}
+
+function saveAccountId() {
+  const input = document.getElementById('account-id-input');
+  const raw = input ? (input.value || '').replace(/[^0-9]/g, '') : '';
+  if (!raw) { showToast(t('settings.account.toast.empty')); return; }
+  if (typeof LB === 'undefined' || !LB.setAccountId) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.setAccountId(raw); showToast(t('settings.account.toast.saved')); } catch (e) {}
+  refreshAccountIdUI();
+}
+
+function clearAccountId() {
+  if (typeof LB !== 'undefined' && LB.clearAccountId) { try { LB.clearAccountId(); } catch (e) {} }
+  showToast(t('settings.account.toast.removed'));
+  refreshAccountIdUI();
 }
 
 /* ── SRT streaming (native module via the LB bridge) ──────────── */
@@ -3691,6 +3735,8 @@ function wireEvents() {
     closeSettings();
     openFirmwarePage();
   });
+  document.getElementById('btn-account-save').addEventListener('click', saveAccountId);
+  document.getElementById('btn-account-clear').addEventListener('click', clearAccountId);
   document.getElementById('btn-firmware-back').addEventListener('click', closeFirmwarePage);
   document.getElementById('btn-fw-file').addEventListener('click', fwPickFile);
   document.getElementById('btn-fw-start').addEventListener('click', fwStart);

@@ -128,9 +128,23 @@ final class BleManager {
     private volatile boolean dfuResumePending = false;
     private int dfuResumeTries = 0;
 
+    // Optional account id for bound scooters (e.g. ST3 Pro): without the 0x30/0x31 session auth the
+    // scooter drops the link after ~10 s. Stored Keystore-encrypted, never handed back to the WebView.
+    private SecureStore secure;
+    private volatile long accountId = 0;
+    private volatile boolean authPending = false;
+    private static final String SEC_ACCOUNT = "account_id";
+
     BleManager(Context ctx, Listener listener) {
         this.appCtx = ctx.getApplicationContext();
         this.listener = listener;
+        try {
+            secure = new SecureStore(appCtx);
+            String v = secure.getString(SEC_ACCOUNT);
+            if (v != null) { try { accountId = Long.parseLong(v.trim()); } catch (Throwable ignored) {} }
+        } catch (Throwable t) {
+            Log.e(TAG, "secure store init failed", t);
+        }
         try {
             BluetoothManager bm = (BluetoothManager) appCtx.getSystemService(Context.BLUETOOTH_SERVICE);
             if (bm != null) adapter = bm.getAdapter();
@@ -358,6 +372,7 @@ final class BleManager {
                 Log.i(TAG, "GATT disconnected status=" + status);
                 connected = false;
                 notifyReady = false;
+                authPending = false;
                 stopPush();
 
                 // ST3 Pro only: pause + fast reconnect to resume; other models fall through as before.
@@ -426,6 +441,15 @@ final class BleManager {
                 NaveeDfuEngine d = dfu;
                 if (d != null && d.isRunning()) { d.onNotify(v); return; }
                 if (DebugLog.WIRE) Log.i(WIRE_TAG, "RX " + hex(v));
+                // Answer the 0x30 session-auth challenge (bound scooters) before normal parsing.
+                if (authPending) {
+                    NaveeAuth.Result r = NaveeAuth.responseFor(v, v.length);
+                    if (r != null) {
+                        authPending = false;
+                        if (r.rejected) Log.i(TAG, "session auth rejected (wrong / unbound account id)");
+                        else { enqueueWrite(CommandBuilder.write(0x31, r.response)); Log.i(TAG, "session auth: challenge -> 0x31"); }
+                    }
+                }
                 parser.onNotify(v);
                 if (frameCount++ % 50 == 0) Log.i(TAG, "rx frames=" + frameCount + " last=" + v.length + "b");
             } catch (Throwable t) {
@@ -548,9 +572,34 @@ final class BleManager {
     private void afterConnect() {
         if (afterConnectDone) return;
         afterConnectDone = true;
+        // Bound scooters need the 0x30 session auth right after connect, or they close the link
+        // after ~10 s. Only sent when the user configured an account id; other scooters are unaffected.
+        if (accountId > 0) {
+            try {
+                authPending = true;
+                enqueueWrite(CommandBuilder.write(0x30, NaveeAuth.authInitPayload(accountId)));
+                Log.i(TAG, "session auth: 0x30 sent");
+            } catch (Throwable t) { Log.e(TAG, "session auth send failed", t); authPending = false; }
+        }
         try { enqueueWrite(CommandBuilder.timeSync()); } catch (Throwable ignored) {}
         main.postDelayed(this::readStatus, 500);
     }
+
+    /** Store the account id for bound-scooter auth (0 or empty clears it). Kept Keystore-encrypted. */
+    void setAccountId(long id) {
+        accountId = id > 0 ? id : 0;
+        try {
+            if (secure != null) {
+                if (accountId > 0) secure.putString(SEC_ACCOUNT, Long.toString(accountId));
+                else secure.remove(SEC_ACCOUNT);
+            }
+        } catch (Throwable t) { Log.e(TAG, "setAccountId persist failed", t); }
+    }
+
+    void clearAccountId() { setAccountId(0); }
+
+    /** Whether an account id is stored (never returns the value itself to callers/JS). */
+    boolean hasAccountId() { return accountId > 0; }
 
     // ── Live-data push (~2x/s) ──
 
@@ -697,7 +746,8 @@ final class BleManager {
                 engine.setResumable(true);
                 Log.i(TAG, "DFU resume enabled for pid " + pid + " (ST3 Pro)");
             }
-            main.postDelayed(() -> { if (dfu == engine) engine.start(image, target, userId); }, 200);
+            final long uid = userId > 0 ? userId : accountId;   // fall back to the stored account id
+            main.postDelayed(() -> { if (dfu == engine) engine.start(image, target, uid); }, 200);
         } catch (Throwable t) {
             Log.e(TAG, "startDfu failed", t);
         }
