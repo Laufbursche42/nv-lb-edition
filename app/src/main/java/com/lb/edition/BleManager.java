@@ -46,6 +46,22 @@ final class BleManager {
         return s.replace('\r', ' ').replace('\n', ' ');
     }
 
+    // Wire log with the account id masked: a 55 AA 00 30 09 .. auth-init frame carries s(userId)
+    // (personal data) in bytes 7..12. Those are shown as XX so an uploaded log never leaks it.
+    private static String wireHex(byte[] b) {
+        if (b != null && b.length >= 17 && (b[0] & 0xFF) == 0x55 && (b[1] & 0xFF) == 0xAA
+                && (b[3] & 0xFF) == 0x30 && (b[4] & 0xFF) == 0x09) {
+            StringBuilder sb = new StringBuilder(b.length * 3);
+            for (int i = 0; i < b.length; i++) {
+                if (i > 0) sb.append(' ');
+                if (i >= 7 && i <= 12) sb.append("XX");
+                else sb.append(HEX[(b[i] >> 4) & 0xF]).append(HEX[b[i] & 0xF]);
+            }
+            return sb.toString();
+        }
+        return hex(b);
+    }
+
     private static String hex(byte[] b) {
         if (b == null) return "null";
         StringBuilder sb = new StringBuilder(b.length * 3);
@@ -683,7 +699,7 @@ final class BleManager {
                 wc.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
             }
             wc.setValue(frame);
-            if (DebugLog.WIRE) Log.i(WIRE_TAG, "TX " + hex(frame));
+            if (DebugLog.WIRE) Log.i(WIRE_TAG, "TX " + wireHex(frame));
             return g.writeCharacteristic(wc);
         } catch (Throwable t) {
             Log.e(TAG, "doWrite failed", t);
