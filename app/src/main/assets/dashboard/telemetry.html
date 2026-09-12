@@ -2688,7 +2688,7 @@ const NAVEE_MODELS = {
   '2619':'UT3 Pro','2620':'UT3 Max','2623':'V45i','2634':'E20 Lite','2643':'E60 Pro','2646':'UT3',
   '2657':'NT5 Max+','2658':'NT5 Ultra','2701':'NT3 Pro','2704':'GT3 Pro','2707':'NT5 Turbo','2714':'ST3 Pro',
   '2736':'KG05','2739':'WOLF X','2745':'NT3 Max','2753':'E45 Pro','2754':'E60 Pro','2768':'EXO S Pro',
-  '2782':'XT5',   // XT5 pid named in navee-unlock; kept so naveeIsXT() hard-blocks the region write on it
+  '2782':'XT5',   // XT5 pid named in nv-unlock; kept so naveeIsXT() hard-blocks the region write on it
 };
 // Pull the 4-digit pid out of a serial: skip an optional family letter, take the next 4 digits.
 function naveePidOf(sn) { if (!sn) return ''; const m = String(sn).match(/[A-Za-z]?(\d{4})/); return m ? m[1] : ''; }

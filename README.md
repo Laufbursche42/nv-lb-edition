@@ -38,7 +38,7 @@ Laufbursche Edition (NAVEE) is a standalone, alternative Android app for NAVEE e
 
 The app is a fork of the author's app for another scooter platform, ported to the NAVEE protocol. Everything that was specific to that other platform was removed rather than carried over half-working; what is left is the part that has been checked against a NAVEE scooter.
 
-**Using an iPhone?** This app is Android only. On iOS there is a browser-based alternative that speaks the same protocol over Web Bluetooth: **[navee-unlock](https://laufbursche42.github.io/navee-unlock/)**, opened in the Bluefy browser. No install, same functions.
+**Using an iPhone?** This app is Android only. On iOS there is a browser-based alternative that speaks the same protocol over Web Bluetooth: **[nv-unlock](https://laufbursche42.github.io/nv-unlock/)**, opened in the Bluefy browser. No install, same functions.
 
 ## Device support
 
