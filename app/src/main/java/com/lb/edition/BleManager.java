@@ -148,7 +148,15 @@ final class BleManager {
 
     // ST3 Pro (pid 2345) tears the BLE link down mid-flash; only that model gets DFU resume.
     private static final String DFU_RESUME_PID = "2345";
-    private static final String DFU_BLOCKED_PID = "2538";   // UT5 Max: flashing disabled while a problem report is investigated
+    // UT5 Max (pid 2538): hard flash block (its meter has no recovery path once damaged). Every other
+    // non-confirmed model is blocked at the patcher instead, so a stock recovery flash stays possible.
+    private static final String[] DFU_BLOCKED_PIDS = {"2538"};
+
+    private static boolean isFlashBlocked(String pid) {
+        if (pid == null) return false;
+        for (String p : DFU_BLOCKED_PIDS) if (p.equals(pid)) return true;
+        return false;
+    }
     private static final long DFU_RESUME_DELAY_MS = 800;   // fast reconnect while a resumable flash is paused
     private static final int DFU_RESUME_MAX_TRIES = 8;
     private volatile boolean dfuResumePending = false;
@@ -798,13 +806,13 @@ final class BleManager {
                 if (listener != null) listener.onFwState("{\"state\":\"failed\",\"message\":\"Connect the scooter first\"}");
                 return;
             }
-            // UT5 Max (pid 2538): flashing is disabled while a problem report is investigated.
-            // Refuse any flash to this model until it is re-enabled.
+            // Hard flash block for the UT5 Max (no recovery path); other unconfirmed models are gated
+            // at the patcher so a stock recovery flash stays possible.
             String pidNow = null;
             try { pidNow = parser.pid(); } catch (Throwable ignored) {}
-            if (DFU_BLOCKED_PID.equals(pidNow)) {
-                Log.i(TAG, "flash blocked for pid " + pidNow + " (UT5 Max, disabled pending verification)");
-                if (listener != null) listener.onFwState("{\"state\":\"failed\",\"message\":\"Flashing is disabled for the UT5 Max in this version.\"}");
+            if (isFlashBlocked(pidNow)) {
+                Log.i(TAG, "flash refused for pid " + pidNow + " (flashing disabled for this model)");
+                if (listener != null) listener.onFwState("{\"state\":\"failed\",\"message\":\"Flashing is disabled for this model in this version.\"}");
                 return;
             }
             stopPush();

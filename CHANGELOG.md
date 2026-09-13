@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.33
+- **Patching limited to confirmed models.** Firmware patching is now restricted to the NT5 family and the XT5 (whose speed release is flash-free), the models confirmed on real hardware. Patching for every other model is disabled in this version while the patches are re-checked. Reading the scooter and the live controls stay available for all models.
+
 ## 1.0.32
 - **UT5 Max flashing disabled for now.** Flashing for the UT5 Max is turned off while we look into a problem report: the patcher no longer builds UT5 Max firmware and the flasher refuses that model. Reading the scooter and the live controls are unaffected.
 - **Serial number masked in the debug log.** The wire log now shows the serial from the 0x74 read as XX, alongside the already-masked account id, so an uploaded log carries no device-identifying data.

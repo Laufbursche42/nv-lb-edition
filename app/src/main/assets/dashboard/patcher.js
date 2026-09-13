@@ -747,7 +747,6 @@ const IMAGES = {
   // UT5 Max BLDC 0.0.1.0 (8901). SZMC-ES-ZM-3553G ERPM latch (top cell 0x20000378). verword 0100 + tag T2416 collide with 9701 -> CRC pin 0xb58f mandatory. Meter needs the trampoline. Marker "0090".
   bldcUT5Max: {
     label: 'UT5 Max BLDC 0.0.1.0 (8901)',
-    disabled: true,   // flashing disabled while a problem report is investigated
     kind: 'bldc',
     match: (u8) => u8.length === 0xf900 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x00]) && beRead(u8, 0xb0, 2) === 0xb58f,
     verify: { size: 0xf900, lenOff: 0x84, lenStock: 0x0000f800, crcOff: 0xb0, crcStock: 0xb58f },
@@ -860,7 +859,6 @@ const IMAGES = {
   // UT5 Max meter 0.0.3.0 (8901). T2314. Drive-mode clamped -> one-shot builder detour mirrors the app lock-state cell 0x20b198 (read-only) into control-frame byte3 so nibble 5/6 reaches bldcUT5Max. CRC pin 0x010a splits it from UT5 Ultra X (0x31f1).
   meterUT5Max: {
     label: 'UT5 Max meter 0.0.3.0 (8901)',
-    disabled: true,   // flashing disabled while a problem report is investigated
     kind: 'meter',
     match: (u8) => u8.length === 0x25c00 && bytesAt(u8, 0, ascii('T2314')) && beRead(u8, 0x13, 2) === 0x010a,
     verify: { size: 0x25c00, crcOff: 0x13, crcStock: 0x010a, lenOff: 0x10, lenStock: 0x025800 },
@@ -1113,8 +1111,16 @@ const IMAGES = {
 };
 
 // Identify which image this is, or null.
+// Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is
+// blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
+const FLASH_ENABLED = new Set([
+  'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
+  'meterXT5',                                                     // XT5 meter
+  'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
+]);
+
 function identify(u8) {
-  for (const key of Object.keys(IMAGES)) if (!IMAGES[key].disabled && IMAGES[key].match(u8)) return key;
+  for (const key of Object.keys(IMAGES)) if (FLASH_ENABLED.has(key) && IMAGES[key].match(u8)) return key;
   return null;
 }
 
@@ -1185,8 +1191,8 @@ function patchFirmware(arrayBuffer, selected) {
   const u8 = new Uint8Array(arrayBuffer.slice(0)); // copy: never mutate the caller's buffer
   const key = identify(u8);
   if (!key) {
-    // A disabled model still matches its signature; give a clear message instead of "unrecognised".
-    for (const k of Object.keys(IMAGES)) if (IMAGES[k].disabled && IMAGES[k].match(u8)) throw new Error('Flashing this model is disabled in this version.');
+    // A blocked model still matches its signature; give a clear message instead of "unrecognised".
+    for (const k of Object.keys(IMAGES)) if (!FLASH_ENABLED.has(k) && IMAGES[k].match(u8)) throw new Error('Flashing this model is disabled in this version.');
     throw new Error('Unrecognised firmware - not a known NAVEE NT5 meter or BLDC image.');
   }
   const spec = IMAGES[key];
