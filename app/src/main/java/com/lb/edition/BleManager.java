@@ -46,20 +46,29 @@ final class BleManager {
         return s.replace('\r', ' ').replace('\n', ' ');
     }
 
-    // Wire log with the account id masked: a 55 AA 00 30 09 .. auth-init frame carries s(userId)
-    // (personal data) in bytes 7..12. Those are shown as XX so an uploaded log never leaks it.
+    // Wire log with personal data masked: the 0x30 auth-init frame carries s(userId) and the 0x74
+    // reply carries the serial number. Scan the buffer for those frames and show their bytes as XX so
+    // an uploaded log never leaks them; everything else prints normally.
     private static String wireHex(byte[] b) {
-        if (b != null && b.length >= 17 && (b[0] & 0xFF) == 0x55 && (b[1] & 0xFF) == 0xAA
-                && (b[3] & 0xFF) == 0x30 && (b[4] & 0xFF) == 0x09) {
-            StringBuilder sb = new StringBuilder(b.length * 3);
-            for (int i = 0; i < b.length; i++) {
-                if (i > 0) sb.append(' ');
-                if (i >= 7 && i <= 12) sb.append("XX");
-                else sb.append(HEX[(b[i] >> 4) & 0xF]).append(HEX[b[i] & 0xF]);
-            }
-            return sb.toString();
+        if (b == null) return hex(b);
+        boolean[] mask = new boolean[b.length];
+        boolean any = false;
+        for (int i = 0; i + 8 <= b.length; i++) {
+            if ((b[i] & 0xFF) != 0x55 || (b[i + 1] & 0xFF) != 0xAA) continue;
+            int cmd = b[i + 3] & 0xFF, len = b[i + 4] & 0xFF, total = 8 + len;
+            if (i + total > b.length) continue;
+            if ((b[i + total - 2] & 0xFF) != 0xFE || (b[i + total - 1] & 0xFF) != 0xFD) continue;
+            if (cmd == 0x30 && len == 9) { for (int k = i + 7; k <= i + 12; k++) mask[k] = true; any = true; }
+            else if (cmd == 0x74 && len > 1) { for (int k = i + 6; k <= i + 4 + len; k++) mask[k] = true; any = true; }
         }
-        return hex(b);
+        if (!any) return hex(b);
+        StringBuilder sb = new StringBuilder(b.length * 3);
+        for (int i = 0; i < b.length; i++) {
+            if (i > 0) sb.append(' ');
+            if (mask[i]) sb.append("XX");
+            else sb.append(HEX[(b[i] >> 4) & 0xF]).append(HEX[b[i] & 0xF]);
+        }
+        return sb.toString();
     }
 
     private static String hex(byte[] b) {
@@ -139,6 +148,7 @@ final class BleManager {
 
     // ST3 Pro (pid 2345) tears the BLE link down mid-flash; only that model gets DFU resume.
     private static final String DFU_RESUME_PID = "2345";
+    private static final String DFU_BLOCKED_PID = "2538";   // UT5 Max: flashing disabled while a problem report is investigated
     private static final long DFU_RESUME_DELAY_MS = 800;   // fast reconnect while a resumable flash is paused
     private static final int DFU_RESUME_MAX_TRIES = 8;
     private volatile boolean dfuResumePending = false;
@@ -458,7 +468,7 @@ final class BleManager {
                 // During a flash the DFU engine owns b003 (XMODEM ACKs + text tokens, not 55 AA frames).
                 NaveeDfuEngine d = dfu;
                 if (d != null && d.isRunning()) { d.onNotify(v); return; }
-                if (DebugLog.WIRE) Log.i(WIRE_TAG, "RX " + hex(v));
+                if (DebugLog.WIRE) Log.i(WIRE_TAG, "RX " + wireHex(v));
                 // Drive the OEM two-round 0x30/0x31 session handshake (bound scooters) before parsing.
                 if (authPending) {
                     NaveeAuth.R30 r = NaveeAuth.parse30(v, v.length);
@@ -786,6 +796,15 @@ final class BleManager {
             if (isDfuActive()) return;
             if (!connected || !notifyReady) {
                 if (listener != null) listener.onFwState("{\"state\":\"failed\",\"message\":\"Connect the scooter first\"}");
+                return;
+            }
+            // UT5 Max (pid 2538): flashing is disabled while a problem report is investigated.
+            // Refuse any flash to this model until it is re-enabled.
+            String pidNow = null;
+            try { pidNow = parser.pid(); } catch (Throwable ignored) {}
+            if (DFU_BLOCKED_PID.equals(pidNow)) {
+                Log.i(TAG, "flash blocked for pid " + pidNow + " (UT5 Max, disabled pending verification)");
+                if (listener != null) listener.onFwState("{\"state\":\"failed\",\"message\":\"Flashing is disabled for the UT5 Max in this version.\"}");
                 return;
             }
             stopPush();

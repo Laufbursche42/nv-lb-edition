@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.32
+- **UT5 Max flashing disabled for now.** Flashing for the UT5 Max is turned off while we look into a problem report: the patcher no longer builds UT5 Max firmware and the flasher refuses that model. Reading the scooter and the live controls are unaffected.
+- **Serial number masked in the debug log.** The wire log now shows the serial from the 0x74 read as XX, alongside the already-masked account id, so an uploaded log carries no device-identifying data.
+
 ## 1.0.31
 - **Bound scooters: the session authentication is now complete.** The account-ID handshake matches the NAVEE app exactly - two 0x30/0x31 rounds, the challenge answered in the mode the scooter asks for (XOR or AES), then the clock and the 0x7B session command. Only after this does a bound scooter such as the ST3 Pro keep the link open and stream its status on its own, so a flash can run to completion. The account ID stays Keystore-encrypted and masked in logs.
 

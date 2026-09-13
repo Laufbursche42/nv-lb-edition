@@ -47,6 +47,12 @@ public class MainActivity extends Activity {
 
     private static final String TAG = "lbedition";
 
+    /** Mask a serial number for the log: keep only the last 4 characters (device-identifying data). */
+    private static String maskSerial(String s) {
+        if (s == null || s.length() <= 4) return "****";
+        return "****" + s.substring(s.length() - 4);
+    }
+
     /** Strip CR/LF (and cap length) so bridge-supplied strings cannot forge extra log lines. */
     private static String logSafe(String s) {
         if (s == null) return "null";
@@ -308,7 +314,7 @@ public class MainActivity extends Activity {
             try {
                 org.json.JSONObject o = new org.json.JSONObject(json);
                 String model = "pid=" + o.optString("pid", "?") + " fwBldc=" + o.optString("fwBldc", "?")
-                        + " serial=" + o.optString("serial", "?") + " region=" + o.optString("region", "?");
+                        + " serial=" + maskSerial(o.optString("serial", "?")) + " region=" + o.optString("region", "?");
                 if (!model.equals(wireModel)) { wireModel = model; Log.i("lbwire", "MODEL " + model); }
                 String state = "driveMode=" + o.opt("driveMode") + " maxSpeed=" + o.opt("maxSpeed")
                         + " limitSpeed=" + o.opt("limitSpeed") + " limitOn=" + o.opt("limitOn")
