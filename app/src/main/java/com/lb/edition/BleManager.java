@@ -149,6 +149,8 @@ final class BleManager {
     private SecureStore secure;
     private volatile long accountId = 0;
     private volatile boolean authPending = false;
+    private int authRounds = 0;
+    private static final int AUTH_MAX_ROUNDS = 4;   // guard against a challenge loop
     private static final String SEC_ACCOUNT = "account_id";
 
     BleManager(Context ctx, Listener listener) {
@@ -457,13 +459,39 @@ final class BleManager {
                 NaveeDfuEngine d = dfu;
                 if (d != null && d.isRunning()) { d.onNotify(v); return; }
                 if (DebugLog.WIRE) Log.i(WIRE_TAG, "RX " + hex(v));
-                // Answer the 0x30 session-auth challenge (bound scooters) before normal parsing.
+                // Drive the OEM two-round 0x30/0x31 session handshake (bound scooters) before parsing.
                 if (authPending) {
-                    NaveeAuth.Result r = NaveeAuth.responseFor(v, v.length);
-                    if (r != null) {
-                        authPending = false;
-                        if (r.rejected) Log.i(TAG, "session auth rejected (wrong / unbound account id)");
-                        else { enqueueWrite(CommandBuilder.write(0x31, r.response)); Log.i(TAG, "session auth: challenge -> 0x31"); }
+                    NaveeAuth.R30 r = NaveeAuth.parse30(v, v.length);
+                    if (r.kind != NaveeAuth.Kind.NONE) {
+                        switch (r.kind) {
+                            case CHALLENGE:
+                                enqueueWrite(CommandBuilder.write(0x31, r.response));
+                                Log.i(TAG, "session auth: challenge -> 0x31");
+                                break;
+                            case COMPLETE:
+                                authPending = false;
+                                Log.i(TAG, "session auth complete -> clock + 0x7B");
+                                afterAuthComplete();
+                                break;
+                            case REJECTED:
+                                authPending = false;
+                                Log.i(TAG, "session auth rejected by scooter");
+                                afterAuthComplete();
+                                break;
+                            default: break;
+                        }
+                    } else {
+                        Boolean ok = NaveeAuth.parse31(v, v.length);
+                        if (ok != null) {
+                            if (ok && ++authRounds < AUTH_MAX_ROUNDS) {
+                                enqueueWrite(CommandBuilder.write(0x30, NaveeAuth.authInitPayload(accountId)));
+                                Log.i(TAG, "session auth: 0x31 ok -> 0x30 (round " + (authRounds + 1) + ")");
+                            } else {
+                                authPending = false;
+                                Log.i(TAG, ok ? "session auth: round cap reached" : "session auth: 0x31 rejected");
+                                afterAuthComplete();
+                            }
+                        }
                     }
                 }
                 parser.onNotify(v);
@@ -588,16 +616,26 @@ final class BleManager {
     private void afterConnect() {
         if (afterConnectDone) return;
         afterConnectDone = true;
-        // Bound scooters need the 0x30 session auth right after connect, or they close the link
-        // after ~10 s. Only sent when the user configured an account id; other scooters are unaffected.
+        // Bound scooters need the full OEM 0x30/0x31 handshake right after connect, or they close the
+        // link after ~10 s. Only when an account id is set; other scooters take the plain path below.
         if (accountId > 0) {
             try {
                 authPending = true;
+                authRounds = 0;
                 enqueueWrite(CommandBuilder.write(0x30, NaveeAuth.authInitPayload(accountId)));
-                Log.i(TAG, "session auth: 0x30 sent");
-            } catch (Throwable t) { Log.e(TAG, "session auth send failed", t); authPending = false; }
+                Log.i(TAG, "session auth: 0x30 sent (round 1)");
+            } catch (Throwable t) { Log.e(TAG, "session auth send failed", t); authPending = false; afterAuthComplete(); }
+            return;   // afterAuthComplete() runs the time sync + status reads once the handshake ends
         }
         try { enqueueWrite(CommandBuilder.timeSync()); } catch (Throwable ignored) {}
+        main.postDelayed(this::readStatus, 500);
+    }
+
+    // Mirror the OEM tail of the handshake: clock (0x6F sub 6) then 0x7B, which arms the scooter's own
+    // 0x90 report stream and keeps the link open; then the normal status reads for the dashboard.
+    private void afterAuthComplete() {
+        try { enqueueWrite(CommandBuilder.timeSync()); } catch (Throwable ignored) {}
+        try { enqueueWrite(CommandBuilder.read(0x7B)); } catch (Throwable ignored) {}
         main.postDelayed(this::readStatus, 500);
     }
 

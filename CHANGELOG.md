@@ -16,6 +16,45 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.31
+- **Bound scooters: the session authentication is now complete.** The account-ID handshake matches the NAVEE app exactly - two 0x30/0x31 rounds, the challenge answered in the mode the scooter asks for (XOR or AES), then the clock and the 0x7B session command. Only after this does a bound scooter such as the ST3 Pro keep the link open and stream its status on its own, so a flash can run to completion. The account ID stays Keystore-encrypted and masked in logs.
+
+## 1.0.30
+- Pointed the in-app links for the companion web control tool at its renamed repository (nv-unlock).
+
+## 1.0.29
+- Privacy: the account ID is masked in the debug log, so an uploaded log never reveals it.
+
+## 1.0.28
+- The account ID can be recovered automatically from an Android Bluetooth HCI log, with a step-by-step guide in the settings. Nothing is uploaded, it is read on the phone.
+
+## 1.0.27
+- Bound scooters: an optional account ID in the settings drives the 0x30 session authentication that some models need to stay connected. It is stored encrypted via the Android Keystore and is not the NAVEE ID shown in the NAVEE app.
+
+## 1.0.26
+- Hardening: telemetry and firmware data reach the dashboard through a bridge pull instead of being placed into executed JavaScript, removing the cross-site-scripting surface.
+
+## 1.0.25
+- Hardening: the remaining log-injection points are sanitized and numeric casts are bounded.
+
+## 1.0.24
+- Hardening: kept the weak-crypto and cross-site-scripting analysis rules active while documenting the by-design cases; trimmed verbose code comments.
+
+## 1.0.23
+- Hardening: a CodeQL static-analysis pass, with findings either fixed or documented as by-design.
+
+## 1.0.22
+- ST3 Pro: during a flash the app reconnects automatically and resumes from the last confirmed block after the scooter drops the link. Whether a unit can resume mid-image depends on its bootloader.
+
+## 1.0.21
+- The speed release from triple-tapping the km/h tile is remembered across the session; internal comment cleanup.
+
+## 1.0.20
+- Ride-log exports are LEAT-compatible: canonical field names and units, a plain JSON sample array, a BOM-free CSV and GPX speed in m/s.
+
+## 1.0.19
+- Switchable speed now covers 16 fully-supported models, with the support matrix shown in What's new.
+
 ## 1.0.18
 
 - **The switchable speed patch now covers the whole fleet where it is technically possible.** Every downloadable NAVEE firmware was checked. On top of the performance line, the patcher now builds lock/unlock controller firmware for the city and commuter models - S40, S60, S2, V25 / V25i, V50i Pro, V45i, N65i, E20 Lite / E25 Go, UT3 Max - the G5 line (G5, G5 Pro, G5 Max) and the UT5 Max. Same capZ top-gear latch as before: boots throttled to about 22 km/h, the speed release opens the top gear to the motor limit and every restart re-locks. Only the top gear changes. Where a model needs it (UT3 Max, S2, UT5 Max) the patched meter also routes the unlock signal to the controller; the rest forward it on their own.

@@ -10,9 +10,9 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * NAVEE 0x30/0x31 connection (session) auth. A bound scooter closes the link a few seconds after
- * connect unless the central authenticates with the account id. The key table mirrors NaveeDfuEngine
- * (keep both in sync); this copy drives the connection-level auth without touching the flash path.
+ * NAVEE 0x30/0x31 connection (session) auth, matching the OEM app's two-round handshake. A bound
+ * scooter closes the link a few seconds after connect unless the central completes this exactly.
+ * Key table mirrors NaveeDfuEngine (keep in sync). The state transitions live in BleManager.
  */
 final class NaveeAuth {
 
@@ -34,18 +34,18 @@ final class NaveeAuth {
 
     private NaveeAuth() {}
 
-    /** 0x30 auth-init payload: [keyIdx, 0, s(userId) x6, 0]. */
+    /** 0x30 auth-init payload: [keyIdx, shareFlag, s(userId) x6, 0]. shareFlag mirrors the OEM (1 with an id). */
     static byte[] authInitPayload(long userId) {
         byte[] s = s6(userId);
         byte[] p = new byte[9];
         p[0] = (byte) KEY_IDX;
-        p[1] = 0x00;
+        p[1] = (byte) (userId > 0 ? 1 : 0);
         System.arraycopy(s, 0, p, 2, 6);
         p[8] = 0x00;
         return p;
     }
 
-    /** Lower 48 bits of the account id, big-endian; first byte forced non-zero and < 0x80. */
+    /** Lower 48 bits of the account id, big-endian; first byte forced non-zero and < 0x80 (OEM ByteUtil.s). */
     private static byte[] s6(long userId) {
         if (userId <= 0) userId = (long) (Math.random() * 1_000_000_000L) + 1;
         long v = userId & 0xFFFFFFFFFFFFL;
@@ -66,27 +66,56 @@ final class NaveeAuth {
         }
     }
 
-    /** Result of scanning notify bytes for a 0x30 reply. */
-    static final class Result {
-        final byte[] response;   // 0x31 payload to send, or null
-        final boolean rejected;  // scooter returned errcode 0xFF (wrong / unbound id)
-        Result(byte[] r, boolean rej) { response = r; rejected = rej; }
+    private static byte[] xor16(byte[] a, byte[] key) {
+        byte[] out = new byte[16];
+        for (int i = 0; i < 16; i++) out[i] = (byte) ((a[i] & 0xFF) ^ (key[i] & 0xFF));
+        return out;
     }
 
-    /** Find a 55 AA 00 30 .. FE FD frame in buf[0..len) and build the 0x31 challenge response. */
-    static Result responseFor(byte[] buf, int len) {
+    enum Kind { CHALLENGE, COMPLETE, REJECTED, NONE }
+
+    static final class R30 {
+        final Kind kind;
+        final byte[] response;   // 0x31 payload when CHALLENGE
+        R30(Kind k, byte[] r) { kind = k; response = r; }
+    }
+
+    /**
+     * Parse a 0x30 reply. OEM logic: errcode != 0 -> rejected; payload length 1 (errcode only) -> the
+     * final reply, auth complete; longer -> a challenge. For length > 17 the first data byte selects
+     * the transform (0 = XOR, else AES) over the following 16 bytes; length 17 is a bare 16-byte AES
+     * challenge with no mode byte.
+     */
+    static R30 parse30(byte[] buf, int len) {
         int i = findFrame(buf, len, 0x30);
-        if (i < 0) return null;
+        if (i < 0) return new R30(Kind.NONE, null);
         int flen = buf[i + 4] & 0xFF;
-        if ((buf[i + 5] & 0xFF) == 0xFF) return new Result(null, true);
-        int dataStart = i + 6, dataLen = flen - 1;
-        if (dataLen >= 16 && dataStart + dataLen <= len) {
-            byte[] challenge = new byte[16];
-            System.arraycopy(buf, dataStart + dataLen - 16, challenge, 0, 16);
-            byte[] resp = aesEcb(KEYS[KEY_IDX], challenge);
-            if (resp != null) return new Result(resp, false);
+        int err = buf[i + 5] & 0xFF;
+        if (err != 0) return new R30(Kind.REJECTED, null);
+        if (flen <= 1) return new R30(Kind.COMPLETE, null);
+        int dataStart = i + 6;
+        byte[] body = new byte[16];
+        boolean useXor;
+        if (flen > 17) {
+            int mode = buf[dataStart] & 0xFF;
+            if (dataStart + 1 + 16 > len) return new R30(Kind.NONE, null);
+            System.arraycopy(buf, dataStart + 1, body, 0, 16);
+            useXor = (mode == 0);
+        } else {
+            if (flen - 1 < 16 || dataStart + 16 > len) return new R30(Kind.NONE, null);
+            System.arraycopy(buf, dataStart, body, 0, 16);
+            useXor = false;
         }
-        return null;
+        byte[] resp = useXor ? xor16(body, KEYS[KEY_IDX]) : aesEcb(KEYS[KEY_IDX], body);
+        if (resp == null) return new R30(Kind.NONE, null);
+        return new R30(Kind.CHALLENGE, resp);
+    }
+
+    /** Parse a 0x31 reply: TRUE if errcode 0 (send the next 0x30), FALSE if rejected, null if not present. */
+    static Boolean parse31(byte[] buf, int len) {
+        int i = findFrame(buf, len, 0x31);
+        if (i < 0) return null;
+        return (buf[i + 5] & 0xFF) == 0;
     }
 
     private static int findFrame(byte[] buf, int len, int cmd) {
