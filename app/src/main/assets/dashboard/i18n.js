@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Boost-safe NT5 firmware.</b> The NT5 speed release no longer opens from the scooter's own boost button - only a deliberate unlock in the app raises the top gear, and it re-locks to 22 km/h on every restart. Re-flash the current firmware in the patcher to get it (the controller then reports 5.5.6.6, 5.0.5.0 or 5.0.5.5); if your scooter still opens full speed on the boost button alone, it is on the old build.",
       "<b>This is a NAVEE app now.</b> It connects to a scooter whose Bluetooth name starts with NAVEE and speaks that scooter's own protocol. No account, no login, no user id: it talks to the scooter directly.",
       "<b>The settings a NAVEE scooter really has.</b> Immobilizer, cruise control, traction control, zero start, drive mode, eco mode, the light switches (auto light, daytime running light, tail light) and the display unit. Each is written the moment you tap it and the scooter reports it back. The quick toggles light up when the scooter reports the function as active. Settings the scooter cannot use are hidden rather than offered in vain; zero-start, region-locked on stock firmware outside the USA, now appears once the patched firmware that unlocks it is flashed.",
       "<b>Your model is detected automatically.</b> The scooter model is read from its serial and shown at the top of the settings, with no manual picking.",
@@ -423,6 +424,7 @@ window.I18N = {
     "patch.disclaimer": "Private ground only. Speed unlock voids the road approval (ABE); the scooter may then no longer be used in public road traffic.",
     "patch.status.download_fail": "Download of {kind} failed. Check your connection.",
     "patch.status.done": "Done. The patched files are in Downloads.",
+    "patch.produces": "delivers controller",
     "patch.toast.ready": "Patched firmware ready - flash it here.",
     "fw.page.title": "Firmware Update",
     "fw.nav.back.icon": "&#8592;",
@@ -567,6 +569,7 @@ window.I18N = {
     "scooter.tune.legal": "<b>Private ground only.</b> With this release the scooter goes faster than it is approved for. That voids the operating permit and the insurance cover; on public roads it is not allowed.",
     "scooter.tune.send": "Send drive mode 4",
     "scooter.tune.status.idle": "Not sent yet.",
+    "scooter.tune.outdated": "This scooter runs an older unlocked firmware that the boost button can open on its own. Rebuild and flash the current firmware in the patcher; the release then works only from this app, and the boost button alone stays at 22 km/h.",
     "scooter.tune.restore.label": "Back to normal",
     "scooter.tune.restore.sub": "Sends the normal drive mode 3",
     "scooter.tune.restore": "Normal",
@@ -606,6 +609,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Boost-sichere NT5-Firmware.</b> Die NT5-Speed-Freigabe öffnet sich nicht mehr über den Boost-Knopf des Rollers - nur ein bewusstes Entsperren in der App hebt den obersten Gang und beim Neustart sperrt er wieder auf 22 km/h. Flash die aktuelle Firmware im Patcher neu, um sie zu bekommen (der Controller meldet dann 5.5.6.6, 5.0.5.0 oder 5.0.5.5); wenn dein Roller am Boost-Knopf allein noch volle Geschwindigkeit gibt, läuft die alte Firmware.",
       "<b>Das hier ist jetzt eine NAVEE-App.</b> Sie verbindet sich mit einem Roller, dessen Bluetooth-Name mit NAVEE beginnt und spricht dessen eigenes Protokoll. Kein Konto, kein Login, keine Benutzer-ID: sie redet direkt mit dem Roller.",
       "<b>Die Einstellungen, die ein NAVEE-Roller wirklich hat.</b> Wegfahrsperre, Tempomat, Traktionskontrolle, Zero-Start, Fahrmodus, Eco-Modus, die Licht-Schalter (Auto-Licht, Tagfahrlicht, Rücklicht) plus die Anzeige-Einheit. Jede wird sofort beim Antippen geschrieben plus der Roller meldet sie zurück. Die Schnellschalter färben sich, sobald der Roller die Funktion als aktiv meldet. Was der Roller nicht annimmt, wird ausgeblendet statt vergeblich angeboten; Zero-Start, auf Serien-Firmware außerhalb der US-Region gesperrt, erscheint jetzt, sobald die gepatchte Firmware geflasht ist, die ihn freischaltet.",
       "<b>Dein Modell wird automatisch erkannt.</b> Das Rollermodell wird aus der Seriennummer gelesen plus oben in den Einstellungen angezeigt, ganz ohne manuelle Auswahl.",
@@ -1024,6 +1028,7 @@ window.I18N = {
     "patch.disclaimer": "Nur auf Privatgelände. Die Entdrosselung hebt die ABE auf; der Roller darf dann nicht mehr im öffentlichen Straßenverkehr genutzt werden.",
     "patch.status.download_fail": "Download von {kind} fehlgeschlagen. Verbindung prüfen.",
     "patch.status.done": "Fertig. Die gepatchten Dateien liegen in Downloads.",
+    "patch.produces": "liefert Controller",
     "patch.toast.ready": "Gepatchte Firmware bereit - hier flashen.",
     "fw.page.title": "Firmware Update",
     "fw.nav.back.icon": "&#8592;",
@@ -1168,6 +1173,7 @@ window.I18N = {
     "scooter.tune.legal": "<b>Nur auf privatem Grund.</b> Mit dieser Freischaltung fährt der Roller schneller als zugelassen. Damit erlischt die Betriebserlaubnis und der Versicherungsschutz; auf öffentlichen Wegen ist das nicht erlaubt.",
     "scooter.tune.send": "Fahrmodus 4 senden",
     "scooter.tune.status.idle": "Noch nicht gesendet.",
+    "scooter.tune.outdated": "Auf diesem Roller läuft eine ältere entdrosselte Firmware, die sich am Boost-Knopf allein öffnen lässt. Bau die aktuelle Firmware im Patcher neu und flashe sie; die Freigabe geht dann nur noch über diese App, der Boost-Knopf allein bleibt bei 22 km/h.",
     "scooter.tune.restore.label": "Zurück auf Normal",
     "scooter.tune.restore.sub": "Sendet den normalen Fahrmodus 3",
     "scooter.tune.restore": "Normal",

@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.34
+- **NT5 speed release is boost-safe now.** The unlock moved off the scooter's own Turbo/boost button to an app-only command, so the boost button alone no longer opens full speed: the scooter stays throttled to 22 km/h until you unlock it in the app, then the boost button reaches the top speed, and it re-locks on every restart. In a check the scooter is genuinely throttled unless the app raised it.
+- **Re-flash once to get it.** The patched controller firmware now reports a new version (5.5.6.6 / 5.0.5.0 / 5.0.5.5). Re-build and flash the current firmware in the patcher to apply the fix. The app flags an old build as bypassable and the patcher shows which controller version it delivers.
+
 ## 1.0.33
 - **Patching limited to confirmed models.** Firmware patching is now restricted to the NT5 family and the XT5 (whose speed release is flash-free), the models confirmed on real hardware. Patching for every other model is disabled in this version while the patches are re-checked. Reading the scooter and the live controls stay available for all models.
 

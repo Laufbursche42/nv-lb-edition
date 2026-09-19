@@ -519,6 +519,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
       <button id="tune-send" class="gs-save-btn" data-i18n="scooter.tune.send">Fahrmodus 4 senden</button>
       <div class="settings-row-sublabel m-6-0-0" id="tune-status" data-i18n="scooter.tune.status.idle">Noch nicht gesendet.</div>
+      <div class="fw-warn m-6-0-0 is-hidden" id="tune-outdated" data-i18n="scooter.tune.outdated">Diese Firmware ist veraltet.</div>
       <div class="settings-row-sublabel m-6-0-0" data-i18n="scooter.tune.gesture">
         Schneller geht es unterwegs mit der Geste: dreimal kurz auf die km/h-VCU-Kachel im Hauptbildschirm tippen schaltet die Freischaltung ein und wieder aus. Die Kachel wird rot, solange sie aktiv ist.
       </div>
@@ -1546,6 +1547,8 @@ function updateBLEUI(data) {
     const spEl = document.getElementById('ble-speed');
     if (spEl) spEl.style.color = _speedReleased ? 'var(--danger)' : '';
   }
+  // Old NT5 latch firmware is bypassable at the boost button: flag it so the owner re-flashes.
+  { const to = document.getElementById('tune-outdated'); if (to) to.classList.toggle('is-hidden', OUTDATED_LATCH_BLDC.indexOf((data.fwBldc || '').trim()) < 0); }
   // Range as the scooter reports it (0x90/0x91), and the max-speed PARAMETER from the 0x70 report -
   // not a session maximum, so it is labelled as a parameter in the grid.
   setTxt('dg-range', Math.round(convDist(data.range)) + ' ' + distUnit());
@@ -3462,10 +3465,12 @@ function wireSpeedRelease() {
 let _speedReleased = (function () { try { return storage.get('lb_speedreleased') === '1'; } catch (e) { return false; } })();
 function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb_speedreleased', on ? '1' : '0'); } catch (e) {} }
 
-// Drive-mode gear byte: patched latch firmware uses 5 unlock / 6 lock; stock XT5 4/3, else 5/2.
-const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0090', '0099', '1118', '7776'];
+// Drive-mode gear byte for non-latch models: stock XT5 4/3, else 5/2. capZ latch is handled in
+// sendSpeedRelease (unlock via app-only nibble 7, lock 6).
+const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0090', '0099', '1118', '7776', '5566', '5050', '5055'];
+// Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
+const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 function speedReleaseGear(on) {
-  if (PATCHED_LATCH_BLDC.includes((liveRaw().fwBldc || '').trim())) return on ? 5 : 6;
   const isXT = naveeIsXT(naveeRealModel());
   if (isXT) return on ? 4 : 3;
   return on ? 5 : 2;
@@ -3477,6 +3482,17 @@ function sendSpeedRelease(on) {
   if (naveeRealModel() === 'UT5 Ultra X') {
     if (typeof LB === 'undefined' || !LB.sendRaw) { showToast(t('msg.app.only.in.app')); return false; }
     LB.sendRaw(naveeNormalHex(0x6d, [0x04, 0x00, on ? 0x04 : 0x03]));
+    setSpeedReleasedFlag(on);
+    setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
+    return true;
+  }
+  const fw = (liveRaw().fwBldc || '').trim();
+  if (PATCHED_LATCH_BLDC.includes(fw)) {
+    if (on && OUTDATED_LATCH_BLDC.includes(fw)) { showToast(t('scooter.tune.outdated'), 6000); return false; }
+    if (on) {
+      if (!pushSetting(NAVEE_CMD.drivemode, 7)) return false;   // app-only unlock (nibble 7)
+      setTimeout(() => { try { pushSetting(NAVEE_CMD.drivemode, 3); } catch (e) {} }, 600);   // back to normal gear; ceiling stays
+    } else if (!pushSetting(NAVEE_CMD.drivemode, 6)) return false;   // lock
     setSpeedReleasedFlag(on);
     setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
     return true;
@@ -4086,6 +4102,7 @@ function fwRunPatcher() {
   if (det.bldc && wantsSpeed) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
   if (!comps.length) { showToast(t('patch.run.noselection'), 3000, 'err'); return; }
   fwState.staged = { meter: null, bldc: null };
+  fwState.producedBldc = null;
   fwState.pendingDownloads = comps.slice();
   fwState.downloading = true;
   document.getElementById('btn-patcher-run').disabled = true;
@@ -4226,6 +4243,7 @@ window.__onFwDownloaded = function(arg) {
     else { fwPatchStatus(t('patch.run.nofw')); }
     return;
   }
+  if (r.kind === 'bldc' && r.mark) fwState.producedBldc = r.mark;
   const patchedName = fwPatchedName(m.name);
   try { LB.fwStagePatched(fwBufToB64(r.bytes), patchedName, r.kind); }
   catch (e) { showToast(tf('msg.error.generic', { e: e })); }
@@ -4248,7 +4266,7 @@ window.__onFwStaged = function(arg) {
     if (fwState.pendingDownloads.length) { fwDownloadNext(); }
     else {
       fwState.downloading = false;
-      fwPatchStatus(t('patch.status.done'));
+      fwPatchStatus(t('patch.status.done') + (fwState.producedBldc ? ' - ' + t('patch.produces') + ' ' + fwState.producedBldc : ''));
       document.getElementById('btn-patcher-run').disabled = false;
       fwHandoffToFlasher();
     }
