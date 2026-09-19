@@ -4,6 +4,7 @@
 
 package com.lb.edition;
 
+import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -419,6 +420,7 @@ final class NaveeDfuEngine {
     }
 
     // AES-128-ECB is fixed by the NAVEE challenge (one 16-byte block); changing it breaks auth.
+    @SuppressLint("GetInstance")
     private static byte[] aesEcb(byte[] key16, byte[] block16) {
         try {
             Cipher c = Cipher.getInstance("AES/ECB/NoPadding");

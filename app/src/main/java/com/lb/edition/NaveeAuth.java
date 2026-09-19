@@ -4,6 +4,7 @@
 
 package com.lb.edition;
 
+import android.annotation.SuppressLint;
 import android.util.Log;
 
 import javax.crypto.Cipher;
@@ -55,6 +56,8 @@ final class NaveeAuth {
         return b;
     }
 
+    // OEM protocol mandates AES-ECB (single 16-byte block); changing the mode breaks auth.
+    @SuppressLint("GetInstance")
     static byte[] aesEcb(byte[] key16, byte[] block16) {
         try {
             Cipher c = Cipher.getInstance("AES/ECB/NoPadding");
