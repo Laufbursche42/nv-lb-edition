@@ -45,6 +45,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3.2.2
+        with:
+          packages: 'platform-tools'
 
       - name: Set up Gradle (enables the Gradle build/dependency cache)
         uses: gradle/actions/setup-gradle@v4
