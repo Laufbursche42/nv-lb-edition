@@ -87,7 +87,7 @@ jobs:
 
       - name: Set up Android SDK
         if: steps.exists.outputs.exists == 'false'
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v3.2.2
 
       - name: Set up Gradle
         if: steps.exists.outputs.exists == 'false'
