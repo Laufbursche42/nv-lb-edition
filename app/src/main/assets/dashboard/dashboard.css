@@ -617,6 +617,11 @@ html, body {
   background: color-mix(in srgb, var(--danger) 12%, transparent); font-size: var(--fs-sm); line-height: 1.5;
 }
 .fw-warn b { color: var(--danger); }
+.fw-danger {
+  border: 1px solid var(--danger); border-radius: 10px; padding: 10px 12px; margin-bottom: 4px;
+  background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger);
+  font-size: var(--fs-sm); line-height: 1.5; font-weight: 700;
+}
 /* ── Action buttons (shared base) ────────────────────────────
    ONE base for every full-tap "action" button: firmware pick/start/cancel, connect
    scan/disconnect, streaming start/stop plus the per-gear/settings Save. It holds the shared look

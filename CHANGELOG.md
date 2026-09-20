@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.38
+- **Untested models are clearly flagged.** Patching firmware for, or connecting, a model that is not yet confirmed on real hardware (the ST3/GT3 family) now shows a red warning and requires an extra confirmation before the app flashes or tunes it. This covers the web patcher, the flasher and the speed release, so an experimental build is never written or run by accident.
+
 ## 1.0.37
 - **ST3/GT3 family patchable (experimental).** ST3 Pro, ST3, GT3, GT3 Pro and GT3 Max can now be patched (speed, cruise, zero start, beeps). It is **not yet confirmed on real hardware**: the build and static checks pass, but a failed flash on these controllers is not recoverable over the air - it needs SWD or a controller swap. Only flash them if you can recover the controller. The controller latch cave is now declared inside the image length so it is programmed and CRC-covered (the earlier out-of-bounds placement is what bricked ST3 Pro and GT3 Pro).
 

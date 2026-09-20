@@ -520,6 +520,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <button id="tune-send" class="gs-save-btn" data-i18n="scooter.tune.send">Fahrmodus 4 senden</button>
       <div class="settings-row-sublabel m-6-0-0" id="tune-status" data-i18n="scooter.tune.status.idle">Noch nicht gesendet.</div>
       <div class="fw-warn m-6-0-0 is-hidden" id="tune-outdated" data-i18n="scooter.tune.outdated">Diese Firmware ist veraltet.</div>
+      <div class="fw-danger m-6-0-0 is-hidden" id="tune-untested" data-i18n="scooter.untested.scooter">Ungetestetes Modell.</div>
       <div class="settings-row-sublabel m-6-0-0" data-i18n="scooter.tune.gesture">
         Schneller geht es unterwegs mit der Geste: dreimal kurz auf die km/h-VCU-Kachel im Hauptbildschirm tippen schaltet die Freischaltung ein und wieder aus. Die Kachel wird rot, solange sie aktiv ist.
       </div>
@@ -808,6 +809,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="fw-warn" data-i18n="fw.warn.intro">
       <b>Erst lesen.</b> Diese Seite schreibt eine Firmware per Bluetooth auf den Roller. Während des Flashens den Roller eingeschaltet und in Reichweite lassen, die App im Vordergrund halten und den Roller nicht ausschalten. Wird der Vorgang unterbrochen, bleibt der Roller im Update-Modus und kann einfach neu geflasht werden. Nur eine Datei flashen, die zu deinem Roller passt.
     </div>
+    <div class="fw-danger is-hidden" id="fw-untested" data-i18n="scooter.untested.fw">Ungetestete Firmware.</div>
 
     <div class="settings-group pt-6">
       <div class="settings-group-title" data-i18n="fw.section.file.title">Firmware</div>
@@ -1549,6 +1551,8 @@ function updateBLEUI(data) {
   }
   // Old NT5 latch firmware is bypassable at the boost button: flag it so the owner re-flashes.
   { const to = document.getElementById('tune-outdated'); if (to) to.classList.toggle('is-hidden', OUTDATED_LATCH_BLDC.indexOf((data.fwBldc || '').trim()) < 0); }
+  // Untested model: flag when an unconfirmed (experimental) scooter is connected.
+  { const tu = document.getElementById('tune-untested'); if (tu) tu.classList.toggle('is-hidden', !isExperimentalScooter()); }
   // Range as the scooter reports it (0x90/0x91), and the max-speed PARAMETER from the 0x70 report -
   // not a session maximum, so it is labelled as a parameter in the grid.
   setTxt('dg-range', Math.round(convDist(data.range)) + ' ' + distUnit());
@@ -3430,7 +3434,7 @@ function wireSpeedRelease() {
     if (!naveeGuard()) return;
     document.getElementById('confirm-title').textContent = t('msg2.navee.tune.confirm.title');
     const warn = document.getElementById('confirm-warn');
-    if (warn) { warn.textContent = t('msg2.navee.tune.confirm.warn'); warn.style.display = 'block'; }
+    if (warn) { warn.textContent = (isExperimentalScooter() ? t('scooter.untested.scooter') + '  ' : '') + t('msg2.navee.tune.confirm.warn'); warn.style.display = 'block'; }
     document.getElementById('confirm-msg').textContent = t('msg2.navee.tune.confirm.body');
     document.getElementById('confirm-ok').textContent = t('msg2.navee.tune.confirm.ok');
     state.confirmCb = () => {
@@ -3470,6 +3474,9 @@ function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb
 const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0090', '0099', '1118', '7776', '5566', '5050', '5055'];
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
+// Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
+const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max
+function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
   const isXT = naveeIsXT(naveeRealModel());
   if (isXT) return on ? 4 : 3;
@@ -3968,6 +3975,7 @@ const fwState = {
   selected: null,                           // chosen feature tags for this run (null = all)
   staged: { meter: null, bldc: null },      // { name } per component once written and staged
   flashQueue: [], flashing: null,           // sequential meter -> bldc flash
+  experimental: false,                      // staged image is untested (not hardware-confirmed)
 };
 
 /* ── Model detection from the live serial pid plus the running controller version ── */
@@ -4103,6 +4111,7 @@ function fwRunPatcher() {
   if (!comps.length) { showToast(t('patch.run.noselection'), 3000, 'err'); return; }
   fwState.staged = { meter: null, bldc: null };
   fwState.producedBldc = null;
+  fwState.experimental = false;
   fwState.pendingDownloads = comps.slice();
   fwState.downloading = true;
   document.getElementById('btn-patcher-run').disabled = true;
@@ -4152,6 +4161,7 @@ function fwStagedList() {
   return out;
 }
 function fwRenderStaged() {
+  const un = document.getElementById('fw-untested'); if (un) un.classList.toggle('is-hidden', !fwState.experimental);
   const info = document.getElementById('fw-fileinfo');
   if (!info) return;
   const list = fwStagedList();
@@ -4173,6 +4183,7 @@ window.__onFwPicked = function(arg) {
     const key = window.NVFW && window.NVFW.identify ? window.NVFW.identify(new Uint8Array(fwB64ToBuf(m.b64))) : null;
     if (!key || !window.NVFW.IMAGES[key]) { showToast(t('fw.pick.unknown'), 4000, 'err'); return; }
     kind = window.NVFW.IMAGES[key].kind === 'bldc' ? 'bldc' : 'meter';
+    if (window.NVFW.isExperimental && window.NVFW.isExperimental(key)) fwState.experimental = true;
   } catch (e) { showToast(t('fw.pick.unknown'), 4000, 'err'); return; }
   try { LB.fwStageRaw(m.b64, m.name, kind); } catch (e) { showToast(tf('msg.error.generic', { e: e })); }
 };
@@ -4244,6 +4255,7 @@ window.__onFwDownloaded = function(arg) {
     return;
   }
   if (r.kind === 'bldc' && r.mark) fwState.producedBldc = r.mark;
+  if (r.experimental) fwState.experimental = true;
   const patchedName = fwPatchedName(m.name);
   try { LB.fwStagePatched(fwBufToB64(r.bytes), patchedName, r.kind); }
   catch (e) { showToast(tf('msg.error.generic', { e: e })); }
@@ -4301,7 +4313,7 @@ function fwStart() {
   if (!cons || !cons.checked) { showToast(t('fw.hint.consent'), 3000, 'err'); return; }
   document.getElementById('confirm-title').textContent = t('fw.confirm.title');
   const warn = document.getElementById('confirm-warn');
-  if (warn) { warn.textContent = t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block'; }
+  if (warn) { warn.textContent = (fwState.experimental ? t('scooter.untested.fw') + '  ' : '') + t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block'; }
   document.getElementById('confirm-msg').textContent = tf('fw.confirm.body', { file: list.map(x => x.name).join(', ') });
   document.getElementById('confirm-ok').textContent = t('fw.confirm.ok');
   state.confirmCb = () => { fwState.flashQueue = list.map(x => x.kind); fwFlashNext(); };

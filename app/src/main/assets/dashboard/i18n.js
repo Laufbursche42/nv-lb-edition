@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Untested models are clearly flagged.</b> When you patch firmware or connect a scooter that is not yet confirmed on real hardware (the ST3/GT3 family), the app shows a red warning and asks for an extra confirmation before it flashes or tunes - so an experimental build is never written or run by accident.",
       "<b>ST3/GT3 family patchable (experimental).</b> ST3 Pro, ST3, GT3, GT3 Pro and GT3 Max can now be patched. Not yet confirmed on real hardware - a failed flash on these controllers is not recoverable over the air (SWD or a controller swap), so only flash them if you can recover the controller.",
       "<b>Boost-safe NT5 firmware.</b> The NT5 speed release no longer opens from the scooter's own boost button - only a deliberate unlock in the app raises the top gear, and it re-locks to 22 km/h on every restart. Re-flash the current firmware in the patcher to get it (the controller then reports 5.5.6.6, 5.0.5.0 or 5.0.5.5); if your scooter still opens full speed on the boost button alone, it is on the old build.",
       "<b>This is a NAVEE app now.</b> It connects to a scooter whose Bluetooth name starts with NAVEE and speaks that scooter's own protocol. No account, no login, no user id: it talks to the scooter directly.",
@@ -571,6 +572,8 @@ window.I18N = {
     "scooter.tune.send": "Send drive mode 4",
     "scooter.tune.status.idle": "Not sent yet.",
     "scooter.tune.outdated": "This scooter runs an older unlocked firmware that the boost button can open on its own. Rebuild and flash the current firmware in the patcher; the release then works only from this app, and the boost button alone stays at 22 km/h.",
+    "scooter.untested.fw": "Untested firmware: this model has not been confirmed on recoverable hardware. Flashing may permanently brick the scooter - only continue if you have a recovery path (SWD or controller swap).",
+    "scooter.untested.scooter": "Untested model: support for this scooter is not confirmed on hardware yet. Patching or tuning it is at your own risk.",
     "scooter.tune.restore.label": "Back to normal",
     "scooter.tune.restore.sub": "Sends the normal drive mode 3",
     "scooter.tune.restore": "Normal",
@@ -610,6 +613,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Ungetestete Modelle werden klar markiert.</b> Wenn du Firmware patchst oder einen Roller verbindest, der noch nicht an echter Hardware bestätigt ist (die ST3/GT3-Familie), zeigt die App eine rote Warnung und fragt vor dem Flashen oder Tunen extra nach - damit ein experimenteller Build nie versehentlich geschrieben oder gefahren wird.",
       "<b>ST3/GT3-Familie patchbar (experimentell).</b> ST3 Pro, ST3, GT3, GT3 Pro plus GT3 Max lassen sich jetzt patchen. Noch nicht auf echter Hardware bestätigt - ein Fehlflash ist bei diesen Controllern nicht per Funk rückholbar (SWD oder Controller-Tausch), also flash sie nur, wenn du den Controller retten kannst.",
       "<b>Boost-sichere NT5-Firmware.</b> Die NT5-Speed-Freigabe öffnet sich nicht mehr über den Boost-Knopf des Rollers - nur ein bewusstes Entsperren in der App hebt den obersten Gang und beim Neustart sperrt er wieder auf 22 km/h. Flash die aktuelle Firmware im Patcher neu, um sie zu bekommen (der Controller meldet dann 5.5.6.6, 5.0.5.0 oder 5.0.5.5); wenn dein Roller am Boost-Knopf allein noch volle Geschwindigkeit gibt, läuft die alte Firmware.",
       "<b>Das hier ist jetzt eine NAVEE-App.</b> Sie verbindet sich mit einem Roller, dessen Bluetooth-Name mit NAVEE beginnt und spricht dessen eigenes Protokoll. Kein Konto, kein Login, keine Benutzer-ID: sie redet direkt mit dem Roller.",
@@ -1176,6 +1180,8 @@ window.I18N = {
     "scooter.tune.send": "Fahrmodus 4 senden",
     "scooter.tune.status.idle": "Noch nicht gesendet.",
     "scooter.tune.outdated": "Auf diesem Roller läuft eine ältere entdrosselte Firmware, die sich am Boost-Knopf allein öffnen lässt. Bau die aktuelle Firmware im Patcher neu und flashe sie; die Freigabe geht dann nur noch über diese App, der Boost-Knopf allein bleibt bei 22 km/h.",
+    "scooter.untested.fw": "Ungetestete Firmware: Dieses Modell ist nicht auf rückholbarer Hardware bestätigt. Ein Flash kann den Roller dauerhaft unbrauchbar machen - nur fortfahren wenn du einen Recovery-Weg hast (SWD oder Controller-Tausch).",
+    "scooter.untested.scooter": "Ungetestetes Modell: Die Unterstützung für diesen Roller ist noch nicht an Hardware bestätigt. Patchen oder Tunen auf eigenes Risiko.",
     "scooter.tune.restore.label": "Zurück auf Normal",
     "scooter.tune.restore.sub": "Sendet den normalen Fahrmodus 3",
     "scooter.tune.restore": "Normal",

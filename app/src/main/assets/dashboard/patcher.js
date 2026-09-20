@@ -1122,6 +1122,11 @@ const IMAGES = {
 // blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
 const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3']);
 
+// Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
+// plus an extra confirmation before creating or flashing these images.
+const EXPERIMENTAL = new Set(['bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3']);
+function isExperimental(key) { return EXPERIMENTAL.has(key); }
+
 function identify(u8) {
   for (const key of Object.keys(IMAGES)) if (FLASH_ENABLED.has(key) && IMAGES[key].match(u8)) return key;
   return null;
@@ -1211,6 +1216,7 @@ function patchFirmware(arrayBuffer, selected) {
     label: spec.label,
     kind: spec.kind,
     mark: spec.mark || null,
+    experimental: isExperimental(key),
     applied: applied,
     nothingToPatch: applied.length === 0,
     bytes: u8,
@@ -1218,8 +1224,8 @@ function patchFirmware(arrayBuffer, selected) {
 }
 
 if (typeof window !== 'undefined') {
-  window.NVFW = { patchFirmware, identify, imageFeatures, crc16Xmodem, IMAGES };
+  window.NVFW = { patchFirmware, identify, imageFeatures, isExperimental, crc16Xmodem, IMAGES };
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { patchFirmware, identify, imageFeatures, featureOf, crc16Xmodem, beRead, beWrite, IMAGES };
+  module.exports = { patchFirmware, identify, imageFeatures, isExperimental, featureOf, crc16Xmodem, beRead, beWrite, IMAGES };
 }
