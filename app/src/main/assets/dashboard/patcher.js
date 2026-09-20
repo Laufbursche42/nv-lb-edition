@@ -344,6 +344,7 @@ const IMAGES = {
     verify: { size: 0xd080, lenOff: 0x84, lenStock: 0x0000cd34, crcOff: 0xb0, crcStock: 0x4805 },
     reseal: bldcResealLz,
     patches: [
+      { off: 0x84, from: [0x00, 0x00, 0xcd, 0x34], to: [0x00, 0x00, 0xcd, 0x64], id: 'len-extend-cave' }, // declare the latch cave inside the image length so it is programmed + CRC-covered
       { off: 0x4f3c, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-default' }, // drop default-path store to 0x2000035a
       { off: 0x4f58, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-matched' }, // drop matched-path store to 0x2000035a
       { off: 0x7d66, from: [0x09, 0x0f, 0x11, 0x70], to: [0x05, 0xf0, 0x6b, 0xb8], id: 'latch-detour' }, // drive-nibble block -> cave latch
@@ -404,6 +405,7 @@ const IMAGES = {
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000b9a8, crcOff: 0xb0, crcStock: 0x599b },
     reseal: bldcResealLz,
     patches: [
+      { off: 0x84, from: [0x00, 0x00, 0xb9, 0xa8], to: [0x00, 0x00, 0xb9, 0xd4], id: 'len-extend-cave' }, // declare the latch cave inside the image length so it is programmed + CRC-covered
       { off: 0x486c, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-a' },
       { off: 0x4888, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-b' },
       { off: 0x765e, from: [0x09, 0x0f, 0x11, 0x70], to: [0x04, 0xf0, 0x27, 0xba], id: 'latch-detour' },
