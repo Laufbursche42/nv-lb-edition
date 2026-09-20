@@ -424,6 +424,7 @@ const IMAGES = {
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b304, crcOff: 0xb0, crcStock: 0xfdb3 },
     reseal: bldcResealLz,
     patches: [
+      { off: 0x84, from: [0x00, 0x00, 0xb3, 0x04], to: [0x00, 0x00, 0xb3, 0x28], id: 'len-extend-cave' }, // declare the latch cave inside the image length
       { off: 0x4570, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-default' },
       { off: 0x458c, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-matched' },
       { off: 0x719a, from: [0x09, 0x0f, 0x11, 0x70], to: [0x04, 0xf0, 0x33, 0xb9], id: 'latch-detour' },
@@ -442,6 +443,7 @@ const IMAGES = {
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b348, crcOff: 0xb0, crcStock: 0x5ce3 },
     reseal: bldcResealLz,
     patches: [
+      { off: 0x84, from: [0x00, 0x00, 0xb3, 0x48], to: [0x00, 0x00, 0xb3, 0x6c], id: 'len-extend-cave' }, // declare the latch cave inside the image length
       { off: 0x4588, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-default' },
       { off: 0x45a4, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-matched' },
       { off: 0x71c4, from: [0x09, 0x0f, 0x11, 0x70], to: [0x04, 0xf0, 0x40, 0xb9], id: 'latch-detour' },
@@ -460,6 +462,7 @@ const IMAGES = {
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b3e4, crcOff: 0xb0, crcStock: 0x21e9 },
     reseal: bldcResealLz,
     patches: [
+      { off: 0x84, from: [0x00, 0x00, 0xb3, 0xe4], to: [0x00, 0x00, 0xb4, 0x08], id: 'len-extend-cave' }, // declare the latch cave inside the image length
       { off: 0x4624, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-default' },
       { off: 0x4640, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-matched' },
       { off: 0x7260, from: [0x09, 0x0f, 0x11, 0x70], to: [0x04, 0xf0, 0x40, 0xb9], id: 'latch-detour' },
@@ -1117,11 +1120,7 @@ const IMAGES = {
 // Identify which image this is, or null.
 // Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is
 // blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
-const FLASH_ENABLED = new Set([
-  'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
-  'meterXT5',                                                     // XT5 meter
-  'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
-]);
+const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3']);
 
 function identify(u8) {
   for (const key of Object.keys(IMAGES)) if (FLASH_ENABLED.has(key) && IMAGES[key].match(u8)) return key;

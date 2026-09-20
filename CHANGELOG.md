@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.37
+- **ST3/GT3 family patchable (experimental).** ST3 Pro, ST3, GT3, GT3 Pro and GT3 Max can now be patched (speed, cruise, zero start, beeps). It is **not yet confirmed on real hardware**: the build and static checks pass, but a failed flash on these controllers is not recoverable over the air - it needs SWD or a controller swap. Only flash them if you can recover the controller. The controller latch cave is now declared inside the image length so it is programmed and CRC-covered (the earlier out-of-bounds placement is what bricked ST3 Pro and GT3 Pro).
+
 ## 1.0.34
 - **NT5 speed release is boost-safe now.** The unlock moved off the scooter's own Turbo/boost button to an app-only command, so the boost button alone no longer opens full speed: the scooter stays throttled to 22 km/h until you unlock it in the app, then the boost button reaches the top speed, and it re-locks on every restart. In a check the scooter is genuinely throttled unless the app raised it.
 - **Re-flash once to get it.** The patched controller firmware now reports a new version (5.5.6.6 / 5.0.5.0 / 5.0.5.5). Re-build and flash the current firmware in the patcher to apply the fix. The app flags an old build as bypassable and the patcher shows which controller version it delivers.

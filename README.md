@@ -46,19 +46,20 @@ The app was built and checked against the **NAVEE XT5 family**. It connects to a
 
 Other NAVEE models that use the same protocol are **expected** to work, but they are **not verified** - nobody has confirmed them on hardware. Treat anything outside the XT5 family as untested: the connection and the read-only pages are the likely case, while a setting your model does not implement is simply ignored by the scooter. Which functions a given unit supports depends on its firmware, so a switch that has no effect on your scooter means the firmware did not accept it, not that the app failed to send it.
 
-Firmware patching is currently limited to the models confirmed on real hardware: the **NT5 family** and the **XT5**. Every other NAVEE model can still connect, read its status and use the live controls, but firmware patching for those models is **disabled in this version** while the patches are re-checked.
+Firmware patching is confirmed on real hardware for the **NT5 family** and the **XT5**. The **ST3/GT3 family** (ST3 Pro, ST3, GT3, GT3 Pro, GT3 Max) is now patchable too, but **experimental and not yet confirmed on hardware** - only flash it if you can recover the controller (SWD or a spare). Every other NAVEE model can still connect, read its status and use the live controls, but firmware patching for those models is **disabled in this version** while the patches are re-checked.
 
 | Model | Speed | Kick-start | Cruise | Warning beeps |
 | --- | --- | --- | --- | --- |
 | NT5 Max, Max+, Turbo, Ultra | patcher | patcher | patcher | patcher |
 | NT5 Ultra X | patcher | stock | stock | patcher |
 | XT5 Pro, Ultra, Max | flash-free | patcher | stock | patcher |
+| ST3 Pro, ST3, GT3, GT3 Pro, GT3 Max (experimental, untested) | patcher | patcher | patcher | patcher |
 
 Legend: `patcher` a switchable lock/unlock patch (boots throttled to ~22 km/h, opens the top gear per ride, re-locks on restart); `flash-free` lifted live over Bluetooth per ride, no flash; `stock` already works in every region with no patch.
 
 - **Pick what to patch, keep your beeps.** After it detects your model the patcher shows a checkbox per feature - speed, cruise, zero start plus the individual warning beeps - and writes only the ticked ones. Nothing is silenced by default, so the confirmation beep stays. A private-ground / ABE disclaimer sits before the patch button, in the app and in the web patcher.
 
-The XT5 speed release is flash-free: it writes nothing to the meter or the controller and reverts on the next power cycle. The NT5 firmware patch is confirmed on hardware and is reversible by flashing the stock firmware back. Read the Disclaimer before use.
+The XT5 speed release is flash-free: it writes nothing to the meter or the controller and reverts on the next power cycle. The NT5 firmware patch is confirmed on hardware and is reversible by flashing the stock firmware back. The **ST3/GT3 family is experimental**: built and statically verified but **not yet confirmed on hardware**, and a failed flash there is not recoverable over the air (SWD or a controller swap) - only flash it if you can recover the unit. Read the Disclaimer before use.
 
 ## Restore the original firmware
 
