@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>NT5 Max: optional full launch torque.</b> The NT5 Max patcher now offers a build choice. Standard (tested) unlocks speed only, and launch current stays what any unlocked scooter delivers (about 18 A). Full - 22 A (untested) also restores the strong pull-away the stock firmware only gives when locked. Full extends the firmware into a reserved area, so it is not hardware-confirmed and can brick the controller - the red untested warning plus an extra confirmation apply, and the lock stays available in both builds.",
       "<b>Untested models are clearly flagged.</b> When you patch firmware or connect a scooter that is not yet confirmed on real hardware (the ST3/GT3 family), the app shows a red warning and asks for an extra confirmation before it flashes or tunes - so an experimental build is never written or run by accident.",
       "<b>ST3/GT3 family patchable (experimental).</b> ST3 Pro, ST3, GT3, GT3 Pro and GT3 Max can now be patched. Not yet confirmed on real hardware - a failed flash on these controllers is not recoverable over the air (SWD or a controller swap), so only flash them if you can recover the controller.",
       "<b>Boost-safe NT5 firmware.</b> The NT5 speed release no longer opens from the scooter's own boost button - only a deliberate unlock in the app raises the top gear, and it re-locks to 22 km/h on every restart. Re-flash the current firmware in the patcher to get it (the controller then reports 5.5.6.6, 5.0.5.0 or 5.0.5.5); if your scooter still opens full speed on the boost button alone, it is on the old build.",
@@ -418,6 +419,8 @@ window.I18N = {
     "patch.status.skip": "No patch for {kind} on this model - skipped.",
     "patch.features.title": "What to patch",
     "feat.speed": "Unlock speed",
+    "feat.launch.full": "Full launch torque - 22 A (untested)",
+    "feat.launch.expl": "Restores the strong pull-away the stock firmware only gives when locked (about 22 A instead of 18 A), on top of the speed unlock. It extends the firmware into a reserved area, so it is not hardware-confirmed and can brick the controller - only pick it if you can recover the controller (SWD or swap). Leave it off for the tested speed-only build. The lock stays available either way.",
     "feat.cruise": "Cruise control",
     "feat.kickstart": "Kick-start (zero start)",
     "feat.beep-overspeed": "Silence over-speed warning",
@@ -613,6 +616,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>NT5 Max: optional volles Anfahr-Drehmoment.</b> Der NT5-Max-Patcher bietet jetzt eine Build-Wahl. Standard (getestet) entsperrt nur die Geschwindigkeit, der Anfahrstrom bleibt wie bei jedem entsperrten Roller (rund 18 A). Voll - 22 A (ungetestet) stellt zusätzlich die kräftige Beschleunigung wieder her, die die Stock-Firmware nur im gesperrten Zustand gibt. Voll erweitert die Firmware in einen reservierten Bereich, ist also nicht an Hardware bestätigt und kann den Controller bricken - die rote Ungetestet-Warnung plus eine Extra-Bestätigung greifen, die Sperre bleibt in beiden Builds erhalten.",
       "<b>Ungetestete Modelle werden klar markiert.</b> Wenn du Firmware patchst oder einen Roller verbindest, der noch nicht an echter Hardware bestätigt ist (die ST3/GT3-Familie), zeigt die App eine rote Warnung und fragt vor dem Flashen oder Tunen extra nach - damit ein experimenteller Build nie versehentlich geschrieben oder gefahren wird.",
       "<b>ST3/GT3-Familie patchbar (experimentell).</b> ST3 Pro, ST3, GT3, GT3 Pro plus GT3 Max lassen sich jetzt patchen. Noch nicht auf echter Hardware bestätigt - ein Fehlflash ist bei diesen Controllern nicht per Funk rückholbar (SWD oder Controller-Tausch), also flash sie nur, wenn du den Controller retten kannst.",
       "<b>Boost-sichere NT5-Firmware.</b> Die NT5-Speed-Freigabe öffnet sich nicht mehr über den Boost-Knopf des Rollers - nur ein bewusstes Entsperren in der App hebt den obersten Gang und beim Neustart sperrt er wieder auf 22 km/h. Flash die aktuelle Firmware im Patcher neu, um sie zu bekommen (der Controller meldet dann 5.5.6.6, 5.0.5.0 oder 5.0.5.5); wenn dein Roller am Boost-Knopf allein noch volle Geschwindigkeit gibt, läuft die alte Firmware.",
@@ -1026,6 +1030,8 @@ window.I18N = {
     "patch.status.skip": "Kein Patch für {kind} bei diesem Modell - übersprungen.",
     "patch.features.title": "Was patchen",
     "feat.speed": "Speed entsperren",
+    "feat.launch.full": "Volles Anfahr-Drehmoment - 22 A (ungetestet)",
+    "feat.launch.expl": "Stellt die kräftige Beschleunigung wieder her, die die Stock-Firmware nur im gesperrten Zustand gibt (rund 22 A statt 18 A), zusätzlich zur Entsperrung. Erweitert die Firmware in einen reservierten Bereich, ist also nicht an Hardware bestätigt und kann den Controller bricken - nur wählen wenn du den Controller retten kannst (SWD oder Tausch). Für den getesteten Speed-only-Build ausgelassen lassen. Die Sperre bleibt in beiden Fällen erhalten.",
     "feat.cruise": "Tempomat",
     "feat.kickstart": "Kickstart (Zero-Start)",
     "feat.beep-overspeed": "Warnton (Tempo) stumm",

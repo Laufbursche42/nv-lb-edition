@@ -4062,7 +4062,11 @@ function patchFeatureList(det) {
 }
 function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v === k ? f : v; }
 function selectedPatchFeatures() {
-  return Array.from(document.querySelectorAll('#patch-features input[type=checkbox]:checked')).map(c => c.value);
+  return Array.from(document.querySelectorAll('#patch-features input[type=checkbox]:checked')).map(c => c.value).filter(v => v !== 'full');
+}
+function selectedPatchVariant() {   // NT5 Max full-torque build variant vs the standard speed-only build
+  const cb = document.getElementById('patch-launch-full');
+  return (cb && cb.checked) ? 'full' : 'std';
 }
 function hidePatchFeatures() {
   const b = document.getElementById('patch-features'); if (b) b.classList.add('is-hidden');
@@ -4087,6 +4091,17 @@ function renderPatchFeatures(det) {
         lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + patchFeatureLabel(f)));
         box.appendChild(lab);
       }
+      // NT5 Max (9301): optional full-torque build variant (restores the launch current, untested).
+      if (det.bldc && det.id === '9301') {
+        const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '10px 0 4px';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'patch-launch-full'; cb.value = 'full';
+        lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + t('feat.launch.full')));
+        box.appendChild(lab);
+        const note = document.createElement('div'); note.className = 'patch-launch-note';
+        note.style.fontSize = '12px'; note.style.opacity = '0.85'; note.style.margin = '0 0 6px'; note.style.lineHeight = '1.45';
+        note.textContent = t('feat.launch.expl');
+        box.appendChild(note);
+      }
     }
   }
   if (disc) {
@@ -4102,6 +4117,7 @@ function fwRunPatcher() {
   const det = fwState.model;
   if (!det || det.state !== 'ok') { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
   fwState.selected = selectedPatchFeatures();
+  fwState.variant = selectedPatchVariant();           // std (speed only) vs full (speed + launch torque, untested)
   const sel = fwState.selected;
   const wantsSpeed = sel.indexOf('speed') >= 0;      // the only bldc-side feature
   const wantsMeter = sel.some(f => f !== 'speed');   // any meter-side feature (cruise/kickstart/beep-*)
@@ -4236,7 +4252,7 @@ window.__onFwDownloaded = function(arg) {
   } catch (e) { /* fall through: patchFirmware surfaces any real error below */ }
   fwPatchStatus(tf('patch.status.patch', { kind: kind }));
   let r;
-  try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64), fwState.selected); }
+  try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64), fwState.selected, fwState.variant); }
   catch (e) {
     fwState.downloading = false;
     fwPatchStatus(t('fw.patch.error') + ' ' + (e && e.message ? e.message : e));

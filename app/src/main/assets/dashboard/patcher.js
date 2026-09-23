@@ -287,6 +287,35 @@ const IMAGES = {
     match: (u8) => u8.length === 0xc080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x00, 0x06]) && beRead(u8, 0xb0, 2) === 0x122b, // size+CRC pin (verword 06 also on S60 0xa080)
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000bf40, crcOff: 0xb0, crcStock: 0x122b },
     reseal: bldcResealLz,
+    // Two build variants selectable in the UI. Default 'patches' = std (speed unlock only, tested).
+    // 'full' additionally restores the stock low-speed torque mode when unlocked (launch current),
+    // via a tail cave; it extends the declared length, so it is experimental until hardware-confirmed.
+    variants: {
+      full: {
+        mark: '5.6.6.6',
+        experimental: true,
+        patches: [
+          { off: 0x84, from: [0x00, 0x00, 0xbf, 0x40], to: [0x00, 0x00, 0xbf, 0x80], id: 'len-extend-cave' }, // declared length covers the tail cave
+          { off: 0x4be4, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-a' }, // drop region-init store to capZ
+          { off: 0x4c00, from: [0x02, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-b' },
+          { off: 0x4bda, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'eco-nop-matcher-a' }, // drop region-init store to eco
+          { off: 0x4bf4, from: [0x13, 0x80], to: [0x00, 0xbf], id: 'eco-nop-matcher-b' },
+          { off: 0x3a2e, from: [0x06, 0xd1], to: [0x00, 0xbf], id: 'launch-degate' }, // run the mode-2 launch setpoint (298) unlocked
+          { off: 0x7d18, from: [0x6b, 0xd1], to: [0x00, 0xbf], id: 'modeforce-degate' }, // run the stock mode-2 force unlocked
+          { off: 0x7cf8, from: [0xc3, 0x78, 0x67, 0x49], to: [0x04, 0xf0, 0xa2, 0xb9], id: 'latch-detour' }, // byte3 read -> b.w cave
+          { off: 0xc040,
+            from: [0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff],
+            to:   [0xc3,0x78,0x3a,0x0e,0x12,0x0f,0x07,0x2a, 0x04,0xd0,0x06,0x2a,0x09,0xd1,0x40,0xf2, 0xb8,0x12,0x01,0xe0,0x40,0xf2,0x20,0x32, 0x40,0xf2,0x5a,0x36,0xc2,0xf2,0x00,0x06, 0x32,0x80,0x40,0xf2,0x48,0x21,0xc2,0xf2, 0x00,0x01,0xfb,0xf7,0x47,0xbe],
+            id: 'latch-cave' }, // nibble 7 -> capZ=800, nibble 6 -> capZ=440, replay displaced insns, return
+          { off: 0x110,
+            from: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            to:   [0x03, 0x48, 0xc8, 0x21, 0x89, 0x00, 0x01, 0x80, 0x41, 0x80, 0x02, 0x48, 0x00, 0x47, 0x00, 0x00, 0x58, 0x03, 0x00, 0x20, 0x49, 0xac, 0x00, 0x00],
+            id: 'capz-boot-stub' }, // seed capZ + eco = 800 (unlocked start), then jump real main
+          { off: 0x1cc, from: [0x49, 0xac, 0x00, 0x00], to: [0x11, 0x00, 0x00, 0x00], id: 'capz-boot-thunk' },
+          { off: 0x8532, from: [0x30, 0x23, 0x03, 0x71, 0x43, 0x71, 0x83, 0x71, 0x36, 0x23, 0xc3, 0x71], to: [0x35, 0x23, 0x03, 0x71, 0x36, 0x23, 0x43, 0x71, 0x83, 0x71, 0xc3, 0x71], id: 'version-marker' }, // fwBldc "0006" -> "5666"
+        ],
+      },
+    },
     patches: [
       // capZ lock/unlock, boot-throttled, latched, TOP GEAR ONLY.
       { off: 0x4be4, from: [0x01, 0x80], to: [0x00, 0xbf], id: 'capz-nop-matcher-a' },
@@ -1196,7 +1225,16 @@ function imageFeatures(u8) {
 
 // Take the stock .bin (ArrayBuffer), return the patched+resealed image. Throws on an unrecognised,
 // wrong or already-patched image (never returns a damaged file).
-function patchFirmware(arrayBuffer, selected) {
+// Selectable build variants of an identified image (e.g. std vs full-torque), for the UI to offer a
+// picker. Returns null when the image has only the default build.
+function imageVariants(u8) {
+  const key = identify(u8);
+  if (!key || !IMAGES[key].variants) return null;
+  const keys = ['std'].concat(Object.keys(IMAGES[key].variants));
+  return { image: key, variants: keys, experimental: Object.fromEntries(keys.map(v => [v, v !== 'std' && !!IMAGES[key].variants[v].experimental])) };
+}
+
+function patchFirmware(arrayBuffer, selected, variantKey) {
   const u8 = new Uint8Array(arrayBuffer.slice(0)); // copy: never mutate the caller's buffer
   const key = identify(u8);
   if (!key) {
@@ -1205,19 +1243,21 @@ function patchFirmware(arrayBuffer, selected) {
     throw new Error('Unrecognised firmware - not a known NAVEE NT5 meter or BLDC image.');
   }
   const spec = IMAGES[key];
+  const variant = (variantKey && variantKey !== 'std' && spec.variants) ? spec.variants[variantKey] : null;
 
   const bad = verifyStock(u8, spec);
   if (bad) throw new Error(bad);
 
-  const applied = applyPatches(u8, spec.patches, selected);
+  const applied = applyPatches(u8, (variant && variant.patches) || spec.patches, selected);
   spec.reseal(u8);
 
   return {
     image: key,
     label: spec.label,
     kind: spec.kind,
-    mark: spec.mark || null,
-    experimental: isExperimental(key),
+    variant: variant ? variantKey : 'std',
+    mark: (variant && variant.mark) || spec.mark || null,
+    experimental: variant ? !!variant.experimental : isExperimental(key),
     applied: applied,
     nothingToPatch: applied.length === 0,
     bytes: u8,
@@ -1225,8 +1265,8 @@ function patchFirmware(arrayBuffer, selected) {
 }
 
 if (typeof window !== 'undefined') {
-  window.NVFW = { patchFirmware, identify, imageFeatures, isExperimental, crc16Xmodem, IMAGES };
+  window.NVFW = { patchFirmware, identify, imageFeatures, imageVariants, isExperimental, crc16Xmodem, IMAGES };
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { patchFirmware, identify, imageFeatures, isExperimental, featureOf, crc16Xmodem, beRead, beWrite, IMAGES };
+  module.exports = { patchFirmware, identify, imageFeatures, imageVariants, isExperimental, featureOf, crc16Xmodem, beRead, beWrite, IMAGES };
 }
