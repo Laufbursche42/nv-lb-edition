@@ -4091,17 +4091,6 @@ function renderPatchFeatures(det) {
         lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + patchFeatureLabel(f)));
         box.appendChild(lab);
       }
-      // NT5 Max (9301): optional full-torque build variant (restores the launch current, untested).
-      if (det.bldc && det.id === '9301') {
-        const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '10px 0 4px';
-        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'patch-launch-full'; cb.value = 'full';
-        lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + t('feat.launch.full')));
-        box.appendChild(lab);
-        const note = document.createElement('div'); note.className = 'patch-launch-note';
-        note.style.fontSize = '12px'; note.style.opacity = '0.85'; note.style.margin = '0 0 6px'; note.style.lineHeight = '1.45';
-        note.textContent = t('feat.launch.expl');
-        box.appendChild(note);
-      }
     }
   }
   if (disc) {

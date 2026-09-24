@@ -287,10 +287,9 @@ const IMAGES = {
     match: (u8) => u8.length === 0xc080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x00, 0x06]) && beRead(u8, 0xb0, 2) === 0x122b, // size+CRC pin (verword 06 also on S60 0xa080)
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000bf40, crcOff: 0xb0, crcStock: 0x122b },
     reseal: bldcResealLz,
-    // Two build variants selectable in the UI. Default 'patches' = std (speed unlock only, tested).
-    // 'full' additionally restores the stock low-speed torque mode when unlocked (launch current),
-    // via a tail cave; it extends the declared length, so it is experimental until hardware-confirmed.
-    variants: {
+    // The "full" (launch-torque) variant used a firmware length-extension and is DISABLED: it was
+    // confirmed to brick the controller on hardware. Only the in-place standard patches below ship.
+    variantsDisabled: {
       full: {
         mark: '5.6.6.6',
         experimental: true,
@@ -1248,7 +1247,13 @@ function patchFirmware(arrayBuffer, selected, variantKey) {
   const bad = verifyStock(u8, spec);
   if (bad) throw new Error(bad);
 
-  const applied = applyPatches(u8, (variant && variant.patches) || spec.patches, selected);
+  const patchList = (variant && variant.patches) || spec.patches;
+  // SAFETY: a firmware length-extension (any patch to len@0x84) bricks these controllers - confirmed
+  // on hardware (NT5 Max, and earlier). Never build such an image; recovery from it needs SWD.
+  if (patchList.some(p => p.off === 0x84)) {
+    throw new Error('This build type (firmware length-extension) is disabled: it bricks the controller. Recovery needs SWD.');
+  }
+  const applied = applyPatches(u8, patchList, selected);
   spec.reseal(u8);
 
   return {
