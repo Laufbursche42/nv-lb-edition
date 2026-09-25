@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.44
+- **Zero start unlocks on the XT5 too.** The XT5 (Pro, Ultra, Max) kickstart patch now also writes a firmware marker, so after a re-flash the meter reports version 5.0.2.0 and the app reveals launch levels 0-2. Previously the marker existed only for the NT5 family, so a patched XT5 kept showing only 3, 4 and 5 for the startup level even though the clamp was already removed. Re-flash the meter from stock in the patcher to get it. Not yet confirmed on real hardware.
+
 ## 1.0.38
 - **Untested models are clearly flagged.** Patching firmware for, or connecting, a model that is not yet confirmed on real hardware (the ST3/GT3 family) now shows a red warning and requires an extra confirmation before the app flashes or tunes it. This covers the web patcher, the flasher and the speed release, so an experimental build is never written or run by accident.
 

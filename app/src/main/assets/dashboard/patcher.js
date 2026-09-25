@@ -151,6 +151,7 @@ const IMAGES = {
     reseal: meterReseal,
     patches: [
       { off: 0x14a49, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bcs) -> unconditional, levels 0-2 accepted in every region
+      { off: 0x14bba, from: [0x33], to: [0x35], id: 'version-marker' }, // meter version builder leading digit '3' -> '5', reported meter version 3.0.2.0 -> 5.0.2.0 (fwMeter "5020")
       { off: 0x15b3e, from: [0xff, 0xf7, 0x4f, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
       { off: 0x15b5e, from: [0xff, 0xf7, 0x3f, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed2' }, // over-speed 2nd bl -> nop
       { off: 0x15b8c, from: [0xcb, 0xf7, 0x8c, 0xd9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop

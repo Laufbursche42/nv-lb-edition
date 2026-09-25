@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Zero start now unlocks on the XT5 too.</b> The XT5 (Pro, Ultra, Max) kickstart patch now also writes a firmware marker, so the meter reports version 5.0.2.0 and the app reveals launch levels 0-2 after you flash it - not just on the NT5. Re-flash the meter in the patcher; if your XT5 still shows only 3, 4 and 5 for the startup level, it is on a build without the marker.",
       "<b>Length-extension patches removed (safety).</b> The experimental full launch-torque build for the NT5 Max and the ST3/GT3/NT3 Pro builds extended the firmware into a reserved area - that was confirmed to brick the controller on hardware. They are gone; only in-place patches remain (the tested speed unlock etc.). A controller already bricked this way can only be recovered over SWD.",
       "<b>Untested models are clearly flagged.</b> When you patch firmware or connect a scooter that is not yet confirmed on real hardware (the ST3/GT3 family), the app shows a red warning and asks for an extra confirmation before it flashes or tunes - so an experimental build is never written or run by accident.",
       "<b>ST3/GT3 family patchable (experimental).</b> ST3 Pro, ST3, GT3, GT3 Pro and GT3 Max can now be patched. Not yet confirmed on real hardware - a failed flash on these controllers is not recoverable over the air (SWD or a controller swap), so only flash them if you can recover the controller.",
@@ -616,6 +617,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Zero-Start entsperrt jetzt auch beim XT5.</b> Der Kickstart-Patch der XT5-Familie (Pro, Ultra, Max) schreibt jetzt zusätzlich einen Firmware-Marker, sodass der Meter Version 5.0.2.0 meldet plus die App nach dem Flashen die Anfahrstufen 0-2 zeigt - nicht mehr nur beim NT5. Flash den Meter im Patcher neu; wenn dein XT5 bei der Anfahrstufe weiter nur 3, 4 plus 5 zeigt, läuft ein Build ohne den Marker.",
       "<b>Längenerweiternde Patches entfernt (Sicherheit).</b> Der experimentelle Voll-Anfahr-Drehmoment-Build der NT5 Max und die ST3/GT3/NT3-Pro-Builds erweiterten die Firmware in einen reservierten Bereich - auf Hardware bestätigt bricked das den Controller. Sie sind raus; es bleiben nur die In-place-Patches (die getestete Entdrosselung usw.). Einen so gebrickten Controller rettet nur noch SWD.",
       "<b>Ungetestete Modelle werden klar markiert.</b> Wenn du Firmware patchst oder einen Roller verbindest, der noch nicht an echter Hardware bestätigt ist (die ST3/GT3-Familie), zeigt die App eine rote Warnung und fragt vor dem Flashen oder Tunen extra nach - damit ein experimenteller Build nie versehentlich geschrieben oder gefahren wird.",
       "<b>ST3/GT3-Familie patchbar (experimentell).</b> ST3 Pro, ST3, GT3, GT3 Pro plus GT3 Max lassen sich jetzt patchen. Noch nicht auf echter Hardware bestätigt - ein Fehlflash ist bei diesen Controllern nicht per Funk rückholbar (SWD oder Controller-Tausch), also flash sie nur, wenn du den Controller retten kannst.",

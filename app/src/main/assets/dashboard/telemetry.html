@@ -3277,8 +3277,10 @@ function naveeSkuOf(region) {
   if (['US', 'CN', 'RU'].includes(r)) return 'USA';
   return 'EUR';
 }
-// A kickstart-patched meter (fwMeter "5022") accepts levels 0-2 on any region.
-function meterKickstartPatched() { return (liveRaw().fwMeter || '').trim() === '5022'; }
+// A kickstart-patched meter carries a "5xxx" marker version (NT5 3.0.2.2 -> "5022", XT5 3.0.2.0 -> "5020")
+// and then accepts launch levels 0-2 on any region. Stock NAVEE meters never report a 5.x.y.z version.
+const NAVEE_METER_PATCHED_FW = ['5022', '5020'];
+function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
 function naveeZeroStartFull() { return naveeSkuOf(liveRaw().region) === 'USA' || meterKickstartPatched(); }
 function setRegionStatus(msg) { const el = document.getElementById('region-status'); if (el) el.textContent = msg; }
 // Raw NAVEE frame builders; checksum = sum of bytes & 0xFF, normal frames end FE FD, factory AE AD.
