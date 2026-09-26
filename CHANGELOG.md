@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.45
+- **Pick the controller top speed.** Patching an NT5 (Max/Ultra/Turbo/Max+) or XT5 Ultra controller now shows a "Target speed" dropdown - NT5 22-40 km/h, XT5 Ultra 22-50. Same top-gear latch/cap as before, only the unlocked value changes (NT5 re-locks to 22 on restart). Experimental until confirmed on a recoverable device (controller flash - recover over SWD). No length-extension; every patch byte-verified against stock.
+
 ## 1.0.44
 - **Zero start unlocks on the XT5 too.** The XT5 (Pro, Ultra, Max) kickstart patch now also writes a firmware marker, so after a re-flash the meter reports version 5.0.2.0 and the app reveals launch levels 0-2. Previously the marker existed only for the NT5 family, so a patched XT5 kept showing only 3, 4 and 5 for the startup level even though the clamp was already removed. Re-flash the meter from stock in the patcher to get it. Not yet confirmed on real hardware.
 

@@ -4058,15 +4058,26 @@ function fwPatchStatus(msg) {
 // Feature checkboxes on the patcher page: which features the detected model can take, plus the selection.
 function patchFeatureList(det) {
   const feats = [];
-  if (det.bldc && !naveeIsXT(det.name)) feats.push('speed');
+  if (det.bldc && (!naveeIsXT(det.name) || String(det.id) === '5801')) feats.push('speed'); // XT5 Ultra (5801) now has a controller speed selector
   if (det.meter) feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   return feats;
 }
 function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v === k ? f : v; }
+// Controller top-speed dropdown options per detected model (keyed by manifest model id, unambiguous).
+// Mirrors the engine variant keys (patcher.js): NT5 family 22-40, XT5 Ultra 22-50; std = 40 (tested).
+// Only models whose bldc image carries speed variants appear here; other controllers keep the binary latch.
+function naveeSpeedOpts(det) {
+  if (!det || !det.bldc) return null;
+  if (['9301', '9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40];
+  if (String(det.id) === '5801') return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra
+  return null;
+}
 function selectedPatchFeatures() {
   return Array.from(document.querySelectorAll('#patch-features input[type=checkbox]:checked')).map(c => c.value).filter(v => v !== 'full');
 }
-function selectedPatchVariant() {   // NT5 Max full-torque build variant vs the standard speed-only build
+function selectedPatchVariant() {   // target-speed dropdown wins; else the legacy launch-full toggle; else std
+  const sp = document.getElementById('patch-speed');
+  if (sp && sp.value) return sp.value;
   const cb = document.getElementById('patch-launch-full');
   return (cb && cb.checked) ? 'full' : 'std';
 }
@@ -4092,6 +4103,18 @@ function renderPatchFeatures(det) {
         cb.checked = f.indexOf('beep') !== 0; // performance features on by default; tone silences off (keep all tones)
         lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + patchFeatureLabel(f)));
         box.appendChild(lab);
+      }
+      const spd = naveeSpeedOpts(det);
+      if (spd) {
+        const sh = document.createElement('div'); sh.className = 'settings-group-title'; sh.style.marginTop = '8px'; sh.textContent = t('patch.speed.title');
+        box.appendChild(sh);
+        const sel = document.createElement('select'); sel.id = 'patch-speed'; sel.className = 'set-ctrl';
+        spd.forEach(function (kmh) {
+          const o = new Option(kmh + ' km/h' + (kmh === 40 ? ' (Standard)' : ''), kmh === 40 ? 'std' : ('speed' + kmh));
+          if (kmh === 40) o.selected = true;
+          sel.appendChild(o);
+        });
+        box.appendChild(sel);
       }
     }
   }

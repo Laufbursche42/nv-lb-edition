@@ -710,6 +710,21 @@ const IMAGES = {
     ],
   },
 
+  // XT5 Ultra BLDC 0.0.2.7 (T2443/MM32F5333). Top-speed cap in FUN_08003364: the region-locked
+  // 250-bucket loads `mov.w r9,#0xff` (25.5 km/h) at 0x37e0; retargeted to `movw r9,#(km/h*10)`.
+  // No overspeed governor (byte-verified); 50 uses 508 to clear the field-weakening gate at 501.
+  bldcXT5Ultra: {
+    label: 'XT5 Ultra BLDC 0.0.2.7',
+    kind: 'bldc',
+    match: (u8) => u8.length === 0xcb68 && bytesAt(u8, 0, ascii('T2443')) && bytesAt(u8, 0x404, [0xb3, 0xc0, 0xe9, 0xd3]),
+    verify: { size: 0xcb68 },
+    reseal: bldcResealCrc32,
+    stdSpeedKmh: 40,
+    patches: [
+      { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' }, // top-gear cap -> movw r9,#400 (40 km/h)
+    ],
+  },
+
   bldcS2: {
     label: 'S2 BLDC 0.0.0.1 (9901)',
     kind: 'bldc',
@@ -1147,14 +1162,71 @@ const IMAGES = {
   },
 };
 
+// ── NT5 top-gear speed variants (22-40 km/h) ──────────────────────────────
+// Same capZ top-gear latch as the std build; only the UNLOCK cap value changes. The lock/boot value
+// stays 22 km/h, so the scooter still re-locks on restart; std already delivers the tested 40.
+// capZ = km/h * 20. 02831 (9301/9207): latch stores capZ via `movs r,#imm8; lsls #2`, so imm8 = km/h*5
+// (one byte). 3553G (9701/9401): latch-cave stores capZ via `movw r0,#imm16`, so imm16 = km/h*20.
+// All of 22-40 verified reachable on NT5 (no measured-speed governor cuts in below 40).
+const NT5_SPEED_KMH = [22, 25, 27, 30, 35];
+
+function movwLE(rd, imm) {  // Thumb-2 MOVW rd,#imm16 -> 4 little-endian bytes
+  const i = (imm >> 11) & 1, imm4 = (imm >> 12) & 0xf, imm3 = (imm >> 8) & 7, imm8 = imm & 0xff;
+  const hw1 = 0xf240 | (i << 10) | imm4, hw2 = (imm3 << 12) | ((rd & 0xf) << 8) | imm8;
+  return [hw1 & 0xff, (hw1 >> 8) & 0xff, hw2 & 0xff, (hw2 >> 8) & 0xff];
+}
+function findSub(arr, sub) {
+  for (let i = 0; i + sub.length <= arr.length; i++) {
+    let ok = true;
+    for (let j = 0; j < sub.length; j++) if (arr[i + j] !== sub[j]) { ok = false; break; }
+    if (ok) return i;
+  }
+  return -1;
+}
+// sel: { latchId, enc: 'movs8'|'movw', find: <current UNLOCK bytes to locate>, rd }
+function ntSpeedVariants(spec, sel) {
+  const out = {};
+  for (const kmh of NT5_SPEED_KMH) {
+    const patches = spec.patches.map((p) => ({ off: p.off, from: p.from, to: p.to.slice(), id: p.id }));
+    const lp = patches.find((p) => p.id === sel.latchId);
+    if (!lp) throw new Error('ntSpeedVariants: latch patch ' + sel.latchId + ' missing');
+    const at = findSub(lp.to, sel.find);
+    if (at < 0) throw new Error('ntSpeedVariants: unlock immediate not found in ' + sel.latchId);
+    if (sel.enc === 'movs8') {
+      lp.to[at] = (kmh * 5) & 0xff;                 // capZ = (km/h * 5) << 2 = km/h * 20
+    } else {
+      const b = movwLE(sel.rd, kmh * 20);           // capZ = km/h * 20
+      for (let k = 0; k < 4; k++) lp.to[at + k] = b[k];
+    }
+    out['speed' + kmh] = { mark: spec.mark, experimental: true, speedKmh: kmh, patches: patches };
+  }
+  return out;
+}
+
+IMAGES.bldc9301.stdSpeedKmh = 40; IMAGES.bldc9301.variants = ntSpeedVariants(IMAGES.bldc9301, { latchId: 'capz-latch', enc: 'movs8', find: [0xc8, 0x26] });
+IMAGES.bldc9207.stdSpeedKmh = 40; IMAGES.bldc9207.variants = ntSpeedVariants(IMAGES.bldc9207, { latchId: 'capz-latch', enc: 'movs8', find: [0xc8, 0x21] });
+IMAGES.bldc9701.stdSpeedKmh = 40; IMAGES.bldc9701.variants = ntSpeedVariants(IMAGES.bldc9701, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
+IMAGES.bldc9401.stdSpeedKmh = 40; IMAGES.bldc9401.variants = ntSpeedVariants(IMAGES.bldc9401, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
+
+// XT5 Ultra controller top-speed variants (22-50 km/h). One cap immediate at 0x37e0 = movw r9,#(km/h*10);
+// no governor. 50 uses 508 to clear the field-weakening gate at 501. std already delivers 40.
+IMAGES.bldcXT5Ultra.variants = (function () {
+  const out = {};
+  for (const kmh of [22, 25, 27, 30, 35, 45, 50]) {
+    const cap = kmh === 50 ? 508 : kmh * 10;
+    out['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: [{ off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], to: movwLE(9, cap), id: 'speed' }] };
+  }
+  return out;
+})();
+
 // Identify which image this is, or null.
 // Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is
 // blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
-const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcXT5Ultra', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {
@@ -1229,9 +1301,18 @@ function imageFeatures(u8) {
 // picker. Returns null when the image has only the default build.
 function imageVariants(u8) {
   const key = identify(u8);
-  if (!key || !IMAGES[key].variants) return null;
-  const keys = ['std'].concat(Object.keys(IMAGES[key].variants));
-  return { image: key, variants: keys, experimental: Object.fromEntries(keys.map(v => [v, v !== 'std' && !!IMAGES[key].variants[v].experimental])) };
+  const spec = key && IMAGES[key];
+  if (!spec || !spec.variants) return null;
+  const vs = spec.variants;
+  const keys = ['std'].concat(Object.keys(vs));
+  const speedKmh = {};
+  keys.forEach(v => { speedKmh[v] = v === 'std' ? (spec.stdSpeedKmh || null) : (vs[v].speedKmh || null); });
+  return {
+    image: key,
+    variants: keys,
+    experimental: Object.fromEntries(keys.map(v => [v, v !== 'std' && !!vs[v].experimental])),
+    speedKmh: speedKmh,
+  };
 }
 
 function patchFirmware(arrayBuffer, selected, variantKey) {

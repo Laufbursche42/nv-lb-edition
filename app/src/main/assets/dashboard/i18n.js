@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Pick the controller top speed.</b> Patching an NT5 (Max/Ultra/Turbo/Max+) or XT5 Ultra controller now shows a 'Target speed' dropdown - NT5 up to 40 km/h, XT5 Ultra up to 50. It is the same top-gear latch/cap as before, only the unlocked value changes; on the NT5 it still re-locks to 22 on restart. Experimental until confirmed on a recoverable device - it is a controller flash, so only do it if you can recover over SWD.",
       "<b>Zero start now unlocks on the XT5 too.</b> The XT5 (Pro, Ultra, Max) kickstart patch now also writes a firmware marker, so the meter reports version 5.0.2.0 and the app reveals launch levels 0-2 after you flash it - not just on the NT5. Re-flash the meter in the patcher; if your XT5 still shows only 3, 4 and 5 for the startup level, it is on a build without the marker.",
       "<b>Length-extension patches removed (safety).</b> The experimental full launch-torque build for the NT5 Max and the ST3/GT3/NT3 Pro builds extended the firmware into a reserved area - that was confirmed to brick the controller on hardware. They are gone; only in-place patches remain (the tested speed unlock etc.). A controller already bricked this way can only be recovered over SWD.",
       "<b>Untested models are clearly flagged.</b> When you patch firmware or connect a scooter that is not yet confirmed on real hardware (the ST3/GT3 family), the app shows a red warning and asks for an extra confirmation before it flashes or tunes - so an experimental build is never written or run by accident.",
@@ -419,6 +420,7 @@ window.I18N = {
     "patch.status.patch": "Patching {kind}...",
     "patch.status.skip": "No patch for {kind} on this model - skipped.",
     "patch.features.title": "What to patch",
+    "patch.speed.title": "Target speed",
     "feat.speed": "Unlock speed",
     "feat.launch.full": "Full launch torque - 22 A (untested)",
     "feat.launch.expl": "Restores the strong pull-away the stock firmware only gives when locked (about 22 A instead of 18 A), on top of the speed unlock. It extends the firmware into a reserved area, so it is not hardware-confirmed and can brick the controller - only pick it if you can recover the controller (SWD or swap). Leave it off for the tested speed-only build. The lock stays available either way.",
@@ -617,6 +619,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Höchstgeschwindigkeit des Controllers wählbar.</b> Beim Patchen eines NT5 (Max/Ultra/Turbo/Max+) oder XT5 Ultra Controllers erscheint jetzt ein Dropdown 'Zielgeschwindigkeit' - NT5 bis 40 km/h, XT5 Ultra bis 50. Es ist derselbe Top-Gang-Latch bzw. -Cap wie bisher, nur der entsperrte Wert ändert sich; beim NT5 sperrt er beim Neustart wieder auf 22. Experimentell bis auf einem rückholbaren Gerät bestätigt - es ist ein Controller-Flash, also nur wenn du per SWD retten kannst.",
       "<b>Zero-Start entsperrt jetzt auch beim XT5.</b> Der Kickstart-Patch der XT5-Familie (Pro, Ultra, Max) schreibt jetzt zusätzlich einen Firmware-Marker, sodass der Meter Version 5.0.2.0 meldet plus die App nach dem Flashen die Anfahrstufen 0-2 zeigt - nicht mehr nur beim NT5. Flash den Meter im Patcher neu; wenn dein XT5 bei der Anfahrstufe weiter nur 3, 4 plus 5 zeigt, läuft ein Build ohne den Marker.",
       "<b>Längenerweiternde Patches entfernt (Sicherheit).</b> Der experimentelle Voll-Anfahr-Drehmoment-Build der NT5 Max und die ST3/GT3/NT3-Pro-Builds erweiterten die Firmware in einen reservierten Bereich - auf Hardware bestätigt bricked das den Controller. Sie sind raus; es bleiben nur die In-place-Patches (die getestete Entdrosselung usw.). Einen so gebrickten Controller rettet nur noch SWD.",
       "<b>Ungetestete Modelle werden klar markiert.</b> Wenn du Firmware patchst oder einen Roller verbindest, der noch nicht an echter Hardware bestätigt ist (die ST3/GT3-Familie), zeigt die App eine rote Warnung und fragt vor dem Flashen oder Tunen extra nach - damit ein experimenteller Build nie versehentlich geschrieben oder gefahren wird.",
@@ -1031,6 +1034,7 @@ window.I18N = {
     "patch.status.patch": "{kind} wird gepatcht...",
     "patch.status.skip": "Kein Patch für {kind} bei diesem Modell - übersprungen.",
     "patch.features.title": "Was patchen",
+    "patch.speed.title": "Zielgeschwindigkeit",
     "feat.speed": "Speed entsperren",
     "feat.launch.full": "Volles Anfahr-Drehmoment - 22 A (ungetestet)",
     "feat.launch.expl": "Stellt die kräftige Beschleunigung wieder her, die die Stock-Firmware nur im gesperrten Zustand gibt (rund 22 A statt 18 A), zusätzlich zur Entsperrung. Erweitert die Firmware in einen reservierten Bereich, ist also nicht an Hardware bestätigt und kann den Controller bricken - nur wählen wenn du den Controller retten kannst (SWD oder Tausch). Für den getesteten Speed-only-Build ausgelassen lassen. Die Sperre bleibt in beiden Fällen erhalten.",
