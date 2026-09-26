@@ -4058,7 +4058,7 @@ function fwPatchStatus(msg) {
 // Feature checkboxes on the patcher page: which features the detected model can take, plus the selection.
 function patchFeatureList(det) {
   const feats = [];
-  if (det.bldc && (!naveeIsXT(det.name) || String(det.id) === '5801')) feats.push('speed'); // XT5 Ultra (5801) now has a controller speed selector
+  if (det.bldc && (!naveeIsXT(det.name) || ['5801', '5301', '5901'].indexOf(String(det.id)) >= 0)) feats.push('speed'); // XT5 Ultra (5801) + XT5 Pro/Max (5301/5901) now have a controller speed selector
   if (det.meter) feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   return feats;
 }
@@ -4068,7 +4068,7 @@ function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v 
 // Only models whose bldc image carries speed variants appear here; other controllers keep the binary latch.
 function naveeSpeedOpts(det) {
   if (!det || !det.bldc) return null;
-  if (['9301', '9701', '9401', '9201', '11101', '8901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family + UT5 Max (3553G, governor ~40)
+  if (['9301', '9701', '9401', '9201', '11101', '8901', '5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family + UT5 Max + XT5 Pro/Max (3553G, cap ~40)
   if (['5801', '9601'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra / UT5 Ultra X (ceiling 60, no field-weakening gate)
   return null;
 }

@@ -725,6 +725,23 @@ const IMAGES = {
     ],
   },
 
+  // XT5 Pro/Max BLDC 0.0.1.0 (5301/5901, byte-identical). T2416/SZMC-ES-ZM-3553G. Top-speed cap is a
+  // region bucket in the meter-frame parser: the region-locked bucket at 0x43cc loads `mov.w r1,#454`
+  // (25 km/h) on the scale km/h*2089/115 (~*18.165). Retargeted in-place to `movw r1,#round(km/h*2089/115)`.
+  // Stock top is 40 (gear-4 bucket 726); no field-weakening gate, but 45/50 exceed the stock design
+  // (physics-bound, not firmware) so the selector caps at 40. Reseal = ERPM CRC-16 @0xb0 like UT5 Max.
+  bldcXT5ProMax: {
+    label: 'XT5 Pro/Max BLDC 0.0.1.0 (5301/5901)',
+    kind: 'bldc',
+    match: (u8) => u8.length === 0xe100 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x00]) && beRead(u8, 0xb0, 2) === 0x1611,
+    verify: { size: 0xe100, lenOff: 0x84, lenStock: 0x0000e000, crcOff: 0xb0, crcStock: 0x1611 },
+    reseal: bldcResealErpm,
+    stdSpeedKmh: 40,
+    patches: [
+      { off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], to: [0x40, 0xf2, 0xd6, 0x21], id: 'speed' }, // region-locked bucket -> movw r1,#726 (40 km/h)
+    ],
+  },
+
   bldcS2: {
     label: 'S2 BLDC 0.0.0.1 (9901)',
     kind: 'bldc',
@@ -1239,14 +1256,25 @@ IMAGES.bldcXT5Ultra.variants = (function () {
   return out;
 })();
 
+// XT5 Pro/Max controller (3553G): region-locked bucket at 0x43cc, scale km/h*2089/115, register r1.
+// Stock top 40; 45/50 physically uncertain -> 22-40. Single in-place immediate (mov.w -> movw), no cave.
+IMAGES.bldcXT5ProMax.variants = (function () {
+  const out = {};
+  for (const kmh of [22, 25, 27, 30, 35]) {
+    const cap = Math.floor(kmh * 2089 / 115);
+    out['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: [{ off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], to: movwLE(1, cap), id: 'speed' }] };
+  }
+  return out;
+})();
+
 // Identify which image this is, or null.
 // Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is
 // blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
-const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {

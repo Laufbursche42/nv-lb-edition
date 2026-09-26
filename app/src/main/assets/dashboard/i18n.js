@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>XT5 Pro/Max target speed.</b> The XT5 Pro and XT5 Max controllers are now in the 'Target speed' selector too (22-40 km/h; stock top is 40). Experimental until confirmed on a recoverable device.",
       "<b>UT5 target speed too.</b> The 'Target speed' selector now also covers the UT5 Max (22-40 km/h) and UT5 Ultra X (22-50) controllers, the same way as the NT5 and XT5 Ultra. It is a controller flash and experimental until confirmed on a recoverable device.",
       "<b>Pick the controller top speed.</b> Patching an NT5 (Max/Ultra/Turbo/Max+) or XT5 Ultra controller now shows a 'Target speed' dropdown - NT5 up to 40 km/h, XT5 Ultra up to 50. It is the same top-gear latch/cap as before, only the unlocked value changes; on the NT5 it still re-locks to 22 on restart. Experimental until confirmed on a recoverable device - it is a controller flash, so only do it if you can recover over SWD.",
       "<b>Zero start now unlocks on the XT5 too.</b> The XT5 (Pro, Ultra, Max) kickstart patch now also writes a firmware marker, so the meter reports version 5.0.2.0 and the app reveals launch levels 0-2 after you flash it - not just on the NT5. Re-flash the meter in the patcher; if your XT5 still shows only 3, 4 and 5 for the startup level, it is on a build without the marker.",
@@ -620,6 +621,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>XT5 Pro/Max Zielgeschwindigkeit.</b> Die Controller XT5 Pro plus XT5 Max sind jetzt auch im Zielgeschwindigkeits-Selektor (22-40 km/h; Stock-Top ist 40). Experimentell bis auf einem rückholbaren Gerät bestätigt.",
       "<b>Zielgeschwindigkeit jetzt auch für UT5.</b> Der Zielgeschwindigkeits-Selektor deckt jetzt auch die Controller UT5 Max (22-40 km/h) plus UT5 Ultra X (22-50) ab, genauso wie NT5 plus XT5 Ultra. Es ist ein Controller-Flash plus experimentell bis auf einem rückholbaren Gerät bestätigt.",
       "<b>Höchstgeschwindigkeit des Controllers wählbar.</b> Beim Patchen eines NT5 (Max/Ultra/Turbo/Max+) oder XT5 Ultra Controllers erscheint jetzt ein Dropdown 'Zielgeschwindigkeit' - NT5 bis 40 km/h, XT5 Ultra bis 50. Es ist derselbe Top-Gang-Latch bzw. -Cap wie bisher, nur der entsperrte Wert ändert sich; beim NT5 sperrt er beim Neustart wieder auf 22. Experimentell bis auf einem rückholbaren Gerät bestätigt - es ist ein Controller-Flash, also nur wenn du per SWD retten kannst.",
       "<b>Zero-Start entsperrt jetzt auch beim XT5.</b> Der Kickstart-Patch der XT5-Familie (Pro, Ultra, Max) schreibt jetzt zusätzlich einen Firmware-Marker, sodass der Meter Version 5.0.2.0 meldet plus die App nach dem Flashen die Anfahrstufen 0-2 zeigt - nicht mehr nur beim NT5. Flash den Meter im Patcher neu; wenn dein XT5 bei der Anfahrstufe weiter nur 3, 4 plus 5 zeigt, läuft ein Build ohne den Marker.",

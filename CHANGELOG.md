@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.47
+- **XT5 Pro/Max target speed.** The XT5 Pro and XT5 Max controllers join the "Target speed" selector (22-40 km/h; stock top is 40, higher is physics-bound). Byte-verified in-place, no length-extension, CRC-resealed; experimental until confirmed on a recoverable device (controller flash - recover over SWD).
+
 ## 1.0.46
 - **UT5 Max and UT5 Ultra X target speed.** The "Target speed" selector now covers the UT5 controllers too - UT5 Max 22-40 km/h (governor caps ~40), UT5 Ultra X 22-50. Byte-verified in-place, no length-extension, CRC-resealed; experimental until confirmed on a recoverable device (controller flash - recover over SWD). On the UT5 Ultra X the cap is a ceiling - the meter must still request the speed in the top gear.
 
