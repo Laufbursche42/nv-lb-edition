@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.46
+- **UT5 Max and UT5 Ultra X target speed.** The "Target speed" selector now covers the UT5 controllers too - UT5 Max 22-40 km/h (governor caps ~40), UT5 Ultra X 22-50. Byte-verified in-place, no length-extension, CRC-resealed; experimental until confirmed on a recoverable device (controller flash - recover over SWD). On the UT5 Ultra X the cap is a ceiling - the meter must still request the speed in the top gear.
+
 ## 1.0.45
 - **Pick the controller top speed.** Patching an NT5 (Max/Ultra/Turbo/Max+) or XT5 Ultra controller now shows a "Target speed" dropdown - NT5 22-40 km/h, XT5 Ultra 22-50. Same top-gear latch/cap as before, only the unlocked value changes (NT5 re-locks to 22 on restart). Experimental until confirmed on a recoverable device (controller flash - recover over SWD). No length-extension; every patch byte-verified against stock.
 

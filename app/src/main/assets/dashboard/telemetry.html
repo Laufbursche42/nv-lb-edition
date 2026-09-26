@@ -4068,8 +4068,8 @@ function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v 
 // Only models whose bldc image carries speed variants appear here; other controllers keep the binary latch.
 function naveeSpeedOpts(det) {
   if (!det || !det.bldc) return null;
-  if (['9301', '9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40];
-  if (String(det.id) === '5801') return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra
+  if (['9301', '9701', '9401', '9201', '11101', '8901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family + UT5 Max (3553G, governor ~40)
+  if (['5801', '9601'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra / UT5 Ultra X (ceiling 60, no field-weakening gate)
   return null;
 }
 function selectedPatchFeatures() {
