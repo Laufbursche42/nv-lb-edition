@@ -499,6 +499,14 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.drl.label">Tagfahrlicht</div><div class="settings-row-sublabel" data-i18n="scooter.drl.sub">Wird gesendet und gespeichert; ob eine eigene Lampe leuchtet, hängt vom Modell ab</div></div>
         <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-drl"><label class="toggle-label" for="ss-drl"></label></div>
       </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.logo.label">Logo-Licht</div><div class="settings-row-sublabel" data-i18n="scooter.logo.sub">Beleuchteter Schriftzug; ob eine Lampe leuchtet, hängt vom Modell ab</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-logo"><label class="toggle-label" for="ss-logo"></label></div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.ambient.label">Ambientlicht</div><div class="settings-row-sublabel" data-i18n="scooter.ambient.sub">Seitliche Streifen bzw. Unterbodenlicht, wo vorhanden</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-ambient"><label class="toggle-label" for="ss-ambient"></label></div>
+      </div>
       <div class="settings-row no-bottom-rule">
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.tail.label">Rücklicht</div><div class="settings-row-sublabel" data-i18n="scooter.tail.sub">Rücklicht ein oder aus</div></div>
         <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="ss-tail"><label class="toggle-label" for="ss-tail"></label></div>
@@ -3349,6 +3357,8 @@ function prefillScooterSettings(live) {
   if (d.unit === 0 || d.unit === 1) setC('ss-unit', d.unit === 1);   // 1 = mph on the scooter display
   if (d.autoLight === 0 || d.autoLight === 1) setC('ss-alight', d.autoLight === 1);
   if (d.drl === 0 || d.drl === 1) setC('ss-drl', d.drl === 1);
+  if (d.logoLight === 0 || d.logoLight === 1) setC('ss-logo', d.logoLight === 1);
+  if (typeof d.ambientLight === 'number') setC('ss-ambient', d.ambientLight > 0);
   if (d.tailLight === 0 || d.tailLight === 1) setC('ss-tail', d.tailLight === 1);
   // Zero-start / startup-speed level (0 = zero start, 1..5 = kick-off threshold).
   if (typeof d.startSpeed === 'number' && d.startSpeed >= 0 && d.startSpeed <= 5) setV('ss-zerostart', d.startSpeed);
@@ -3425,6 +3435,17 @@ function wireScooterSettings() {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
     // Daytime running light is a 0x6D sub-command (sub 3), like eco - not a plain single-byte opcode.
     if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(0x6D, 3, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
+  });
+  const logo = document.getElementById('ss-logo');
+  if (logo) logo.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    // Logo / lettering light is a 0x6D sub-command (sub 2), like the DRL.
+    if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(0x6D, 2, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
+  });
+  const amb = document.getElementById('ss-ambient');
+  if (amb) amb.addEventListener('change', e => {
+    if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    pushSetting(0x5E, e.target.checked ? 1 : 0);   // ambient / underglow light, plain toggle
   });
   wireSpeedRelease();
 }

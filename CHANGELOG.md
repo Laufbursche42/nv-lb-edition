@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.49
+- **Logo and ambient light switches.** The Light section now also has a Logo light (illuminated lettering, 0x6D sub 2) switch and an Ambient light (side strips / underglow, 0x5E) switch, next to the existing daytime running light. Which channel lights the lettering vs the side strips depends on the model - toggle each to see. (The web tool already had these.)
+
 ## 1.0.48
 - **XT5 target-speed fix.** The chosen cap now binds after unlock. The XT5 top speed is a switch of per-command buckets; the selector previously capped only the region-locked one, so unlocking still ran full speed. It now clamps all of them (Ultra + Pro/Max), so the cap is a hard top in every gear. NT5/UT5 were already correct. Re-flash the controller to get the fix.
 

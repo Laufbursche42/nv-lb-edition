@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Logo + ambient light switches.</b> Turn the illuminated lettering and the side/underglow strips on or off from the Light section (next to the daytime running light). Which channel lights what depends on the model - just toggle each.",
       "<b>XT5 speed cap fix.</b> On the XT5 (Ultra/Pro/Max) the chosen target speed now actually binds after you unlock - the earlier build capped only one internal gear, so unlocking still ran full speed. Re-flash the controller to get it. (NT5/UT5 were already correct.)",
       "<b>XT5 Pro/Max target speed.</b> The XT5 Pro and XT5 Max controllers are now in the 'Target speed' selector too (22-40 km/h; stock top is 40). Experimental until confirmed on a recoverable device.",
       "<b>UT5 target speed too.</b> The 'Target speed' selector now also covers the UT5 Max (22-40 km/h) and UT5 Ultra X (22-50) controllers, the same way as the NT5 and XT5 Ultra. It is a controller flash and experimental until confirmed on a recoverable device.",
@@ -572,6 +573,10 @@ window.I18N = {
     "scooter.alight.sub": "Headlight comes on automatically while riding",
     "scooter.drl.label": "Daytime running light",
     "scooter.drl.sub": "Sent and stored; whether a dedicated lamp lights up depends on the model",
+    "scooter.logo.label": "Logo light",
+    "scooter.logo.sub": "Illuminated lettering; whether a lamp lights up depends on the model",
+    "scooter.ambient.label": "Ambient light",
+    "scooter.ambient.sub": "Side strips / underglow, where fitted",
     "scooter.tail.label": "Tail light",
     "scooter.tail.sub": "Tail light on or off",
     "scooter.tune.section.title": "Speed release",
@@ -622,6 +627,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Logo- plus Ambientlicht-Schalter.</b> Schalte den beleuchteten Schriftzug plus die seitlichen/Unterboden-Streifen in der Licht-Sektion ein oder aus (neben dem Tagfahrlicht). Welcher Kanal was beleuchtet, hängt vom Modell ab - einfach durchtippen.",
       "<b>XT5-Speed-Fix.</b> Beim XT5 (Ultra/Pro/Max) greift die gewählte Zielgeschwindigkeit jetzt wirklich nach dem Entsperren - der vorige Build begrenzte nur einen internen Gang, entsperrt fuhr er trotzdem voll. Controller neu flashen, um es zu bekommen. (NT5/UT5 waren schon korrekt.)",
       "<b>XT5 Pro/Max Zielgeschwindigkeit.</b> Die Controller XT5 Pro plus XT5 Max sind jetzt auch im Zielgeschwindigkeits-Selektor (22-40 km/h; Stock-Top ist 40). Experimentell bis auf einem rückholbaren Gerät bestätigt.",
       "<b>Zielgeschwindigkeit jetzt auch für UT5.</b> Der Zielgeschwindigkeits-Selektor deckt jetzt auch die Controller UT5 Max (22-40 km/h) plus UT5 Ultra X (22-50) ab, genauso wie NT5 plus XT5 Ultra. Es ist ein Controller-Flash plus experimentell bis auf einem rückholbaren Gerät bestätigt.",
@@ -1189,6 +1195,10 @@ window.I18N = {
     "scooter.alight.sub": "Scheinwerfer schaltet automatisch beim Fahren ein",
     "scooter.drl.label": "Tagfahrlicht",
     "scooter.drl.sub": "Wird gesendet und gespeichert; ob eine eigene Lampe leuchtet, hängt vom Modell ab",
+    "scooter.logo.label": "Logo-Licht",
+    "scooter.logo.sub": "Beleuchteter Schriftzug; ob eine Lampe leuchtet, hängt vom Modell ab",
+    "scooter.ambient.label": "Ambientlicht",
+    "scooter.ambient.sub": "Seitliche Streifen bzw. Unterbodenlicht, wo vorhanden",
     "scooter.tail.label": "Rücklicht",
     "scooter.tail.sub": "Rücklicht ein oder aus",
     "scooter.tune.section.title": "Speed-Freischaltung",
