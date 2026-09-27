@@ -720,8 +720,10 @@ const IMAGES = {
     verify: { size: 0xcb68 },
     reseal: bldcResealCrc32,
     stdSpeedKmh: 40,
-    patches: [
-      { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' }, // top-gear cap -> movw r9,#400 (40 km/h)
+    patches: [  // std: clamp every over-40 bucket to 40 (movw r9,#400); speed variants below cover 22-50
+      { off: 0x37ae, from: [0x4f, 0xf4, 0xfe, 0x79], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
+      { off: 0x37cc, from: [0x40, 0xf2, 0x95, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
+      { off: 0x37d6, from: [0x40, 0xf2, 0xc7, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
     ],
   },
 
@@ -737,8 +739,8 @@ const IMAGES = {
     verify: { size: 0xe100, lenOff: 0x84, lenStock: 0x0000e000, crcOff: 0xb0, crcStock: 0x1611 },
     reseal: bldcResealErpm,
     stdSpeedKmh: 40,
-    patches: [
-      { off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], to: [0x40, 0xf2, 0xd6, 0x21], id: 'speed' }, // region-locked bucket -> movw r1,#726 (40 km/h)
+    patches: [  // std: top gear-4 bucket at 40 (movw r1,#726); speed variants below cover 22-35
+      { off: 0x43e0, from: [0x40, 0xf2, 0xd6, 0x21], to: [0x40, 0xf2, 0xd6, 0x21], id: 'speed' },
     ],
   },
 
@@ -1245,27 +1247,28 @@ IMAGES.bldcUT5UltraX.variants = (function () {
   return out;
 })();
 
-// XT5 Ultra controller top-speed variants (22-50 km/h). One cap immediate at 0x37e0 = movw r9,#(km/h*10);
-// no governor. 50 uses 508 to clear the field-weakening gate at 501. std already delivers 40.
-IMAGES.bldcXT5Ultra.variants = (function () {
-  const out = {};
-  for (const kmh of [22, 25, 27, 30, 35, 45, 50]) {
-    const cap = kmh === 50 ? 508 : kmh * 10;
-    out['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: [{ off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], to: movwLE(9, cap), id: 'speed' }] };
-  }
-  return out;
-})();
-
-// XT5 Pro/Max controller (3553G): region-locked bucket at 0x43cc, scale km/h*2089/115, register r1.
-// Stock top 40; 45/50 physically uncertain -> 22-40. Single in-place immediate (mov.w -> movw), no cave.
-IMAGES.bldcXT5ProMax.variants = (function () {
-  const out = {};
-  for (const kmh of [22, 25, 27, 30, 35]) {
-    const cap = Math.floor(kmh * 2089 / 115);
-    out['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: [{ off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], to: movwLE(1, cap), id: 'speed' }] };
-  }
-  return out;
-})();
+// XT5 top speed is a switch of per-command buckets; the cap must bind after unlock, so clamp every
+// bucket above the target down to it (Ultra r9=km/h*10, 50 keeps 508 for the FW gate; Pro/Max r1=km/h*2089/115).
+// std is inline in each block so the payload-bounds guard reads the offsets; only variants generated here.
+function xtBucketVariants(buckets, rd, scaleFn, topOff, speeds) {
+  const build = (kmh) => {
+    const t = scaleFn(kmh), ps = [];
+    for (const b of buckets) if (b.cap > t) ps.push({ off: b.off, from: b.from, to: movwLE(rd, t), id: 'speed' });
+    if (!ps.length) { const tb = buckets.find((b) => b.off === topOff); ps.push({ off: tb.off, from: tb.from, to: movwLE(rd, t), id: 'speed' }); }
+    return ps;
+  };
+  const v = {};
+  for (const kmh of speeds) v['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: build(kmh) };
+  return v;
+}
+IMAGES.bldcXT5Ultra.variants = xtBucketVariants(
+  [{ off: 0x37ae, from: [0x4f, 0xf4, 0xfe, 0x79], cap: 508 }, { off: 0x37c2, from: [0x40, 0xf2, 0x45, 0x19], cap: 325 },
+   { off: 0x37cc, from: [0x40, 0xf2, 0x95, 0x19], cap: 405 }, { off: 0x37d6, from: [0x40, 0xf2, 0xc7, 0x19], cap: 455 },
+   { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], cap: 255 }],
+  9, (k) => (k === 50 ? 508 : k * 10), 0x37ae, [22, 25, 27, 30, 35, 45, 50]);
+IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
+  [{ off: 0x43e0, from: [0x40, 0xf2, 0xd6, 0x21], cap: 726 }, { off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], cap: 454 }],
+  1, (k) => Math.floor(k * 2089 / 115), 0x43e0, [22, 25, 27, 30, 35]);
 
 // Identify which image this is, or null.
 // Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is

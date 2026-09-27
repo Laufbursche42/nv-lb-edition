@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.48
+- **XT5 target-speed fix.** The chosen cap now binds after unlock. The XT5 top speed is a switch of per-command buckets; the selector previously capped only the region-locked one, so unlocking still ran full speed. It now clamps all of them (Ultra + Pro/Max), so the cap is a hard top in every gear. NT5/UT5 were already correct. Re-flash the controller to get the fix.
+
 ## 1.0.47
 - **XT5 Pro/Max target speed.** The XT5 Pro and XT5 Max controllers join the "Target speed" selector (22-40 km/h; stock top is 40, higher is physics-bound). Byte-verified in-place, no length-extension, CRC-resealed; experimental until confirmed on a recoverable device (controller flash - recover over SWD).
 

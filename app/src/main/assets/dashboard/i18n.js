@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>XT5 speed cap fix.</b> On the XT5 (Ultra/Pro/Max) the chosen target speed now actually binds after you unlock - the earlier build capped only one internal gear, so unlocking still ran full speed. Re-flash the controller to get it. (NT5/UT5 were already correct.)",
       "<b>XT5 Pro/Max target speed.</b> The XT5 Pro and XT5 Max controllers are now in the 'Target speed' selector too (22-40 km/h; stock top is 40). Experimental until confirmed on a recoverable device.",
       "<b>UT5 target speed too.</b> The 'Target speed' selector now also covers the UT5 Max (22-40 km/h) and UT5 Ultra X (22-50) controllers, the same way as the NT5 and XT5 Ultra. It is a controller flash and experimental until confirmed on a recoverable device.",
       "<b>Pick the controller top speed.</b> Patching an NT5 (Max/Ultra/Turbo/Max+) or XT5 Ultra controller now shows a 'Target speed' dropdown - NT5 up to 40 km/h, XT5 Ultra up to 50. It is the same top-gear latch/cap as before, only the unlocked value changes; on the NT5 it still re-locks to 22 on restart. Experimental until confirmed on a recoverable device - it is a controller flash, so only do it if you can recover over SWD.",
@@ -621,6 +622,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>XT5-Speed-Fix.</b> Beim XT5 (Ultra/Pro/Max) greift die gewählte Zielgeschwindigkeit jetzt wirklich nach dem Entsperren - der vorige Build begrenzte nur einen internen Gang, entsperrt fuhr er trotzdem voll. Controller neu flashen, um es zu bekommen. (NT5/UT5 waren schon korrekt.)",
       "<b>XT5 Pro/Max Zielgeschwindigkeit.</b> Die Controller XT5 Pro plus XT5 Max sind jetzt auch im Zielgeschwindigkeits-Selektor (22-40 km/h; Stock-Top ist 40). Experimentell bis auf einem rückholbaren Gerät bestätigt.",
       "<b>Zielgeschwindigkeit jetzt auch für UT5.</b> Der Zielgeschwindigkeits-Selektor deckt jetzt auch die Controller UT5 Max (22-40 km/h) plus UT5 Ultra X (22-50) ab, genauso wie NT5 plus XT5 Ultra. Es ist ein Controller-Flash plus experimentell bis auf einem rückholbaren Gerät bestätigt.",
       "<b>Höchstgeschwindigkeit des Controllers wählbar.</b> Beim Patchen eines NT5 (Max/Ultra/Turbo/Max+) oder XT5 Ultra Controllers erscheint jetzt ein Dropdown 'Zielgeschwindigkeit' - NT5 bis 40 km/h, XT5 Ultra bis 50. Es ist derselbe Top-Gang-Latch bzw. -Cap wie bisher, nur der entsperrte Wert ändert sich; beim NT5 sperrt er beim Neustart wieder auf 22. Experimentell bis auf einem rückholbaren Gerät bestätigt - es ist ein Controller-Flash, also nur wenn du per SWD retten kannst.",
