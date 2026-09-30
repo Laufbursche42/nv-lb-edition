@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max is fully in the patcher now.</b> The UT5 Max meter can be patched for kickstart and cruise control too, alongside the controller target-speed selector (22-40 km/h) it already had - so speed, kickstart and cruise are all reachable. Both firmware images were byte-checked (no length-extension, checksums resealed); experimental until confirmed on a recoverable device, so only flash it where you can recover over SWD.",
       "<b>Logo + ambient light switches.</b> Turn the illuminated lettering and the side/underglow strips on or off from the Light section (next to the daytime running light). Which channel lights what depends on the model - just toggle each.",
       "<b>XT5 speed cap fix.</b> On the XT5 (Ultra/Pro/Max) the chosen target speed now actually binds after you unlock - the earlier build capped only one internal gear, so unlocking still ran full speed. Re-flash the controller to get it. (NT5/UT5 were already correct.)",
       "<b>XT5 Pro/Max target speed.</b> The XT5 Pro and XT5 Max controllers are now in the 'Target speed' selector too (22-40 km/h; stock top is 40). Experimental until confirmed on a recoverable device.",
@@ -627,6 +628,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max jetzt vollständig im Patcher.</b> Der UT5-Max-Meter lässt sich jetzt auch für Kickstart plus Tempomat patchen - neben dem Controller-Zielgeschwindigkeit-Selektor (22-40 km/h), den es schon gab. Damit sind Speed, Kickstart plus Tempomat alle erreichbar. Beide Firmware-Images sind byte-geprüft (kein len-extend, Prüfsummen neu versiegelt); experimentell bis auf einem rückholbaren Gerät bestätigt, nur dort flashen wo SWD-Recovery möglich ist.",
       "<b>Logo- plus Ambientlicht-Schalter.</b> Schalte den beleuchteten Schriftzug plus die seitlichen/Unterboden-Streifen in der Licht-Sektion ein oder aus (neben dem Tagfahrlicht). Welcher Kanal was beleuchtet, hängt vom Modell ab - einfach durchtippen.",
       "<b>XT5-Speed-Fix.</b> Beim XT5 (Ultra/Pro/Max) greift die gewählte Zielgeschwindigkeit jetzt wirklich nach dem Entsperren - der vorige Build begrenzte nur einen internen Gang, entsperrt fuhr er trotzdem voll. Controller neu flashen, um es zu bekommen. (NT5/UT5 waren schon korrekt.)",
       "<b>XT5 Pro/Max Zielgeschwindigkeit.</b> Die Controller XT5 Pro plus XT5 Max sind jetzt auch im Zielgeschwindigkeits-Selektor (22-40 km/h; Stock-Top ist 40). Experimentell bis auf einem rückholbaren Gerät bestätigt.",

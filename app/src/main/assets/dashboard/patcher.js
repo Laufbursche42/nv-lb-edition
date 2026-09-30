@@ -1273,11 +1273,11 @@ IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
 // Identify which image this is, or null.
 // Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is
 // blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
-const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'meterUT5Max', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcUT5Max', 'meterUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {
