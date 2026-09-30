@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.51
+- **UT5 Max can now be flashed.** In 1.0.50 the UT5 Max showed the patches but the flash itself was refused; that is fixed. Speed, kickstart and cruise now flash on the UT5 Max. Experimental - only flash it where you can recover the controller over SWD.
+
 ## 1.0.50
 - **UT5 Max meter patches enabled (kickstart + cruise).** The UT5 Max meter (kickstart, cruise, drive-mode, warning beeps) is now flashable, next to the controller target-speed selector (22-40 km/h) that was already there - so the UT5 Max is fully covered in the patcher. Both the controller and the meter image were byte-audited against stock (every change inside the image, no length-extension, CRC/checksum resealed). Experimental until confirmed on a recoverable device. Mirrors lb-webpatcher v36.
 

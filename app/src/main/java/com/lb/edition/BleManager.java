@@ -148,9 +148,9 @@ final class BleManager {
 
     // ST3 Pro (pid 2345) tears the BLE link down mid-flash; only that model gets DFU resume.
     private static final String DFU_RESUME_PID = "2345";
-    // UT5 Max (pid 2538): hard flash block (its meter has no recovery path once damaged). Every other
-    // non-confirmed model is blocked at the patcher instead, so a stock recovery flash stays possible.
-    private static final String[] DFU_BLOCKED_PIDS = {"2538"};
+    // Native DFU flash block list, by pid. Empty = no model is hard-blocked here; unconfirmed
+    // models are gated at the patcher instead, so a stock recovery flash stays possible.
+    private static final String[] DFU_BLOCKED_PIDS = {};
 
     private static boolean isFlashBlocked(String pid) {
         if (pid == null) return false;
