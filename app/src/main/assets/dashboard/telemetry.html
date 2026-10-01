@@ -4100,6 +4100,9 @@ function naveeSpeedOpts(det) {
   if (['5801', '9601'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra / UT5 Ultra X (ceiling 60, no field-weakening gate)
   return null;
 }
+// 02831 in-place latch: the speed unlock overwrites the lock-gated launch boost, so launch torque drops
+// (~22 A -> ~18 A). Byte-verified on 9301; 9207 = Max+ 9201 / Turbo 11101. Other controllers keep it.
+function naveeIsLaunchDrop(det) { return !!(det && ['9301', '9201', '11101'].indexOf(String(det.id)) >= 0); }
 function selectedPatchFeatures() {
   return Array.from(document.querySelectorAll('#patch-features input[type=checkbox]:checked')).map(c => c.value).filter(v => v !== 'full');
 }
@@ -4143,6 +4146,10 @@ function renderPatchFeatures(det) {
           sel.appendChild(o);
         });
         box.appendChild(sel);
+      }
+      if (naveeIsLaunchDrop(det)) {
+        const w = document.createElement('div'); w.className = 'patch-disclaimer'; w.style.marginTop = '8px';
+        w.textContent = t('patch.launchdrop'); box.appendChild(w);
       }
     }
   }

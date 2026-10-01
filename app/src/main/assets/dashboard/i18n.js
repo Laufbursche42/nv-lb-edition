@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Launch-torque note for the NT5 Max / Max+ / Turbo.</b> Unlocking the speed on these controllers lowers the pull-away torque (launch current about 22 A -> 18 A) - the strong launch is tied to the 22 km/h lock in the stock firmware, so unlocking removes it. The patcher now says so up front. By design; other models keep their launch torque.",
       "<b>Patching paused for ST3/GT3/UT5/NT3 Pro.</b> ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro and UT5 Max no longer offer patching - there is no reliable patch for them yet, so it is switched off until a working one is ready, to keep you from bricking your scooter. NT5 and XT5 are unchanged. Test users get the right firmware from us directly: the Firmware page still lets you pick a finished .bin and flash it as-is - with a brick warning you confirm.",
       "<b>UT5 Max is fully in the patcher now.</b> The UT5 Max meter can be patched for kickstart and cruise control too, alongside the controller target-speed selector (22-40 km/h) it already had - so speed, kickstart and cruise are all reachable. Both firmware images were byte-checked (no length-extension, checksums resealed); experimental until confirmed on a recoverable device, so only flash it where you can recover over SWD.",
       "<b>Logo + ambient light switches.</b> Turn the illuminated lettering and the side/underglow strips on or off from the Light section (next to the daytime running light). Which channel lights what depends on the model - just toggle each.",
@@ -437,6 +438,7 @@ window.I18N = {
     "feat.beep-alarm": "Silence alarm / find-me tone",
     "feat.beep-melody": "Silence startup / error melody",
     "patch.disclaimer": "Private ground only. Speed unlock voids the road approval (ABE); the scooter may then no longer be used in public road traffic.",
+    "patch.launchdrop": "Heads up for this controller (NT5 Max / Max+ / Turbo): unlocking the speed lowers the launch torque - pull-away current drops from about 22 A to 18 A. The strong launch is tied to the 22 km/h lock in the stock firmware, so unlocking removes it. By design, not recoverable without a brick-risk firmware extension.",
     "patch.status.download_fail": "Download of {kind} failed. Check your connection.",
     "patch.status.done": "Done. The patched files are in Downloads.",
     "patch.produces": "delivers controller",
@@ -631,6 +633,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Hinweis zur Anfahrkraft beim NT5 Max / Max+ / Turbo.</b> Das Entsperren der Geschwindigkeit senkt bei diesen Controllern die Anfahrkraft (Anfahrstrom etwa 22 A -> 18 A) - der starke Anfahr-Schub ist in der Werks-Firmware an die 22-km/h-Sperre gekoppelt, entsperrt entfällt er. Der Patcher sagt das jetzt vorab. Bauartbedingt; andere Modelle behalten ihre Anfahrkraft.",
       "<b>Patchen für ST3/GT3/UT5/NT3 Pro pausiert.</b> ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro plus UT5 Max bieten kein Patchen mehr - es gibt für sie noch keinen zuverlässigen Patch, also ist es abgeschaltet bis ein funktionierender bereit ist, damit du deinen Roller nicht brickst. NT5 plus XT5 bleiben unverändert. Testnutzer bekommen die passende Firmware direkt von uns: die Firmware-Seite lässt dich weiter eine fertige .bin wählen plus unverändert flashen - mit Brick-Warnung plus Bestätigung.",
       "<b>UT5 Max jetzt vollständig im Patcher.</b> Der UT5-Max-Meter lässt sich jetzt auch für Kickstart plus Tempomat patchen - neben dem Controller-Zielgeschwindigkeit-Selektor (22-40 km/h), den es schon gab. Damit sind Speed, Kickstart plus Tempomat alle erreichbar. Beide Firmware-Images sind byte-geprüft (kein len-extend, Prüfsummen neu versiegelt); experimentell bis auf einem rückholbaren Gerät bestätigt, nur dort flashen wo SWD-Recovery möglich ist.",
       "<b>Logo- plus Ambientlicht-Schalter.</b> Schalte den beleuchteten Schriftzug plus die seitlichen/Unterboden-Streifen in der Licht-Sektion ein oder aus (neben dem Tagfahrlicht). Welcher Kanal was beleuchtet, hängt vom Modell ab - einfach durchtippen.",
@@ -1063,6 +1066,7 @@ window.I18N = {
     "feat.beep-alarm": "Alarm-/Find-me-Ton stumm",
     "feat.beep-melody": "Start-/Fehlermelodie stumm",
     "patch.disclaimer": "Nur auf Privatgelände. Die Entdrosselung hebt die ABE auf; der Roller darf dann nicht mehr im öffentlichen Straßenverkehr genutzt werden.",
+    "patch.launchdrop": "Hinweis zu diesem Controller (NT5 Max / Max+ / Turbo): Das Entsperren der Geschwindigkeit senkt die Anfahrkraft - der Anfahrstrom fällt von etwa 22 A auf 18 A. Der starke Anfahr-Schub ist in der Werks-Firmware an die 22-km/h-Sperre gekoppelt, entsperrt entfällt er. Bauartbedingt, ohne Brick-Risiko nicht rückholbar.",
     "patch.status.download_fail": "Download von {kind} fehlgeschlagen. Verbindung prüfen.",
     "patch.status.done": "Fertig. Die gepatchten Dateien liegen in Downloads.",
     "patch.produces": "liefert Controller",

@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.55
+- The patcher now shows a note on the NT5 Max, Max+ and Turbo: unlocking the speed lowers the launch torque (pull-away current about 22 A -> 18 A), because the strong launch is tied to the 22 km/h lock in the stock firmware - by design, not restorable without a brick-risk extension. Other models are unaffected.
+
 ## 1.0.54
 - UT5 Ultra X joins the patching pause (it was missed in 1.0.53), so the whole UT5 series is now flash-only like ST3/GT3/NT3 Pro. The in-app support list now marks these models as "paused" instead of "patcher". NT5 and XT5 are unchanged.
 
