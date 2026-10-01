@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Patching paused for ST3/GT3/UT5/NT3 Pro.</b> ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro and UT5 Max no longer offer patching - there is no reliable patch for them yet, so it is switched off until a working one is ready, to keep you from bricking your scooter. NT5 and XT5 are unchanged. Test users get the right firmware from us directly: the Firmware page still lets you pick a finished .bin and flash it as-is - with a brick warning you confirm.",
       "<b>UT5 Max is fully in the patcher now.</b> The UT5 Max meter can be patched for kickstart and cruise control too, alongside the controller target-speed selector (22-40 km/h) it already had - so speed, kickstart and cruise are all reachable. Both firmware images were byte-checked (no length-extension, checksums resealed); experimental until confirmed on a recoverable device, so only flash it where you can recover over SWD.",
       "<b>Logo + ambient light switches.</b> Turn the illuminated lettering and the side/underglow strips on or off from the Light section (next to the daytime running light). Which channel lights what depends on the model - just toggle each.",
       "<b>XT5 speed cap fix.</b> On the XT5 (Ultra/Pro/Max) the chosen target speed now actually binds after you unlock - the earlier build capped only one internal gear, so unlocking still ran full speed. Re-flash the controller to get it. (NT5/UT5 were already correct.)",
@@ -421,6 +422,7 @@ window.I18N = {
     "patch.run.noselection": "Pick at least one option to patch.",
     "patch.run.pickvariant": "Pick your board variant above.",
     "patch.run.unsupported": "This model is not supported by the patcher yet.",
+    "patch.run.experimental": "No patching for this model here. Flash a firmware file you were provided on the Firmware page instead.",
     "patch.status.download": "Downloading {kind}...",
     "patch.status.patch": "Patching {kind}...",
     "patch.status.skip": "No patch for {kind} on this model - skipped.",
@@ -448,6 +450,7 @@ window.I18N = {
     "fw.file.choose": "&#128193; Choose your own file",
     "fw.toast.pick_fail": "Could not read the chosen file.",
     "fw.pick.unknown": "Unrecognised firmware - not a NAVEE meter or BLDC image.",
+    "fw.rawwarn": "You are flashing a finished firmware file unchecked - nothing is patched or verified here. The target (display or controller) is detected from the file. A wrong file or a wrong target can brick the scooter; you are responsible for the file being correct.",
     "fw.file.none": "No file loaded.",
     "fw.file.downloading": "Downloading...",
     "fw.file.download_fail": "Download failed. Check the link and your connection.",
@@ -628,6 +631,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Patchen für ST3/GT3/UT5/NT3 Pro pausiert.</b> ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro plus UT5 Max bieten kein Patchen mehr - es gibt für sie noch keinen zuverlässigen Patch, also ist es abgeschaltet bis ein funktionierender bereit ist, damit du deinen Roller nicht brickst. NT5 plus XT5 bleiben unverändert. Testnutzer bekommen die passende Firmware direkt von uns: die Firmware-Seite lässt dich weiter eine fertige .bin wählen plus unverändert flashen - mit Brick-Warnung plus Bestätigung.",
       "<b>UT5 Max jetzt vollständig im Patcher.</b> Der UT5-Max-Meter lässt sich jetzt auch für Kickstart plus Tempomat patchen - neben dem Controller-Zielgeschwindigkeit-Selektor (22-40 km/h), den es schon gab. Damit sind Speed, Kickstart plus Tempomat alle erreichbar. Beide Firmware-Images sind byte-geprüft (kein len-extend, Prüfsummen neu versiegelt); experimentell bis auf einem rückholbaren Gerät bestätigt, nur dort flashen wo SWD-Recovery möglich ist.",
       "<b>Logo- plus Ambientlicht-Schalter.</b> Schalte den beleuchteten Schriftzug plus die seitlichen/Unterboden-Streifen in der Licht-Sektion ein oder aus (neben dem Tagfahrlicht). Welcher Kanal was beleuchtet, hängt vom Modell ab - einfach durchtippen.",
       "<b>XT5-Speed-Fix.</b> Beim XT5 (Ultra/Pro/Max) greift die gewählte Zielgeschwindigkeit jetzt wirklich nach dem Entsperren - der vorige Build begrenzte nur einen internen Gang, entsperrt fuhr er trotzdem voll. Controller neu flashen, um es zu bekommen. (NT5/UT5 waren schon korrekt.)",
@@ -1044,6 +1048,7 @@ window.I18N = {
     "patch.run.noselection": "Wähle mindestens eine Option zum Patchen.",
     "patch.run.pickvariant": "Oben die Board-Variante wählen.",
     "patch.run.unsupported": "Dieses Modell unterstützt der Patcher noch nicht.",
+    "patch.run.experimental": "Für dieses Modell hier kein Patchen. Flashe stattdessen auf der Firmware-Seite eine fertige Firmware-Datei, die du bekommen hast.",
     "patch.status.download": "{kind} wird heruntergeladen...",
     "patch.status.patch": "{kind} wird gepatcht...",
     "patch.status.skip": "Kein Patch für {kind} bei diesem Modell - übersprungen.",
@@ -1071,6 +1076,7 @@ window.I18N = {
     "fw.file.choose": "&#128193; Eigene Datei wählen",
     "fw.toast.pick_fail": "Die gewählte Datei konnte nicht gelesen werden.",
     "fw.pick.unknown": "Unbekannte Firmware - kein NAVEE Meter- oder BLDC-Image.",
+    "fw.rawwarn": "Du flashst eine fertige Firmware-Datei ungeprüft - hier wird nichts gepatcht plus nichts geprüft. Das Ziel (Display oder Controller) wird aus der Datei erkannt. Eine falsche Datei oder ein falsches Ziel kann den Roller bricken; die Verantwortung für die Korrektheit der Datei liegt bei dir.",
     "fw.file.none": "Keine Datei geladen.",
     "fw.file.downloading": "Wird heruntergeladen...",
     "fw.file.download_fail": "Download fehlgeschlagen. Link und Verbindung prüfen.",

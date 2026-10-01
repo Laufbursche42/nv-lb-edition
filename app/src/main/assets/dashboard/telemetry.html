@@ -3498,7 +3498,7 @@ const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '551
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
-const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max
+const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418', '2701', '2538']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro, UT5 Max
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
   const isXT = naveeIsXT(naveeRealModel());
@@ -3999,6 +3999,7 @@ const fwState = {
   staged: { meter: null, bldc: null },      // { name } per component once written and staged
   flashQueue: [], flashing: null,           // sequential meter -> bldc flash
   experimental: false,                      // staged image is untested (not hardware-confirmed)
+  raw: false,                               // staged image was picked by the user (unverified, flash as-is)
 };
 
 /* ── Model detection from the live serial pid plus the running controller version ── */
@@ -4046,6 +4047,12 @@ function renderPatcherModel(forcedId) {
     if (det.meter) parts.push('Meter ' + det.meter.vn);
     if (det.bldc) parts.push('Controller ' + det.bldc.vn);
     modelEl.textContent = det.name + (parts.length ? ' (' + parts.join(', ') + ')' : '');
+    if (isExperimentalScooter()) {   // untested model: no public patching - flash a provided file instead
+      hidePatchFeatures();
+      btn.disabled = true;
+      hint.textContent = t('patch.run.experimental');
+      return;
+    }
     renderPatchFeatures(det);
     const flashable = !!(det.meter || det.bldc);
     btn.disabled = !flashable;
@@ -4151,6 +4158,7 @@ function fwRunPatcher() {
   if (typeof LB === 'undefined' || !LB.fwDownloadPatch) { showToast(t('msg.app.only.in.app')); return; }
   const det = fwState.model;
   if (!det || det.state !== 'ok') { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
+  if (isExperimentalScooter()) { showToast(t('patch.run.experimental'), 4000, 'err'); return; }   // untested model: no patching, flash a provided file
   fwState.selected = selectedPatchFeatures();
   fwState.variant = selectedPatchVariant();           // std (speed only) vs full (speed + launch torque, untested)
   const sel = fwState.selected;
@@ -4162,6 +4170,7 @@ function fwRunPatcher() {
   if (!comps.length) { showToast(t('patch.run.noselection'), 3000, 'err'); return; }
   fwState.staged = { meter: null, bldc: null };
   fwState.producedBldc = null;
+  fwState.raw = false;
   fwState.experimental = false;
   fwState.pendingDownloads = comps.slice();
   fwState.downloading = true;
@@ -4212,7 +4221,7 @@ function fwStagedList() {
   return out;
 }
 function fwRenderStaged() {
-  const un = document.getElementById('fw-untested'); if (un) un.classList.toggle('is-hidden', !fwState.experimental);
+  const un = document.getElementById('fw-untested'); if (un) un.classList.toggle('is-hidden', !(fwState.experimental || fwState.raw));
   const info = document.getElementById('fw-fileinfo');
   if (!info) return;
   const list = fwStagedList();
@@ -4231,10 +4240,14 @@ window.__onFwPicked = function(arg) {
   if (!m || !m.ok) { showToast(t('fw.toast.pick_fail'), 3000, 'err'); return; }
   let kind;
   try {
-    const key = window.NVFW && window.NVFW.identify ? window.NVFW.identify(new Uint8Array(fwB64ToBuf(m.b64))) : null;
-    if (!key || !window.NVFW.IMAGES[key]) { showToast(t('fw.pick.unknown'), 4000, 'err'); return; }
-    kind = window.NVFW.IMAGES[key].kind === 'bldc' ? 'bldc' : 'meter';
-    if (window.NVFW.isExperimental && window.NVFW.isExperimental(key)) fwState.experimental = true;
+    const u8 = new Uint8Array(fwB64ToBuf(m.b64));
+    if (u8.length < 0x100) { showToast(t('fw.pick.unknown'), 4000, 'err'); return; }
+    // Target from the header magic, not identify(), so a pre-built/patched file is accepted too
+    // (patches never touch offset 0): "T2202" at 0 = meter, else controller. A picked file is
+    // unverified, so it flashes raw with the brick warning + consent before it is written.
+    const isMeter = u8[0] === 0x54 && u8[1] === 0x32 && u8[2] === 0x32 && u8[3] === 0x30 && u8[4] === 0x32;
+    kind = isMeter ? 'meter' : 'bldc';
+    fwState.raw = true;
   } catch (e) { showToast(t('fw.pick.unknown'), 4000, 'err'); return; }
   try { LB.fwStageRaw(m.b64, m.name, kind); } catch (e) { showToast(tf('msg.error.generic', { e: e })); }
 };
@@ -4364,7 +4377,7 @@ function fwStart() {
   if (!cons || !cons.checked) { showToast(t('fw.hint.consent'), 3000, 'err'); return; }
   document.getElementById('confirm-title').textContent = t('fw.confirm.title');
   const warn = document.getElementById('confirm-warn');
-  if (warn) { warn.textContent = (fwState.experimental ? t('scooter.untested.fw') + '  ' : '') + t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block'; }
+  if (warn) { warn.textContent = (fwState.raw ? t('fw.rawwarn') + '  ' : (fwState.experimental ? t('scooter.untested.fw') + '  ' : '')) + t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block'; }
   document.getElementById('confirm-msg').textContent = tf('fw.confirm.body', { file: list.map(x => x.name).join(', ') });
   document.getElementById('confirm-ok').textContent = t('fw.confirm.ok');
   state.confirmCb = () => { fwState.flashQueue = list.map(x => x.kind); fwFlashNext(); };

@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.53
+- **Patching disabled for ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro and UT5 Max.** There is no reliable working patch for these models yet, so to keep normal users from bricking their scooter the patch options are removed for now. Test users get the right firmware from us directly and can still flash it: the flash step takes a file you upload and flashes it as-is, after a brick warning you confirm. NT5 and XT5 are unchanged (patch + flash). Mirrors lb-webpatcher v38.
+
 ## 1.0.51
 - **UT5 Max can now be flashed.** In 1.0.50 the UT5 Max showed the patches but the flash itself was refused; that is fixed. Speed, kickstart and cruise now flash on the UT5 Max. Experimental - only flash it where you can recover the controller over SWD.
 
