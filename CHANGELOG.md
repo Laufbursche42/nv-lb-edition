@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.54
+- UT5 Ultra X joins the patching pause (it was missed in 1.0.53), so the whole UT5 series is now flash-only like ST3/GT3/NT3 Pro. The in-app support list now marks these models as "paused" instead of "patcher". NT5 and XT5 are unchanged.
+
 ## 1.0.53
 - **Patching disabled for ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro and UT5 Max.** There is no reliable working patch for these models yet, so to keep normal users from bricking their scooter the patch options are removed for now. Test users get the right firmware from us directly and can still flash it: the flash step takes a file you upload and flashes it as-is, after a brick warning you confirm. NT5 and XT5 are unchanged (patch + flash). Mirrors lb-webpatcher v38.
 

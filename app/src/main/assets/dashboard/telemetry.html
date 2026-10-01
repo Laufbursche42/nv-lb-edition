@@ -3498,7 +3498,7 @@ const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '551
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
-const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418', '2701', '2538']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro, UT5 Max
+const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418', '2701', '2538', '2585']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro, UT5 Max, UT5 Ultra X
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
   const isXT = naveeIsXT(naveeRealModel());
