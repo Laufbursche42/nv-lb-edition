@@ -453,7 +453,11 @@ final class BleManager {
         @Override
         public void onMtuChanged(BluetoothGatt g, int mtu, int status) {
             Log.i(TAG, "onMtuChanged mtu=" + mtu + " status=" + status);
-            proceedAfterMtu(g);
+            // Android / the peer may negotiate the MTU on its own right after connect, BEFORE service
+            // discovery has assigned notifyChar. Only let an MTU event drive the notify hand-off once the
+            // characteristics exist; otherwise it latches the MTU step and arms notifications on a null
+            // characteristic (NPE), leaving the link "connected" but silent (no RX).
+            if (notifyChar != null) proceedAfterMtu(g);
         }
 
         @Override
@@ -582,22 +586,35 @@ final class BleManager {
     }
 
     private void enableNotifications(BluetoothGatt g) {
+        // Snapshot the field: a concurrent disconnect can null it between the guard and the call.
+        final BluetoothGattCharacteristic nc = notifyChar;
+        if (g == null || nc == null) {
+            // Not ready (e.g. an MTU event arrived before discovery). Do NOT markReady - that would fake
+            // a connection with no notifications and therefore no telemetry. A reconnect retries cleanly.
+            Log.w(TAG, "enableNotifications skipped: gatt/notifyChar not ready");
+            return;
+        }
         try {
-            g.setCharacteristicNotification(notifyChar, true);
-            BluetoothGattDescriptor cccd = notifyChar.getDescriptor(CCCD);
+            g.setCharacteristicNotification(nc, true);
+            BluetoothGattDescriptor cccd = nc.getDescriptor(CCCD);
             if (cccd != null) {
                 cccd.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 boolean ok = g.writeDescriptor(cccd);
                 Log.i(TAG, "writeDescriptor(CCCD) initiated=" + ok);
-                if (!ok) main.post(this::markReady);
+                if (!ok) { Log.w(TAG, "writeDescriptor rejected; reconnecting"); reconnectForNotify(g); }
             } else {
                 Log.w(TAG, "CCCD descriptor missing; proceeding");
                 main.post(this::markReady);
             }
         } catch (Throwable t) {
             Log.e(TAG, "enableNotifications failed", t);
-            main.post(this::markReady);
+            reconnectForNotify(g);   // was markReady(): that faked a live link with no RX (no telemetry)
         }
+    }
+
+    /** Notifications could not be armed: drop the link so the normal backoff reconnect gives a clean retry. */
+    private void reconnectForNotify(BluetoothGatt g) {
+        try { if (g != null) g.disconnect(); } catch (Throwable ignored) {}
     }
 
     // Notifications are live: mark connected, persist the device, start the push loop and run the

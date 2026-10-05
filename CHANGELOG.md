@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.56
+- Telemetry fix: on some phones the app connected but the dashboard stayed empty (speed, battery and temperature blank, model and firmware missing). When the phone negotiated the BLE MTU before service discovery finished, the app armed notifications too early, failed silently and left the link "connected" while receiving nothing. Notifications are now armed only after the characteristics are known, and a failed attempt reconnects cleanly instead of faking a live link.
+- Removed two stale "UT5 Max is fully in the patcher" what's-new notes that contradicted the UT5 patching pause; the in-app support list already lists the UT5 models as paused.
+
 ## 1.0.55
 - The patcher now shows a note on the NT5 Max, Max+ and Turbo: unlocking the speed lowers the launch torque (pull-away current about 22 A -> 18 A), because the strong launch is tied to the 22 km/h lock in the stock firmware - by design, not restorable without a brick-risk extension. Other models are unaffected.
 
