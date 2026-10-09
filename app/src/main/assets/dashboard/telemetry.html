@@ -3494,11 +3494,11 @@ function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb
 
 // Drive-mode gear byte for non-latch models: stock XT5 4/3, else 5/2. capZ latch is handled in
 // sendSpeedRelease (unlock via app-only nibble 7, lock 6).
-const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0090', '0099', '1118', '7776', '5566', '5050', '5055'];
+const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0099', '1118', '7776', '5566', '5050', '5055'];
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
-const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418', '2701', '2538', '2585']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro, UT5 Max, UT5 Ultra X
+const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418', '2701', '2585']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro, UT5 Ultra X
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
   const isXT = naveeIsXT(naveeRealModel());
@@ -3516,6 +3516,9 @@ function sendSpeedRelease(on) {
     setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
     return true;
   }
+  // UT5 Max: the cap sits permanently in the controller (gear 3/4 ceiling patched to 40). Its stock meter
+  // only ever emits drive mode 2, 3 or 11, so no app gear can switch anything here - say so, send nothing.
+  if (naveeRealModel() === 'UT5 Max') { showToast(t('scooter.tune.permanent'), 6000); return false; }
   const fw = (liveRaw().fwBldc || '').trim();
   if (PATCHED_LATCH_BLDC.includes(fw)) {
     if (on && OUTDATED_LATCH_BLDC.includes(fw)) { showToast(t('scooter.tune.outdated'), 6000); return false; }
@@ -4083,11 +4086,15 @@ function fwPatchStatus(msg) {
   if (!el) return;
   el.classList.remove('is-hidden'); el.textContent = msg;
 }
+// Models whose meter must never be patched, whatever the manifest offers. UT5 Max (8901): its meter
+// bootloader rejects a patched image and it hosts BLE, so a failed commit is unrecoverable - the speed
+// lever sits in the controller alone (patcher.js bldcUT5Max, permanent 40 km/h top gear).
+function naveeMeterPatchBlocked(det) { return !!det && String(det.id) === '8901'; }
 // Feature checkboxes on the patcher page: which features the detected model can take, plus the selection.
 function patchFeatureList(det) {
   const feats = [];
   if (det.bldc && (!naveeIsXT(det.name) || ['5801', '5301', '5901'].indexOf(String(det.id)) >= 0)) feats.push('speed'); // XT5 Ultra (5801) + XT5 Pro/Max (5301/5901) now have a controller speed selector
-  if (det.meter) feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
+  if (det.meter && !naveeMeterPatchBlocked(det)) feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   return feats;
 }
 function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v === k ? f : v; }
@@ -4096,7 +4103,8 @@ function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v 
 // Only models whose bldc image carries speed variants appear here; other controllers keep the binary latch.
 function naveeSpeedOpts(det) {
   if (!det || !det.bldc) return null;
-  if (['9301', '9701', '9401', '9201', '11101', '8901', '5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family + UT5 Max + XT5 Pro/Max (3553G, cap ~40)
+  if (['9301', '9701', '9401', '9201', '11101', '5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family + XT5 Pro/Max (3553G, cap ~40)
+  if (String(det.id) === '8901') return null;  // UT5 Max: one permanent 40 km/h build, no selector and no toggle
   if (['5801', '9601'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra / UT5 Ultra X (ceiling 60, no field-weakening gate)
   return null;
 }
@@ -4172,7 +4180,7 @@ function fwRunPatcher() {
   const wantsSpeed = sel.indexOf('speed') >= 0;      // the only bldc-side feature
   const wantsMeter = sel.some(f => f !== 'speed');   // any meter-side feature (cruise/kickstart/beep-*)
   const comps = [];
-  if (det.meter && wantsMeter) comps.push({ kind: 'meter', url: det.meter.url, name: fwReadableName(det, 'meter', det.meter.vn) });
+  if (det.meter && wantsMeter && !naveeMeterPatchBlocked(det)) comps.push({ kind: 'meter', url: det.meter.url, name: fwReadableName(det, 'meter', det.meter.vn) });
   if (det.bldc && wantsSpeed) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
   if (!comps.length) { showToast(t('patch.run.noselection'), 3000, 'err'); return; }
   fwState.staged = { meter: null, bldc: null };

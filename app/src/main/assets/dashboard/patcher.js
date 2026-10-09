@@ -815,7 +815,16 @@ const IMAGES = {
     ],
   },
 
-  // UT5 Max BLDC 0.0.1.0 (8901). SZMC-ES-ZM-3553G ERPM latch (top cell 0x20000378). verword 0100 + tag T2416 collide with 9701 -> CRC pin 0xb58f mandatory. Meter needs the trampoline. Marker "0090".
+  // UT5 Max BLDC 0.0.1.0 (8901). SZMC-ES-ZM-3553G. verword 0100 + tag T2416 collide with 9701 -> CRC pin
+  // 0xb58f mandatory. Permanent top-gear cap, controller only - the meter is never flashed (its own
+  // bootloader is not in any dump and rejects a patched image; that is what bricked a device).
+  // Mechanics: the drive-mode limit selector (0x49a8..0x49e0) reads the ceiling for gear 3/4 from
+  // 0x20000376, a cell with no writer anywhere in the app. The ldrh is replaced by an immediate, so the
+  // stock top gear carries the target itself (km/h*20, 800 = 40) and no meter-side nibble is needed.
+  // Left stock on purpose: the fault derate at 0x4a40 (clamps to [0x20000378] while error flag
+  // 0x2000037a or 0x20000387 is set), gear 2, the walk mode and the whole boot path. The over-rev
+  // governor (cmp #0x186 = 39.0 at km/h*10, 0x384e/0x3ade/0x517c/0x5198) shaves the top to ~39.
+  // Marker "0090".
   bldcUT5Max: {
     label: 'UT5 Max BLDC 0.0.1.0 (8901)',
     kind: 'bldc',
@@ -823,9 +832,7 @@ const IMAGES = {
     verify: { size: 0xf900, lenOff: 0x84, lenStock: 0x0000f800, crcOff: 0xb0, crcStock: 0xb58f },
     reseal: bldcResealErpm,
     patches: [
-      { off: 0x4d38, from: [0x76, 0x03, 0x00, 0x20], to: [0x78, 0x03, 0x00, 0x20], id: 'latch-repoint-mode3' },
-      { off: 0xa64e, from: [0x9e, 0xf8, 0x03, 0x20], to: [0x05, 0xf0, 0xda, 0xb8], id: 'latch-detour' },
-      { off: 0xf7f0, from: [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff], to: [0x00, 0xb5, 0xf6, 0xf7, 0xdd, 0xfe, 0x40, 0xf2, 0xb8, 0x10, 0x40, 0xf2, 0x78, 0x31, 0xc2, 0xf2, 0x00, 0x01, 0x08, 0x80, 0x00, 0xbd, 0x9e, 0xf8, 0x03, 0x20, 0x02, 0xf0, 0x0f, 0x03, 0x05, 0x2b, 0x02, 0xd0, 0x06, 0x2b, 0x03, 0xd0, 0x09, 0xe0, 0x40, 0xf2, 0x20, 0x30, 0x01, 0xe0, 0x40, 0xf2, 0xb8, 0x10, 0x40, 0xf2, 0x78, 0x33, 0xc2, 0xf2, 0x00, 0x03, 0x18, 0x80, 0xfa, 0xf7, 0x11, 0xbf], id: 'latch-cave' },
+      { off: 0x49cc, from: [0xb9, 0xf8, 0x00, 0xc0], to: [0x40, 0xf2, 0x20, 0x3c], id: 'speed' }, // gear 3/4 ceiling: ldrh.w r12,[r9] -> movw r12,#800 (40 km/h)
       { off: 0xaf2c, from: [0x31, 0x22], to: [0x39, 0x22], id: 'version-marker' },
     ],
   },
@@ -924,7 +931,10 @@ const IMAGES = {
     ],
   },
 
-  // UT5 Max meter 0.0.3.0 (8901). T2314. Drive-mode clamped -> one-shot builder detour mirrors the app lock-state cell 0x20b198 (read-only) into control-frame byte3 so nibble 5/6 reaches bldcUT5Max. CRC pin 0x010a splits it from UT5 Ultra X (0x31f1).
+  // UT5 Max meter 0.0.3.0 (8901). T2314. NOT flashable and deliberately kept out of FLASH_ENABLED: the
+  // meter bootloader is in no dump, rejects a patched image and killed a device (it also hosts BLE, so a
+  // failed commit takes the DFU gateway with it). Kept only so the CRC pin 0x010a documents the split
+  // from UT5 Ultra X (0x31f1). The speed lever lives in bldcUT5Max alone.
   meterUT5Max: {
     label: 'UT5 Max meter 0.0.3.0 (8901)',
     kind: 'meter',
@@ -932,9 +942,8 @@ const IMAGES = {
     verify: { size: 0x25c00, crcOff: 0x13, crcStock: 0x010a, lenOff: 0x10, lenStock: 0x025800 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    patches: [
-      { off: 0x13212, from: [0x00, 0x07, 0x00, 0x0f], to: [0x05, 0x20, 0x00, 0xbf], id: 'drivemode-force5' }, // BLDC-cap only: force outgoing drive-mode nibble to 5 (movs r0,#5; nop); no cave/kickstart/cruise/beeps
-    ],
+    blocked: 'The UT5 Max meter is never patched: its bootloader rejects a patched image and it hosts BLE, so a failed update cannot be undone. Patch the controller instead - it carries the 40 km/h top gear on its own.',
+    patches: [],
   },
 
   // E20 / E25 meter 2.0.0.7 (4001/4101). Meter feature patches (region-gated kickstart/cruise flipped to work in every region, plus per-tone beep silences).
@@ -1217,7 +1226,7 @@ IMAGES.bldc9301.stdSpeedKmh = 40; IMAGES.bldc9301.variants = ntSpeedVariants(IMA
 IMAGES.bldc9207.stdSpeedKmh = 40; IMAGES.bldc9207.variants = ntSpeedVariants(IMAGES.bldc9207, { latchId: 'capz-latch', enc: 'movs8', find: [0xc8, 0x21] });
 IMAGES.bldc9701.stdSpeedKmh = 40; IMAGES.bldc9701.variants = ntSpeedVariants(IMAGES.bldc9701, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
 IMAGES.bldc9401.stdSpeedKmh = 40; IMAGES.bldc9401.variants = ntSpeedVariants(IMAGES.bldc9401, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
-IMAGES.bldcUT5Max.stdSpeedKmh = 40; IMAGES.bldcUT5Max.variants = ntSpeedVariants(IMAGES.bldcUT5Max, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 }); // 3553G, same capZ latch as NT5 9701/9401; governor caps ~40
+IMAGES.bldcUT5Max.stdSpeedKmh = 40;  // single permanent cap, no selector (governor shaves it to ~39)
 
 // UT5 Ultra X (T2443): the switchable-gate block sets the unlocked region ceiling (km/h*10) via the
 // unlock `movw r0,#imm` in its `to` (std = 400 = 40). Ceiling 60 (no field-weakening gate), so 22-50
@@ -1266,11 +1275,11 @@ IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
 // blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
 // UT5 Max meter: flashable with ONLY the minimal BLDC-cap patch (force drive-mode nibble 5);
 // kickstart/cruise/beeps removed. Experimental - full meter patch set bricked on hardware.
-const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'meterUT5Max', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const FLASH_ENABLED = new Set(['meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX', 'meterXT5', 'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207', 'bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcUT5Max', 'meterUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
+const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'meterST3GT3', 'bldcNT3Pro']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {
@@ -1364,7 +1373,7 @@ function patchFirmware(arrayBuffer, selected, variantKey) {
   const key = identify(u8);
   if (!key) {
     // A blocked model still matches its signature; give a clear message instead of "unrecognised".
-    for (const k of Object.keys(IMAGES)) if (!FLASH_ENABLED.has(k) && IMAGES[k].match(u8)) throw new Error('Flashing this model is disabled in this version.');
+    for (const k of Object.keys(IMAGES)) if (!FLASH_ENABLED.has(k) && IMAGES[k].match(u8)) throw new Error(IMAGES[k].blocked || 'Flashing this model is disabled in this version.');
     throw new Error('Unrecognised firmware - not a known NAVEE NT5 meter or BLDC image.');
   }
   const spec = IMAGES[key];

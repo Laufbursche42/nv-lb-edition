@@ -16,6 +16,11 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.57
+- **UT5 Max patching is back, controller only.** It now gets one fixed 40 km/h top gear instead of a switchable release. The speedometer is no longer offered as a patch target at all: no cruise, kickstart or beep options and no download for it, because its update routine rejects a modified file and it is also the Bluetooth gateway - a failed speedometer update cannot be undone, and that is what bricked a scooter. The controller patch replaces four bytes inside the existing firmware and leaves file length, start-up code and the fault limp-home untouched. Still marked untested, with the red warning and the extra confirmation: a controller flash stays a flash and this controller has no cable rescue.
+- The target-speed dropdown is gone for the UT5 Max - there is exactly one build now.
+- A triple tap on the km/h tile now explains itself on a UT5 Max instead of sending a drive mode its stock speedometer discards: the cap sits permanently in the controller, so there is nothing to switch on or off.
+
 ## 1.0.56
 - Telemetry fix: on some phones the app connected but the dashboard stayed empty (speed, battery and temperature blank, model and firmware missing). When the phone negotiated the BLE MTU before service discovery finished, the app armed notifications too early, failed silently and left the link "connected" while receiving nothing. Notifications are now armed only after the characteristics are known, and a failed attempt reconnects cleanly instead of faking a live link.
 - Removed two stale "UT5 Max is fully in the patcher" what's-new notes that contradicted the UT5 patching pause; the in-app support list already lists the UT5 models as paused.
