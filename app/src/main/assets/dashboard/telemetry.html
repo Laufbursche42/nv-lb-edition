@@ -3501,7 +3501,10 @@ const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 const EXPERIMENTAL_PIDS = ['2585']; // UT5 Ultra X
 // Models whose speed cap sits permanently in the controller: no app gear switches anything there.
 // Covers both states (stock + controller-only patch applied) because neither has a switchable latch.
-const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro'];
+const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro',
+  'G5', 'GT5 Max', 'GT5 Pro', 'UT3 Max', 'NT3 Max', 'G5 Max', 'G5 pro', 'V45i', 'N65i II',
+  'E20 Lite', 'E25 Go', 'V25/V25i', 'N65i', 'V50i Pro', 'V40i/V40i Pro', 'S40', 'S60', 'V3 Pro',
+  'V40i Pro II', 'S2', 'E20', 'E25', 'E45 Pro', 'E60 Pro', 'K100 Max', 'K100 Pro', 'K100'];
 // Models where the app-side release makes sense (gear-based or special path). Everything else
 // (V25, N65i, V50i Pro, E20, G5, GT5 ...) has no release mechanism we can trigger over BLE.
 const RELEASE_CAPABLE_MODELS = ['XT5 Pro', 'XT5 Ultra', 'XT5 Max',
@@ -4114,8 +4117,13 @@ function fwPatchStatus(msg) {
 // lever sits in the controller alone (patcher.js bldcUT5Max, permanent 40 km/h top gear).
 // ST3/GT3 family: same reason, and their controller carries the raised top gear on its own, so cruise
 // and kickstart (both meter patches) are not offered there at all.
+// Models whose meter is never a patch target: it hosts BLE and is the only route back from a failed
+// controller update. The raised top gear sits in the controller alone.
 const METER_BLOCKED_IDS = ['8901', '12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401',
-  '5401', '8501', '8401', '10501', '12701'];   // G5, GT5 Max, GT5 Pro, UT3 Max, NT3 Max
+  '5401', '8501', '8401', '10501', '12701', '5701', '5601', '10201', '10701', '6001',
+  '10101', '9101', '701', '1101', '1201', '1301', '1601', '2501', '4201', '4401', '9901',
+  '4001', '4101', '10001', '10301', '10601', '12801', '12901',
+  '5001', '5101', '5201'];
 function naveeMeterPatchBlocked(det) { return !!det && METER_BLOCKED_IDS.indexOf(String(det.id)) >= 0; }
 // Feature checkboxes on the patcher page: which features the detected model can take, plus the selection.
 function patchFeatureList(det) {
@@ -4130,15 +4138,31 @@ function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v 
 // Only models whose bldc image carries speed variants appear here; other controllers keep the binary latch.
 function naveeSpeedOpts(det) {
   if (!det || !det.bldc) return null;
-  if (['9301', '9701', '9401', '9201', '11101', '5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family + XT5 Pro/Max (3553G, cap ~40)
+  if (['9301', '9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family (3553G, cap ~40)
+  // XT5 Pro/Max: a d-axis current gate sits at 45.0 km/h, so 45 and 50 are offered too.
+  if (['5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50];
   if (String(det.id) === '8901') return null;  // UT5 Max: one permanent 40 km/h build, no selector and no toggle
   if (['12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401'].indexOf(String(det.id)) >= 0) return null; // ST3/GT3/NT3 Pro: one permanently raised top gear, no selector and no toggle
-  if (['5801', '9601'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra / UT5 Ultra X (ceiling 60, no field-weakening gate)
+  // XT5 Ultra: field weakening needs a cap of at least 501 and is wound back above 516, so 51 is the
+  // top of the useful window. UT5 Ultra X: the firmware clamps the cap to 600, which 60 still passes.
+  if (String(det.id) === '5801') return [22, 25, 27, 30, 35, 40, 45, 50, 51];
+  if (String(det.id) === '9601') return [22, 25, 27, 30, 35, 40, 45, 50, 55, 60];
   // 02831 in-place selector: the offered steps are the ones whose unit value exists as a flash
   // halfword in that build, so the pick lands in the firmware without rounding.
   if (String(det.id) === '5401') return [20, 25, 27, 30, 32, 35, 40, 45, 50];   // G5
   if (['8501', '8401', '10501'].indexOf(String(det.id)) >= 0) return [25, 27, 32, 35, 40, 45, 50]; // GT5 Max, GT5 Pro, UT3 Max
   if (String(det.id) === '12701') return [20, 25, 27, 30, 32, 35, 40, 45];      // NT3 Max
+  if (['5701', '5601'].indexOf(String(det.id)) >= 0) return [20, 25, 27, 30, 32, 35, 40, 45]; // G5 Max, G5 Pro
+  if (String(det.id) === '10201') return [20, 25, 27, 30, 32, 35, 40, 50];      // V45i
+  if (String(det.id) === '10701') return [20, 25, 27, 30, 32, 35, 40];          // N65i II 0.0.0.6
+  if (String(det.id) === '6001') return [20, 27, 30, 32, 35, 40];               // N65i II 0.0.0.5
+  if (['10101', '9101'].indexOf(String(det.id)) >= 0) return [20, 22, 25, 27, 30, 32, 35, 40, 50]; // E20 Lite, E25 Go
+  // Older platform, no meter converter: one repointed literal word carries the top gear.
+  if (['701', '1201', '1301', '1601', '2501', '4201'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 32, 35, 40, 50]; // V25/V25i, V50i Pro, V40i, S40, S60, V3 Pro
+  if (String(det.id) === '1101') return [22, 25, 27, 30, 32, 35, 40, 45];       // N65i
+  if (['4401', '9901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 32, 35, 40, 45, 50]; // V40i Pro II, S2
+  if (['4001', '4101'].indexOf(String(det.id)) >= 0) return [20, 22, 25, 27, 30, 32, 35, 40, 45]; // E20, E25
+  if (['10001', '10301', '10601', '12801', '12901'].indexOf(String(det.id)) >= 0) return [20, 25, 27, 30, 32, 35, 40, 45, 50]; // E45 Pro, E60 Pro
   return null;
 }
 // 02831 in-place latch: the speed unlock overwrites the lock-gated launch boost, so launch torque drops
@@ -4169,6 +4193,14 @@ function renderPatchFeatures(det) {
       const head = document.createElement('div');
       head.className = 'settings-group-title'; head.textContent = t('patch.features.title');
       box.appendChild(head);
+      // Say WHY cruise and kickstart are missing on models whose speedometer we never patch,
+      // instead of silently leaving the options out.
+      if (det.meter && naveeMeterPatchBlocked(det)) {
+        const n = document.createElement('div');
+        n.className = 'hint'; n.style.margin = '2px 0 6px';
+        n.textContent = t('patch.meter.never');
+        box.appendChild(n);
+      }
       for (const f of feats) {
         const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '4px 0';
         const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f;
