@@ -1078,8 +1078,9 @@ patches: [
     verify: { size: 0xe100, lenOff: 0x84, lenStock: 0x0000e000, crcOff: 0xb0, crcStock: 0x1611 },
     reseal: bldcResealErpm,
     stdSpeedKmh: 40,
-    patches: [  // std: top gear-4 bucket at 40 (movw r1,#726); speed variants below cover 22-35
+    patches: [  // std: top gear-4 bucket at 40 (movw r1,#726); speed variants below cover 22-50
       { off: 0x43e0, from: [0x40, 0xf2, 0xd6, 0x21], to: [0x40, 0xf2, 0xd6, 0x21], id: 'speed' },
+      { off: 0x1b6a, from: [0x05, 0x29, 0x1f, 0xd0], to: [0x04, 0x29, 0x1f, 0xda], id: 'launch-ramp' }, // drive-mode test beq #5 -> bge #4: mode 4 joins mode 5 on the 3-count ramp step instead of 2
     ],
   },
 
@@ -1968,12 +1969,12 @@ IMAGES.bldcUT5UltraX.variants = (function () {
 // XT5 top speed is a switch of per-command buckets; the cap must bind after unlock, so clamp every
 // bucket above the target down to it (Ultra r9=km/h*10, 50 keeps 508 for the FW gate; Pro/Max r1=km/h*2089/115).
 // std is inline in each block so the payload-bounds guard reads the offsets; only variants generated here.
-function xtBucketVariants(buckets, rd, scaleFn, topOff, speeds) {
+function xtBucketVariants(buckets, rd, scaleFn, topOff, speeds, extra) {
   const build = (kmh) => {
     const t = scaleFn(kmh), ps = [];
     for (const b of buckets) if (b.cap > t) ps.push({ off: b.off, from: b.from, to: movwLE(rd, t), id: 'speed' });
     if (!ps.length) { const tb = buckets.find((b) => b.off === topOff); ps.push({ off: tb.off, from: tb.from, to: movwLE(rd, t), id: 'speed' }); }
-    return ps;
+    return ps.concat(extra || []);   // a named variant replaces spec.patches, so carry them along
   };
   const v = {};
   for (const kmh of speeds) v['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: build(kmh) };
@@ -1986,7 +1987,8 @@ IMAGES.bldcXT5Ultra.variants = xtBucketVariants(
   9, (k) => (k === 50 ? 508 : k * 10), 0x37ae, [22, 25, 27, 30, 35, 45, 50, 51]);
 IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
   [{ off: 0x43e0, from: [0x40, 0xf2, 0xd6, 0x21], cap: 726 }, { off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], cap: 454 }],
-  1, (k) => Math.floor(k * 2089 / 115), 0x43e0, [22, 25, 27, 30, 35, 45, 50]);
+  1, (k) => Math.floor(k * 2089 / 115), 0x43e0, [22, 25, 27, 30, 35, 45, 50],
+  [{ off: 0x1b6a, from: [0x05, 0x29, 0x1f, 0xd0], to: [0x04, 0x29, 0x1f, 0xda], id: 'launch-ramp' }]);
 
 // Identify which image this is, or null.
 // Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is
@@ -2037,6 +2039,7 @@ function featureOf(id) {
   if (id.indexOf('beep-melody') === 0) return 'beep-melody';
   if (id.indexOf('beep-') === 0) return id; // beep-silence legacy or any other single beep patch
   if (id.indexOf('version-marker') === 0) return 'marker';
+  if (id.indexOf('launch-ramp') === 0) return 'launchramp';   // 'launch-degate' stays part of the speed set
   return 'speed';
 }
 

@@ -4129,6 +4129,8 @@ function naveeMeterPatchBlocked(det) { return !!det && METER_BLOCKED_IDS.indexOf
 function patchFeatureList(det) {
   const feats = [];
   if (det.bldc && (!naveeIsXT(det.name) || ['5801', '5301', '5901'].indexOf(String(det.id)) >= 0)) feats.push('speed'); // XT5 Ultra (5801) + XT5 Pro/Max (5301/5901) now have a controller speed selector
+  // XT5 Pro/Max controller only: the drive-mode ramp step (mode 4 gets mode 5's 3 counts per pass)
+  if (det.bldc && ['5301', '5901'].indexOf(String(det.id)) >= 0) feats.push('launchramp');
   if (det.meter && !naveeMeterPatchBlocked(det)) feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   return feats;
 }
@@ -4139,7 +4141,7 @@ function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v 
 function naveeSpeedOpts(det) {
   if (!det || !det.bldc) return null;
   if (['9301', '9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family (3553G, cap ~40)
-  // XT5 Pro/Max: a d-axis current gate sits at 45.0 km/h, so 45 and 50 are offered too.
+  // XT5 Pro/Max: the top-gear immediate carries 40 stock and the scale reaches 50 exactly.
   if (['5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50];
   if (String(det.id) === '8901') return null;  // UT5 Max: one permanent 40 km/h build, no selector and no toggle
   if (['12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401'].indexOf(String(det.id)) >= 0) return null; // ST3/GT3/NT3 Pro: one permanently raised top gear, no selector and no toggle
@@ -4204,9 +4206,15 @@ function renderPatchFeatures(det) {
       for (const f of feats) {
         const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '4px 0';
         const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f;
-        cb.checked = f.indexOf('beep') !== 0; // performance features on by default; tone silences off (keep all tones)
+        // performance features on by default; tone silences and the untested ramp off
+        cb.checked = f.indexOf('beep') !== 0 && f !== 'launchramp';
         lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + patchFeatureLabel(f)));
         box.appendChild(lab);
+        const expl = t('feat.' + f + '.expl');
+        if (expl !== 'feat.' + f + '.expl') {
+          const h = document.createElement('div'); h.className = 'hint'; h.style.margin = '0 0 6px 20px';
+          h.textContent = expl; box.appendChild(h);
+        }
       }
       const spd = naveeSpeedOpts(det);
       if (spd) {
