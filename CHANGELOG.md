@@ -16,6 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.61
+- NT3 Pro patchable again too, controller only, same in-place design as the ST3/GT3 family: six bytes, no length extension. Its top gear becomes 40.0 km/h.
+- That 40.0 km/h is a chosen value: unlike the ST3/GT3 controllers this one has no ceiling of its own in that code path. Its low-battery floor (20 km/h below 10 percent charge) stays stock.
+- No speedometer patch here either, so no cruise and no kickstart.
+- The in-app support table was wrong for every model this change touched (it still said "paused") and claimed a working patcher for NT3 Max, which is blocked. Those rows now match the engine, with a new "not offered" value for features whose speedometer patch we deliberately do not ship.
+- Still untested: red warning plus extra confirmation.
+
 ## 1.0.58
 - ST3 Pro, ST3, GT3 Pro, GT3 and GT3 Max patchable again, controller only: one permanent top gear, 39.8 km/h on ST3 Pro and ST3, 32.0 km/h on the GT3 models - each firmware's own ceiling. There is no switch: undoing it means flashing the stock controller firmware.
 - No speedometer patch on these five: no cruise, kickstart or beeps, and no download for it. It hosts Bluetooth and is the only way back from a failed controller update.
