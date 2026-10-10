@@ -16,6 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.62
+- Five more controllers patchable with a target-speed dropdown, controller only: G5 (20-50 km/h), GT5 Max, GT5 Pro, UT3 Max (25-50), NT3 Max (20-45).
+- Each model offers only the steps its own firmware can hold exactly, so what you pick is what the controller gets.
+- No speedometer patch on these five either: no cruise, no kickstart, no beep options.
+- They replace the old patch sets of those builds, which wrote code behind the firmware length - that is what bricked scooters.
+- Still untested: red warning plus extra confirmation.
+
 ## 1.0.61
 - NT3 Pro patchable again too, controller only, same in-place design as the ST3/GT3 family: six bytes, no length extension. Its top gear becomes 40.0 km/h.
 - That 40.0 km/h is a chosen value: unlike the ST3/GT3 controllers this one has no ceiling of its own in that code path. Its low-battery floor (20 km/h below 10 percent charge) stays stock.
