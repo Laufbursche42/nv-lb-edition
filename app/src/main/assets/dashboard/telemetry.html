@@ -3538,6 +3538,19 @@ function sendSpeedRelease(on) {
   if (!pushSetting(NAVEE_CMD.drivemode, speedReleaseGear(on))) return false;
   setSpeedReleasedFlag(on);
   setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
+  // Verify after ~1.2s: pushSetting only confirms the BLE write went out, not that the controller
+  // accepted it. On a stock scooter the SKU byte can silently clamp the open gear (NT5 and others
+  // with a low SKU), so the ride is still at 22 km/h even though the tile looks "active". If the
+  // read-back drive-mode differs from the one we commanded, tell the user the FW needs patching.
+  if (on) {
+    const want = speedReleaseGear(on);
+    setTimeout(() => {
+      try {
+        const got = liveRaw().driveMode;
+        if (typeof got === 'number' && got !== want) showToast(t('scooter.tune.clamped'), 7000);
+      } catch (e) {}
+    }, 1200);
+  }
   return true;
 }
 
