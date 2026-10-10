@@ -3502,6 +3502,10 @@ const EXPERIMENTAL_PIDS = ['2701', '2585']; // NT3 Pro, UT5 Ultra X
 // Models whose speed cap sits permanently in the controller: no app gear switches anything there.
 // Covers both states (stock + controller-only patch applied) because neither has a switchable latch.
 const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro'];
+// Models where the app-side release makes sense (gear-based or special path). Everything else
+// (V25, N65i, V50i Pro, E20, G5, GT5 ...) has no release mechanism we can trigger over BLE.
+const RELEASE_CAPABLE_MODELS = ['XT5 Pro', 'XT5 Ultra', 'XT5 Max',
+  'NT5 Max', 'NT5 Max+', 'NT5 Ultra', 'NT5 Turbo', 'NT5 Ultra X', 'UT5 Ultra X'];
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
   const isXT = naveeIsXT(naveeRealModel());
@@ -3524,6 +3528,7 @@ function sendSpeedRelease(on) {
   // Same for the ST3/GT3 family: the raised top gear sits permanently in the controller (drive mode 3
   // and 5 no longer take the meter speed limit), so there is no gear the app could switch.
   if (PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) { showToast(t('scooter.tune.permanent'), 6000); return false; }
+  if (RELEASE_CAPABLE_MODELS.indexOf(naveeRealModel()) < 0) { showToast(t('scooter.tune.unsupported'), 6000); return false; }
   const fw = (liveRaw().fwBldc || '').trim();
   if (PATCHED_LATCH_BLDC.includes(fw)) {
     if (on && OUTDATED_LATCH_BLDC.includes(fw)) { showToast(t('scooter.tune.outdated'), 6000); return false; }

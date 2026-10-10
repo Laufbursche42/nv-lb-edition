@@ -24,6 +24,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 - Still untested: red warning plus extra confirmation. The supported-device list now tells "untested" apart from "upload-flash only" instead of lumping both together.
 - Patcher engine synced with lb-webpatcher (same FLASH_ENABLED set, same patch flow).
 - Speed release now verifies after ~1.2 s: if the controller silently clamped the open gear (stock SKU byte on NT5 and others), a toast says the firmware needs patching first instead of leaving the tile falsely red.
+- Models outside the release-capable set (V25, N65i, V50i Pro, E20, G5, GT5 and the like) now say "not covered by the app-side release" instead of sending a BLE command that was never going to do anything.
 
 ## 1.0.57
 - **UT5 Max patching is back, controller only.** It now gets one fixed 40 km/h top gear instead of a switchable release. The speedometer is no longer offered as a patch target at all: no cruise, kickstart or beep options and no download for it, because its update routine rejects a modified file and it is also the Bluetooth gateway - a failed speedometer update cannot be undone, and that is what bricked a scooter. The controller patch replaces four bytes inside the existing firmware and leaves file length, start-up code and the fault limp-home untouched. Still marked untested, with the red warning and the extra confirmation: a controller flash stays a flash and this controller has no cable rescue.
