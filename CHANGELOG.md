@@ -16,6 +16,14 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.58
+- ST3 Pro, ST3, GT3 Pro, GT3 and GT3 Max patchable again, controller only: one permanent top gear, 39.8 km/h on ST3 Pro and ST3, 32.0 km/h on the GT3 models - each firmware's own ceiling. There is no switch: undoing it means flashing the stock controller firmware.
+- No speedometer patch on these five: no cruise, kickstart or beeps, and no download for it. It hosts Bluetooth and is the only way back from a failed controller update.
+- Six bytes in place instead of the old length extension that bricked scooters.
+- Triple tap on the km/h tile now explains itself on every controller-only model (UT5 Max, ST3/GT3 family, NT3 Pro): the cap is permanent, nothing to switch - whether patched or stock.
+- Still untested: red warning plus extra confirmation. The supported-device list now tells "untested" apart from "upload-flash only" instead of lumping both together.
+- Patcher engine synced with lb-webpatcher (same FLASH_ENABLED set, same patch flow).
+
 ## 1.0.57
 - **UT5 Max patching is back, controller only.** It now gets one fixed 40 km/h top gear instead of a switchable release. The speedometer is no longer offered as a patch target at all: no cruise, kickstart or beep options and no download for it, because its update routine rejects a modified file and it is also the Bluetooth gateway - a failed speedometer update cannot be undone, and that is what bricked a scooter. The controller patch replaces four bytes inside the existing firmware and leaves file length, start-up code and the fault limp-home untouched. Still marked untested, with the red warning and the extra confirmation: a controller flash stays a flash and this controller has no cable rescue.
 - The target-speed dropdown is gone for the UT5 Max - there is exactly one build now.

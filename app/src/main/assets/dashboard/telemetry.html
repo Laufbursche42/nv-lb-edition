@@ -3498,7 +3498,10 @@ const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '551
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
-const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2418', '2701', '2585']; // ST3 Pro, GT3 Pro, ST3, GT3, GT3 Max, NT3 Pro, UT5 Ultra X
+const EXPERIMENTAL_PIDS = ['2701', '2585']; // NT3 Pro, UT5 Ultra X
+// Models whose speed cap sits permanently in the controller: no app gear switches anything there.
+// Covers both states (stock + controller-only patch applied) because neither has a switchable latch.
+const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro'];
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
   const isXT = naveeIsXT(naveeRealModel());
@@ -3518,7 +3521,9 @@ function sendSpeedRelease(on) {
   }
   // UT5 Max: the cap sits permanently in the controller (gear 3/4 ceiling patched to 40). Its stock meter
   // only ever emits drive mode 2, 3 or 11, so no app gear can switch anything here - say so, send nothing.
-  if (naveeRealModel() === 'UT5 Max') { showToast(t('scooter.tune.permanent'), 6000); return false; }
+  // Same for the ST3/GT3 family: the raised top gear sits permanently in the controller (drive mode 3
+  // and 5 no longer take the meter speed limit), so there is no gear the app could switch.
+  if (PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) { showToast(t('scooter.tune.permanent'), 6000); return false; }
   const fw = (liveRaw().fwBldc || '').trim();
   if (PATCHED_LATCH_BLDC.includes(fw)) {
     if (on && OUTDATED_LATCH_BLDC.includes(fw)) { showToast(t('scooter.tune.outdated'), 6000); return false; }
@@ -4089,7 +4094,10 @@ function fwPatchStatus(msg) {
 // Models whose meter must never be patched, whatever the manifest offers. UT5 Max (8901): its meter
 // bootloader rejects a patched image and it hosts BLE, so a failed commit is unrecoverable - the speed
 // lever sits in the controller alone (patcher.js bldcUT5Max, permanent 40 km/h top gear).
-function naveeMeterPatchBlocked(det) { return !!det && String(det.id) === '8901'; }
+// ST3/GT3 family: same reason, and their controller carries the raised top gear on its own, so cruise
+// and kickstart (both meter patches) are not offered there at all.
+const METER_BLOCKED_IDS = ['8901', '12501', '3801', '3401', '12601', '3701', '3501', '3601'];
+function naveeMeterPatchBlocked(det) { return !!det && METER_BLOCKED_IDS.indexOf(String(det.id)) >= 0; }
 // Feature checkboxes on the patcher page: which features the detected model can take, plus the selection.
 function patchFeatureList(det) {
   const feats = [];
@@ -4105,6 +4113,7 @@ function naveeSpeedOpts(det) {
   if (!det || !det.bldc) return null;
   if (['9301', '9701', '9401', '9201', '11101', '5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family + XT5 Pro/Max (3553G, cap ~40)
   if (String(det.id) === '8901') return null;  // UT5 Max: one permanent 40 km/h build, no selector and no toggle
+  if (['12501', '3801', '3401', '12601', '3701', '3501', '3601'].indexOf(String(det.id)) >= 0) return null; // ST3/GT3: one permanently raised top gear, no selector and no toggle
   if (['5801', '9601'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50]; // XT5 Ultra / UT5 Ultra X (ceiling 60, no field-weakening gate)
   return null;
 }
