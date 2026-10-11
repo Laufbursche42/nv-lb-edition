@@ -1430,13 +1430,15 @@ patches: [
   // UT5 Max BLDC 0.0.1.0 (8901). SZMC-ES-ZM-3553G. verword 0100 + tag T2416 collide with 9701 -> CRC pin
   // 0xb58f mandatory. Permanent top-gear cap, controller only - the meter is never flashed (its own
   // bootloader is not in any dump and rejects a patched image; that is what bricked a device).
-  // Mechanics: the drive-mode limit selector (0x49a8..0x49e0) reads the ceiling for gear 3/4 from
-  // 0x20000376, a cell with no writer anywhere in the app. The ldrh is replaced by an immediate, so the
-  // stock top gear carries the target itself (km/h*20, 800 = 40) and no meter-side nibble is needed.
-  // Left stock on purpose: the fault derate at 0x4a40 (clamps to [0x20000378] while error flag
-  // 0x2000037a or 0x20000387 is set), gear 2, the walk mode and the whole boot path. The over-rev
-  // governor (cmp #0x186 = 39.0 at km/h*10, 0x384e/0x3ade/0x517c/0x5198) shaves the top to ~39.
-  // Marker "0090".
+  // Mechanics: the ride-gear limit is COMMANDED BY THE METER, not the controller. The meter sends it in
+  // every frame (byte 10 -> [0x20000274], single writer at 0x0a73e, single reader the cap calc at 0x497a),
+  // and in gears 3/4/5 the controller writes that value straight into the active cap at 0x4a3e - so an
+  // earlier patch of the gear-ceiling cell is overwritten every cycle and has no road effect (seen on
+  // hardware). The working lever is to force the meter value at its source: replace the byte-10 load at
+  // 0x0a73e (ldrb.w r0,[lr,#0xa]) with an immediate (movw r0,#40), so the controller runs the top gear at
+  // 40 km/h regardless of what the meter sends. Eco keeps its own lower cell (gear 2 is min(cell,40)); the
+  // over-rev governor (cmp #0x186 = 39.0 at km/h*10, 0x384e/0x3ade/0x517c/0x5198) shaves the top to ~39.
+  // In-place, inside the payload, len@0x84 untouched. Marker "0080" (= 0.0.8.0, not in the latch list).
   bldcUT5Max: {
     label: 'UT5 Max BLDC 0.0.1.0 (8901)',
     kind: 'bldc',
@@ -1444,8 +1446,8 @@ patches: [
     verify: { size: 0xf900, lenOff: 0x84, lenStock: 0x0000f800, crcOff: 0xb0, crcStock: 0xb58f },
     reseal: bldcResealErpm,
     patches: [
-      { off: 0x49cc, from: [0xb9, 0xf8, 0x00, 0xc0], to: [0x40, 0xf2, 0x20, 0x3c], id: 'speed' }, // gear 3/4 ceiling: ldrh.w r12,[r9] -> movw r12,#800 (40 km/h)
-      { off: 0xaf2c, from: [0x31, 0x22], to: [0x39, 0x22], id: 'version-marker' },
+      { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x28, 0x00], id: 'speed' }, // meter frame byte10 -> immediate: ldrb.w r0,[lr,#0xa] -> movw r0,#40, forces the commanded limit to 40 km/h
+      { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' }, // fwBldc char3 '1' -> '8' => "0080" (= 0.0.8.0)
     ],
   },
   // S2 meter 2.0.0.1 (9901). Drive-mode clamped -> one-shot trampoline routes app nibble 5/6 into the control frame for bldcS2. Kickstart gate flip.
