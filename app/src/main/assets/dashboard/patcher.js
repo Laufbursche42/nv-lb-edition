@@ -345,17 +345,45 @@ const IMAGES = {
     match: (u8) => u8.length === 0xd080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x02, 0x00]),
     verify: { size: 0xd080, lenOff: 0x84, lenStock: 0x0000cd34, crcOff: 0xb0, crcStock: 0x4805 },
     reseal: bldcResealLz,
+    // Same family as GT3 Pro but divisor 0x60 (scale 0x829/0x60 = 21.76 counts/km/h) and the ceiling is a
+    // flash constant, not an immediate. Governor FUN_00003d2c: meter byte 10 -> cap cell 0x20000260 (single
+    // writer at 0x7e5a) -> sVar10 = 2089*[cell]/96 -> ride modes 3/5 cap = sVar10, clamped by the flash
+    // ceiling at 0x4164 (stock 866 = 39.8 km/h) which also feeds the mode-4 fixed cap. Working lever forces
+    // byte 10 to the target (sVar10 = T km/h) and sets the flash ceiling to the same, so mode 3/4/5 all land
+    // on T. The old mode3/5/cap patches were overwritten by the meter every cycle (no road effect). Selectable.
     patches: [
-      // The meter sends its speed limit in frame type 9 and the controller then forces that value on
-      // drive modes 3 and 5, ignoring the region table. These two branch displacements make modes 3
-      // and 5 skip that override block (exactly as if the meter had sent 0), so the mode limit stands.
-      { off: 0x3ec0, from: [0x07], to: [0x08], id: 'speed-mode3' },
-      { off: 0x3ec4, from: [0x05], to: [0x06], id: 'speed-mode5' },
-      // Mode 3/5 then read their limit through this literal. Repoint it from the region RAM cell to
-      // flash 0x4064, the build's own ceiling constant 866 = 39.8 km/h (0x829/0x60 = 21.76 per km/h).
-      { off: 0x4160, from: [0x5a, 0x03, 0x00, 0x20], to: [0x64, 0x40, 0x00, 0x00], id: 'speed-cap' },
+      { off: 0x7e5a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
+      { off: 0x4164, from: [0x62, 0x03], to: [0x66, 0x03], id: 'speed-cap-ceiling' }, // flash ceiling 866 -> 870 (40.0 km/h)
       { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' }, // fwBldc "0020" -> "4424"
     ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0x7e5a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
+        { off: 0x4164, from: [0x62, 0x03], to: [0xde, 0x01], id: 'speed-cap-ceiling' }, // 478 (22.0 km/h)
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x7e5a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
+        { off: 0x4164, from: [0x62, 0x03], to: [0x20, 0x02], id: 'speed-cap-ceiling' }, // 544 (25.0 km/h)
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x7e5a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
+        { off: 0x4164, from: [0x62, 0x03], to: [0x8c, 0x02], id: 'speed-cap-ceiling' }, // 652 (30.0 km/h)
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x7e5a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
+        { off: 0x4164, from: [0x62, 0x03], to: [0xf9, 0x02], id: 'speed-cap-ceiling' }, // 761 (35.0 km/h)
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed45: { experimental: true, speedKmh: 45, patches: [
+        { off: 0x7e5a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
+        { off: 0x4164, from: [0x62, 0x03], to: [0xd3, 0x03], id: 'speed-cap-ceiling' }, // 979 (45.0 km/h)
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+    },
   },
 
   // NT3 Pro BLDC 0.0.0.7 (12401), 02831 capZ latch.
@@ -446,12 +474,51 @@ const IMAGES = {
     match: (u8) => u8.length === 0xc080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x07]) && beRead(u8, 0xb0, 2) === 0x599b,
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000b9a8, crcOff: 0xb0, crcStock: 0x599b },
     reseal: bldcResealLz,
+    // Real top-speed path (FUN_0000387c): the meter commands the limit via frame byte 10, stored at
+    // cap cell 0x2000025c (single writer at 0x764a/0x764c). The governor scales it sVar10 = 2089*[cell]/100
+    // and in ride modes 3/5 sets the active cap to sVar10, clamped by the hard ceiling (0xa7<<2 = 668 = 32 km/h).
+    // Mode 4 uses a fixed cap (same 668). The old mode3/5/cap patches touched a non-governing cell and did
+    // nothing on the road. The working lever forces byte 10 to the target (movs r1,#T, sVar10 = 2089*T/100 = T km/h),
+    // raises both caps so the forced value is not clipped, and keeps the marker. Target speed is selectable.
     patches: [
-      { off: 0x3a0c, from: [0x07], to: [0x08], id: 'speed-mode3' }, // skip the meter-override block
-      { off: 0x3a10, from: [0x05], to: [0x06], id: 'speed-mode5' },
-      { off: 0x3c8c, from: [0x56, 0x03, 0x00, 0x20], to: [0x90, 0x0d, 0x00, 0x00], id: 'speed-cap' }, // -> flash 0x0d90 = 668 (32.0 km/h, 0x829/0x64)
+      { off: 0x774a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
+      { off: 0x3a50, from: [0xa7], to: [0xd1], id: 'speed-cap-mode4' }, // mode 4 fixed cap 0xd1<<2 = 836 (40.0 km/h)
+      { off: 0x3a78, from: [0xa7], to: [0xd1], id: 'speed-cap-ceiling' }, // governor hard ceiling 836 (40.0 km/h)
       { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' }, // fwBldc "0017" -> "4417"
     ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0x774a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' }, // movs r1,#22
+        { off: 0x3a50, from: [0xa7], to: [0x73], id: 'speed-cap-mode4' }, // 0x73<<2 = 460 (22.0 km/h)
+        { off: 0x3a78, from: [0xa7], to: [0x73], id: 'speed-cap-ceiling' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x774a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' }, // movs r1,#25
+        { off: 0x3a50, from: [0xa7], to: [0x83], id: 'speed-cap-mode4' }, // 0x83<<2 = 524 (25.1 km/h)
+        { off: 0x3a78, from: [0xa7], to: [0x83], id: 'speed-cap-ceiling' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x774a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' }, // movs r1,#30
+        { off: 0x3a50, from: [0xa7], to: [0x9d], id: 'speed-cap-mode4' }, // 0x9d<<2 = 628 (30.1 km/h)
+        { off: 0x3a78, from: [0xa7], to: [0x9d], id: 'speed-cap-ceiling' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x774a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' }, // movs r1,#35
+        { off: 0x3a50, from: [0xa7], to: [0xb7], id: 'speed-cap-mode4' }, // 0xb7<<2 = 732 (35.0 km/h)
+        { off: 0x3a78, from: [0xa7], to: [0xb7], id: 'speed-cap-ceiling' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed45: { experimental: true, speedKmh: 45, patches: [
+        { off: 0x774a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' }, // movs r1,#45
+        { off: 0x3a50, from: [0xa7], to: [0xeb], id: 'speed-cap-mode4' }, // 0xeb<<2 = 940 (45.0 km/h)
+        { off: 0x3a78, from: [0xa7], to: [0xeb], id: 'speed-cap-ceiling' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+    },
   },
 
   // GT3 BLDC 0.0.1.1 (3501), 02831 capZ latch.
@@ -461,12 +528,49 @@ const IMAGES = {
     match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x01]) && beRead(u8, 0xb0, 2) === 0xfdb3,
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b304, crcOff: 0xb0, crcStock: 0xfdb3 },
     reseal: bldcResealLz,
+    // Same governor as GT3 Pro (FUN_000035a0): meter byte 10 -> cap cell 0x20000242 (single writer at
+    // 0x727a) -> sVar9 = 2089*[cell]/100 -> ride modes 3/5 cap = sVar9, clamped by the hard ceiling
+    // (movs r0,#0xa7; lsls#2 = 668 = 32 km/h at 0x3748) and the mode-4 fixed cap (same 668 at 0x37a4). The
+    // working lever forces byte 10 to the target (movs r1,#T, sVar9 = T km/h) and raises both caps. Selectable.
     patches: [
-      { off: 0x3730, from: [0x07], to: [0x08], id: 'speed-mode3' }, // skip the meter-override block
-      { off: 0x3734, from: [0x05], to: [0x06], id: 'speed-mode5' },
-      { off: 0x3980, from: [0x32, 0x03, 0x00, 0x20], to: [0x00, 0x42, 0x00, 0x00], id: 'speed-cap' }, // -> flash 0x4200 = 668 (32.0 km/h)
+      { off: 0x727a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
+      { off: 0x3748, from: [0xa7], to: [0xd1], id: 'speed-cap-ceiling' }, // ceiling 0xd1<<2 = 836 (40.0 km/h)
+      { off: 0x37a4, from: [0xa7], to: [0xd1], id: 'speed-cap-mode4' }, // mode 4 fixed cap 836 (40.0 km/h)
       { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' }, // fwBldc "0011" -> "1111"
     ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0x727a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
+        { off: 0x3748, from: [0xa7], to: [0x73], id: 'speed-cap-ceiling' },
+        { off: 0x37a4, from: [0xa7], to: [0x73], id: 'speed-cap-mode4' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x727a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
+        { off: 0x3748, from: [0xa7], to: [0x83], id: 'speed-cap-ceiling' },
+        { off: 0x37a4, from: [0xa7], to: [0x83], id: 'speed-cap-mode4' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x727a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
+        { off: 0x3748, from: [0xa7], to: [0x9d], id: 'speed-cap-ceiling' },
+        { off: 0x37a4, from: [0xa7], to: [0x9d], id: 'speed-cap-mode4' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x727a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
+        { off: 0x3748, from: [0xa7], to: [0xb7], id: 'speed-cap-ceiling' },
+        { off: 0x37a4, from: [0xa7], to: [0xb7], id: 'speed-cap-mode4' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
+      ] },
+      speed45: { experimental: true, speedKmh: 45, patches: [
+        { off: 0x727a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
+        { off: 0x3748, from: [0xa7], to: [0xeb], id: 'speed-cap-ceiling' },
+        { off: 0x37a4, from: [0xa7], to: [0xeb], id: 'speed-cap-mode4' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
+      ] },
+    },
   },
 
   // GT3 Max BLDC 0.0.1.1 (3601), 02831 capZ latch.
@@ -476,12 +580,48 @@ const IMAGES = {
     match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x01]) && beRead(u8, 0xb0, 2) === 0x5ce3,
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b348, crcOff: 0xb0, crcStock: 0x5ce3 },
     reseal: bldcResealLz,
+    // Same governor as GT3 3501 (byte 10 -> cap cell 0x20000242, writer at 0x729e; sVar9 = 2089*[cell]/100;
+    // ceiling movs r0,#0xa7;lsls#2 = 668 at 0x3760; mode-4 fixed cap same at 0x37bc). Force byte 10 to the
+    // target and raise both caps. Selectable.
     patches: [
-      { off: 0x3748, from: [0x07], to: [0x08], id: 'speed-mode3' }, // skip the meter-override block
-      { off: 0x374c, from: [0x05], to: [0x06], id: 'speed-mode5' },
-      { off: 0x398c, from: [0x32, 0x03, 0x00, 0x20], to: [0x10, 0x42, 0x00, 0x00], id: 'speed-cap' }, // -> flash 0x4210 = 668 (32.0 km/h)
+      { off: 0x729e, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
+      { off: 0x3760, from: [0xa7, 0x20], to: [0xd1, 0x20], id: 'speed-cap-ceiling' }, // 836 (40.0 km/h)
+      { off: 0x37bc, from: [0xa7, 0x22], to: [0xd1, 0x22], id: 'speed-cap-mode4' }, // 836 (40.0 km/h)
       { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' }, // fwBldc "0011" -> "2211"
     ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0x729e, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
+        { off: 0x3760, from: [0xa7, 0x20], to: [0x73, 0x20], id: 'speed-cap-ceiling' },
+        { off: 0x37bc, from: [0xa7, 0x22], to: [0x73, 0x22], id: 'speed-cap-mode4' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x729e, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
+        { off: 0x3760, from: [0xa7, 0x20], to: [0x83, 0x20], id: 'speed-cap-ceiling' },
+        { off: 0x37bc, from: [0xa7, 0x22], to: [0x83, 0x22], id: 'speed-cap-mode4' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x729e, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
+        { off: 0x3760, from: [0xa7, 0x20], to: [0x9d, 0x20], id: 'speed-cap-ceiling' },
+        { off: 0x37bc, from: [0xa7, 0x22], to: [0x9d, 0x22], id: 'speed-cap-mode4' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x729e, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
+        { off: 0x3760, from: [0xa7, 0x20], to: [0xb7, 0x20], id: 'speed-cap-ceiling' },
+        { off: 0x37bc, from: [0xa7, 0x22], to: [0xb7, 0x22], id: 'speed-cap-mode4' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
+      ] },
+      speed45: { experimental: true, speedKmh: 45, patches: [
+        { off: 0x729e, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
+        { off: 0x3760, from: [0xa7, 0x20], to: [0xeb, 0x20], id: 'speed-cap-ceiling' },
+        { off: 0x37bc, from: [0xa7, 0x22], to: [0xeb, 0x22], id: 'speed-cap-mode4' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
+      ] },
+    },
   },
 
   // ST3 BLDC 0.0.1.1 (3701), 02831 capZ latch.
@@ -491,12 +631,43 @@ const IMAGES = {
     match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x01]) && beRead(u8, 0xb0, 2) === 0x21e9,
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b3e4, crcOff: 0xb0, crcStock: 0x21e9 },
     reseal: bldcResealLz,
+    // ST3-family governor (like ST3 Pro): divisor 0x60 (scale 0x829/0x60 = 21.76 counts/km/h), and the
+    // ceiling + mode-4 cap are one pool constant at 0x3950 (stock 866 = 39.8 km/h). Meter byte 10 -> cap cell
+    // 0x20000242 (single writer at 0x733a) -> sVar10 = 2089*[cell]/96. Force byte 10 to the target and set the
+    // ceiling constant to the same, so mode 3/4/5 all land on T. Old mode3/5/cap patches had no road effect. Selectable.
     patches: [
-      { off: 0x3724, from: [0x07], to: [0x08], id: 'speed-mode3' }, // skip the meter-override block
-      { off: 0x3728, from: [0x05], to: [0x06], id: 'speed-mode5' },
-      { off: 0x3974, from: [0x32, 0x03, 0x00, 0x20], to: [0x50, 0x38, 0x00, 0x00], id: 'speed-cap' }, // -> flash 0x3850 = 866 (39.8 km/h)
+      { off: 0x733a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
+      { off: 0x3950, from: [0x62, 0x03], to: [0x66, 0x03], id: 'speed-cap-ceiling' }, // ceiling+mode4 866 -> 870 (40.0 km/h)
       { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' }, // fwBldc "0011" -> "3311"
     ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0x733a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
+        { off: 0x3950, from: [0x62, 0x03], to: [0xde, 0x01], id: 'speed-cap-ceiling' }, // 478 (22.0 km/h)
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x733a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
+        { off: 0x3950, from: [0x62, 0x03], to: [0x20, 0x02], id: 'speed-cap-ceiling' }, // 544 (25.0 km/h)
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x733a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
+        { off: 0x3950, from: [0x62, 0x03], to: [0x8c, 0x02], id: 'speed-cap-ceiling' }, // 652 (30.0 km/h)
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x733a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
+        { off: 0x3950, from: [0x62, 0x03], to: [0xf9, 0x02], id: 'speed-cap-ceiling' }, // 761 (35.0 km/h)
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed45: { experimental: true, speedKmh: 45, patches: [
+        { off: 0x733a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
+        { off: 0x3950, from: [0x62, 0x03], to: [0xd3, 0x03], id: 'speed-cap-ceiling' }, // 979 (45.0 km/h)
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+    },
   },
 
   // BLDC 0.0.1.3, GT5 Pro (8401), 02831 capZ latch on the byte3 drive mode.
@@ -1039,7 +1210,14 @@ patches: [
     match: (u8) => u8.length === 0xe3e4 && bytesAt(u8, 0, ascii('T2443')) && bytesAt(u8, 0x404, [0xb5, 0x7b, 0xa1, 0xf7]),
     verify: { size: 0xe3e4 },
     reseal: bldcResealCrc32,
+    // Top speed is min(meter region value * 10, gate ceiling), floored at 200 (FUN_08004080 / the gate at
+    // 0x8f20). The gate (below) raises the ceiling to the selected km/h*10 when the unlock bit is set, but the
+    // meter region value [0x20000352] (written at 0x8ef8 from frame byte 0xa * 10) binds the min() - so with a
+    // low region value the ceiling never takes effect. speed-source forces that load (ldrb r0,[r1,#0xa] at
+    // 0x8ee8 = file 0x9300) to 70, so [0x20000352] = 700 and the gate ceiling always wins; the locked ceiling
+    // (220) still clamps when the unlock bit is clear, so lock behaviour is unchanged.
     patches: [
+      { off: 0x9300, from: [0x88, 0x7a], to: [0x46, 0x20], id: 'speed-source' }, // ldrb r0,[r1,#0xa] -> movs r0,#70
       { off: 0x9338, from: [0x40, 0xf6, 0x22, 0x20, 0xc2, 0xf2, 0x00, 0x00, 0x00, 0x78, 0x01, 0x28, 0x04, 0xd1, 0xff, 0xe7, 0xdc, 0x20, 0xad, 0xf8, 0x36, 0x00, 0x11, 0xe0, 0x40, 0xf6, 0x22, 0x20, 0xc2, 0xf2, 0x00, 0x00, 0x00, 0x78, 0x09, 0x28, 0x04, 0xd1, 0xff, 0xe7, 0xfa, 0x20, 0xad, 0xf8, 0x36, 0x00, 0x04, 0xe0, 0x4f, 0xf4, 0x2f, 0x70, 0xad, 0xf8, 0x36, 0x00, 0xff, 0xe7, 0xff, 0xe7], to: [0x40, 0xf6, 0x22, 0x30, 0xc2, 0xf2, 0x00, 0x00, 0x00, 0x7b, 0x00, 0xf0, 0x10, 0x00, 0x00, 0x28, 0x04, 0xd0, 0x40, 0xf2, 0x90, 0x10, 0xad, 0xf8, 0x36, 0x00, 0x0f, 0xe0, 0xdc, 0x20, 0xad, 0xf8, 0x36, 0x00, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf, 0x00, 0xbf], id: 'switchable-gate' },
       { off: 0xb249, from: [0x31], to: [0x39], id: 'version-marker' },
     ],
@@ -1445,10 +1623,40 @@ patches: [
     match: (u8) => u8.length === 0xf900 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x00]) && beRead(u8, 0xb0, 2) === 0xb58f,
     verify: { size: 0xf900, lenOff: 0x84, lenStock: 0x0000f800, crcOff: 0xb0, crcStock: 0xb58f },
     reseal: bldcResealErpm,
+    // Full-read of FUN_00004820 (the governor): the forced byte-10 value becomes the setpoint
+    // [0x20001b40] = commanded * 2089/115, then the master clamp at 0x4a5a (strh.gt r0,[r1,#0x18] <- the
+    // flash per-gear ceiling [0x20000378]) pulls it back to ~22 km/h every cycle - that is why forcing the
+    // source alone was a hardware no-op. Working lever forces byte 10 to the target AND nops that clamp.
+    // Over-rev governor (cmp #0x186 = 39.0, 0x384e/0x3ade/0x517c/0x5198) shaves the top to ~39, so 40 is the
+    // practical ceiling; full phase current is available from 28 km/h (gesamtanalyse 8.19.6). Target selectable.
     patches: [
-      { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x28, 0x00], id: 'speed' }, // meter frame byte10 -> immediate: ldrb.w r0,[lr,#0xa] -> movw r0,#40, forces the commanded limit to 40 km/h
-      { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' }, // fwBldc char3 '1' -> '8' => "0080" (= 0.0.8.0)
+      { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x28, 0x00], id: 'speed-source' }, // ldrb.w r0,[lr,#0xa] -> movw r0,#40 (meter byte10 forced to 40 km/h)
+      { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp strh.gt r0,[r1,#0x18]
+      { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' }, // fwBldc "0010" -> "0080"
     ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x16, 0x00], id: 'speed-source' }, // movw r0,#22
+        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x19, 0x00], id: 'speed-source' }, // movw r0,#25
+        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x1e, 0x00], id: 'speed-source' }, // movw r0,#30
+        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x23, 0x00], id: 'speed-source' }, // movw r0,#35
+        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
+      ] },
+    },
   },
   // S2 meter 2.0.0.1 (9901). Drive-mode clamped -> one-shot trampoline routes app nibble 5/6 into the control frame for bldcS2. Kickstart gate flip.
   meterS2: {
@@ -1946,7 +2154,7 @@ IMAGES.bldc9301.stdSpeedKmh = 40; IMAGES.bldc9301.variants = ntSpeedVariants(IMA
 IMAGES.bldc9207.stdSpeedKmh = 40; IMAGES.bldc9207.variants = ntSpeedVariants(IMAGES.bldc9207, { latchId: 'capz-latch', enc: 'movs8', find: [0xc8, 0x21] });
 IMAGES.bldc9701.stdSpeedKmh = 40; IMAGES.bldc9701.variants = ntSpeedVariants(IMAGES.bldc9701, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
 IMAGES.bldc9401.stdSpeedKmh = 40; IMAGES.bldc9401.variants = ntSpeedVariants(IMAGES.bldc9401, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
-IMAGES.bldcUT5Max.stdSpeedKmh = 40;  // single permanent cap, no selector (governor shaves it to ~39)
+// bldcUT5Max stdSpeedKmh (40) and variants (22-40) are defined in its IMAGES block above; over-rev governor shaves the top to ~39.
 
 // UT5 Ultra X (T2443): the switchable-gate block sets the unlocked region ceiling (km/h*10) via the
 // unlock `movw r0,#imm` in its `to` (std = 400 = 40). The firmware clamps the cap back to 600 unless
