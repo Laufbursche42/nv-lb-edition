@@ -487,8 +487,9 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       Der aktuelle Zustand wird live vom Roller gelesen. Welche Funktionen dein Modell unterstützt, hängt von der Firmware ab; nicht unterstützte Schalter bleiben ohne Wirkung.
     </div>
 
-    <!-- Light switches: auto light 0x57 (plain toggle), daytime running light 0x6D sub 3, tail light
-         0x54. State comes from the live 0x70 report (offsets 8/24/4). -->
+    <!-- Light switches: auto light 0x57, logo 0x6D sub 2, ambient/side strip 0x6D sub 1, daytime
+         running light 0x6D sub 3, tail light 0x54. State comes from the live 0x70 report
+         (offsets: auto 8, logo 23, ambient 10, drl 24, tail 4). -->
     <div class="section-hdr sub-hdr" data-i18n="scooter.light.section.title">Licht</div>
     <div class="settings-group pt-4">
       <div class="settings-row">
@@ -513,7 +514,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
     </div>
 
-    <!-- Speed release: drive mode 4 via 0x58, one-shot button. -->
+    <!-- Speed release: drive mode via 0x58 (per-model gear), one-shot button. -->
     <div class="section-hdr sub-hdr" data-i18n="scooter.tune.section.title">Speed-Freischaltung</div>
     <div class="settings-group pt-4">
       <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.intro">
@@ -3445,12 +3446,13 @@ function wireScooterSettings() {
   const amb = document.getElementById('ss-ambient');
   if (amb) amb.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
-    pushSetting(0x5E, e.target.checked ? 1 : 0);   // ambient / underglow light, plain toggle
+    // Side / underglow strip is a 0x6D sub-command (sub 1), like the logo; 0x5E has no meter handler.
+    if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(0x6D, 1, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
   });
   wireSpeedRelease();
 }
 
-/* Speed release: drive mode 4 via 0x58, one-shot with confirm. */
+/* Speed release: drive mode via 0x58 (per-model gear from speedReleaseGear), one-shot with confirm. */
 function wireSpeedRelease() {
   const send = document.getElementById('tune-send');
   if (send) send.addEventListener('click', () => {
@@ -3498,7 +3500,7 @@ const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '551
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
-const EXPERIMENTAL_PIDS = ['2585']; // UT5 Ultra X
+const EXPERIMENTAL_PIDS = ['2585', '2443']; // UT5 Ultra X; XT5 Ultra (BLE drive-level Drossel not yet confirmed over BT)
 // Models whose speed cap sits permanently in the controller: no app gear switches anything there.
 // Covers both states (stock + controller-only patch applied) because neither has a switchable latch.
 const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro',
@@ -3511,6 +3513,9 @@ const RELEASE_CAPABLE_MODELS = ['XT5 Pro', 'XT5 Ultra', 'XT5 Max',
   'NT5 Max', 'NT5 Max+', 'NT5 Ultra', 'NT5 Turbo', 'NT5 Ultra X', 'UT5 Ultra X'];
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
+  // XT5 Ultra (T2443) is a different controller from XT5 Pro/Max (T2416): its live drive level is the
+  // speed selector - gear 5 = level D (full), gear 2 = level S (~22 km/h).
+  if (naveeRealModel() === 'XT5 Ultra') return on ? 5 : 2;
   const isXT = naveeIsXT(naveeRealModel());
   if (isXT) return on ? 4 : 3;
   return on ? 5 : 2;
@@ -3533,7 +3538,8 @@ function sendSpeedRelease(on) {
   if (PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) { showToast(t('scooter.tune.permanent'), 6000); return false; }
   if (RELEASE_CAPABLE_MODELS.indexOf(naveeRealModel()) < 0) { showToast(t('scooter.tune.unsupported'), 6000); return false; }
   const fw = (liveRaw().fwBldc || '').trim();
-  if (PATCHED_LATCH_BLDC.includes(fw)) {
+  // XT5 Ultra has no latch marker: its live drive level is the selector, so always take the gear path.
+  if (naveeRealModel() !== 'XT5 Ultra' && PATCHED_LATCH_BLDC.includes(fw)) {
     if (on && OUTDATED_LATCH_BLDC.includes(fw)) { showToast(t('scooter.tune.outdated'), 6000); return false; }
     if (on) {
       if (!pushSetting(NAVEE_CMD.drivemode, 7)) return false;   // app-only unlock (nibble 7)
