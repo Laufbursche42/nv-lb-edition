@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.69
+- UT5 Max: the triple-tap on the km/h tile now explains the model instead of doing nothing. Its speed is a fixed flash setting in the controller (flashed = open, stock = limited); there is no Bluetooth on/off, because the speedometer cannot be flashed safely.
+- XT5 Ultra: corrected the speed-release help text. It wrongly said the top mode was road-confirmed at 50.8 km/h; it was not. Whether the scooter opens without a flash depends on the individual unit, not the country - triple-tap the speedometer to check, otherwise the cap sits in the firmware and needs the patcher.
+
 ## 1.0.62
 - Five more controllers patchable with a target-speed dropdown, controller only: G5 (20-50 km/h), GT5 Max, GT5 Pro, UT3 Max (25-50), NT3 Max (20-45).
 - Each model offers only the steps its own firmware can hold exactly, so what you pick is what the controller gets.

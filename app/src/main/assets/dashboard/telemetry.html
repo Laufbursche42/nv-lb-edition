@@ -518,7 +518,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="section-hdr sub-hdr" data-i18n="scooter.tune.section.title">Speed-Freischaltung</div>
     <div class="settings-group pt-4">
       <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.intro">
-        Schickt den Fahrmodus 4 an den Roller. Nur die XT5-Familie kennt diesen Modus; am XT5 Ultra ist er im Fahrtest bestätigt (50,8 km/h), bei XT5 Pro und XT5 Max ist er aus dem Code belegt aber noch nicht am Gerät geprüft. Bei allen anderen Modellen passiert nichts.
+        Schaltet die XT5-Familie über 0x58 in ihren schnellen Fahrmodus (XT5 Ultra: Stufe D/Sport, XT5 Pro und XT5 Max: Fahrmodus 4). Beim XT5 Ultra hängt es am einzelnen Gerät, nicht am Land: manche fahren dann voll, bei anderen sitzt die Grenze fest in der Firmware und ohne Controller-Flash ändert sich nichts - teste mit dem 3-fach-Tap am Tacho. Bei XT5 Pro und XT5 Max ist er aus dem Code belegt, aber noch nicht am Gerät geprüft. Bei allen anderen Modellen passiert nichts.
       </div>
       <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.detail">
         Der Wert ist fest, es gibt nichts einzustellen: der Roller wählt ihn selbst aus seinem SKU-Byte (40, 50, 60 oder 65), der Controller rundet auf seine nächste Stufe. Der Zustand steht nur im Arbeitsspeicher, ein Druck auf die Modus-Taste oder ein Neustart setzt ihn zurück. Also vor jeder Fahrt neu senden.
@@ -3531,10 +3531,13 @@ function sendSpeedRelease(on) {
     setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
     return true;
   }
-  // UT5 Max: the cap sits permanently in the controller (gear 3/4 ceiling patched to 40). Its stock meter
-  // only ever emits drive mode 2, 3 or 11, so no app gear can switch anything here - say so, send nothing.
-  // Same for the ST3/GT3 family: the raised top gear sits permanently in the controller (drive mode 3
-  // and 5 no longer take the meter speed limit), so there is no gear the app could switch.
+  // UT5 Max: speed is a permanent flash setting in the controller; the meter is unflashable and
+  // region-gates the only global speed field (byte10), so there is no BLE on/off switch. Own message
+  // (flashed = permanently open, stock = permanently limited) instead of the generic permanent toast.
+  if (naveeRealModel() === 'UT5 Max') { showToast(t('scooter.tune.ut5max'), 8000); return false; }
+  // ST3/GT3 family and the other controller-only models: the raised (or stock) top gear sits permanently
+  // in the controller (drive mode 3 and 5 no longer take the meter speed limit), so there is no gear the
+  // app could switch.
   if (PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) { showToast(t('scooter.tune.permanent'), 6000); return false; }
   if (RELEASE_CAPABLE_MODELS.indexOf(naveeRealModel()) < 0) { showToast(t('scooter.tune.unsupported'), 6000); return false; }
   const fw = (liveRaw().fwBldc || '').trim();
