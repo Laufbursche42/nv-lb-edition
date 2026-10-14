@@ -1223,11 +1223,12 @@ patches: [
     ],
   },
 
-  // XT5 Ultra BLDC 0.0.2.7 (T2443/MM32F5333). Top-speed cap in FUN_08003364: the region-locked
-  // 250-bucket loads `mov.w r9,#0xff` (25.5 km/h) at 0x37e0; retargeted to `movw r9,#(km/h*10)`.
-  // No overspeed governor (byte-verified). Field weakening needs cap >= 501 (`cmp.w r0,#0x1f4` at
-  // 0x49ba) and the firmware winds it back above 516 measured (51.6 km/h), so the useful window is
-  // 501..515: 50 uses 508, 51 uses 510. Above that the cap only raises the target, not the current.
+  // XT5 Ultra BLDC 0.0.2.7 (T2443/MM32F5333). Top-speed cap in FUN_08003364: the meter commands a speed
+  // profile in each 0x51 frame; the controller maps it to one of five buckets (r9 = 255/325/405/455/508 at
+  // 0x37ae/0x37c2/0x37cc/0x37d6/0x37e0) or, for a profile outside those, the fallback (r9 loaded from
+  // [0x2000011a] at 0x37ee). All six r9 writes are set to the target, so the cap is the selected speed
+  // whatever profile the SKU-locked meter sends. Field weakening needs the cap >= 501 and is wound back
+  // above ~516, so 50 maps to 508 and 51 to 510. Controller only; CRC32 reseal @0x404.
   bldcXT5Ultra: {
     label: 'XT5 Ultra BLDC 0.0.2.7',
     kind: 'bldc',
@@ -1235,10 +1236,13 @@ patches: [
     verify: { size: 0xcb68 },
     reseal: bldcResealCrc32,
     stdSpeedKmh: 40,
-    patches: [  // std: clamp every over-40 bucket to 40 (movw r9,#400); speed variants below cover 22-50
+    patches: [  // std 40: set all five buckets plus the fallback reader (0x37ee) to movw r9,#400; variants cover 22-51
       { off: 0x37ae, from: [0x4f, 0xf4, 0xfe, 0x79], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
+      { off: 0x37c2, from: [0x40, 0xf2, 0x45, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
       { off: 0x37cc, from: [0x40, 0xf2, 0x95, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
       { off: 0x37d6, from: [0x40, 0xf2, 0xc7, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
+      { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
+      { off: 0x37ee, from: [0xb1, 0xf8, 0x02, 0x90], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
     ],
   },
 
@@ -2190,19 +2194,30 @@ function xtBucketVariants(buckets, rd, scaleFn, topOff, speeds, extra) {
   for (const kmh of speeds) v['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: build(kmh) };
   return v;
 }
-IMAGES.bldcXT5Ultra.variants = xtBucketVariants(
-  [{ off: 0x37ae, from: [0x4f, 0xf4, 0xfe, 0x79], cap: 508 }, { off: 0x37c2, from: [0x40, 0xf2, 0x45, 0x19], cap: 325 },
-   { off: 0x37cc, from: [0x40, 0xf2, 0x95, 0x19], cap: 405 }, { off: 0x37d6, from: [0x40, 0xf2, 0xc7, 0x19], cap: 455 },
-   { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], cap: 255 }],
-  9, (k) => (k === 50 ? 508 : k * 10), 0x37ae, [22, 25, 27, 30, 35, 45, 50, 51]);
+// Set every speed source to the target (unlike xtBucketVariants, which only clamps buckets already above it).
+function xtRaiseAll(sites, rd, scaleFn, speeds) {
+  const v = {};
+  for (const kmh of speeds) {
+    const to = movwLE(rd, scaleFn(kmh));
+    v['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: sites.map((s) => ({ off: s.off, from: s.from, to: to.slice(), id: 'speed' })) };
+  }
+  return v;
+}
+// XT5 Ultra: all five meter-profile buckets plus the fallback reader at 0x37ee are set to the target, so the
+// controller caps at the chosen speed whatever the SKU-locked meter sends. 50 -> 508, 51 -> 510.
+IMAGES.bldcXT5Ultra.variants = xtRaiseAll(
+  [{ off: 0x37ae, from: [0x4f, 0xf4, 0xfe, 0x79] }, { off: 0x37c2, from: [0x40, 0xf2, 0x45, 0x19] },
+   { off: 0x37cc, from: [0x40, 0xf2, 0x95, 0x19] }, { off: 0x37d6, from: [0x40, 0xf2, 0xc7, 0x19] },
+   { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09] }, { off: 0x37ee, from: [0xb1, 0xf8, 0x02, 0x90] }],
+  9, (k) => (k === 50 ? 508 : k === 51 ? 510 : k * 10), [22, 25, 27, 30, 35, 45, 50, 51]);
 IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
   [{ off: 0x43e0, from: [0x40, 0xf2, 0xd6, 0x21], cap: 726 }, { off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], cap: 454 }],
   1, (k) => Math.floor(k * 2089 / 115), 0x43e0, [22, 25, 27, 30, 35, 45, 50],
   [{ off: 0x1b6a, from: [0x05, 0x29, 0x1f, 0xd0], to: [0x04, 0x29, 0x1f, 0xda], id: 'launch-ramp' }]);
 
 // Identify which image this is, or null.
-// Only hardware-confirmed families are flashable: the NT5 family and the XT5. Everything else is
-// blocked while the patches are re-checked, after device-damaging reports on unconfirmed models.
+// Which images the patcher will flash. Experimental models (EXPERIMENTAL set below) show a warning and
+// need an extra confirmation before patching; none of the experimental speed patches is confirmed on hardware.
 const FLASH_ENABLED = new Set([
   'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
   'meterXT5',                                                     // XT5 meter
