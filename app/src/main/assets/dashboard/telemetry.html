@@ -518,7 +518,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="section-hdr sub-hdr" data-i18n="scooter.tune.section.title">Speed-Freischaltung</div>
     <div class="settings-group pt-4">
       <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.intro">
-        Schaltet die XT5-Familie über 0x58 in ihren schnellen Fahrmodus (XT5 Ultra: Stufe D/Sport, XT5 Pro und XT5 Max: Fahrmodus 4). Beim XT5 Ultra hängt es am einzelnen Gerät, nicht am Land: manche fahren dann voll, bei anderen sitzt die Grenze fest in der Firmware und ohne Controller-Flash ändert sich nichts - teste mit dem 3-fach-Tap am Tacho. Bei XT5 Pro und XT5 Max ist er aus dem Code belegt, aber noch nicht am Gerät geprüft. Bei allen anderen Modellen passiert nichts.
+        Schaltet die XT5-Familie über 0x58 in ihren schnellen Fahrmodus (Fahrmodus 4). Beim XT5 Ultra hängt es am einzelnen Gerät, nicht am Land, ob es ohne Flash klappt: manche fahren dann voll, bei anderen sitzt die Grenze fest in der Firmware und ohne Controller-Flash ändert sich nichts - teste mit dem 3-fach-Tap am Tacho. Bei einem geflashten XT5 Ultra gibt erst dieser Knopf die freigeschaltete Geschwindigkeit frei; der 3-fach-Tap allein bleibt unter Umständen bei etwa 25 km/h. Bei XT5 Pro und XT5 Max ist er aus dem Code belegt, aber noch nicht am Gerät geprüft. Bei allen anderen Modellen passiert nichts.
       </div>
       <div class="settings-row-sublabel mb-8" data-i18n="scooter.tune.detail">
         Der Wert ist fest, es gibt nichts einzustellen: der Roller wählt ihn selbst aus seinem SKU-Byte (40, 50, 60 oder 65), der Controller rundet auf seine nächste Stufe. Der Zustand steht nur im Arbeitsspeicher, ein Druck auf die Modus-Taste oder ein Neustart setzt ihn zurück. Also vor jeder Fahrt neu senden.
@@ -3500,7 +3500,7 @@ const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '551
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
-const EXPERIMENTAL_PIDS = ['2585', '2443']; // UT5 Ultra X; XT5 Ultra (BLE drive-level Drossel not yet confirmed over BT)
+const EXPERIMENTAL_PIDS = ['2585', '2443']; // UT5 Ultra X; XT5 Ultra (gear-4 BLE release reaches full speed on one patched unit, broader SKU behaviour unconfirmed)
 // Models whose speed cap sits permanently in the controller: no app gear switches anything there.
 // Covers both states (stock + controller-only patch applied) because neither has a switchable latch.
 const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro',
@@ -3513,9 +3513,7 @@ const RELEASE_CAPABLE_MODELS = ['XT5 Pro', 'XT5 Ultra', 'XT5 Max',
   'NT5 Max', 'NT5 Max+', 'NT5 Ultra', 'NT5 Turbo', 'NT5 Ultra X', 'UT5 Ultra X'];
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
-  // XT5 Ultra (T2443) is a different controller from XT5 Pro/Max (T2416): its live drive level is the
-  // speed selector - gear 5 = level D (full), gear 2 = level S (~22 km/h).
-  if (naveeRealModel() === 'XT5 Ultra') return on ? 5 : 2;
+  // XT5 family (incl. the T2443 XT5 Ultra) unlocks on gear 4 and restricts on gear 3; the others use 5/2.
   const isXT = naveeIsXT(naveeRealModel());
   if (isXT) return on ? 4 : 3;
   return on ? 5 : 2;
@@ -3541,8 +3539,7 @@ function sendSpeedRelease(on) {
   if (PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) { showToast(t('scooter.tune.permanent'), 6000); return false; }
   if (RELEASE_CAPABLE_MODELS.indexOf(naveeRealModel()) < 0) { showToast(t('scooter.tune.unsupported'), 6000); return false; }
   const fw = (liveRaw().fwBldc || '').trim();
-  // XT5 Ultra has no latch marker: its live drive level is the selector, so always take the gear path.
-  if (naveeRealModel() !== 'XT5 Ultra' && PATCHED_LATCH_BLDC.includes(fw)) {
+  if (PATCHED_LATCH_BLDC.includes(fw)) {
     if (on && OUTDATED_LATCH_BLDC.includes(fw)) { showToast(t('scooter.tune.outdated'), 6000); return false; }
     if (on) {
       if (!pushSetting(NAVEE_CMD.drivemode, 7)) return false;   // app-only unlock (nibble 7)
