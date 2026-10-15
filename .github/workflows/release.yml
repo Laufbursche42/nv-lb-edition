@@ -28,6 +28,7 @@ on:
       - '.gitattributes'
       - '.gitignore'
       - '.github/**'
+      - '.githooks/**'
       - '_portspec/**'
   workflow_dispatch:
 

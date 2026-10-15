@@ -298,23 +298,17 @@ if grep -aqzF -- "$MANIFEST_REL" "$STAGED_LIST" 2>/dev/null; then
 fi
 
 # =================================================================
-# PHASE E - what's-new gate
+# PHASE E - release gate: a commit that ships a new version (touches app/src/main,
+# not just version/build meta) must add BOTH a new CHANGELOG section AND a what's-new
+# entry in both language blocks, so a release is never shipped undocumented.
 # =================================================================
-# versionName counts commits that touch app/, so any such commit ships a new version to users. A new
-# version without a what's-new entry leaves them guessing what changed, so the entry is mandatory -
-# in BOTH languages, like the changelog in the webpatcher repo. Every point starts with "<b>, so two
-# added lines of that shape (one per language block) are what this looks for.
-#
-# Only version.properties or build files staged -> no user-visible change -> no entry required.
-WN="app/src/main/assets/dashboard/i18n.js"
-needs_wn=0
+WN_FILE="app/src/main/assets/dashboard/i18n.js"
+CL_FILE="CHANGELOG.md"
+needs_rel=0
 while IFS= read -r -d '' f; do
-  case "$f" in
-    app/src/main/*) needs_wn=1 ;;
-  esac
+  case "$f" in app/src/main/*) needs_rel=1 ;; esac
 done < "$STAGED_LIST"
-# a version-only or gradle-only commit does not ship a feature
-if [ "$needs_wn" = "1" ]; then
+if [ "$needs_rel" = "1" ]; then
   only_meta=1
   while IFS= read -r -d '' f; do
     case "$f" in
@@ -323,22 +317,45 @@ if [ "$needs_wn" = "1" ]; then
       app/*) only_meta=0 ;;
     esac
   done < "$STAGED_LIST"
-  [ "$only_meta" = "1" ] && needs_wn=0
+  [ "$only_meta" = "1" ] && needs_rel=0
 fi
-if [ "$needs_wn" = "1" ]; then
-  if ! grep -aqzF -- "$WN" "$STAGED_LIST" 2>/dev/null; then
-    echo "BLOCK: this commit touches app/src/main, so it ships a new version - but $WN is not staged."
-    echo "  -> add a what's-new point to BOTH whatsnew.points blocks (English and German), newest first."
+if [ "$needs_rel" = "1" ]; then
+  if git diff --cached -- "$CL_FILE" | grep -qE '^\+## '; then
+    echo "OK    [changelog] new section added in $CL_FILE"
+  else
+    echo "BLOCK: releasing commit (touches app/src/main) but no new '## <version>' section added+staged in $CL_FILE."
+    echo "  -> add a '## <version>' section at the top of $CL_FILE describing the change, then 'git add' it."
+    RC=1
+  fi
+  if ! grep -aqzF -- "$WN_FILE" "$STAGED_LIST" 2>/dev/null; then
+    echo "BLOCK: releasing commit but $WN_FILE not staged - add a what's-new point to BOTH whatsnew.points blocks (en + de)."
     RC=1
   else
-    added=$(git diff --cached -- "$WN" | grep -cE '^\+[[:space:]]*"<b>' || true)
-    if [ "${added:-0}" -lt 2 ]; then
-      echo "BLOCK: $WN is staged but adds $added what's-new point(s); both language blocks need one."
-      echo "  -> every point starts with \"<b>; add one to each whatsnew.points array, newest first."
+    wn_added=$(git diff --cached -- "$WN_FILE" | grep -cE '^\+[[:space:]]*"<b>' || true)
+    if [ "${wn_added:-0}" -lt 2 ]; then
+      echo "BLOCK: $WN_FILE adds ${wn_added:-0} what's-new point(s); both language blocks need one (>= 2, each starting with \"<b>)."
       RC=1
     else
-      echo "OK    [whatsnew] $added new point(s) across the language blocks"
+      echo "OK    [whatsnew] ${wn_added} new point(s) across the language blocks"
     fi
+  fi
+fi
+
+# =================================================================
+# PHASE F - author-identity guard. The expected email is read from the LOCAL
+# git config key lb.expectedEmail (set per machine, e.g. in the global .gitconfig);
+# it is NEVER hard-coded here, so nothing private lands in this committed file.
+# No key set -> silent no-op (e.g. on a fresh clone elsewhere).
+# =================================================================
+EXP_EMAIL=$(git config lb.expectedEmail 2>/dev/null || true)
+if [ -n "$EXP_EMAIL" ]; then
+  CUR_EMAIL=$(git config user.email 2>/dev/null || true)
+  if [ "$CUR_EMAIL" = "$EXP_EMAIL" ]; then
+    echo "OK    [identity] author email matches lb.expectedEmail"
+  else
+    echo "BLOCK: commit author email does not match the expected identity (see: git config lb.expectedEmail)."
+    echo "  -> fix with: git config user.email <the expected address>"
+    RC=1
   fi
 fi
 
