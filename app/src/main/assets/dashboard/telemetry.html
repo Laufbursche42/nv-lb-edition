@@ -283,20 +283,29 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="settings-row-sublabel note-gap" data-i18n="settings.firmware.update.hint">Gepatchte oder eigene Firmware über Bluetooth auf den Roller flashen (Roller muss verbunden sein)</div>
   </div>
 
-  <!-- Bound-scooter account id (advanced). Stored Keystore-encrypted in the app, never in the page. -->
+  <!-- Bound-scooter account id (advanced): collapsed behind one button; the long notes live in "?" popups. -->
   <div class="settings-group has-top-rule">
-    <div class="settings-group-title" data-i18n="settings.account.group.title">Bound scooter (advanced)</div>
-    <div class="settings-row-sublabel note-gap" data-i18n="settings.account.intro">Some scooters (e.g. NAVEE ST3 Pro) are bound to a NAVEE account and close the Bluetooth link after about ten seconds unless the app authenticates. Enter the account ID to keep the link open, which is needed for flashing.</div>
-    <div class="settings-row-sublabel note-gap"><b data-i18n="settings.account.notid">This is NOT the NAVEE ID you can see in the NAVEE app. It is the internal account binding ID.</b></div>
-    <div class="settings-input-row">
-      <input type="password" inputmode="numeric" id="account-id-input" class="settings-input" autocomplete="off" data-i18n-ph="settings.account.placeholder" placeholder="Account ID (digits only)">
+    <div class="account-head">
+      <button type="button" id="btn-account-toggle" class="settings-btn account-toggle" aria-expanded="false" aria-controls="account-body">
+        <span data-i18n="settings.account.group.title">NAVEE Account ID</span>
+        <span class="account-chev" aria-hidden="true">&#9656;</span>
+      </button>
+      <button type="button" class="set-help" data-set-help="account-intro" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
     </div>
-    <div class="settings-row-sublabel note-gap" id="account-id-status" data-i18n="settings.account.status.none">No account ID stored</div>
-    <button id="btn-account-save" class="settings-btn" data-i18n="settings.account.save">Save account ID</button>
-    <button id="btn-account-clear" class="settings-btn" data-i18n="settings.account.clear">Remove account ID</button>
-    <div class="settings-group-title mt-14" data-i18n="settings.account.log.title">Get the account ID from a Bluetooth log (Android)</div>
-    <div class="settings-row-sublabel note-gap" data-i18n="settings.account.log.steps">1. Settings &gt; Developer options &gt; turn on "Enable Bluetooth HCI snoop log". 2. Fully close the NAVEE app, then open it and connect to the scooter once. 3. Create a bug report (Developer options &gt; Bug report) or locate the btsnoop_hci.log file. 4. Tap the button below and pick that file. The app reads the account ID out of it. Nothing is uploaded, it stays on the phone.</div>
-    <button id="btn-account-log" class="settings-btn" data-i18n="settings.account.log.pick">Import from Bluetooth log</button>
+    <div id="account-body" class="account-body" hidden>
+      <div class="settings-row-sublabel note-gap"><b data-i18n="settings.account.notid">This is NOT the NAVEE ID you can see in the NAVEE app. It is the internal account binding ID.</b></div>
+      <div class="settings-input-row">
+        <input type="password" inputmode="numeric" id="account-id-input" class="settings-input" autocomplete="off" data-i18n-ph="settings.account.placeholder" placeholder="Account ID (digits only)">
+      </div>
+      <div class="settings-row-sublabel note-gap" id="account-id-status" data-i18n="settings.account.status.none">No account ID stored</div>
+      <button id="btn-account-save" class="settings-btn" data-i18n="settings.account.save">Save account ID</button>
+      <button id="btn-account-clear" class="settings-btn" data-i18n="settings.account.clear">Remove account ID</button>
+      <div class="account-sub-head mt-14">
+        <div class="settings-group-title" data-i18n="settings.account.log.title">Get the account ID from a Bluetooth log (Android)</div>
+        <button type="button" class="set-help" data-set-help="account-log" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
+      </div>
+      <button id="btn-account-log" class="settings-btn" data-i18n="settings.account.log.pick">Import from Bluetooth log</button>
+    </div>
   </div>
 
   <!-- GPS: the recording settings and the recordings they produce belong together. -->
@@ -775,6 +784,40 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
       <button type="button" id="btn-dsp-reset-light" class="settings-btn mt-10" data-i18n="display.reset.light">Reset light mode</button>
     </div>
+
+    <div class="settings-group has-top-rule">
+      <div class="settings-group-title" data-i18n="display.fonts.title">Font sizes</div>
+      <div class="settings-row-sublabel mb-10" data-i18n="display.fonts.hint">Tile font size on the main screen, per row split into value and label.</div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.speed.val">Speed - value</div></div>
+        <input class="set-ctrl" id="dsp-font-speed-val" type="number" min="20" max="72" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.speed.lbl">Speed - label</div></div>
+        <input class="set-ctrl" id="dsp-font-speed-lbl" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.hero.val">Upper tiles - value</div></div>
+        <input class="set-ctrl" id="dsp-font-hero-val" type="number" min="10" max="48" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.hero.lbl">Upper tiles - label</div></div>
+        <input class="set-ctrl" id="dsp-font-hero-lbl" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.tele.top">Drive &amp; battery tiles - title</div></div>
+        <input class="set-ctrl" id="dsp-font-tele-top" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.tele.mid">Drive &amp; battery tiles - value</div></div>
+        <input class="set-ctrl" id="dsp-font-tele-mid" type="number" min="10" max="48" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.tele.bot">Drive &amp; battery tiles - unit</div></div>
+        <input class="set-ctrl" id="dsp-font-tele-bot" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
+      <button type="button" id="btn-dsp-reset-fonts" class="settings-btn mt-10" data-i18n="display.fonts.reset">Reset font sizes</button>
+    </div>
   </div>
 </div>
 
@@ -1063,12 +1106,26 @@ const DISPLAY_DEFAULTS = {
   light: { card: '#ffffff', bg: '#e8edf5', lum: 100 }
 };
 
+// Rider-adjustable tile font sizes in px, global (not per theme), stored under cfg.fonts. Empty by
+// default so the CSS keeps its built-in sizes until a value is entered. Each row carries its own
+// range; `def` is where the input sits until the rider sets a value, `varName` the matching CSS var.
+const FONT_META = [
+  { key: 'speedVal', varName: '--sz-speed-val', id: 'dsp-font-speed-val', def: 64, min: 20, max: 72 },
+  { key: 'speedLbl', varName: '--sz-speed-lbl', id: 'dsp-font-speed-lbl', def: 14, min: 10, max: 40 },
+  { key: 'heroVal',  varName: '--sz-hero-val',  id: 'dsp-font-hero-val',  def: 38, min: 10, max: 48 },
+  { key: 'heroLbl',  varName: '--sz-hero-lbl',  id: 'dsp-font-hero-lbl',  def: 13, min: 10, max: 40 },
+  { key: 'teleTop',  varName: '--sz-tele-top',  id: 'dsp-font-tele-top',  def: 12, min: 10, max: 40 },
+  { key: 'teleMid',  varName: '--sz-tele-mid',  id: 'dsp-font-tele-mid',  def: 30, min: 10, max: 48 },
+  { key: 'teleBot',  varName: '--sz-tele-bot',  id: 'dsp-font-tele-bot',  def: 12, min: 10, max: 40 }
+];
+
 function loadDisplayCfg() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null'); } catch (e) {}
-  const out = { dark: Object.assign({}, DISPLAY_DEFAULTS.dark), light: Object.assign({}, DISPLAY_DEFAULTS.light) };
+  const out = { dark: Object.assign({}, DISPLAY_DEFAULTS.dark), light: Object.assign({}, DISPLAY_DEFAULTS.light), fonts: {} };
   if (saved) {
     ['dark', 'light'].forEach(k => { if (saved[k]) Object.assign(out[k], saved[k]); });
+    if (saved.fonts) Object.assign(out.fonts, saved.fonts);
   }
   return out;
 }
@@ -1135,6 +1192,22 @@ function applyDisplay() {
   });
 }
 
+// Push the rider's tile font sizes onto :root as CSS custom properties, then re-fit the fold so the
+// layout adapts. A key that is not set is removed, so the stylesheet falls back to the built-in size.
+function applyFontSizes() {
+  const f = loadDisplayCfg().fonts || {};
+  const root = document.documentElement;
+  FONT_META.forEach(m => {
+    if (f[m.key] != null) {
+      const px = Math.max(m.min, Math.min(m.max, Number(f[m.key]) || m.def));
+      root.style.setProperty(m.varName, px + 'px');
+    } else {
+      root.style.removeProperty(m.varName);
+    }
+  });
+  try { scheduleFitFold(); } catch (e) {}
+}
+
 function initDisplayPage() {
   const cfg = loadDisplayCfg();
   const bind = (theme, key, id, isRange) => {
@@ -1166,6 +1239,31 @@ function initDisplayPage() {
   if (rd) rd.addEventListener('click', () => reset('dark'));
   const rl = document.getElementById('btn-dsp-reset-light');
   if (rl) rl.addEventListener('click', () => reset('light'));
+
+  FONT_META.forEach(m => {
+    const el = document.getElementById(m.id);
+    if (!el) return;
+    el.min = String(m.min); el.max = String(m.max);
+    el.value = String(cfg.fonts[m.key] != null ? cfg.fonts[m.key] : m.def);
+    el.addEventListener('change', () => {
+      let v = Math.round(Number(el.value));
+      if (isNaN(v)) v = m.def;
+      v = Math.max(m.min, Math.min(m.max, v));
+      el.value = String(v);
+      const now = loadDisplayCfg();
+      now.fonts[m.key] = v;
+      saveDisplayCfg(now);
+      applyFontSizes();
+    });
+  });
+  const rf = document.getElementById('btn-dsp-reset-fonts');
+  if (rf) rf.addEventListener('click', () => {
+    const now = loadDisplayCfg();
+    now.fonts = {};
+    saveDisplayCfg(now);
+    applyFontSizes();
+    refreshDisplayControls();
+  });
 }
 
 function refreshDisplayControls() {
@@ -1177,6 +1275,7 @@ function refreshDisplayControls() {
   put('dsp-light-card', cfg.light.card);
   put('dsp-light-bg',   cfg.light.bg);
   put('dsp-light-lum',  String(cfg.light.lum));
+  FONT_META.forEach(m => put(m.id, String(cfg.fonts[m.key] != null ? cfg.fonts[m.key] : m.def)));
 }
 
 function openDisplayPage() {
@@ -1204,6 +1303,7 @@ function applyTheme(dark) {
   // The rider's own colours are inline properties on :root and therefore outrank the stylesheet's
   // theme block, so the other theme's set has to be written now that the theme has changed.
   try { applyDisplay(); } catch (e) {}
+  try { applyFontSizes(); } catch (e) {}
 }
 
 function initTheme() {
@@ -1410,7 +1510,9 @@ const SETTINGS_HELP = {
   "dg-rssi": { title: 'msg.help.set.dg.rssi.title', text: 'msg.help.set.dg.rssi.text' },
   "dg-volt": { title: 'msg.help.set.dg.volt.title', text: 'msg.help.set.dg.volt.text' },
   "dg-gps": { title: 'msg.help.set.dg.gps.title', text: 'msg.help.set.dg.gps.text' },
-  "dg-pts": { title: 'msg.help.set.dg.pts.title', text: 'msg.help.set.dg.pts.text' }
+  "dg-pts": { title: 'msg.help.set.dg.pts.title', text: 'msg.help.set.dg.pts.text' },
+  "account-intro": { title: 'settings.account.group.title', text: 'settings.account.intro' },
+  "account-log": { title: 'settings.account.log.title', text: 'settings.account.log.steps' }
 };
 
 let settingsHelpDelegated = false;
@@ -2200,6 +2302,16 @@ function loadSettings() {
 
   // Account ID (bound scooters): reflect whether one is stored. The value itself is never read back.
   refreshAccountIdUI();
+}
+
+// Expand / collapse the bound-scooter block; the chevron rotation is driven by aria-expanded.
+function toggleAccountBody() {
+  const btn = document.getElementById('btn-account-toggle');
+  const body = document.getElementById('account-body');
+  if (!btn || !body) return;
+  const open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+  body.hidden = open;
 }
 
 // The account ID lives only in the app's Keystore-encrypted store, never in the page or localStorage.
@@ -3556,7 +3668,11 @@ function sendSpeedRelease(on) {
   // accepted it. On a stock scooter the SKU byte can silently clamp the open gear (NT5 and others
   // with a low SKU), so the ride is still at 22 km/h even though the tile looks "active". If the
   // read-back drive-mode differs from the one we commanded, tell the user the FW needs patching.
-  if (on) {
+  // The XT5 Ultra reports a fixed drive mode and no cap field over BLE (driveMode pinned,
+  // maxSpeed/limitSpeed 0), so a read-back can never equal the sent gear even when the release took
+  // (hardware-confirmed) - the check would fire a false "not taken", so skip it there. The sent toast
+  // already states the behaviour accurately.
+  if (on && naveeRealModel() !== 'XT5 Ultra') {
     const want = speedReleaseGear(on);
     setTimeout(() => {
       try {
@@ -3830,6 +3946,8 @@ function wireEvents() {
     closeSettings();
     openFirmwarePage();
   });
+  // Collapse the whole bound-scooter block behind one button; expand on tap.
+  document.getElementById('btn-account-toggle').addEventListener('click', toggleAccountBody);
   document.getElementById('btn-account-save').addEventListener('click', saveAccountId);
   document.getElementById('btn-account-clear').addEventListener('click', clearAccountId);
   document.getElementById('btn-account-log').addEventListener('click', importAccountIdFromLog);

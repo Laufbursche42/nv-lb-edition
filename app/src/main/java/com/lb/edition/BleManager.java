@@ -662,13 +662,15 @@ final class BleManager {
             } catch (Throwable t) { Log.e(TAG, "session auth send failed", t); authPending = false; afterAuthComplete(); }
             return;   // afterAuthComplete() runs the time sync + status reads once the handshake ends
         }
-        try { enqueueWrite(CommandBuilder.timeSync()); } catch (Throwable ignored) {}
-        main.postDelayed(this::readStatus, 500);
+        connectTail();
     }
 
-    // Mirror the OEM tail of the handshake: clock (0x6F sub 6) then 0x7B, which arms the scooter's own
-    // 0x90 report stream and keeps the link open; then the normal status reads for the dashboard.
-    private void afterAuthComplete() {
+    private void afterAuthComplete() { connectTail(); }
+
+    // Connect tail run on every connect (bound or not): clock (0x6F sub 6) then 0x7B, which arms the
+    // scooter's own 0x90/0x91/0x92 report stream (remaining range, trip and total mileage) and keeps
+    // the link open; then the dashboard status reads.
+    private void connectTail() {
         try { enqueueWrite(CommandBuilder.timeSync()); } catch (Throwable ignored) {}
         try { enqueueWrite(CommandBuilder.read(0x7B)); } catch (Throwable ignored) {}
         main.postDelayed(this::readStatus, 500);

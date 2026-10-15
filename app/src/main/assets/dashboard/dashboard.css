@@ -427,6 +427,17 @@ html, body {
 /* Own line under the value, centred like the title and the value above it. */
 .tc-unit { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--label); }
 
+/* Rider-adjustable tile font sizes (Display settings -> Font sizes). id + class outranks the plain
+   class rule, so each area is independent; the var stays unset until the rider sets a value, so the
+   built-in size (the clamp/token) stays the default. */
+#speed-row .sd-val  { font-size: var(--sz-speed-val, clamp(42px, 13vw, 64px)); }
+#speed-row .sd-unit { font-size: var(--sz-speed-lbl, var(--fs-base)); }
+#hero-row .hc-val   { font-size: var(--sz-hero-val, clamp(28px, 9vw, 38px)); }
+#hero-row .hc-unit  { font-size: var(--sz-hero-lbl, var(--fs-md)); }
+#tele-row .tc-title { font-size: var(--sz-tele-top, var(--fs-sm)); }
+#tele-row .tc-main  { font-size: var(--sz-tele-mid, clamp(22px, 7vw, 30px)); }
+#tele-row .tc-unit  { font-size: var(--sz-tele-bot, var(--fs-sm)); }
+
 /* Two stacked tile rows: temperatures and power above, currents below. */
 #tele-area { display: flex; flex-direction: column; gap: var(--gap); }
 /* Drive-mode quick toggles under the motor tiles: four equal-width buttons on one row. */
@@ -484,6 +495,19 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 .set-help:hover, .set-help:active { background: var(--border); color: var(--text); }
+
+/* Collapsible bound-scooter (account id) block: one toggle button + a "?" beside it,
+   the controls live in a body that is hidden until the button is tapped. */
+.account-head { display: flex; align-items: center; gap: 8px; }
+.account-head .account-toggle {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.account-chev { display: inline-block; font-size: var(--fs-xs); transition: transform .2s; }
+.account-toggle[aria-expanded="true"] .account-chev { transform: rotate(90deg); }
+.account-body[hidden] { display: none; }
+.account-body { margin-top: 10px; }
+.account-sub-head { display: flex; align-items: center; gap: 8px; }
+.account-sub-head .settings-group-title { margin-bottom: 0; }
 
 /* ── Modal popups ───────────────────────────────────────────
    One theme-aware shell for the all-values help, the version info and the what-is-new
