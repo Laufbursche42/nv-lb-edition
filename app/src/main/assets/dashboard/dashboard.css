@@ -434,9 +434,9 @@ html, body {
 #speed-row .sd-unit { font-size: var(--sz-speed-lbl, var(--fs-base)); }
 #hero-row .hc-val   { font-size: var(--sz-hero-val, clamp(28px, 9vw, 38px)); }
 #hero-row .hc-unit  { font-size: var(--sz-hero-lbl, var(--fs-md)); }
-#tele-row .tc-title { font-size: var(--sz-tele-top, var(--fs-sm)); }
-#tele-row .tc-main  { font-size: var(--sz-tele-mid, clamp(22px, 7vw, 30px)); }
-#tele-row .tc-unit  { font-size: var(--sz-tele-bot, var(--fs-sm)); }
+#tele-row .tc-title { font-size: var(--sz-m1-top, var(--fs-sm)); }
+#tele-row .tc-main  { font-size: var(--sz-m1-mid, clamp(22px, 7vw, 32px)); }
+#tele-row .tc-unit  { font-size: var(--sz-m1-bot, var(--fs-sm)); }
 
 /* Two stacked tile rows: temperatures and power above, currents below. */
 #tele-area { display: flex; flex-direction: column; gap: var(--gap); }

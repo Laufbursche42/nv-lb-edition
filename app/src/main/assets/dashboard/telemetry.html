@@ -787,7 +787,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 
     <div class="settings-group has-top-rule">
       <div class="settings-group-title" data-i18n="display.fonts.title">Font sizes</div>
-      <div class="settings-row-sublabel mb-10" data-i18n="display.fonts.hint">Tile font size on the main screen, per row split into value and label.</div>
+      <div class="settings-row-sublabel mb-10" data-i18n="display.fonts.hint">Font size for every tile text line on the main screen, set individually. On the live-value tiles that is the title (top), the value (middle) and the unit (bottom). The screen still auto-scales to the height, so it is mainly the ratio between the sizes that shows.</div>
       <div class="settings-row">
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.speed.val">Speed - value</div></div>
         <input class="set-ctrl" id="dsp-font-speed-val" type="number" min="20" max="72" step="1" inputmode="numeric">
@@ -805,16 +805,16 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <input class="set-ctrl" id="dsp-font-hero-lbl" type="number" min="10" max="40" step="1" inputmode="numeric">
       </div>
       <div class="settings-row">
-        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.tele.top">Drive &amp; battery tiles - title</div></div>
-        <input class="set-ctrl" id="dsp-font-tele-top" type="number" min="10" max="40" step="1" inputmode="numeric">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m1.top">Tile row 1 - title (top)</div></div>
+        <input class="set-ctrl" id="dsp-font-m1-top" type="number" min="10" max="40" step="1" inputmode="numeric">
       </div>
       <div class="settings-row">
-        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.tele.mid">Drive &amp; battery tiles - value</div></div>
-        <input class="set-ctrl" id="dsp-font-tele-mid" type="number" min="10" max="48" step="1" inputmode="numeric">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m1.mid">Tile row 1 - value (middle)</div></div>
+        <input class="set-ctrl" id="dsp-font-m1-mid" type="number" min="10" max="48" step="1" inputmode="numeric">
       </div>
       <div class="settings-row">
-        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.tele.bot">Drive &amp; battery tiles - unit</div></div>
-        <input class="set-ctrl" id="dsp-font-tele-bot" type="number" min="10" max="40" step="1" inputmode="numeric">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m1.bot">Tile row 1 - unit (bottom)</div></div>
+        <input class="set-ctrl" id="dsp-font-m1-bot" type="number" min="10" max="40" step="1" inputmode="numeric">
       </div>
       <button type="button" id="btn-dsp-reset-fonts" class="settings-btn mt-10" data-i18n="display.fonts.reset">Reset font sizes</button>
     </div>
@@ -902,6 +902,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <p id="verinfo-license" data-i18n="fw.verinfo.license">Laufbursche Edition (NAVEE) is source-available under the PolyForm Noncommercial License 1.0.0 with Additional Terms. Read the <span class="link-ble" onclick="openExt('https://github.com/Laufbursche42/nv-lb-edition/blob/main/README.md')">GitHub README</span> and <span class="link-ble" onclick="openExt('https://github.com/Laufbursche42/nv-lb-edition/blob/main/license.md')">License</span>.</p>
     <p id="verinfo-osm" data-i18n="fw.verinfo.map.attribution">Offline maps and POI data (camping / charging) are &copy; OpenStreetMap contributors, licensed under the ODbL 1.0.</p>
     <p><span class="link-ble" id="verinfo-disclaimer-link" data-i18n="disclaimer.read.link">Read the liability disclaimer</span></p>
+    <p><span class="link-ble" id="verinfo-report" data-i18n="fw.verinfo.report">Report issue</span></p>
     <button type="button" id="verinfo-close" data-i18n="fw.verinfo.close">Close</button>
   </div>
 </div>
@@ -1114,9 +1115,9 @@ const FONT_META = [
   { key: 'speedLbl', varName: '--sz-speed-lbl', id: 'dsp-font-speed-lbl', def: 14, min: 10, max: 40 },
   { key: 'heroVal',  varName: '--sz-hero-val',  id: 'dsp-font-hero-val',  def: 38, min: 10, max: 48 },
   { key: 'heroLbl',  varName: '--sz-hero-lbl',  id: 'dsp-font-hero-lbl',  def: 13, min: 10, max: 40 },
-  { key: 'teleTop',  varName: '--sz-tele-top',  id: 'dsp-font-tele-top',  def: 12, min: 10, max: 40 },
-  { key: 'teleMid',  varName: '--sz-tele-mid',  id: 'dsp-font-tele-mid',  def: 30, min: 10, max: 48 },
-  { key: 'teleBot',  varName: '--sz-tele-bot',  id: 'dsp-font-tele-bot',  def: 12, min: 10, max: 40 }
+  { key: 'm1Top', varName: '--sz-m1-top', id: 'dsp-font-m1-top', def: 12, min: 10, max: 40 },
+  { key: 'm1Mid', varName: '--sz-m1-mid', id: 'dsp-font-m1-mid', def: 32, min: 10, max: 48 },
+  { key: 'm1Bot', varName: '--sz-m1-bot', id: 'dsp-font-m1-bot', def: 12, min: 10, max: 40 }
 ];
 
 function loadDisplayCfg() {
@@ -2691,6 +2692,48 @@ function closeVersionInfo() {
   if (o) o.classList.remove('open');
 }
 
+// Prefilled bug report from the version/disclaimer dialog. Collects only non-personal device/app
+// facts (Android version, phone model, UI language, app version) plus the already-masked debug-log
+// tail. No name, account, GPS, serial or advertising id; the scooter/model stays a free field.
+function reportFromApp() {
+  const isDe = (document.documentElement.getAttribute('lang') || 'en').toLowerCase() === 'de';
+  let appVer = '';
+  try { appVer = (typeof appVersionString === 'function' ? appVersionString() : '') || ''; } catch (e) {}
+  let di = {};
+  try { if (typeof LB !== 'undefined' && LB.deviceInfo) di = JSON.parse(LB.deviceInfo() || '{}'); } catch (e) {}
+  let log = '';
+  try { if (typeof LB !== 'undefined' && LB.recentLog) log = LB.recentLog() || ''; } catch (e) {}
+  const F = String.fromCharCode(96, 96, 96);
+  const android = (di.androidRelease ? 'Android ' + di.androidRelease : 'Android ?') + (di.sdk ? ' (API ' + di.sdk + ')' : '');
+  const phone = ((di.manufacturer || '') + ' ' + (di.model || '')).trim() || (isDe ? '(unbekannt)' : '(unknown)');
+  const lang = di.lang || (isDe ? 'de' : 'en');
+  const lines = [];
+  if (isDe) {
+    lines.push('**App:** NAVEE LB Edition ' + appVer);
+    lines.push('**Android:** ' + android);
+    lines.push('**Handy:** ' + phone);
+    lines.push('**Sprache:** ' + lang);
+    lines.push('**Scooter / Modell:**');
+    lines.push('', '---', '');
+    lines.push('**Dein Anliegen:**', '', '(bitte beschreiben)', '');
+    lines.push(log ? '**Debug-Log (automatisch angehängt):**' : '**Debug-Log:** (keins vorhanden - Debug-Modus einschalten und erneut melden)');
+  } else {
+    lines.push('**App:** NAVEE LB Edition ' + appVer);
+    lines.push('**Android:** ' + android);
+    lines.push('**Phone:** ' + phone);
+    lines.push('**Language:** ' + lang);
+    lines.push('**Scooter / model:**');
+    lines.push('', '---', '');
+    lines.push('**Your request:**', '', '(please describe)', '');
+    lines.push(log ? '**Debug log (attached automatically):**' : '**Debug log:** (none yet - enable debug mode and report again)');
+  }
+  if (log) { lines.push('', F, log, F); }
+  const title = '[navee-lb-edition] ' + (isDe ? 'Rückmeldung' : 'Feedback');
+  const url = 'https://github.com/Laufbursche42/Laufbursche42/issues/new?title=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(lines.join('\n'));
+  if (typeof LB !== 'undefined' && LB.openUrl) { try { LB.openUrl(url); return; } catch (e) {} }
+  try { window.open(url, '_blank', 'noopener'); } catch (e) {}
+}
+
 /* ── Connect page (BLE scan / connect / disconnect via LB bridge) ── */
 
 function openConnectPage() {
@@ -3996,6 +4039,7 @@ function wireEvents() {
     openVersionInfo();
   });
   document.getElementById('verinfo-close').addEventListener('click', closeVersionInfo);
+  { const vr = document.getElementById('verinfo-report'); if (vr) vr.addEventListener('click', reportFromApp); }
   document.getElementById('verinfo-overlay').addEventListener('click', e => {
     if (e.target === document.getElementById('verinfo-overlay')) closeVersionInfo();
   });

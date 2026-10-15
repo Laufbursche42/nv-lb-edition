@@ -16,6 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.72
+
+- Telemetry: range, trip and total distance now come through. The app arms the scooter's report stream with the OEM 0x30/0x31 session handshake on every connect (a prior build's 0x7B armed nothing). Unbound scooters arm on their own via the crypto challenge; a bound scooter needs its account ID. Arm-only - it never pairs the scooter (no second 0x30), so no flash write and no regression.
+- Display settings > Font sizes: the lower-row control is now labelled "Tile row 1" and its ranges match the other Laufbursche editions, so the font-size settings behave the same across all of them.
+- What is new now notes that a few scooter readouts (range, trip, total distance) only come through with the NAVEE account ID - the user/account binding ID you store in the settings, not the NAVEE ID shown inside the NAVEE app.
+- Report issue: the Version / disclaimer dialog has a new "Report issue" button that opens a pre-filled GitHub issue with the app version, Android version, phone model and your (already masked) debug log attached. No personal data is collected.
+
 ## 1.0.69
 - UT5 Max: the triple-tap on the km/h tile now explains the model instead of doing nothing. Its speed is a fixed flash setting in the controller (flashed = open, stock = limited); there is no Bluetooth on/off, because the speedometer cannot be flashed safely.
 - XT5 Ultra: corrected the speed-release help text. It wrongly said the top mode was road-confirmed at 50.8 km/h; it was not. Whether the scooter opens without a flash depends on the individual unit, not the country - triple-tap the speedometer to check, otherwise the cap sits in the firmware and needs the patcher.

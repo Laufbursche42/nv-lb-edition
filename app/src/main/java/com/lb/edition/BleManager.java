@@ -168,6 +168,12 @@ final class BleManager {
     private volatile long accountId = 0;
     private volatile boolean authPending = false;
     private int authRounds = 0;
+    // Arm-only handshake: no account id, so we send 0x30 -> 0x31 once to set the meter's report gate
+    // and then STOP. We never send a second 0x30, which (and only which) would pair the scooter to a
+    // dummy id in its flash and break the owner's manufacturer-app pairing.
+    private boolean armOnly = false;
+    // One-shot flag so a test log carries a single clear line when the report push actually starts.
+    private boolean reportLiveLogged = false;
     private static final int AUTH_MAX_ROUNDS = 4;   // guard against a challenge loop
     private static final String SEC_ACCOUNT = "account_id";
 
@@ -505,7 +511,14 @@ final class BleManager {
                     } else {
                         Boolean ok = NaveeAuth.parse31(v, v.length);
                         if (ok != null) {
-                            if (ok && ++authRounds < AUTH_MAX_ROUNDS) {
+                            if (ok && armOnly) {
+                                // Gate is now set by the 0x31 crypto match, so the scooter will push
+                                // 0x90/0x92. Stop: a further 0x30 while the gate is set would pair the
+                                // scooter to the dummy id in its flash. One round is all we send here.
+                                authPending = false;
+                                Log.i(TAG, "session auth: 0x31 ok -> report stream armed (arm-only)");
+                                afterAuthComplete();
+                            } else if (ok && ++authRounds < AUTH_MAX_ROUNDS) {
                                 enqueueWrite(CommandBuilder.write(0x30, NaveeAuth.authInitPayload(accountId)));
                                 Log.i(TAG, "session auth: 0x31 ok -> 0x30 (round " + (authRounds + 1) + ")");
                             } else {
@@ -517,6 +530,16 @@ final class BleManager {
                     }
                 }
                 parser.onNotify(v);
+                // One-shot, un-gated: proves in any log that the report push is live. A pushed homepage
+                // (0x90 >= 16 B) or a trip report (0x91/0x92) only arrives once the meter's report gate
+                // is armed, unlike the 1-byte 0x90 pull ack.
+                if (!reportLiveLogged && v.length >= 7 && (v[0] & 0xFF) == 0x55 && (v[1] & 0xFF) == 0xAA) {
+                    int rcmd = v[3] & 0xFF, rlen = v[4] & 0xFF;
+                    if ((rcmd == 0x90 && rlen >= 16) || rcmd == 0x91 || rcmd == 0x92) {
+                        reportLiveLogged = true;
+                        Log.i(TAG, "report stream live: cmd=0x" + Integer.toHexString(rcmd) + " len=" + rlen);
+                    }
+                }
                 if (frameCount++ % 50 == 0) Log.i(TAG, "rx frames=" + frameCount + " last=" + v.length + "b");
             } catch (Throwable t) {
                 Log.e(TAG, "onCharacteristicChanged failed", t);
@@ -651,25 +674,31 @@ final class BleManager {
     private void afterConnect() {
         if (afterConnectDone) return;
         afterConnectDone = true;
-        // Bound scooters need the full OEM 0x30/0x31 handshake right after connect, or they close the
-        // link after ~10 s. Only when an account id is set; other scooters take the plain path below.
-        if (accountId > 0) {
-            try {
-                authPending = true;
-                authRounds = 0;
-                enqueueWrite(CommandBuilder.write(0x30, NaveeAuth.authInitPayload(accountId)));
-                Log.i(TAG, "session auth: 0x30 sent (round 1)");
-            } catch (Throwable t) { Log.e(TAG, "session auth send failed", t); authPending = false; afterAuthComplete(); }
-            return;   // afterAuthComplete() runs the time sync + status reads once the handshake ends
+        reportLiveLogged = false;
+        // Every connect runs the OEM 0x30/0x31 session handshake: it sets the meter's report-enable
+        // gate, which is the only thing that makes the scooter push the full 0x90/0x92 reports
+        // (remaining range, trip and total mileage). A bound scooter also closes the link after ~10 s
+        // unless this completes. With no account id we arm only (0x30 -> challenge -> 0x31, then stop);
+        // with one we use the real id, which a bound scooter requires.
+        try {
+            authPending = true;
+            authRounds = 0;
+            armOnly = (accountId <= 0);
+            enqueueWrite(CommandBuilder.write(0x30, NaveeAuth.authInitPayload(accountId)));
+            Log.i(TAG, "session auth: 0x30 sent (round 1" + (armOnly ? ", arm-only" : "") + ")");
+        } catch (Throwable t) {
+            Log.e(TAG, "session auth send failed", t);
+            authPending = false;
+            afterAuthComplete();
         }
-        connectTail();
+        // afterAuthComplete() runs the time sync + status reads once the handshake ends or is rejected.
     }
 
     private void afterAuthComplete() { connectTail(); }
 
-    // Connect tail run on every connect (bound or not): clock (0x6F sub 6) then 0x7B, which arms the
-    // scooter's own 0x90/0x91/0x92 report stream (remaining range, trip and total mileage) and keeps
-    // the link open; then the dashboard status reads.
+    // Connect tail, run after the session handshake: clock (0x6F sub 6), then a fault-history read
+    // (0x7B, which the meter only acks - it does NOT arm the report stream; the 0x30/0x31 handshake
+    // sets the meter's report gate), then the dashboard status reads.
     private void connectTail() {
         try { enqueueWrite(CommandBuilder.timeSync()); } catch (Throwable ignored) {}
         try { enqueueWrite(CommandBuilder.read(0x7B)); } catch (Throwable ignored) {}
