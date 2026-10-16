@@ -1223,27 +1223,16 @@ patches: [
     ],
   },
 
-  // XT5 Ultra BLDC 0.0.2.7 (T2443/MM32F5333). Top-speed cap in FUN_08003364: the meter commands a speed
-  // profile in each 0x51 frame; the controller maps it to one of five buckets (r9 = 255/325/405/455/508 at
-  // 0x37ae/0x37c2/0x37cc/0x37d6/0x37e0) or, for a profile outside those, the fallback (r9 loaded from
-  // [0x2000011a] at 0x37ee). All six r9 writes are set to the target, so the cap is the selected speed
-  // whatever profile the SKU-locked meter sends. Field weakening needs the cap >= 501 and is wound back
-  // above ~516, so 50 maps to 508 and 51 to 510. Controller only; CRC32 reseal @0x404.
+  // XT5 Ultra BLDC 0.0.2.7 (T2443/MM32F5333). Not patched - the top speed opens over Bluetooth
+  // without flashing, so a controller flash is never needed. Recognised only to refuse it clearly.
   bldcXT5Ultra: {
     label: 'XT5 Ultra BLDC 0.0.2.7',
     kind: 'bldc',
     match: (u8) => u8.length === 0xcb68 && bytesAt(u8, 0, ascii('T2443')) && bytesAt(u8, 0x404, [0xb3, 0xc0, 0xe9, 0xd3]),
     verify: { size: 0xcb68 },
     reseal: bldcResealCrc32,
-    stdSpeedKmh: 40,
-    patches: [  // std 40: set all five buckets plus the fallback reader (0x37ee) to movw r9,#400; variants cover 22-51
-      { off: 0x37ae, from: [0x4f, 0xf4, 0xfe, 0x79], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
-      { off: 0x37c2, from: [0x40, 0xf2, 0x45, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
-      { off: 0x37cc, from: [0x40, 0xf2, 0x95, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
-      { off: 0x37d6, from: [0x40, 0xf2, 0xc7, 0x19], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
-      { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
-      { off: 0x37ee, from: [0xb1, 0xf8, 0x02, 0x90], to: [0x40, 0xf2, 0x90, 0x19], id: 'speed' },
-    ],
+    blocked: 'The XT5 Ultra controller is never patched - its top speed opens over Bluetooth without flashing (the app speed release, gear 4), so a controller flash is not needed.',
+    patches: [],
   },
 
   // XT5 Pro/Max BLDC 0.0.1.0 (5301/5901, byte-identical). T2416/SZMC-ES-ZM-3553G. Top-speed cap is a
@@ -2194,22 +2183,6 @@ function xtBucketVariants(buckets, rd, scaleFn, topOff, speeds, extra) {
   for (const kmh of speeds) v['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: build(kmh) };
   return v;
 }
-// Set every speed source to the target (unlike xtBucketVariants, which only clamps buckets already above it).
-function xtRaiseAll(sites, rd, scaleFn, speeds) {
-  const v = {};
-  for (const kmh of speeds) {
-    const to = movwLE(rd, scaleFn(kmh));
-    v['speed' + kmh] = { experimental: true, speedKmh: kmh, patches: sites.map((s) => ({ off: s.off, from: s.from, to: to.slice(), id: 'speed' })) };
-  }
-  return v;
-}
-// XT5 Ultra: all five meter-profile buckets plus the fallback reader at 0x37ee are set to the target, so the
-// controller caps at the chosen speed whatever the SKU-locked meter sends. 50 -> 508, 51 -> 510.
-IMAGES.bldcXT5Ultra.variants = xtRaiseAll(
-  [{ off: 0x37ae, from: [0x4f, 0xf4, 0xfe, 0x79] }, { off: 0x37c2, from: [0x40, 0xf2, 0x45, 0x19] },
-   { off: 0x37cc, from: [0x40, 0xf2, 0x95, 0x19] }, { off: 0x37d6, from: [0x40, 0xf2, 0xc7, 0x19] },
-   { off: 0x37e0, from: [0x4f, 0xf0, 0xff, 0x09] }, { off: 0x37ee, from: [0xb1, 0xf8, 0x02, 0x90] }],
-  9, (k) => (k === 50 ? 508 : k === 51 ? 510 : k * 10), [22, 25, 27, 30, 35, 45, 50, 51]);
 IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
   [{ off: 0x43e0, from: [0x40, 0xf2, 0xd6, 0x21], cap: 726 }, { off: 0x43cc, from: [0x4f, 0xf4, 0xe3, 0x71], cap: 454 }],
   1, (k) => Math.floor(k * 2089 / 115), 0x43e0, [22, 25, 27, 30, 35, 45, 50],
@@ -2222,7 +2195,6 @@ const FLASH_ENABLED = new Set([
   'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
   'meterXT5',                                                     // XT5 meter
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
-  'bldcXT5Ultra',                                                 // XT5 Ultra controller (target-speed selector, experimental)
   'bldcUT5Max',                                                   // UT5 Max controller (permanent 40 km/h top gear, meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
   'bldcXT5ProMax',                                                // XT5 Pro/Max controller (target-speed selector 22-40, experimental)
@@ -2234,7 +2206,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['bldcXT5Ultra', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcN65iII10701', 'bldcN65iII6001', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcN65iII10701', 'bldcN65iII6001', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {

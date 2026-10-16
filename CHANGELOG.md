@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.73
+- XT5 Ultra: the top speed opens over Bluetooth without flashing (app speed release, gear 4). The controller speed patch is withdrawn - it is not needed. Kickstart stays as a meter patch and cruise is a live BLE toggle, not a firmware patch.
+
 ## 1.0.72
 
 - Telemetry: range, trip and total distance now come through. The app arms the scooter's report stream with the OEM 0x30/0x31 session handshake on every connect (a prior build's 0x7B armed nothing). Unbound scooters arm on their own via the crypto challenge; a bound scooter needs its account ID. Arm-only - it never pairs the scooter (no second 0x30), so no flash write and no regression.
