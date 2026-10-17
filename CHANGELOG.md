@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.74
+- UT5 Max: speed limiter on/off over Bluetooth. Flash the patched UT5 Max meter image once (built off-device, upload-flash only, experimental with a red warning); the speed-release toggle then opens or limits the top speed over Bluetooth, and off is byte-identical to a stock scooter. Kick-start levels 0-2 and cruise now also work on the UT5 Max meter. Controller stays stock. Not yet confirmed on hardware.
+
 ## 1.0.73
 - XT5 Ultra: the top speed opens over Bluetooth without flashing (app speed release, gear 4). The controller speed patch is withdrawn - it is not needed. Kickstart stays as a meter patch and cruise is a live BLE toggle, not a firmware patch.
 

@@ -1713,10 +1713,12 @@ patches: [
     patches: [],
   },
 
-  // UT5 Max meter 0.0.3.0 (8901). T2314. NOT flashable and deliberately kept out of FLASH_ENABLED: the
-  // meter bootloader is in no dump, rejects a patched image and killed a device (it also hosts BLE, so a
-  // failed commit takes the DFU gateway with it). Kept only so the CRC pin 0x010a documents the split
-  // from UT5 Ultra X (0x31f1). The speed lever lives in bldcUT5Max alone.
+  // UT5 Max meter 0.0.3.0 (8901). T2314. App drossel toggle + kickstart + cruise, all in-place
+  // (len@0x10 untouched, image passes its own len+CRC gate; stock CRC 0x010a -> 0x4980). drossel-gate
+  // and drossel-boot redirect the DE region gate (bl FUN_080178e2) at the frame builder and its
+  // boot-init companion to read the no-auth BLE flag 0x0020ab0e (class 0x81 sub1): flag 0 = stock DE
+  // throttle, nonzero = full in every region; both sites are required (either alone re-zeroes the
+  // speed byte). Experimental, not confirmed on recoverable hardware.
   meterUT5Max: {
     label: 'UT5 Max meter 0.0.3.0 (8901)',
     kind: 'meter',
@@ -1724,8 +1726,13 @@ patches: [
     verify: { size: 0x25c00, crcOff: 0x13, crcStock: 0x010a, lenOff: 0x10, lenStock: 0x025800 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    blocked: 'The UT5 Max meter is never patched: its bootloader rejects a patched image and it hosts BLE, so a failed update cannot be undone. Patch the controller instead - it carries the 40 km/h top gear on its own.',
-    patches: [],
+    patches: [
+      { off: 0x133ae, from: [0x04, 0xf0, 0x98, 0xfa], to: [0x95, 0xf8, 0x2e, 0x00], id: 'drossel-gate' }, // frame-builder region gate (bl FUN_080178e2) -> ldrb.w r0,[r5,#0x2e] = BLE flag 0x0020ab0e
+      { off: 0x169c6, from: [0x00, 0xf0, 0x8c, 0xff], to: [0x94, 0xf8, 0x34, 0x00], id: 'drossel-boot' }, // boot-init companion gate -> ldrb.w r0,[r4,#0x34] = same flag 0x0020ab0e
+      { off: 0x1438f, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bhs) -> unconditional, launch levels 0-2 accepted in every region
+      { off: 0x14068, from: [0x0b, 0xd0], to: [0x00, 0xbf], id: 'cruise' }, // cruise/tempomat DE sub-gate (beq) -> nop, enable bit forwarded in every region
+      { off: 0x1a7da, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version '0030' -> '0050' (fwMeter "0050"), app patched-FW detection
+    ],
   },
 
   // E20 / E25 meter 2.0.0.7 (4001/4101). Meter feature patches (region-gated kickstart/cruise flipped to work in every region, plus per-tone beep silences).
@@ -2194,6 +2201,7 @@ IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
 const FLASH_ENABLED = new Set([
   'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
   'meterXT5',                                                     // XT5 meter
+  'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + cruise, experimental)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
   'bldcUT5Max',                                                   // UT5 Max controller (permanent 40 km/h top gear, meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
@@ -2206,7 +2214,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcN65iII10701', 'bldcN65iII6001', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterUT5Max', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcN65iII10701', 'bldcN65iII6001', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {
