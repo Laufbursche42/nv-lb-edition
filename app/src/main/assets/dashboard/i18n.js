@@ -5,6 +5,9 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max can be patched.</b> The firmware patcher offers the UT5 Max (controller speed) with the untested-firmware warning, like the other models that are not yet confirmed on hardware. Flashing is at your own risk until someone confirms it works.",
+      "<b>Scan lists every Bluetooth device.</b> The device list shows every advertising Bluetooth device in range, sorted by signal strength with NAVEE scooters at the top so yours is easy to spot. Devices without a name show their address. Tapping a device that is not a NAVEE scooter brings up a clear message.",
+      "<b>Bluetooth-log import reads the account id reliably.</b> The log scanner skips auth frames too short to hold the account id, so a short frame later in the log does not hide it. Thanks to a user bug report.",
       "<b>UT5 Max: speed limiter on/off over Bluetooth.</b> Flash the patched UT5 Max meter image once (built off-device, upload-flash only, experimental) - then the speed switch opens or limits the top speed over Bluetooth, with off identical to a stock scooter. Kick-start levels 0-2 and cruise now work on the UT5 Max meter too. Not yet confirmed on hardware.",
       "<b>XT5 Ultra: speed without flashing.</b> The top speed opens over Bluetooth (app speed release, gear 4) - the controller is no longer flashed for it. Kickstart stays as a meter patch, cruise remains a live toggle.",
       "<b>Range, trip and total distance now come through.</b> These three only arrive once the scooter's report stream is switched on - the manufacturer app does that with its connection handshake, and the app now does the same on every connect (an earlier build sent a command that did nothing). It works on its own on a scooter that is not bound to a NAVEE account; a bound scooter needs its account ID entered in the settings, otherwise it keeps these three to itself.",
@@ -194,6 +197,9 @@ window.I18N = {
     "msg.connect.state.connected": "Connected: <b>{name}</b>",
     "msg.connect.state.disconnected": "Not connected",
     "msg.connect.state.name.fallback": "scooter",
+    "msg.connect.status.connecting": "Connecting...",
+    "msg.connect.status.discovering": "Reading services...",
+    "msg.connect.status.noservice": "Not a NAVEE scooter (no compatible service)",
     "msg.error.generic": "Error: {e}",
     "msg.gear.tag.park": "P",
     "msg.gear.tag.reverse": "R",
@@ -673,6 +679,9 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max lässt sich patchen.</b> Der Firmware-Patcher bietet den UT5 Max (Controller-Tempo) mit dem Ungetestet-Hinweis an, wie die anderen noch nicht an Hardware bestätigten Modelle. Das Flashen ist bis zur Bestätigung auf eigenes Risiko.",
+      "<b>Der Scan listet jedes Bluetooth-Gerät.</b> Die Geräteliste zeigt jedes Gerät in Reichweite, sortiert nach Signalstärke mit NAVEE-Scootern oben, damit deiner leicht zu finden ist. Geräte ohne Namen zeigen ihre Adresse und beim Antippen eines Geräts, das kein NAVEE-Scooter ist, erscheint eine klare Meldung.",
+      "<b>Bluetooth-Log-Import liest die Konto-ID zuverlässig.</b> Der Log-Scanner überspringt Auth-Frames, die zu kurz für die Konto-ID sind, damit ein späteres kurzes Frame sie nicht verdeckt. Danke für einen Nutzer-Report.",
       "<b>UT5 Max: Drossel an/aus über Bluetooth.</b> Flashe einmal das gepatchte UT5-Max-Meter-Image (off-device gebaut, nur Upload-Flash, experimentell) - danach öffnet oder drosselt der Schalter die Höchstgeschwindigkeit über Bluetooth, aus = identisch zum Serien-Roller. Kickstart-Stufen 0-2 und Tempomat laufen jetzt auch beim UT5-Max-Meter. Am Gerät noch nicht bestätigt.",
       "<b>XT5 Ultra: Tempo ohne Flashen.</b> Die Höchstgeschwindigkeit öffnet per Bluetooth (App-Drossel, Gang 4) - der Controller wird dafür nicht mehr geflasht. Kickstart bleibt als Meter-Patch, der Tempomat läuft weiter als Live-Schalter.",
       "<b>Reichweite, Trip und Gesamtstrecke kommen jetzt an.</b> Diese drei Werte werden erst gesendet, wenn der Report-Stream des Rollers eingeschaltet ist. Die Hersteller-App macht das mit ihrem Verbindungs-Handshake und die App führt ihn jetzt bei jedem Verbinden genauso aus (ein früherer Stand sendete ein Kommando, das nichts bewirkte). Bei einem Roller, der nicht an ein NAVEE-Konto gebunden ist, geht das von allein; ein gebundener Roller braucht die Account-ID in den Einstellungen, sonst behält er diese drei Werte für sich.",
@@ -862,6 +871,9 @@ window.I18N = {
     "msg.connect.state.connected": "Verbunden: <b>{name}</b>",
     "msg.connect.state.disconnected": "Nicht verbunden",
     "msg.connect.state.name.fallback": "Scooter",
+    "msg.connect.status.connecting": "Verbinden...",
+    "msg.connect.status.discovering": "Dienste werden gelesen...",
+    "msg.connect.status.noservice": "Kein NAVEE-Scooter (kein passender Dienst)",
     "msg.error.generic": "Fehler: {e}",
     "msg.gear.tag.park": "P",
     "msg.gear.tag.reverse": "R",

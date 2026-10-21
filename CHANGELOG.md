@@ -16,6 +16,11 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.75
+- The BLE device list shows every discovered Bluetooth device, sorted by signal strength with NAVEE scooters first; tapping a device that is not a NAVEE scooter shows a clear message.
+- The UT5 Max can be patched (controller speed) with the untested-firmware warning; the patcher no longer hard-blocks experimental models - they patch with the warning like every other unconfirmed model. The UT5 Ultra X is controller-only to match lb-webpatcher (its meter has no patch).
+- Bluetooth log import: the account id is found even when the log contains a later short 0x30 frame. Such a frame could previously overwrite the account-id frame, so the app reported no account id although it was in the log. Thanks to the detailed report in #8.
+
 ## 1.0.74
 - UT5 Max: speed limiter on/off over Bluetooth. Flash the patched UT5 Max meter image once (built off-device, upload-flash only, experimental with a red warning); the speed-release toggle then opens or limits the top speed over Bluetooth, and off is byte-identical to a stock scooter. Kick-start levels 0-2 and cruise now also work on the UT5 Max meter. Controller stays stock. Not yet confirmed on hardware.
 

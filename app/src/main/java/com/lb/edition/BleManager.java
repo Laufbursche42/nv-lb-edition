@@ -89,9 +89,6 @@ final class BleManager {
     private static final UUID NAVEE_WRITE   = UUID.fromString("0000b002-0000-1000-8000-00805f9b34fb");
     private static final UUID NAVEE_NOTIFY  = UUID.fromString("0000b003-0000-1000-8000-00805f9b34fb");
 
-    // The scooter advertises as "NAVEE..." (same match the official app uses).
-    private static final String[] NAME_PREFIXES = {"NAVEE"};
-
     private static final long DISCOVER_DELAY_MS = 1200;   // Android settle time after connect
     // The stock NAVEE app negotiates ATT MTU 148 before it opens the notify channel and waits
     // ~100 ms on either side of the exchange (BleHandler.X). Same values here.
@@ -221,7 +218,7 @@ final class BleManager {
             ScanSettings s = new ScanSettings.Builder()
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .build();
-            // No UUID filter: the scooter does not advertise its 128-bit service UUID, so match by name.
+            // No UUID or name filter: list every advertising LE device; the NAVEE service (d0ff) is bound at connect, not matched here.
             scanner.startScan(null, s, scanCallback);
             scanning = true;
             Log.i(TAG, "scan started");
@@ -267,7 +264,6 @@ final class BleManager {
             if (name == null || name.isEmpty()) {
                 try { name = result.getDevice().getName(); } catch (Throwable ignored) {}
             }
-            if (!nameAccepted(name)) return;
             ScanEntry e = new ScanEntry();
             e.name = (name == null) ? "" : name;
             e.address = addr;
@@ -282,12 +278,6 @@ final class BleManager {
         } catch (Throwable t) {
             Log.e(TAG, "handleScan failed", t);
         }
-    }
-
-    private static boolean nameAccepted(String name) {
-        if (name == null) return false;
-        for (String p : NAME_PREFIXES) if (name.startsWith(p)) return true;
-        return false;
     }
 
     private void pushScanResults() {
@@ -566,6 +556,8 @@ final class BleManager {
                 return;
             }
             Log.w(TAG, "no NAVEE service");
+            desiredAddress = null;   // tapped a non-NAVEE device: do not arm the backoff reconnect
+            closeGatt();             // drop the idle link; close() is silent and will not clobber the status below
             pushState("no-service");
             return;
         }
@@ -577,6 +569,8 @@ final class BleManager {
         writeChar = svc.getCharacteristic(NAVEE_WRITE);
         if (notifyChar == null || writeChar == null) {
             Log.w(TAG, "notify/write characteristic missing (notify=" + notifyChar + " write=" + writeChar + ")");
+            desiredAddress = null;
+            closeGatt();
             pushState("no-char");
             return;
         }

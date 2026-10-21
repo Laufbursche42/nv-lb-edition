@@ -69,6 +69,9 @@ final class AuthLog {
             if ((b[i] & 0xFF) != 0x55 || (b[i + 1] & 0xFF) != 0xAA
                     || (b[i + 2] & 0xFF) != 0x00 || (b[i + 3] & 0xFF) != 0x30) continue;
             int len = b[i + 4] & 0xFF;
+            // The account-id 0x30 frame carries a >=9-byte payload; shorter valid 0x30 frames
+            // (e.g. len 1) must not overwrite it. Mirror userIdFromFrame's minimum.
+            if (len < 9) continue;
             int total = len + 8;
             if (i + total > b.length) continue;
             if ((b[i + 6 + len] & 0xFF) != 0xFE || (b[i + 7 + len] & 0xFF) != 0xFD) continue;

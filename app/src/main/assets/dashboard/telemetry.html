@@ -2802,6 +2802,13 @@ window.__onBleScan = function(listArg) {
     box.innerHTML = '<div class="no-routes" data-i18n="msg.scan.none">No devices found: tap Scan again</div>';
     return;
   }
+  // NAVEE scooters first, then strongest signal first, so the scooter stays near the top of a now-unfiltered list
+  const isNavee = d => /^NAVEE/i.test((d && d.name) || '');
+  arr.sort((a, b) => {
+    const na = isNavee(a), nb = isNavee(b);
+    if (na !== nb) return na ? -1 : 1;
+    return ((b && b.rssi) || -999) - ((a && a.rssi) || -999);
+  });
   box.innerHTML = '';
   arr.forEach(dev => {
     if (!dev) return;
@@ -2814,6 +2821,7 @@ window.__onBleScan = function(listArg) {
     const ad = document.createElement('div'); ad.className = 'scan-addr';
     ad.textContent = dev.address || '';
     info.appendChild(nm); info.appendChild(ad);
+    if (isNavee(dev)) { el.style.borderLeft = '2px solid var(--gps)'; }
     const rs = document.createElement('div'); rs.className = 'scan-rssi';
     rs.textContent = (dev.rssi != null && dev.rssi !== '') ? (dev.rssi + ' dBm') : '';
     el.appendChild(info); el.appendChild(rs);
@@ -2832,13 +2840,22 @@ window.__onBleState = function(stArg) {
   try { if (typeof stArg === 'string') s = JSON.parse(stArg); } catch (e) { s = {}; }
   s = s || {};
   const connected = !!s.connected;
+  // Map the native status token to a localized label; unknown/empty -> no suffix
+  const STATUS_LABELS = {
+    connecting:   'msg.connect.status.connecting',
+    discovering:  'msg.connect.status.discovering',
+    'no-service': 'msg.connect.status.noservice',
+    'no-char':    'msg.connect.status.noservice'
+  };
+  const statusLabel = (s.status && STATUS_LABELS[s.status]) ? t(STATUS_LABELS[s.status]) : '';
+  if (!connected && (s.status === 'no-service' || s.status === 'no-char')) showToast(t('msg.connect.status.noservice'));
   const cs = document.getElementById('conn-state');
   if (cs) {
     if (connected) {
       cs.innerHTML = tf('msg.connect.state.connected', { name: escXML(s.name || s.address || t('msg.connect.state.name.fallback')) }) +
-        (s.status ? ' · ' + escXML(s.status) : '');
+        (statusLabel ? ' · ' + statusLabel : '');
     } else {
-      cs.textContent = t('msg.connect.state.disconnected') + (s.status ? ' · ' + s.status : '');
+      cs.textContent = t('msg.connect.state.disconnected') + (statusLabel ? ' · ' + statusLabel : '');
     }
   }
   const dot = document.getElementById('ble-dot');
@@ -3664,8 +3681,11 @@ function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb
 const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '5511', '6611', '7711', '5515', '5513', '8811', '1115', '1116', '1117', '2225', '2224', '3335', '6665', '7775', '9991', '4449', '9911', '8884', '0099', '1118', '7776', '5566', '5050', '5055'];
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
-// Models flashing/tuning is enabled for but not yet confirmed on recoverable hardware.
-const EXPERIMENTAL_PIDS = ['2585', '2538']; // UT5 Ultra X, UT5 Max (meter built off-device, upload-flash only)
+// Untested models: still patchable, but shown with the untested warning (not yet confirmed on recoverable hardware).
+const EXPERIMENTAL_PIDS = ['2585', '2538']; // UT5 Ultra X, UT5 Max - carry the untested warning
+// Hard block: models that must NOT be patched in-app at all. Mechanism kept available, but currently EMPTY -
+// every NAVEE scooter is patchable; unconfirmed ones carry the untested warning (EXPERIMENTAL_PIDS + image flag).
+const PATCH_BLOCKED_PIDS = [];
 // Models whose speed cap sits permanently in the controller: no app gear switches anything there.
 // Covers both states (stock + controller-only patch applied) because neither has a switchable latch.
 const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro',
@@ -3677,6 +3697,7 @@ const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT
 const RELEASE_CAPABLE_MODELS = ['XT5 Pro', 'XT5 Ultra', 'XT5 Max',
   'NT5 Max', 'NT5 Max+', 'NT5 Ultra', 'NT5 Turbo', 'NT5 Ultra X', 'UT5 Ultra X'];
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
+function isPatchBlocked() { try { return PATCH_BLOCKED_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function speedReleaseGear(on) {
   // XT5 family (incl. the T2443 XT5 Ultra) unlocks on gear 4 and restricts on gear 3; the others use 5/2.
   const isXT = naveeIsXT(naveeRealModel());
@@ -4261,12 +4282,15 @@ function renderPatcherModel(forcedId) {
     if (det.meter) parts.push('Meter ' + det.meter.vn);
     if (det.bldc) parts.push('Controller ' + det.bldc.vn);
     modelEl.textContent = det.name + (parts.length ? ' (' + parts.join(', ') + ')' : '');
-    if (isExperimentalScooter()) {   // untested model: no public patching - flash a provided file instead
+    if (isPatchBlocked()) {   // hard block: not patchable in-app, flash a provided file instead
       hidePatchFeatures();
       btn.disabled = true;
       hint.textContent = t('patch.run.experimental');
       return;
     }
+    // Untested-but-patchable models (e.g. UT5 Max) run the normal flow; the untested warning rides along
+    // via the staged-image experimental flag and the confirm dialog. The brick-sensitive meter is held
+    // out by METER_BLOCKED_IDS, so the UT5 Max patches controller-only.
     renderPatchFeatures(det);
     const flashable = !!(det.meter || det.bldc);
     btn.disabled = !flashable;
@@ -4304,7 +4328,7 @@ function fwPatchStatus(msg) {
 // and kickstart (both meter patches) are not offered there at all.
 // Models whose meter is never a patch target: it hosts BLE and is the only route back from a failed
 // controller update. The raised top gear sits in the controller alone.
-const METER_BLOCKED_IDS = ['8901', '12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401',
+const METER_BLOCKED_IDS = ['8901', '9601', '12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401',
   '5401', '8501', '8401', '10501', '12701', '5701', '5601', '10201', '10701', '6001',
   '10101', '9101', '701', '1101', '1201', '1301', '1601', '2501', '4201', '4401', '9901',
   '4001', '4101', '10001', '10301', '10601', '12801', '12901',
@@ -4429,7 +4453,7 @@ function fwRunPatcher() {
   if (typeof LB === 'undefined' || !LB.fwDownloadPatch) { showToast(t('msg.app.only.in.app')); return; }
   const det = fwState.model;
   if (!det || det.state !== 'ok') { showToast(t('patch.run.nofw'), 3000, 'err'); return; }
-  if (isExperimentalScooter()) { showToast(t('patch.run.experimental'), 4000, 'err'); return; }   // untested model: no patching, flash a provided file
+  if (isPatchBlocked()) { showToast(t('patch.run.experimental'), 4000, 'err'); return; }   // hard block: flash a provided file instead
   fwState.selected = selectedPatchFeatures();
   fwState.variant = selectedPatchVariant();           // std (speed only) vs full (speed + launch torque, untested)
   const sel = fwState.selected;
