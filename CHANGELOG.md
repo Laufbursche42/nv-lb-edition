@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.76
+- UT5 Max: the meter patch is offered in the app patcher (not only via upload), matching the web patcher. The in-place meter patch - BLE speed drossel plus kick-start and cruise - is applied as one atomic set, so off stays byte-identical to a stock meter and the app's speed switch always has the firmware gate it needs (never a dead toggle). The controller remains a separate patch target. Both carry the untested-firmware warning; the meter hosts Bluetooth and is the only route back from a failed controller flash, so flash it only where you accept the risk.
+
 ## 1.0.75
 - The BLE device list shows every discovered Bluetooth device, sorted by signal strength with NAVEE scooters first; tapping a device that is not a NAVEE scooter shows a clear message.
 - The UT5 Max can be patched (controller speed) with the untested-firmware warning; the patcher no longer hard-blocks experimental models - they patch with the warning like every other unconfirmed model. The UT5 Ultra X is controller-only to match lb-webpatcher (its meter has no patch).

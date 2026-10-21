@@ -3688,7 +3688,7 @@ const EXPERIMENTAL_PIDS = ['2585', '2538']; // UT5 Ultra X, UT5 Max - carry the 
 const PATCH_BLOCKED_PIDS = [];
 // Models whose speed cap sits permanently in the controller: no app gear switches anything there.
 // Covers both states (stock + controller-only patch applied) because neither has a switchable latch.
-const PERMANENT_CAP_MODELS = ['UT5 Max', 'ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro',
+const PERMANENT_CAP_MODELS = ['ST3 Pro', 'GT3 Pro', 'ST3', 'GT3', 'GT3 Max', 'NT3 Pro',
   'G5', 'GT5 Max', 'GT5 Pro', 'UT3 Max', 'NT3 Max', 'G5 Max', 'G5 pro', 'V45i', 'N65i II',
   'E20 Lite', 'E25 Go', 'V25/V25i', 'N65i', 'V50i Pro', 'V40i/V40i Pro', 'S40', 'S60', 'V3 Pro',
   'V40i Pro II', 'S2', 'E20', 'E25', 'E45 Pro', 'E60 Pro', 'K100 Max', 'K100 Pro', 'K100'];
@@ -4289,8 +4289,8 @@ function renderPatcherModel(forcedId) {
       return;
     }
     // Untested-but-patchable models (e.g. UT5 Max) run the normal flow; the untested warning rides along
-    // via the staged-image experimental flag and the confirm dialog. The brick-sensitive meter is held
-    // out by METER_BLOCKED_IDS, so the UT5 Max patches controller-only.
+    // via the staged-image experimental flag and the confirm dialog. The UT5 Max offers both its meter
+    // (drossel + kickstart + cruise, applied atomically) and its controller.
     renderPatchFeatures(det);
     const flashable = !!(det.meter || det.bldc);
     btn.disabled = !flashable;
@@ -4321,14 +4321,12 @@ function fwPatchStatus(msg) {
   if (!el) return;
   el.classList.remove('is-hidden'); el.textContent = msg;
 }
-// Models whose meter must never be patched, whatever the manifest offers. UT5 Max (8901): its meter
-// bootloader rejects a patched image and it hosts BLE, so a failed commit is unrecoverable - the speed
-// lever sits in the controller alone (patcher.js bldcUT5Max, permanent 40 km/h top gear).
-// ST3/GT3 family: same reason, and their controller carries the raised top gear on its own, so cruise
-// and kickstart (both meter patches) are not offered there at all.
-// Models whose meter is never a patch target: it hosts BLE and is the only route back from a failed
-// controller update. The raised top gear sits in the controller alone.
-const METER_BLOCKED_IDS = ['8901', '9601', '12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401',
+// Models whose meter must never be patched, whatever the manifest offers: the meter hosts BLE and is the
+// only route back from a failed controller update, and these have no confirmed in-place meter patch, so
+// the raised top gear sits in the controller alone. ST3/GT3 family: same reason. The UT5 Max (8901) is
+// NOT here - its meter has an in-place patch (drossel, kickstart, cruise) applied as one atomic set and
+// offered with the untested warning.
+const METER_BLOCKED_IDS = ['9601', '12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401',
   '5401', '8501', '8401', '10501', '12701', '5701', '5601', '10201', '10701', '6001',
   '10101', '9101', '701', '1101', '1201', '1301', '1601', '2501', '4201', '4401', '9901',
   '4001', '4101', '10001', '10301', '10601', '12801', '12901',
@@ -4352,7 +4350,7 @@ function naveeSpeedOpts(det) {
   if (['9301', '9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family (3553G, cap ~40)
   // XT5 Pro/Max: the top-gear immediate carries 40 stock and the scale reaches 50 exactly.
   if (['5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50];
-  if (String(det.id) === '8901') return null;  // UT5 Max: one permanent 40 km/h build, no selector and no toggle
+  if (String(det.id) === '8901') return null;  // UT5 Max: controller is one fixed 40 build (no dropdown); the meter drossel is the app on/off toggle
   if (['12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401'].indexOf(String(det.id)) >= 0) return null; // ST3/GT3/NT3 Pro: one permanently raised top gear, no selector and no toggle
   // UT5 Ultra X: the firmware clamps the cap to 600, which 60 still passes.
   if (String(det.id) === '9601') return [22, 25, 27, 30, 35, 40, 45, 50, 55, 60];

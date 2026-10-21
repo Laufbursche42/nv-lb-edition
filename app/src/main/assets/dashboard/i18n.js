@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: the display (meter) patch is available in both tools.</b> The in-place meter patch - BLE speed drossel plus kick-start and cruise - is offered in the app and in the web patcher, carrying the untested-firmware warning. It is applied as one set: off is byte-identical to a stock meter, and the Bluetooth speed switch opens or limits the top speed. The controller stays a separate patch option. The meter hosts Bluetooth, so flash it only where you accept the risk.",
       "<b>UT5 Max can be patched.</b> The firmware patcher offers the UT5 Max (controller speed) with the untested-firmware warning, like the other models that are not yet confirmed on hardware. Flashing is at your own risk until someone confirms it works.",
       "<b>Scan lists every Bluetooth device.</b> The device list shows every advertising Bluetooth device in range, sorted by signal strength with NAVEE scooters at the top so yours is easy to spot. Devices without a name show their address. Tapping a device that is not a NAVEE scooter brings up a clear message.",
       "<b>Bluetooth-log import reads the account id reliably.</b> The log scanner skips auth frames too short to hold the account id, so a short frame later in the log does not hide it. Thanks to a user bug report.",
@@ -679,6 +680,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: der Display-Patch (Tacho) ist in beiden Tools verfügbar.</b> Der in-place-Meter-Patch - BLE-Drossel plus Kickstart und Tempomat - wird in der App und im Web-Patcher angeboten, mit dem Ungetestet-Hinweis. Er wird als ein Satz angewendet: aus ist byte-identisch zum Serien-Tacho, der Bluetooth-Schalter öffnet oder drosselt die Höchstgeschwindigkeit. Der Controller bleibt eine separate Patch-Option. Der Tacho trägt Bluetooth, also flashe ihn nur, wenn du das Risiko trägst.",
       "<b>UT5 Max lässt sich patchen.</b> Der Firmware-Patcher bietet den UT5 Max (Controller-Tempo) mit dem Ungetestet-Hinweis an, wie die anderen noch nicht an Hardware bestätigten Modelle. Das Flashen ist bis zur Bestätigung auf eigenes Risiko.",
       "<b>Der Scan listet jedes Bluetooth-Gerät.</b> Die Geräteliste zeigt jedes Gerät in Reichweite, sortiert nach Signalstärke mit NAVEE-Scootern oben, damit deiner leicht zu finden ist. Geräte ohne Namen zeigen ihre Adresse und beim Antippen eines Geräts, das kein NAVEE-Scooter ist, erscheint eine klare Meldung.",
       "<b>Bluetooth-Log-Import liest die Konto-ID zuverlässig.</b> Der Log-Scanner überspringt Auth-Frames, die zu kurz für die Konto-ID sind, damit ein späteres kurzes Frame sie nicht verdeckt. Danke für einen Nutzer-Report.",

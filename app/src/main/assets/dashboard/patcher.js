@@ -1726,6 +1726,10 @@ patches: [
     verify: { size: 0x25c00, crcOff: 0x13, crcStock: 0x010a, lenOff: 0x10, lenStock: 0x025800 },
     bodyBase: 0x400,
     reseal: meterReseal,
+    // Atomic image: the drossel gate, its boot companion, kickstart, cruise and the '0050' version
+    // marker always apply together. The app keys the BLE drossel toggle off that marker, so a partial
+    // patch (marker present, gate missing) would show a dead toggle - never split this set.
+    atomic: true,
     patches: [
       { off: 0x133ae, from: [0x04, 0xf0, 0x98, 0xfa], to: [0x95, 0xf8, 0x2e, 0x00], id: 'drossel-gate' }, // frame-builder region gate (bl FUN_080178e2) -> ldrb.w r0,[r5,#0x2e] = BLE flag 0x0020ab0e
       { off: 0x169c6, from: [0x00, 0xf0, 0x8c, 0xff], to: [0x94, 0xf8, 0x34, 0x00], id: 'drossel-boot' }, // boot-init companion gate -> ldrb.w r0,[r4,#0x34] = same flag 0x0020ab0e
@@ -2325,7 +2329,9 @@ function patchFirmware(arrayBuffer, selected, variantKey) {
   if (patchList.some(p => p.off === 0x84)) {
     throw new Error('This build type (firmware length-extension) is disabled: it bricks the controller. Recovery needs SWD.');
   }
-  const applied = applyPatches(u8, patchList, selected);
+  // Atomic images patch as a complete set regardless of feature selection (see spec.atomic): their
+  // version marker tells the app that every part of the patch is present.
+  const applied = applyPatches(u8, patchList, spec.atomic ? null : selected);
   spec.reseal(u8);
 
   return {
