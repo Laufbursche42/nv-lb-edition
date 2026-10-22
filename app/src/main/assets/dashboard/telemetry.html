@@ -542,6 +542,10 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div class="settings-row-sublabel m-6-0-0" data-i18n="scooter.tune.gesture">
         Schneller geht es unterwegs mit der Geste: dreimal kurz auf die km/h-VCU-Kachel im Hauptbildschirm tippen schaltet die Freischaltung ein und wieder aus. Die Kachel wird rot, solange sie aktiv ist.
       </div>
+      <div class="settings-row mt-8">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.tune.hold.label">Freischaltung über Moduswechsel halten</div><div class="settings-row-sublabel" data-i18n="scooter.tune.hold.sub">XT5, experimentell: sendet die Freigabe nach einem Moduswechsel automatisch neu, solange die App verbunden ist.</div></div>
+        <div class="toggle-wrap"><input type="checkbox" class="toggle-input" id="tune-hold"><label class="toggle-label" for="tune-hold"></label></div>
+      </div>
       <div class="settings-row mt-8 no-bottom-rule">
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.tune.restore.label">Zurück auf Normal</div><div class="settings-row-sublabel" data-i18n="scooter.tune.restore.sub">Sendet den normalen Fahrmodus 3</div></div>
         <button id="tune-restore" class="route-gpx-btn" data-i18n="scooter.tune.restore">Normal</button>
@@ -1673,6 +1677,17 @@ function updateBLEUI(data) {
     _ut5DrosselSynced = true;
     try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x81, [0x01, _speedReleased ? 0x01 : 0x00])); } catch (e) {}
   }
+  // Auto re-arm the XT5 speed release after a manual drive-mode change (opt-in, experimental).
+  // The XT5 release is a live gear-4 command that a mode switch wipes; when the rider turned on
+  // "hold release across mode changes", re-send it once (debounced) whenever the reported drive
+  // mode changes. Only while connected and released, never after the Stop button (rideStopped).
+  if (_holdReleaseOnModeChange && _speedReleased && !state.rideStopped
+      && naveeIsXT(naveeRealModel()) && typeof data.driveMode === 'number'
+      && _lastDriveModeSeen !== null && data.driveMode !== _lastDriveModeSeen) {
+    const _now = Date.now();
+    if (_now - _lastReArmAt > 1500) { _lastReArmAt = _now; try { pushSetting(NAVEE_CMD.drivemode, speedReleaseGear(true)); } catch (e) {} }
+  }
+  if (typeof data.driveMode === 'number') _lastDriveModeSeen = data.driveMode;
   // Range as the scooter reports it (0x90/0x91), and the max-speed PARAMETER from the 0x70 report -
   // not a session maximum, so it is labelled as a parameter in the grid.
   setTxt('dg-range', Math.round(convDist(data.range)) + ' ' + distUnit());
@@ -3675,6 +3690,11 @@ function wireSpeedRelease() {
 let _speedReleased = (function () { try { return storage.get('lb_speedreleased') === '1'; } catch (e) { return false; } })();
 let _ut5DrosselSynced = false;  // one-shot guard: push the UT5 Max drossel state once per connection
 function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb_speedreleased', on ? '1' : '0'); } catch (e) {} }
+// Opt-in (XT5): re-send the gear-4 release automatically after a rider drive-mode change, which
+// otherwise wipes the live release. App-side state only; "off" is always clean stock.
+let _holdReleaseOnModeChange = (function () { try { return storage.get('lb_holdrelease') === '1'; } catch (e) { return false; } })();
+let _lastDriveModeSeen = null;   // last reported drive mode, to detect a rider mode switch
+let _lastReArmAt = 0;            // debounce for the auto re-arm (ms)
 
 // Drive-mode gear byte for non-latch models: stock XT5 4/3, else 5/2. capZ latch is handled in
 // sendSpeedRelease (unlock via app-only nibble 7, lock 6).
@@ -3749,11 +3769,11 @@ function sendSpeedRelease(on) {
   // accepted it. On a stock scooter the SKU byte can silently clamp the open gear (NT5 and others
   // with a low SKU), so the ride is still at 22 km/h even though the tile looks "active". If the
   // read-back drive-mode differs from the one we commanded, tell the user the FW needs patching.
-  // The XT5 Ultra reports a fixed drive mode and no cap field over BLE (driveMode pinned,
-  // maxSpeed/limitSpeed 0), so a read-back can never equal the sent gear even when the release took
-  // (hardware-confirmed) - the check would fire a false "not taken", so skip it there. The sent toast
-  // already states the behaviour accurately.
-  if (on && naveeRealModel() !== 'XT5 Ultra') {
+  // The whole XT5 family remaps the commanded gear in the meter and reports a fixed drive mode with
+  // no cap field over BLE, so a read-back can never equal the sent gear even when the release took
+  // (XT5 Ultra hardware-confirmed; XT5 Pro reported from the field) - the check would fire a false
+  // "not taken", so skip it for every XT5. The sent toast already states the behaviour accurately.
+  if (on && !naveeIsXT(naveeRealModel())) {
     const want = speedReleaseGear(on);
     setTimeout(() => {
       try {
@@ -4125,6 +4145,9 @@ function wireEvents() {
   });
 
   // Dark mode toggle in settings
+  { const _hr = document.getElementById('tune-hold');
+    if (_hr) { _hr.checked = _holdReleaseOnModeChange;
+      _hr.addEventListener('change', e => { _holdReleaseOnModeChange = !!e.target.checked; try { storage.set('lb_holdrelease', _holdReleaseOnModeChange ? '1' : '0'); } catch (_) {} }); } }
   document.getElementById('toggle-dark').addEventListener('change', e => {
     applyTheme(e.target.checked);
   });
@@ -4232,7 +4255,7 @@ const fwState = {
   pendingDownloads: [],                     // components left to download+patch this run
   selected: null,                           // chosen feature tags for this run (null = all)
   staged: { meter: null, bldc: null },      // { name } per component once written and staged
-  flashQueue: [], flashing: null,           // sequential meter -> bldc flash
+  flashQueue: [], flashing: null, flashDone: [],   // sequential meter -> bldc flash; flashDone = components that succeeded this run
   experimental: false,                      // staged image is untested (not hardware-confirmed)
   raw: false,                               // staged image was picked by the user (unverified, flash as-is)
 };
@@ -4674,7 +4697,7 @@ function fwStart() {
   if (warn) { warn.textContent = (fwState.raw ? t('fw.rawwarn') + '  ' : (fwState.experimental ? t('scooter.untested.fw') + '  ' : '')) + t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block'; }
   document.getElementById('confirm-msg').textContent = tf('fw.confirm.body', { file: list.map(x => x.name).join(', ') });
   document.getElementById('confirm-ok').textContent = t('fw.confirm.ok');
-  state.confirmCb = () => { fwState.flashQueue = list.map(x => x.kind); fwFlashNext(); };
+  state.confirmCb = () => { fwState.flashQueue = list.map(x => x.kind); fwState.flashDone = []; fwFlashNext(); };
   document.getElementById('confirm-overlay').classList.add('open');
 }
 function fwFlashNext() {
@@ -4729,8 +4752,8 @@ window.__onFwState = function(arg) {
     return;
   }
   if (st === 'success') {
-    // one component finished: drop it, then continue the queue or finish the run.
-    if (fwState.flashing) fwState.staged[fwState.flashing] = null;
+    // one component finished: record it, drop it, then continue the queue or finish the run.
+    if (fwState.flashing) { fwState.staged[fwState.flashing] = null; fwState.flashDone.push(fwState.flashing); }
     fwState.flashing = null;
     fwRenderStaged();
     if (fwState.flashQueue.length) { fwResetProgress(); setTimeout(fwFlashNext, 1200); return; }
@@ -4741,10 +4764,22 @@ window.__onFwState = function(arg) {
     return;
   }
   fwState.running = false;
+  const failedKind = fwState.flashing;              // component that was flashing when it failed
+  const doneKinds = (fwState.flashDone || []).slice();
   fwState.flashQueue = []; fwState.flashing = null;
-  if (st === 'failed') showToast(s.message === 'auth-rejected' ? t('fw.fail.bound') : (s.message || t('fw.toast.failed')), 6000, 'err');
+  if (st === 'failed') {
+    // Report WHICH component failed, and that any earlier component already succeeded, so a failed
+    // meter flash never reads as the whole run (incl. a working controller unlock) having failed.
+    const raw = s.message === 'auth-rejected' ? t('fw.fail.bound') : (s.message || t('fw.toast.failed'));
+    const compName = (k) => k === 'meter' ? t('fw.comp.meter') : (k === 'bldc' ? t('fw.comp.bldc') : k);
+    let msg = raw;
+    if (failedKind && doneKinds.length) msg = tf('fw.fail.after', { done: compName(doneKinds[0]), failed: compName(failedKind), msg: raw });
+    else if (failedKind) msg = tf('fw.fail.component', { comp: compName(failedKind), msg: raw });
+    showToast(msg, 8000, 'err');
+  }
   else if (st === 'cancelled') showToast(s.message || t('fw.toast.cancelled'), 4000, 'err');
   if (st === 'failed') { try { if (LB.fwClear) LB.fwClear(); } catch (e) {} fwState.staged = { meter: null, bldc: null }; }
+  fwState.flashDone = [];
   fwRenderStaged();
   fwSyncStartEnabled();
 };

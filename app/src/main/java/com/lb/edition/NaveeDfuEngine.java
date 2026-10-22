@@ -344,8 +344,13 @@ final class NaveeDfuEngine {
         sendBlock();
     }
 
-    // OEM aborts the whole DFU on a block-ACK timeout; only a NAK resends. No auto-resend on timeout.
-    private void onBlockTimeout() { fail("block " + seq + " ACK timeout"); }
+    // Over BLE a single ACK notification can drop; the OEM's abort-on-timeout assumes a stable wired
+    // link. Resend the block instead (bounded by BLOCK_RETRIES) - the same recovery a NAK triggers;
+    // the receiver discards a duplicate by its sequence number. Give up only after the retry budget.
+    private void onBlockTimeout() {
+        host.log("block " + seq + " ACK timeout - resending (" + (blockRetries + 1) + "/" + BLOCK_RETRIES + ")");
+        resendBlock();
+    }
 
     private void resendBlock() {
         if (++blockRetries >= BLOCK_RETRIES) { fail("block " + seq + " failed after " + BLOCK_RETRIES + " retries"); return; }

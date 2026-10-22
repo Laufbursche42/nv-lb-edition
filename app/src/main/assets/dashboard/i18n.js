@@ -5,6 +5,9 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>XT5: the speed release can hold across drive-mode changes now.</b> Switching the drive mode on the scooter normally wipes the release - it is a live Bluetooth command, not stored in the firmware. Enable 'Keep release across mode changes' in the speed-release section and the app re-sends it automatically after a mode switch, as long as it stays connected. Opt-in and experimental; for a release that holds without the app, flash the firmware.",
+      "<b>NT5 family (Max, Max+, Turbo, Ultra): the continuous beep above 30 km/h can be silenced now.</b> It is a separate, self-sustaining over-speed warning in the meter - not the single chirp an earlier build muted - so it kept sounding. Switching off the over-speed tone in the patcher now also raises its 30 km/h trigger out of range; re-flash the NT5 meter to get it. Silencing a meter tone never changes motor power - pull-away lives in the controller.",
+      "<b>XT5 Pro: more robust flashing and no more false \"release not taken\".</b> A single dropped Bluetooth packet no longer aborts a firmware flash midway - the block is resent, so the meter flash completes on the newer firmware (it used to time out around 83%). After the speed release the app no longer shows a false \"controller did not take it\" on the XT5 Pro/Max - their meter remaps the gear like the Ultra. A failed display flash now says so clearly instead of reporting the whole flash as failed.",
       "<b>UT5 Max: the display (meter) patch is available in both tools.</b> The in-place meter patch - BLE speed drossel plus kick-start and cruise - is offered in the app and in the web patcher, carrying the untested-firmware warning. It is applied as one set: off is byte-identical to a stock meter, and the Bluetooth speed switch opens or limits the top speed. The controller stays a separate patch option. The meter hosts Bluetooth, so flash it only where you accept the risk.",
       "<b>UT5 Max can be patched.</b> The firmware patcher offers the UT5 Max (controller speed) with the untested-firmware warning, like the other models that are not yet confirmed on hardware. Flashing is at your own risk until someone confirms it works.",
       "<b>Scan lists every Bluetooth device.</b> The device list shows every advertising Bluetooth device in range, sorted by signal strength with NAVEE scooters at the top so yours is easy to spot. Devices without a name show their address. Tapping a device that is not a NAVEE scooter brings up a clear message.",
@@ -530,6 +533,10 @@ window.I18N = {
     "fw.toast.success": "Firmware flashed.",
     "fw.toast.failed": "Flashing failed.",
     "fw.toast.cancelled": "Flashing cancelled.",
+    "fw.comp.meter": "display (meter)",
+    "fw.comp.bldc": "controller",
+    "fw.fail.component": "{comp} flash failed: {msg}",
+    "fw.fail.after": "The {done} flash succeeded, but the {failed} flash failed: {msg}. The {done} update is on the scooter - only the {failed} part is missing.",
     "fw.confirm.title": "Start flashing?",
     "fw.confirm.warn": "Keep the scooter on and in range, keep the app in the foreground and do not power the scooter off during the update.",
     "fw.confirm.body": "Flash {file} onto the scooter now?",
@@ -641,6 +648,8 @@ window.I18N = {
     "scooter.tune.outdated": "This scooter runs an older unlocked firmware that the boost button can open on its own. Rebuild and flash the current firmware in the patcher; the release then works only from this app, and the boost button alone stays at 22 km/h.",
     "scooter.untested.fw": "Untested firmware: this model has not been confirmed on recoverable hardware. Flashing may permanently brick the scooter - only continue if you have a recovery path (SWD or controller swap).",
     "scooter.untested.scooter": "Untested model: support for this scooter is not confirmed on hardware yet. Patching or tuning it is at your own risk.",
+    "scooter.tune.hold.label": "Keep release across mode changes",
+    "scooter.tune.hold.sub": "XT5, experimental: re-sends the release automatically after a drive-mode change, as long as the app stays connected.",
     "scooter.tune.restore.label": "Back to normal",
     "scooter.tune.restore.sub": "Sends the normal drive mode 3",
     "scooter.tune.restore": "Normal",
@@ -680,6 +689,9 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>XT5: die Freischaltung lässt sich jetzt über Moduswechsel halten.</b> Ein Moduswechsel am Roller wischt die Freigabe sonst weg - sie ist ein Live-Bluetooth-Befehl, nicht in der Firmware gespeichert. Schalte im Freischaltungs-Bereich 'Freischaltung über Moduswechsel halten' ein, dann sendet die App sie nach einem Moduswechsel automatisch neu, solange sie verbunden ist. Opt-in und experimentell; für eine Freigabe, die ohne App hält, die Firmware flashen.",
+      "<b>NT5-Familie (Max, Max+, Turbo, Ultra): der Dauerpiepton ab 30 km/h lässt sich jetzt abschalten.</b> Er ist eine eigene, selbsterhaltende Übergeschwindigkeits-Warnung im Meter - nicht der einzelne Piep, den ein früherer Build stumm schaltete - darum blieb er. Wer im Patcher den Übergeschwindigkeitston abwählt, hebt jetzt auch dessen 30-km/h-Schwelle aus dem Bereich; dafür den NT5-Meter neu flashen. Einen Meter-Ton stumm schalten ändert nie die Motorleistung - die Anfahrt sitzt im Controller.",
+      "<b>XT5 Pro: robusteres Flashen und Schluss mit der falschen \"nicht übernommen\"-Meldung.</b> Ein einzelnes verlorenes Bluetooth-Paket bricht den Firmware-Flash nicht mehr mittendrin ab - der Block wird neu gesendet, sodass der Meter-Flash auch auf der neueren Firmware durchläuft (vorher Timeout bei etwa 83%). Nach der Speed-Freigabe zeigt die App beim XT5 Pro/Max kein falsches \"Controller hat nicht übernommen\" mehr - ihr Meter remappt den Gang wie beim Ultra. Ein fehlgeschlagener Display-Flash sagt das jetzt klar, statt den ganzen Flash als fehlgeschlagen zu melden.",
       "<b>UT5 Max: der Display-Patch (Tacho) ist in beiden Tools verfügbar.</b> Der in-place-Meter-Patch - BLE-Drossel plus Kickstart und Tempomat - wird in der App und im Web-Patcher angeboten, mit dem Ungetestet-Hinweis. Er wird als ein Satz angewendet: aus ist byte-identisch zum Serien-Tacho, der Bluetooth-Schalter öffnet oder drosselt die Höchstgeschwindigkeit. Der Controller bleibt eine separate Patch-Option. Der Tacho trägt Bluetooth, also flashe ihn nur, wenn du das Risiko trägst.",
       "<b>UT5 Max lässt sich patchen.</b> Der Firmware-Patcher bietet den UT5 Max (Controller-Tempo) mit dem Ungetestet-Hinweis an, wie die anderen noch nicht an Hardware bestätigten Modelle. Das Flashen ist bis zur Bestätigung auf eigenes Risiko.",
       "<b>Der Scan listet jedes Bluetooth-Gerät.</b> Die Geräteliste zeigt jedes Gerät in Reichweite, sortiert nach Signalstärke mit NAVEE-Scootern oben, damit deiner leicht zu finden ist. Geräte ohne Namen zeigen ihre Adresse und beim Antippen eines Geräts, das kein NAVEE-Scooter ist, erscheint eine klare Meldung.",
@@ -1205,6 +1217,10 @@ window.I18N = {
     "fw.toast.success": "Firmware geflasht.",
     "fw.toast.failed": "Flashen fehlgeschlagen.",
     "fw.toast.cancelled": "Flashen abgebrochen.",
+    "fw.comp.meter": "Display (Tacho)",
+    "fw.comp.bldc": "Controller",
+    "fw.fail.component": "{comp}-Flash fehlgeschlagen: {msg}",
+    "fw.fail.after": "Der {done}-Flash war erfolgreich, aber der {failed}-Flash ist fehlgeschlagen: {msg}. Der {done}-Teil ist auf dem Roller - nur der {failed}-Teil fehlt.",
     "fw.confirm.title": "Flashen starten?",
     "fw.confirm.warn": "Roller eingeschaltet und in Reichweite lassen, die App im Vordergrund halten und den Roller während des Updates nicht ausschalten.",
     "fw.confirm.body": "{file} jetzt auf den Roller flashen?",
@@ -1316,6 +1332,8 @@ window.I18N = {
     "scooter.tune.outdated": "Auf diesem Roller läuft eine ältere entdrosselte Firmware, die sich am Boost-Knopf allein öffnen lässt. Bau die aktuelle Firmware im Patcher neu und flashe sie; die Freigabe geht dann nur noch über diese App, der Boost-Knopf allein bleibt bei 22 km/h.",
     "scooter.untested.fw": "Ungetestete Firmware: Dieses Modell ist nicht auf rückholbarer Hardware bestätigt. Ein Flash kann den Roller dauerhaft unbrauchbar machen - nur fortfahren wenn du einen Recovery-Weg hast (SWD oder Controller-Tausch).",
     "scooter.untested.scooter": "Ungetestetes Modell: Die Unterstützung für diesen Roller ist noch nicht an Hardware bestätigt. Patchen oder Tunen auf eigenes Risiko.",
+    "scooter.tune.hold.label": "Freischaltung über Moduswechsel halten",
+    "scooter.tune.hold.sub": "XT5, experimentell: sendet die Freigabe nach einem Moduswechsel automatisch neu, solange die App verbunden ist.",
     "scooter.tune.restore.label": "Zurück auf Normal",
     "scooter.tune.restore.sub": "Sendet den normalen Fahrmodus 3",
     "scooter.tune.restore": "Normal",

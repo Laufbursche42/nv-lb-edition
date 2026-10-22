@@ -86,6 +86,7 @@ const IMAGES = {
       { off: 0x14679, from: [0xd0], to: [0xe0], id: 'cruise' },
       { off: 0x14d6e, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
       { off: 0x15de4, from: [0xff, 0xf7, 0xef, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15d44, from: [0x1e, 0x28], to: [0xff, 0x28], id: 'beep-overspeed-nag' }, // continuous over-speed nag: 30 km/h trigger (cmp #0x1e) -> #0xff so the steady tone never fires; 0x15de4 is the separate one-shot chirp
       { off: 0x15e58, from: [0xff, 0xf7, 0xb5, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
     ],
   },
@@ -103,6 +104,7 @@ const IMAGES = {
       { off: 0x14631, from: [0xd0], to: [0xe0], id: 'cruise' },
       { off: 0x14d1a, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
       { off: 0x15da2, from: [0xff, 0xf7, 0x07, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15cf0, from: [0x1e, 0x28], to: [0xff, 0x28], id: 'beep-overspeed-nag' }, // continuous over-speed nag: 30 km/h trigger (cmp #0x1e) -> #0xff so the steady tone never fires; 0x15da2 is the separate one-shot chirp
       { off: 0x15e1c, from: [0xff, 0xf7, 0xa9, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
     ],
   },
@@ -120,6 +122,7 @@ const IMAGES = {
       { off: 0x14635, from: [0xd0], to: [0xe0], id: 'cruise' },
       { off: 0x14d1e, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version 3.0.2.2 -> 5.0.2.2
       { off: 0x15da6, from: [0xff, 0xf7, 0x07, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
+      { off: 0x15cf4, from: [0x1e, 0x28], to: [0xff, 0x28], id: 'beep-overspeed-nag' }, // continuous over-speed nag: 30 km/h trigger (cmp #0x1e) -> #0xff so the steady tone never fires; 0x15da6 is the separate one-shot chirp
       { off: 0x15e48, from: [0xff, 0xf7, 0x95, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
       { off: 0x15e8c, from: [0xff, 0xf7, 0x96, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // startup/error melody bl -> nop
     ],

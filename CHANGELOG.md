@@ -16,6 +16,14 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.77
+- XT5 Pro: the meter flash no longer aborts partway through. A single dropped Bluetooth ACK used to fail the whole XMODEM transfer - it showed up as a timeout around 83% on the newer 3.0.2.3 firmware; the block is now resent instead, the same recovery a NAK already triggered. The web patcher (lb-webpatcher) had the same logic and gets the same fix.
+- XT5 Pro/Max: no more false "the controller did not take the release" after the speed release. The read-back check was only skipped for the XT5 Ultra, but the Pro and Max remap the commanded gear in the meter the same way, so the warning fired even when the release worked. The check is now skipped for the whole XT5 family.
+- Firmware flash now reports per component: if the controller flash succeeds but the display (meter) flash fails, the message says exactly that instead of reporting the whole run as failed.
+- XT5: the speed release can optionally hold across drive-mode changes - with the opt-in "keep release across mode changes" switch on, the app re-sends the live gear-4 release after a mode switch while it stays connected. Experimental; a release that holds without the app still needs a firmware flash.
+- NT5 family (Max, Max+, Turbo, Ultra): silencing the over-speed tone now also stops the continuous beep above 30 km/h. That steady tone is a separate, self-sustaining over-speed warning in the meter - not the single chirp an earlier build muted - which is why it kept sounding; switching the over-speed tone off in the patcher now also moves its 30 km/h trigger out of range. Re-flash the NT5 meter to get it.
+- Note: silencing a meter tone never changes pull-away or hill-start - the meter does not drive the motor. The weaker launch some riders notice after unlocking is the controller's by-design torque/current drop when the speed lock is removed, not the tone patch.
+
 ## 1.0.76
 - UT5 Max: the meter patch is offered in the app patcher (not only via upload), matching the web patcher. The in-place meter patch - BLE speed drossel plus kick-start and cruise - is applied as one atomic set, so off stays byte-identical to a stock meter and the app's speed switch always has the firmware gate it needs (never a dead toggle). The controller remains a separate patch target. Both carry the untested-firmware warning; the meter hosts Bluetooth and is the only route back from a failed controller flash, so flash it only where you accept the risk.
 
