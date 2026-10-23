@@ -106,6 +106,17 @@ public class MainActivity extends Activity {
         // GPS route recording: native foreground-service recorder that survives the screen going off,
         // also driven from the BLE listener callbacks below.
         routeRecorder = new RouteRecorder(getApplicationContext());
+        // Forward native route-recorder errors (e.g. a refused background foreground-service start on
+        // Android 12+) to the dashboard, which shows the rider a clear message.
+        routeRecorder.setListener(code -> {
+            try {
+                org.json.JSONObject o = new org.json.JSONObject();
+                o.put("error", code);
+                pushObj("__onRouteError", o.toString());
+            } catch (Throwable t) {
+                Log.e(TAG, "route error forward failed", t);
+            }
+        });
 
         // Debug logging: persistent across restarts (SharedPreferences key lb_debug).
         // Resume capture immediately if the user left it enabled.

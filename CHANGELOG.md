@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.79
+- Route recording now tells you when it could not auto-start. On Android 12 and newer the system can refuse to start the recording's foreground service from the background (for example when the screen was off at the moment recording should begin); the app now catches that, clears the half-armed state and shows a clear message, instead of the recording silently never beginning.
+- The block only affects the automatic background start, not recording itself - starting it manually from the app works normally.
+
 ## 1.0.78
 - Light switches no longer snap back to off. After you flip a light toggle (side/ambient, logo, daytime running, auto or tail) the app holds your choice for a few seconds instead of letting the next status report reset it; after that the report takes over again, so a scooter that genuinely did not take the command still shows the real state. Fixes the "the switch jumps back" reports on the side/ambient light.
 - Note on the side/ambient strip: the switch sends the command the meter firmware actually reads (0x6D, confirmed in the XT5 meter dispatcher - 0x5E is a no-op there), but whether a lamp lights depends on the model, the region and whether the LED strip is fitted and powered. On many EU units the strip is not installed, so the toggle has nothing to drive.

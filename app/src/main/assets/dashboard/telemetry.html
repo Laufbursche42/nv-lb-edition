@@ -2849,6 +2849,15 @@ window.__onBleScan = function(listArg) {
   });
 };
 
+/* Native route-recorder errors: {error}. "fgservice" = the OS refused a background foreground-service
+   start (Android 12+), so auto-start failed and the rider must start recording manually. */
+window.__onRouteError = function(argObj) {
+  let o = argObj;
+  try { if (typeof argObj === 'string') o = JSON.parse(argObj); } catch (e) { o = {}; }
+  o = o || {};
+  if (o.error === 'fgservice') showToast(t('msg.route.autostart.failed'));
+};
+
 /* Native pushes connection state here: {connected, name, address, status}. */
 window.__onBleState = function(stArg) {
   let s = stArg;

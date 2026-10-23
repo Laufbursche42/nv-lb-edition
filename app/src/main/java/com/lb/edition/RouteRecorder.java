@@ -36,6 +36,12 @@ public final class RouteRecorder {
     private long armLastTs = 0;
     private String currentFileName = null;   // the file being recorded right now (not yet importable)
 
+    /** Surfaces a recording error to the UI, e.g. the OS refusing a background foreground-service start
+     *  on Android 12+. MainActivity sets this and forwards the code to the dashboard. */
+    public interface Listener { void onRecordingError(String code); }
+    private volatile Listener listener;
+    public void setListener(Listener l) { this.listener = l; }
+
     RouteRecorder(Context ctx) {
         this.appCtx = ctx != null ? ctx.getApplicationContext() : null;
     }
@@ -146,7 +152,17 @@ public final class RouteRecorder {
                 Intent i = new Intent(appCtx, RouteRecorderService.class);
                 i.putExtra(RouteRecorderService.EXTRA_FILE, f.getAbsolutePath());
                 i.putExtra(RouteRecorderService.EXTRA_INTERVAL_MS, intervalMs());
-                appCtx.startForegroundService(i);
+                try {
+                    appCtx.startForegroundService(i);
+                } catch (Throwable t) {
+                    // Android 12+ refuses a foreground-service start from the background. Undo the arm
+                    // and tell the UI so the rider can start the recording manually.
+                    Log.e(TAG, "startForegroundService refused", t);
+                    armed = false;
+                    currentFileName = null;
+                    notifyError("fgservice");
+                    return;
+                }
             }
             Log.i(TAG, "route armed: " + name);
         } catch (Throwable t) {
@@ -154,6 +170,12 @@ public final class RouteRecorder {
             armed = false;
             currentFileName = null;
         }
+    }
+
+    private void notifyError(String code) {
+        Listener l = listener;
+        if (l == null) return;
+        try { l.onRecordingError(code); } catch (Throwable t) { Log.e(TAG, "listener failed", t); }
     }
 
     private void finalizeRide() {

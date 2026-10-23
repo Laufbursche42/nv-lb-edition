@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Route recording tells you when it could not start on its own.</b> On Android 12 and newer the system can refuse to start the recording's background service, so an armed recording would silently never begin. The app now catches that, clears the half-armed state and shows a clear message.",
+      "<b>What to do if that message appears.</b> Open the app and start the route recording manually from the foreground - the block only affects the automatic background start, not recording itself.",
       "<b>Light switches no longer jump back to off.</b> After you flip a light toggle the app keeps your choice for a few seconds instead of letting the next status report snap it back; then the report takes over again, so a scooter that truly did not accept the command still shows the real state. Fixes the side/ambient switch springing back.",
       "<b>About the side / ambient strip.</b> The switch sends the command the meter firmware actually reads, but whether a lamp lights depends on the model, the region and whether the LED strip is fitted and wired. On many EU units the strip is not installed, so there is nothing for the toggle to drive.",
       "<b>XT5: the speed release can hold across drive-mode changes now.</b> Switching the drive mode on the scooter normally wipes the release - it is a live Bluetooth command, not stored in the firmware. Enable 'Keep release across mode changes' in the speed-release section and the app re-sends it automatically after a mode switch, as long as it stays connected. Opt-in and experimental; for a release that holds without the app, flash the firmware.",
@@ -200,6 +202,7 @@ window.I18N = {
     "msg.connect.known.device.fallback": "(saved scooter)",
     "msg.connect.reconnect.label": "Reconnect",
     "msg.connect.reconnecting": "Reconnecting to {device}",
+    "msg.route.autostart.failed": "Route recording could not start automatically - please start it manually in the app.",
     "msg.connect.state.connected": "Connected: <b>{name}</b>",
     "msg.connect.state.disconnected": "Not connected",
     "msg.connect.state.name.fallback": "scooter",
@@ -691,6 +694,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Die Routenaufzeichnung sagt jetzt Bescheid, wenn sie nicht von selbst starten konnte.</b> Ab Android 12 kann das System den Hintergrund-Start des Aufzeichnungsdienstes verweigern, dann wäre eine scharfgeschaltete Aufzeichnung still nie losgelaufen. Die App fängt das jetzt ab, räumt den halb scharfgeschalteten Zustand auf und zeigt eine klare Meldung.",
+      "<b>Was tun, wenn die Meldung kommt.</b> Öffne die App und starte die Routenaufzeichnung im Vordergrund manuell - die Sperre betrifft nur den automatischen Hintergrund-Start, nicht die Aufzeichnung selbst.",
       "<b>Lichtschalter springen nicht mehr auf Aus zurück.</b> Nach dem Umlegen eines Licht-Schalters hält die App deine Wahl ein paar Sekunden, statt sie vom nächsten Status-Report zurücksetzen zu lassen; danach übernimmt wieder der Report, sodass ein Roller, der den Befehl wirklich nicht annimmt, den echten Zustand zeigt. Behebt das Zurückspringen des Seiten-/Ambientlicht-Schalters.",
       "<b>Zum Seiten-/Ambientstreifen.</b> Der Schalter sendet den Befehl, den die Meter-Firmware tatsächlich liest, aber ob eine Lampe leuchtet, hängt vom Modell, der Region und davon ab, ob der LED-Streifen verbaut und angeschlossen ist. Bei vielen EU-Geräten ist der Streifen nicht verbaut, der Schalter hat dann nichts zu schalten.",
       "<b>XT5: die Freischaltung lässt sich jetzt über Moduswechsel halten.</b> Ein Moduswechsel am Roller wischt die Freigabe sonst weg - sie ist ein Live-Bluetooth-Befehl, nicht in der Firmware gespeichert. Schalte im Freischaltungs-Bereich 'Freischaltung über Moduswechsel halten' ein, dann sendet die App sie nach einem Moduswechsel automatisch neu, solange sie verbunden ist. Opt-in und experimentell; für eine Freigabe, die ohne App hält, die Firmware flashen.",
@@ -886,6 +891,7 @@ window.I18N = {
     "msg.connect.known.device.fallback": "(gespeicherter Scooter)",
     "msg.connect.reconnect.label": "Neu verbinden",
     "msg.connect.reconnecting": "Neu verbinden mit {device}",
+    "msg.route.autostart.failed": "Routenaufzeichnung konnte nicht automatisch gestartet werden - bitte in der App manuell starten.",
     "msg.connect.state.connected": "Verbunden: <b>{name}</b>",
     "msg.connect.state.disconnected": "Nicht verbunden",
     "msg.connect.state.name.fallback": "Scooter",
