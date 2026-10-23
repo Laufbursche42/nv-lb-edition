@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.81
+- XT5 Pro / XT5 Max: the 0.0.1.3 controller version detection is corrected. The firmware writes the version as ASCII in the BLE notification at a different slot than earlier versions, so the previous charCode check never matched a real 0.0.1.3 device. The check now reads the correct bytes; the warning banner and the release-button block reliably fire on a genuine unpatched 0.0.1.3 controller.
+- XT5 Pro / XT5 Max: the app now recognises a patched 0.0.1.3 controller and unlocks the speed release for it. Flash your 0.0.1.3 OTA in the firmware patcher (lb-webpatcher v86 or the Android patcher) to get the patch; the patcher redirects mode 4 to the meter-driven cap cell (~45 km/h with meter patch active). Experimental, not yet confirmed on hardware.
+
 ## 1.0.80
 - XT5 Pro / XT5 Max: detect controller firmware 0.0.1.3 on connect and show a warning banner. NAVEE removed the mode-4 gear-4 case in this update, so the flash-free 40 km/h release no longer works on 0.0.1.3. The release button is blocked when this version is active; downgrade to 0.0.1.0 in the firmware patcher to restore the flash-free path.
 
