@@ -3505,6 +3505,14 @@ function naveeNormalHex(sub, payload) {
 }
 function naveeSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Light switches that cannot read their state back reliably from the 0x70 report (ambient has no
+// clean report echo on most models). After the user flips one we hold its on-screen state for a
+// grace window so the next report does not snap the toggle back; after the window the report wins
+// again, so a scooter that genuinely did not take the command still tells the truth.
+const _lightHold = {};
+function holdLight(id) { _lightHold[id] = Date.now() + 8000; }
+function lightHeld(id) { return (_lightHold[id] || 0) > Date.now(); }
+
 // Region write via factory 0xA2 in line-test; hard-gated on the real pid (naveeRegionAllowed).
 async function naveeWriteRegion(code) {
   code = (code || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
@@ -3552,11 +3560,11 @@ function prefillScooterSettings(live) {
   if (d.tcs === 0 || d.tcs === 1) setC('ss-tcs', d.tcs === 1);
   if (d.eco === 0 || d.eco === 1) setC('ss-eco', d.eco === 1);
   if (d.unit === 0 || d.unit === 1) setC('ss-unit', d.unit === 1);   // 1 = mph on the scooter display
-  if (d.autoLight === 0 || d.autoLight === 1) setC('ss-alight', d.autoLight === 1);
-  if (d.drl === 0 || d.drl === 1) setC('ss-drl', d.drl === 1);
-  if (d.logoLight === 0 || d.logoLight === 1) setC('ss-logo', d.logoLight === 1);
-  if (typeof d.ambientLight === 'number') setC('ss-ambient', d.ambientLight > 0);
-  if (d.tailLight === 0 || d.tailLight === 1) setC('ss-tail', d.tailLight === 1);
+  if ((d.autoLight === 0 || d.autoLight === 1) && !lightHeld('ss-alight')) setC('ss-alight', d.autoLight === 1);
+  if ((d.drl === 0 || d.drl === 1) && !lightHeld('ss-drl')) setC('ss-drl', d.drl === 1);
+  if ((d.logoLight === 0 || d.logoLight === 1) && !lightHeld('ss-logo')) setC('ss-logo', d.logoLight === 1);
+  if (typeof d.ambientLight === 'number' && !lightHeld('ss-ambient')) setC('ss-ambient', d.ambientLight > 0);
+  if ((d.tailLight === 0 || d.tailLight === 1) && !lightHeld('ss-tail')) setC('ss-tail', d.tailLight === 1);
   // Zero-start / startup-speed level (0 = zero start, 1..5 = kick-off threshold).
   if (typeof d.startSpeed === 'number' && d.startSpeed >= 0 && d.startSpeed <= 5) setV('ss-zerostart', d.startSpeed);
   // Levels 0-2 are USA-SKU only (the meter clamps them to 3 elsewhere); hide them on non-USA units.
@@ -3620,29 +3628,35 @@ function wireScooterSettings() {
   const alight = document.getElementById('ss-alight');
   if (alight) alight.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    holdLight('ss-alight');
     pushSetting(0x57, e.target.checked ? 1 : 0);   // auto headlight, plain toggle
   });
   const tail = document.getElementById('ss-tail');
   if (tail) tail.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    holdLight('ss-tail');
     pushSetting(0x54, e.target.checked ? 1 : 0);   // tail light, plain toggle
   });
   const drl = document.getElementById('ss-drl');
   if (drl) drl.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    holdLight('ss-drl');
     // Daytime running light is a 0x6D sub-command (sub 3), like eco - not a plain single-byte opcode.
     if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(0x6D, 3, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
   });
   const logo = document.getElementById('ss-logo');
   if (logo) logo.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
+    holdLight('ss-logo');
     // Logo / lettering light is a 0x6D sub-command (sub 2), like the DRL.
     if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(0x6D, 2, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
   });
   const amb = document.getElementById('ss-ambient');
   if (amb) amb.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
-    // Side / underglow strip is a 0x6D sub-command (sub 1), like the logo; 0x5E has no meter handler.
+    holdLight('ss-ambient');
+    // Side / underglow strip is a 0x6D sub-command (sub 1), like the logo; the XT5 meter has no
+    // 0x5E handler, so 0x6D sub1 is the channel the firmware actually reads (report byte 10).
     if (typeof LB !== 'undefined' && LB.sendSub) { try { LB.sendSub(0x6D, 1, e.target.checked ? 1 : 0); } catch (err) { showToast(tf('msg2.toast.error', { e: err })); } }
   });
   wireSpeedRelease();

@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.78
+- Light switches no longer snap back to off. After you flip a light toggle (side/ambient, logo, daytime running, auto or tail) the app holds your choice for a few seconds instead of letting the next status report reset it; after that the report takes over again, so a scooter that genuinely did not take the command still shows the real state. Fixes the "the switch jumps back" reports on the side/ambient light.
+- Note on the side/ambient strip: the switch sends the command the meter firmware actually reads (0x6D, confirmed in the XT5 meter dispatcher - 0x5E is a no-op there), but whether a lamp lights depends on the model, the region and whether the LED strip is fitted and powered. On many EU units the strip is not installed, so the toggle has nothing to drive.
+
 ## 1.0.77
 - XT5 Pro: the meter flash no longer aborts partway through. A single dropped Bluetooth ACK used to fail the whole XMODEM transfer - it showed up as a timeout around 83% on the newer 3.0.2.3 firmware; the block is now resent instead, the same recovery a NAK already triggered. The web patcher (lb-webpatcher) had the same logic and gets the same fix.
 - XT5 Pro/Max: no more false "the controller did not take the release" after the speed release. The read-back check was only skipped for the XT5 Ultra, but the Pro and Max remap the commanded gear in the meter the same way, so the warning fired even when the release worked. The check is now skipped for the whole XT5 family.
