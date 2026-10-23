@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>XT5 Pro / XT5 Max: NAVEE's September firmware (0.0.1.3) blocks the flash-free speed release.</b> The new controller removed the mode-4 gear-4 case that let the scooter run at 40 km/h without flashing. The app detects this version on connect and shows a warning; the release button is blocked on 0.0.1.3. Downgrade the controller to 0.0.1.0 in the firmware patcher to restore the flash-free path.",
+      "<b>XT5 Pro / XT5 Max on 0.0.1.3: version is read automatically on connect.</b> The app reads the raw controller firmware bytes every time it connects and flags the anti-tune version automatically - no extra step needed.",
       "<b>Route recording tells you when it could not start on its own.</b> On Android 12 and newer the system can refuse to start the recording's background service, so an armed recording would silently never begin. The app now catches that, clears the half-armed state and shows a clear message.",
       "<b>What to do if that message appears.</b> Open the app and start the route recording manually from the foreground - the block only affects the automatic background start, not recording itself.",
       "<b>Light switches no longer jump back to off.</b> After you flip a light toggle the app keeps your choice for a few seconds instead of letting the next status report snap it back; then the report takes over again, so a scooter that truly did not accept the command still shows the real state. Fixes the side/ambient switch springing back.",
@@ -651,6 +653,8 @@ window.I18N = {
     "scooter.tune.clamped": "The controller did not take the release - its SKU byte clamps the open gear on this firmware. The only way to actually raise the top speed on your scooter is to patch the controller firmware first in the app's Firmware Patcher, then re-send the release.",
     "scooter.tune.unsupported": "Your model is not covered by the app-side release. This feature works only on the XT5 family (Pro / Ultra / Max), the NT5 family (Max / Max+ / Ultra / Turbo / Ultra X) and the UT5 Ultra X. No BLE command was sent.",
     "scooter.tune.outdated": "This scooter runs an older unlocked firmware that the boost button can open on its own. Rebuild and flash the current firmware in the patcher; the release then works only from this app, and the boost button alone stays at 22 km/h.",
+    "scooter.tune.xt5.0013.warn": "Controller firmware 0.0.1.3 detected. NAVEE removed the flash-free gear-4 release in this update. A downgrade to controller 0.0.1.0 is required to restore it.",
+    "scooter.tune.xt5.0013.blocked": "Controller 0.0.1.3: flash-free release unavailable. Downgrade to controller 0.0.1.0 first.",
     "scooter.untested.fw": "Untested firmware: this model has not been confirmed on recoverable hardware. Flashing may permanently brick the scooter - only continue if you have a recovery path (SWD or controller swap).",
     "scooter.untested.scooter": "Untested model: support for this scooter is not confirmed on hardware yet. Patching or tuning it is at your own risk.",
     "scooter.tune.hold.label": "Keep release across mode changes",
@@ -694,6 +698,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>XT5 Pro / XT5 Max: NAVEEs September-Firmware (0.0.1.3) sperrt die flashfreie Geschwindigkeitsfreigabe.</b> Der neue Controller hat den Mode-4/Gang-4-Fall entfernt, der den Roller ohne Flashen auf 40 km/h fahren ließ. Die App erkennt diese Version beim Verbinden und zeigt eine Warnung; der Freigabe-Knopf ist bei 0.0.1.3 gesperrt. Im Firmware-Patcher auf Controller 0.0.1.0 downgraden, um den flashfreien Weg wiederherzustellen.",
+      "<b>XT5 Pro / XT5 Max mit 0.0.1.3: Version wird beim Verbinden automatisch ausgelesen.</b> Die App liest bei jedem Verbinden die rohen Controller-Firmware-Bytes und erkennt die Anti-Tune-Version automatisch - kein zusätzlicher Schritt nötig.",
       "<b>Die Routenaufzeichnung sagt jetzt Bescheid, wenn sie nicht von selbst starten konnte.</b> Ab Android 12 kann das System den Hintergrund-Start des Aufzeichnungsdienstes verweigern, dann wäre eine scharfgeschaltete Aufzeichnung still nie losgelaufen. Die App fängt das jetzt ab, räumt den halb scharfgeschalteten Zustand auf und zeigt eine klare Meldung.",
       "<b>Was tun, wenn die Meldung kommt.</b> Öffne die App und starte die Routenaufzeichnung im Vordergrund manuell - die Sperre betrifft nur den automatischen Hintergrund-Start, nicht die Aufzeichnung selbst.",
       "<b>Lichtschalter springen nicht mehr auf Aus zurück.</b> Nach dem Umlegen eines Licht-Schalters hält die App deine Wahl ein paar Sekunden, statt sie vom nächsten Status-Report zurücksetzen zu lassen; danach übernimmt wieder der Report, sodass ein Roller, der den Befehl wirklich nicht annimmt, den echten Zustand zeigt. Behebt das Zurückspringen des Seiten-/Ambientlicht-Schalters.",
@@ -1340,6 +1346,8 @@ window.I18N = {
     "scooter.tune.clamped": "Der Controller hat die Freigabe nicht übernommen - seine SKU-Byte-Begrenzung clamp't den Open-Gang bei dieser Firmware. Um die Topspeed deines Scooters wirklich anzuheben, musst du die Controller-Firmware erst im Firmware-Patcher der App patchen und dann die Freigabe erneut senden.",
     "scooter.tune.unsupported": "Dein Modell wird von der App-Freigabe nicht abgedeckt. Diese Funktion funktioniert nur bei der XT5-Familie (Pro / Ultra / Max), der NT5-Familie (Max / Max+ / Ultra / Turbo / Ultra X) und dem UT5 Ultra X. Es wurde kein BLE-Befehl gesendet.",
     "scooter.tune.outdated": "Auf diesem Roller läuft eine ältere entdrosselte Firmware, die sich am Boost-Knopf allein öffnen lässt. Bau die aktuelle Firmware im Patcher neu und flashe sie; die Freigabe geht dann nur noch über diese App, der Boost-Knopf allein bleibt bei 22 km/h.",
+    "scooter.tune.xt5.0013.warn": "Controller-Firmware 0.0.1.3 erkannt. NAVEE hat die flashfreie Gang-4-Freigabe in diesem Update entfernt. Ein Downgrade auf Controller 0.0.1.0 ist nötig, um sie wiederherzustellen.",
+    "scooter.tune.xt5.0013.blocked": "Controller 0.0.1.3: flashfreie Freigabe nicht verfügbar. Erst auf Controller 0.0.1.0 downgraden.",
     "scooter.untested.fw": "Ungetestete Firmware: Dieses Modell ist nicht auf rückholbarer Hardware bestätigt. Ein Flash kann den Roller dauerhaft unbrauchbar machen - nur fortfahren wenn du einen Recovery-Weg hast (SWD oder Controller-Tausch).",
     "scooter.untested.scooter": "Ungetestetes Modell: Die Unterstützung für diesen Roller ist noch nicht an Hardware bestätigt. Patchen oder Tunen auf eigenes Risiko.",
     "scooter.tune.hold.label": "Freischaltung über Moduswechsel halten",

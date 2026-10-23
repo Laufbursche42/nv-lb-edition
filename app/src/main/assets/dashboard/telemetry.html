@@ -539,6 +539,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div class="settings-row-sublabel m-6-0-0" id="tune-status" data-i18n="scooter.tune.status.idle">Noch nicht gesendet.</div>
       <div class="fw-warn m-6-0-0 is-hidden" id="tune-outdated" data-i18n="scooter.tune.outdated">Diese Firmware ist veraltet.</div>
       <div class="fw-danger m-6-0-0 is-hidden" id="tune-untested" data-i18n="scooter.untested.scooter">Ungetestetes Modell.</div>
+      <div class="fw-warn m-6-0-0 is-hidden" id="tune-0013" data-i18n="scooter.tune.xt5.0013.warn">Controller 0.0.1.3 - flashfreie Freigabe nicht verfügbar.</div>
       <div class="settings-row-sublabel m-6-0-0" data-i18n="scooter.tune.gesture">
         Schneller geht es unterwegs mit der Geste: dreimal kurz auf die km/h-VCU-Kachel im Hauptbildschirm tippen schaltet die Freischaltung ein und wieder aus. Die Kachel wird rot, solange sie aktiv ist.
       </div>
@@ -1669,6 +1670,8 @@ function updateBLEUI(data) {
   { const to = document.getElementById('tune-outdated'); if (to) to.classList.toggle('is-hidden', OUTDATED_LATCH_BLDC.indexOf((data.fwBldc || '').trim()) < 0); }
   // Untested model: flag when an unconfirmed (experimental) scooter is connected.
   { const tu = document.getElementById('tune-untested'); if (tu) tu.classList.toggle('is-hidden', !isExperimentalScooter()); }
+  // XT5 Pro/Max on controller 0.0.1.3: flash-free gear-4 release is gone.
+  { const ta = document.getElementById('tune-0013'); if (ta) ta.classList.toggle('is-hidden', !isXT5ProMaxAntiTune()); }
   // UT5 Max drossel: once per connection to a patched meter (fwMeter "0050"), push the app-remembered
   // switch state (default off = stock DE throttle) so the device matches the UI regardless of the value
   // persisted in NVM key 0x5c. The app is the source of truth; toggling on re-persists via _speedReleased.
@@ -3741,6 +3744,16 @@ const RELEASE_CAPABLE_MODELS = ['XT5 Pro', 'XT5 Ultra', 'XT5 Max',
   'NT5 Max', 'NT5 Max+', 'NT5 Ultra', 'NT5 Turbo', 'NT5 Ultra X', 'UT5 Ultra X'];
 function isExperimentalScooter() { try { return EXPERIMENTAL_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
 function isPatchBlocked() { try { return PATCH_BLOCKED_PIDS.indexOf((liveRaw().pid || '').trim()) >= 0; } catch (e) { return false; } }
+// XT5 Pro/Max on controller 0.0.1.3: NAVEE removed the mode-4 gear-4 case (code-verified, no cave space for in-place patch).
+// Raw fwBldc bytes from BLE opcode 0x73: version 0.0.1.3 -> charCodes [0, 0, 1, 3].
+function isXT5ProMaxAntiTune() {
+  try {
+    const m = naveeRealModel();
+    if (m !== 'XT5 Pro' && m !== 'XT5 Max') return false;
+    const fw = liveRaw().fwBldc || '';
+    return fw.charCodeAt(0) === 0 && fw.charCodeAt(1) === 0 && fw.charCodeAt(2) === 1 && fw.charCodeAt(3) === 3;
+  } catch (e) { return false; }
+}
 function speedReleaseGear(on) {
   // XT5 family (incl. the T2443 XT5 Ultra) unlocks on gear 4 and restricts on gear 3; the others use 5/2.
   const isXT = naveeIsXT(naveeRealModel());
@@ -3785,6 +3798,8 @@ function sendSpeedRelease(on) {
     setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
     return true;
   }
+  // XT5 Pro/Max on controller 0.0.1.3: mode-4 case is gone, sending gear 4 does nothing useful.
+  if (on && isXT5ProMaxAntiTune()) { showToast(t('scooter.tune.xt5.0013.blocked'), 8000); return false; }
   if (!pushSetting(NAVEE_CMD.drivemode, speedReleaseGear(on))) return false;
   setSpeedReleasedFlag(on);
   setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
