@@ -792,8 +792,13 @@ select.set-ctrl { text-align: left; -webkit-appearance: none; appearance: none; 
 .note-gap { margin: 6px 0 10px; }
   /* Model line: shows the connected scooter's advertised NAVEE name. No per-model gating. */
   #model-banner { padding: 8px 2px 2px; font-size: var(--fs-md); color: var(--label); }
-  #model-banner .model-line { margin-bottom: 6px; }
+  #model-banner .model-line { margin-bottom: 4px; }
   #model-name { font-weight: var(--fw-semibold); color: var(--text); }
+  #model-pick-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+  .model-pick-label { font-size: var(--fs-xs); color: var(--label); }
+  #model-select.set-ctrl { flex: 1; min-width: 0; max-width: 200px; font-size: var(--fs-xs); padding: 5px 8px; width: auto; }
+  #model-manual-note { display: none; font-size: var(--fs-xs); color: var(--accent); margin-top: 4px; }
+  .model-manual #model-manual-note { display: block; }
 
   /* Draggable dashboard navigation banner (bottom, low profile). Fed by window.__onNav. */
   #nav-banner { position: fixed; left: 8px; right: 8px; bottom: 12px; z-index: 950;

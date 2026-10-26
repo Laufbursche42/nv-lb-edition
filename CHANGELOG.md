@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.84
+- Manual model override: the model banner in the scooter settings now shows a dropdown. If the app auto-detected the wrong model (or no model at all), pick the correct one from the list. The override is stored locally and held across reconnects; choose "Auto-detect" to go back to the automatic detection. Caps (cruise, kick-start) update immediately when the override changes.
+
 ## 1.0.83
 - Unit toggle (km/h / mph on the scooter display): the firmware maps 0 = mph and 1 = km/h, which is the opposite of what the app was sending and reading. The toggle now sends and reads the correct value, so switching to mph actually sets mph on the scooter.
 - Drive mode selector: Normal and Turbo values were swapped. Normal now sends mode 5 (D / drive) and Turbo sends mode 3 (S / sport), matching what the NT5 Max scooter display shows. The read-back from the scooter is corrected as well.

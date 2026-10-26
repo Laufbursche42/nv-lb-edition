@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Manual model override.</b> If the app auto-detected the wrong model, pick the correct one from the new dropdown in the model banner. The choice is stored locally and held across reconnects; choose \"Auto-detect\" to go back.",
       "<b>Unit toggle fixed.</b> The km/h / mph switch on the scooter display was inverted: the firmware uses 0 = mph and 1 = km/h, the opposite of what the app was sending. Switching to mph now actually sets mph on the scooter display.",
       "<b>Drive mode selector fixed.</b> Normal and Turbo were sending the wrong modes. Normal now sends the D (drive) mode and Turbo sends the S (sport) mode, matching what the scooter display shows.",
       "<b>GT3 Max: firmware patcher now serves bldc 0.0.1.7.</b> NAVEE OTA already pushed this version to many GT3 Max units. The patch offsets have been verified; the experimental warning still applies.",
@@ -421,6 +422,10 @@ window.I18N = {
     "settings.help.hint": "What is this?",
     "settings.help.marker": "?",
     "settings.model.label": "Model:",
+    "settings.model.option.auto": "Auto-detect",
+    "settings.model.pick.prompt": "Wrong model? Pick manually:",
+    "settings.model.select.label": "Select scooter model",
+    "settings.model.manual.note": "Manual model selected. Auto-detection is overridden. Choose “Auto-detect” to reset.",
     "settings.update.app.available": "New app version available",
     "settings.update.app.action": "Download &amp; install -&gt;",
     "msg2.update.toast.none": "No app update to download",
@@ -699,6 +704,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Manueller Modell-Override.</b> Wenn die App das falsche Modell erkannt hat, im neuen Dropdown im Modell-Banner das richtige wählen. Die Wahl wird lokal gespeichert und bleibt über Reconnects erhalten; „Auto-Erkennung“ wählen um zurückzusetzen.",
       "<b>Einheiten-Schalter korrigiert.</b> Der km/h-/mph-Schalter für die Roller-Anzeige war invertiert: die Firmware nutzt 0 = mph und 1 = km/h - genau umgekehrt als die App bisher sendete. Auf mph umschalten setzt jetzt wirklich mph am Roller-Display.",
       "<b>Fahrmodus-Auswahl korrigiert.</b> Normal und Turbo haben bisher die falschen Modi gesendet. Normal sendet jetzt den D-Modus und Turbo den S-Modus, was der Anzeige am Roller entspricht.",
       "<b>GT3 Max: Firmware-Patcher liefert jetzt bldc 0.0.1.7.</b> NAVEE-OTA hat diese Version bereits auf viele GT3-Max-Geräte gespielt. Die Patch-Offsets sind verifiziert; die Ungetestet-Warnung gilt weiterhin.",
@@ -1115,6 +1121,10 @@ window.I18N = {
     "settings.help.hint": "Was ist das?",
     "settings.help.marker": "?",
     "settings.model.label": "Modell:",
+    "settings.model.option.auto": "Auto-Erkennung",
+    "settings.model.pick.prompt": "Falsches Modell? Manuell wählen:",
+    "settings.model.select.label": "Scooter-Modell wählen",
+    "settings.model.manual.note": "Modell manuell gewählt. Auto-Erkennung überbrückt. „Auto-Erkennung“ wählen zum Zurücksetzen.",
     "settings.update.app.available": "Neue App-Version verfügbar",
     "settings.update.app.action": "Herunterladen &amp; installieren -&gt;",
     "msg2.update.toast.none": "Kein App-Update zum Herunterladen",
