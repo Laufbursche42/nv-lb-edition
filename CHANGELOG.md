@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.83
+- Unit toggle (km/h / mph on the scooter display): the firmware maps 0 = mph and 1 = km/h, which is the opposite of what the app was sending and reading. The toggle now sends and reads the correct value, so switching to mph actually sets mph on the scooter.
+- Drive mode selector: Normal and Turbo values were swapped. Normal now sends mode 5 (D / drive) and Turbo sends mode 3 (S / sport), matching what the NT5 Max scooter display shows. The read-back from the scooter is corrected as well.
+
 ## 1.0.82
 - GT3 Max: the firmware patcher now downloads bldc 0.0.1.7 for GT3 Max units. NAVEE OTA has already pushed this version (originally the GT3 Pro build, same T2324/02831 chip) to many GT3 Max units. The patch offsets are verified; the experimental warning still applies.
 

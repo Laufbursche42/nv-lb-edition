@@ -474,8 +474,8 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div class="settings-row">
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.drivemode.label">Fahrmodus</div><div class="settings-row-sublabel" data-i18n="scooter.drivemode.sub">Normal oder Turbo</div></div>
         <select class="set-ctrl" id="ss-drivemode">
-          <option value="3" data-i18n="scooter.drivemode.normal">Normal</option>
-          <option value="5" data-i18n="scooter.drivemode.turbo">Turbo</option>
+          <option value="5" data-i18n="scooter.drivemode.normal">Normal</option>
+          <option value="3" data-i18n="scooter.drivemode.turbo">Turbo</option>
         </select>
       </div>
       <div class="settings-row">
@@ -3571,7 +3571,7 @@ function prefillScooterSettings(live) {
   if (typeof d.cruise === 'number') setC('ss-cruise', d.cruise > 0);
   if (d.tcs === 0 || d.tcs === 1) setC('ss-tcs', d.tcs === 1);
   if (d.eco === 0 || d.eco === 1) setC('ss-eco', d.eco === 1);
-  if (d.unit === 0 || d.unit === 1) setC('ss-unit', d.unit === 1);   // 1 = mph on the scooter display
+  if (d.unit === 0 || d.unit === 1) setC('ss-unit', d.unit === 0);   // 0 = mph on the scooter display
   if ((d.autoLight === 0 || d.autoLight === 1) && !lightHeld('ss-alight')) setC('ss-alight', d.autoLight === 1);
   if ((d.drl === 0 || d.drl === 1) && !lightHeld('ss-drl')) setC('ss-drl', d.drl === 1);
   if ((d.logoLight === 0 || d.logoLight === 1) && !lightHeld('ss-logo')) setC('ss-logo', d.logoLight === 1);
@@ -3630,7 +3630,7 @@ function wireScooterSettings() {
   const unit = document.getElementById('ss-unit');
   if (unit) unit.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
-    pushSetting(NAVEE_CMD.unit, e.target.checked ? 1 : 0);
+    pushSetting(NAVEE_CMD.unit, e.target.checked ? 0 : 1);
   });
   const dm = document.getElementById('ss-drivemode');
   if (dm) dm.addEventListener('change', e => {

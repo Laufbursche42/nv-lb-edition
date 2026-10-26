@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Unit toggle fixed.</b> The km/h / mph switch on the scooter display was inverted: the firmware uses 0 = mph and 1 = km/h, the opposite of what the app was sending. Switching to mph now actually sets mph on the scooter display.",
+      "<b>Drive mode selector fixed.</b> Normal and Turbo were sending the wrong modes. Normal now sends the D (drive) mode and Turbo sends the S (sport) mode, matching what the scooter display shows.",
       "<b>GT3 Max: firmware patcher now serves bldc 0.0.1.7.</b> NAVEE OTA already pushed this version to many GT3 Max units. The patch offsets have been verified; the experimental warning still applies.",
       "<b>XT5 Pro / XT5 Max: 0.0.1.3 is now directly patchable - no downgrade needed.</b> Flash your 0.0.1.3 controller OTA in the firmware patcher (lb-webpatcher v87 or the Android patcher). Mode 4 is redirected to the meter-driven cap cell, giving ~45 km/h with an active meter patch. Experimental; carries the untested warning.",
       "<b>What to do if that message appears.</b> Open the app and start the route recording manually from the foreground - the block only affects the automatic background start, not recording itself.",
@@ -697,6 +699,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Einheiten-Schalter korrigiert.</b> Der km/h-/mph-Schalter für die Roller-Anzeige war invertiert: die Firmware nutzt 0 = mph und 1 = km/h - genau umgekehrt als die App bisher sendete. Auf mph umschalten setzt jetzt wirklich mph am Roller-Display.",
+      "<b>Fahrmodus-Auswahl korrigiert.</b> Normal und Turbo haben bisher die falschen Modi gesendet. Normal sendet jetzt den D-Modus und Turbo den S-Modus, was der Anzeige am Roller entspricht.",
       "<b>GT3 Max: Firmware-Patcher liefert jetzt bldc 0.0.1.7.</b> NAVEE-OTA hat diese Version bereits auf viele GT3-Max-Geräte gespielt. Die Patch-Offsets sind verifiziert; die Ungetestet-Warnung gilt weiterhin.",
       "<b>XT5 Pro / XT5 Max: 0.0.1.3 ist jetzt direkt patchbar - kein Downgrade nötig.</b> Im Firmware-Patcher (lb-webpatcher v87 oder Android-Patcher) die 0.0.1.3-Controller-OTA hochladen und flashen. Modus 4 wird auf die Meter-gesteuerte Cap-Zelle umgeleitet (~45 km/h mit aktivem Meter-Patch). Experimentell; trägt die Ungetestet-Warnung.",
       "<b>Was tun, wenn die Meldung kommt.</b> Öffne die App und starte die Routenaufzeichnung im Vordergrund manuell - die Sperre betrifft nur den automatischen Hintergrund-Start, nicht die Aufzeichnung selbst.",
