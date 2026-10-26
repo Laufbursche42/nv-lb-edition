@@ -470,9 +470,9 @@ const IMAGES = {
     },
   },
 
-  // GT3 Pro BLDC 0.0.1.7 (3401/12601), 02831 capZ latch.
+  // GT3 Pro / GT3 Max BLDC 0.0.1.7 (3401/3601/12601), 02831 capZ latch.
   bldcGT3Pro: {
-    label: 'GT3 Pro BLDC 0.0.1.7 (3401/12601)',
+    label: 'GT3 Pro / GT3 Max BLDC 0.0.1.7 (3401/3601/12601)',
     kind: 'bldc',
     match: (u8) => u8.length === 0xc080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x07]) && beRead(u8, 0xb0, 2) === 0x599b,
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000b9a8, crcOff: 0xb0, crcStock: 0x599b },
