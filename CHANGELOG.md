@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.85
+- Bluetooth connection stability: the app now requests a high-priority BLE connection (shorter connection interval) immediately after notifications are enabled. This fixes random disconnects on Samsung Galaxy S25 / Android 16 and other Android devices whose BLE stack drops the default balanced-priority connection.
+
 ## 1.0.84
 - Manual model override: the model banner in the scooter settings now shows a dropdown. If the app auto-detected the wrong model (or no model at all), pick the correct one from the list. The override is stored locally and held across reconnects; choose "Auto-detect" to go back to the automatic detection. Caps (cruise, kick-start) update immediately when the override changes.
 

@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Bluetooth connection stability.</b> The app now requests a high-priority connection right after pairing with the scooter. This fixes random disconnects on Samsung Galaxy S25 / Android 16 and similar devices whose Bluetooth stack drops the default connection.",
       "<b>Manual model override.</b> If the app auto-detected the wrong model, pick the correct one from the new dropdown in the model banner. The choice is stored locally and held across reconnects; choose \"Auto-detect\" to go back.",
       "<b>Unit toggle fixed.</b> The km/h / mph switch on the scooter display was inverted: the firmware uses 0 = mph and 1 = km/h, the opposite of what the app was sending. Switching to mph now actually sets mph on the scooter display.",
       "<b>Drive mode selector fixed.</b> Normal and Turbo were sending the wrong modes. Normal now sends the D (drive) mode and Turbo sends the S (sport) mode, matching what the scooter display shows.",
@@ -704,6 +705,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Bluetooth-Verbindungsstabilität.</b> Die App fordert direkt nach dem Verbinden eine hochpriore BLE-Verbindung an. Das behebt zufällige Verbindungsabbrüche auf Samsung Galaxy S25 / Android 16 und ähnlichen Geräten, deren Bluetooth-Stack die Standard-Verbindung abbricht.",
       "<b>Manueller Modell-Override.</b> Wenn die App das falsche Modell erkannt hat, im neuen Dropdown im Modell-Banner das richtige wählen. Die Wahl wird lokal gespeichert und bleibt über Reconnects erhalten; „Auto-Erkennung“ wählen um zurückzusetzen.",
       "<b>Einheiten-Schalter korrigiert.</b> Der km/h-/mph-Schalter für die Roller-Anzeige war invertiert: die Firmware nutzt 0 = mph und 1 = km/h - genau umgekehrt als die App bisher sendete. Auf mph umschalten setzt jetzt wirklich mph am Roller-Display.",
       "<b>Fahrmodus-Auswahl korrigiert.</b> Normal und Turbo haben bisher die falschen Modi gesendet. Normal sendet jetzt den D-Modus und Turbo den S-Modus, was der Anzeige am Roller entspricht.",

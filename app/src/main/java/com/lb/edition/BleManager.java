@@ -639,6 +639,7 @@ final class BleManager {
     private void markReady() {
         notifyReady = true;
         connected = true;
+        try { BluetoothGatt g = gatt; if (g != null) g.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_HIGH); } catch (Throwable ignored) {}
         reconnectDelay = RECONNECT_BASE_MS;
         try {
             SharedPreferences.Editor ed = appCtx.getSharedPreferences("lb", Context.MODE_PRIVATE).edit()
