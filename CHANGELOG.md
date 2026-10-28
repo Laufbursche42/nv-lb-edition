@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.88
+- Account ID: web-based Bluetooth log file picker (no native import needed) and Http Catcher JSON paste (iPhone) added to the account-ID section. Both paths extract the userId locally; nothing is uploaded. i18n for both new keys added (DE + EN).
+
 ## 1.0.87
 - Patcher guide: a collapsible "How it works" accordion at the top of the patcher screen explains the three steps (connect, patch, flash) and common errors, in German and English.
 

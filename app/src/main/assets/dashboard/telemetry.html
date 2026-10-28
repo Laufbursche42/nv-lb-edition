@@ -310,6 +310,16 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <button type="button" class="set-help" data-set-help="account-log" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
       </div>
       <button id="btn-account-log" class="settings-btn" data-i18n="settings.account.log.pick">Import from Bluetooth log</button>
+      <label class="settings-btn" id="btn-account-log-web" style="display:inline-block;cursor:pointer;">
+        <input type="file" id="nv-log-web-input" accept=".log,.gz,.zip,.cfa,application/zip,application/gzip" hidden>
+        <span data-i18n="settings.account.log.web">Log-Datei direkt laden</span>
+      </label>
+      <div class="account-sub-head mt-14">
+        <div class="settings-group-title" data-i18n="settings.account.json.title">iPhone: Http Catcher</div>
+        <button type="button" class="set-help" data-set-help="account-json" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
+      </div>
+      <textarea id="nv-json-web-input" rows="3" style="width:100%;box-sizing:border-box;font-size:12px;font-family:monospace;background:var(--field,#1a1a1a);border:1px solid var(--line,#333);border-radius:8px;padding:7px 10px;color:var(--fg,#eee);margin-top:4px;resize:vertical;" spellcheck="false" data-i18n-ph="settings.account.json.placeholder"></textarea>
+      <button id="btn-account-json" class="settings-btn" data-i18n="settings.account.json.parse">ID ermitteln</button>
     </div>
   </div>
 
@@ -1528,7 +1538,8 @@ const SETTINGS_HELP = {
   "dg-gps": { title: 'msg.help.set.dg.gps.title', text: 'msg.help.set.dg.gps.text' },
   "dg-pts": { title: 'msg.help.set.dg.pts.title', text: 'msg.help.set.dg.pts.text' },
   "account-intro": { title: 'settings.account.group.title', text: 'settings.account.intro' },
-  "account-log": { title: 'settings.account.log.title', text: 'settings.account.log.steps' }
+  "account-log": { title: 'settings.account.log.title', text: 'settings.account.log.steps' },
+  "account-json": { title: 'settings.account.json.title', text: 'settings.account.json.steps' }
 };
 
 let settingsHelpDelegated = false;
@@ -2389,6 +2400,115 @@ window.__onAuthLogResult = function (ok) {
   showToast(t(ok ? 'settings.account.log.ok' : 'settings.account.log.none'));
   refreshAccountIdUI();
 };
+
+/* ── Web-based btsnoop + Http-Catcher JSON parser (runs fully client-side) ─── */
+function _nvScanAuthFrame(b) {
+  let found = null;
+  for (let i = 0; i + 8 < b.length; i++) {
+    if (b[i] !== 0x55 || b[i+1] !== 0xaa || b[i+2] !== 0x00 || b[i+3] !== 0x30) continue;
+    const len = b[i+4]; if (len < 9 || i + 6 + len > b.length) continue;
+    let cs = 0; for (let j = 2; j < 5 + len; j++) cs = (cs + b[i+j]) & 0xff;
+    if (b[i+5+len] !== cs) continue;
+    if (b[i+6+len] !== 0xfe || b[i+7+len] !== 0xfd) continue;
+    found = b.slice(i, i + 8 + len);
+  }
+  return found;
+}
+function _nvS6ToUserId(frame) {
+  // s6 bytes: frame[7..12] (big-endian, 6 bytes); if top byte was 0 it was replaced with 0x88
+  const b = frame;
+  const top = b[7] === 0x88 ? 0 : b[7];
+  let uid = 0;
+  uid = top * Math.pow(2, 40) + b[8] * Math.pow(2, 32) + b[9] * 16777216 + b[10] * 65536 + b[11] * 256 + b[12];
+  return uid > 0 ? String(Math.round(uid)) : null;
+}
+async function _nvTryDecompress(bytes, fmt) {
+  try {
+    if (typeof DecompressionStream !== 'function') return null;
+    const ds = new DecompressionStream(fmt);
+    const writer = ds.writable.getWriter(); writer.write(bytes); writer.close();
+    const chunks = []; const reader = ds.readable.getReader();
+    for (;;) { const { done, value } = await reader.read(); if (done) break; chunks.push(value); }
+    const total = chunks.reduce((s, c) => s + c.length, 0);
+    const out = new Uint8Array(total); let off = 0;
+    for (const c of chunks) { out.set(c, off); off += c.length; }
+    return out;
+  } catch (e) { return null; }
+}
+function _nvZipEntries(b) {
+  const out = [], dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  let eocd = -1;
+  for (let i = b.length - 22; i >= 0; i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+  if (eocd < 0) return out;
+  const cdOff = dv.getUint32(eocd + 16, true), cdNum = dv.getUint16(eocd + 10, true);
+  let p = cdOff;
+  for (let i = 0; i < cdNum && p + 46 <= b.length; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    const usize = dv.getUint32(p + 24, true), fnLen = dv.getUint16(p + 28, true);
+    const exLen = dv.getUint16(p + 30, true), cmLen = dv.getUint16(p + 32, true);
+    const lhOff = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(b.slice(p + 46, p + 46 + fnLen));
+    out.push({ name, method, csize, usize, lhOff });
+    p += 46 + fnLen + exLen + cmLen;
+  }
+  return out;
+}
+function _nvZipEntryData(b, ent) {
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const p = ent.lhOff;
+  if (p + 30 > b.length || dv.getUint32(p, true) !== 0x04034b50) return null;
+  const fnLen = dv.getUint16(p + 26, true), exLen = dv.getUint16(p + 28, true);
+  const start = p + 30 + fnLen + exLen;
+  return b.slice(start, start + ent.csize);
+}
+async function _nvParseUserIdFromLog(file) {
+  const raw = new Uint8Array(await file.arrayBuffer());
+  let f = _nvScanAuthFrame(raw); if (f) return _nvS6ToUserId(f);
+  if (raw[0] === 0x1f && raw[1] === 0x8b) {
+    const g = await _nvTryDecompress(raw, 'gzip');
+    if (g) { f = _nvScanAuthFrame(g); if (f) return _nvS6ToUserId(f); }
+  }
+  if (raw[0] === 0x50 && raw[1] === 0x4b) {
+    const ents = _nvZipEntries(raw);
+    ents.sort((a, b2) => (/(btsnoop|bluetooth|bt)/i.test(b2.name) ? 1 : 0) - (/(btsnoop|bluetooth|bt)/i.test(a.name) ? 1 : 0));
+    for (const ent of ents) {
+      const data = _nvZipEntryData(raw, ent); if (!data) continue;
+      let dec = ent.method === 0 ? data : await _nvTryDecompress(data, 'deflate-raw');
+      if (!dec) continue;
+      f = _nvScanAuthFrame(dec); if (f) return _nvS6ToUserId(f);
+      if (dec[0] === 0x1f && dec[1] === 0x8b) { const g = await _nvTryDecompress(dec, 'gzip'); if (g) { f = _nvScanAuthFrame(g); if (f) return _nvS6ToUserId(f); } }
+    }
+  }
+  return null;
+}
+function _nvParseUserIdFromJson(text) {
+  const m = text.match(/"(?:userId|user_id|accountId|account_id|uid)"\s*:\s*"?(\d{4,12})"?/i);
+  return m ? m[1] : null;
+}
+async function importAccountIdFromLogWeb(file) {
+  if (!file) return;
+  showToast(t('settings.account.log.parsing'));
+  try {
+    const uid = await _nvParseUserIdFromLog(file);
+    if (!uid) { showToast(t('settings.account.log.none')); return; }
+    if (typeof LB !== 'undefined' && LB.setAccountId) { LB.setAccountId(uid); }
+    document.getElementById('account-id-input').value = uid;
+    showToast(t('settings.account.log.ok'));
+    refreshAccountIdUI();
+  } catch (e) { showToast(t('settings.account.log.none')); }
+}
+function importAccountIdFromJson() {
+  const ta = document.getElementById('nv-json-web-input');
+  const text = ta ? ta.value.trim() : '';
+  if (!text) { showToast(t('settings.account.json.empty')); return; }
+  const uid = _nvParseUserIdFromJson(text);
+  if (!uid) { showToast(t('settings.account.log.none')); return; }
+  if (typeof LB !== 'undefined' && LB.setAccountId) { LB.setAccountId(uid); }
+  document.getElementById('account-id-input').value = uid;
+  showToast(t('settings.account.log.ok'));
+  refreshAccountIdUI();
+}
 
 /* ── SRT streaming (native module via the LB bridge) ──────────── */
 
@@ -4148,6 +4268,8 @@ function wireEvents() {
   document.getElementById('btn-account-save').addEventListener('click', saveAccountId);
   document.getElementById('btn-account-clear').addEventListener('click', clearAccountId);
   document.getElementById('btn-account-log').addEventListener('click', importAccountIdFromLog);
+  document.getElementById('nv-log-web-input').addEventListener('change', function (e) { importAccountIdFromLogWeb(e.target.files && e.target.files[0]); e.target.value = ''; });
+  document.getElementById('btn-account-json').addEventListener('click', importAccountIdFromJson);
   document.getElementById('btn-firmware-back').addEventListener('click', closeFirmwarePage);
   document.getElementById('btn-fw-file').addEventListener('click', fwPickFile);
   document.getElementById('btn-fw-start').addEventListener('click', fwStart);

@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Account ID: Android log and iPhone Http Catcher.</b> The account-ID section now also accepts an Android Bluetooth HCI snoop log file (the file picker is available directly in the app, no native import needed) and an Http Catcher JSON export from iPhone. Both extract the ID locally; nothing is uploaded.",
       "<b>Patcher guide.</b> A collapsible step-by-step guide now sits at the top of the patcher screen - tap to expand.",
       "<b>N65i II confirmed.</b> The N65i II speed patch is hardware-confirmed (40 km/h reached). The untested warning is removed.",
       "<b>Bluetooth connection stability.</b> The app now requests a high-priority connection right after pairing with the scooter. This fixes random disconnects on Samsung Galaxy S25 / Android 16 and similar devices whose Bluetooth stack drops the default connection.",
@@ -455,8 +456,15 @@ window.I18N = {
     "settings.account.log.title": "Get the account ID from a Bluetooth log (Android)",
     "settings.account.log.steps": "1. Settings, then Developer options, turn on \"Enable Bluetooth HCI snoop log\". 2. Fully close the NAVEE app, then open it and connect to the scooter once. 3. Create a bug report (Developer options, then Bug report) or find the btsnoop_hci.log file. 4. Tap the button below and pick that file. The app reads the account ID out of it on the phone. Nothing is uploaded.",
     "settings.account.log.pick": "Import from Bluetooth log",
+    "settings.account.log.web": "Import log file directly",
+    "settings.account.log.parsing": "Scanning log file...",
     "settings.account.log.ok": "Account ID found in the log and saved",
     "settings.account.log.none": "No account ID found in that file",
+    "settings.account.json.title": "iPhone: Http Catcher",
+    "settings.account.json.steps": "On iPhone: install Http Catcher, enable HTTPS decryption, start the NAVEE app and log in. Then export the session as JSON and paste the full JSON text below. The ID is read out locally - nothing is uploaded.",
+    "settings.account.json.placeholder": "Paste Http Catcher JSON export here...",
+    "settings.account.json.parse": "Extract ID",
+    "settings.account.json.empty": "Paste the Http Catcher JSON first",
     "settings.scooter.info.action": "&#8505; Scooter info",
     "settings.scooter.info.hint": "Serial number and firmware versions",
     "settings.scooter.navigation.action": "&#129517; Navigation",
@@ -709,6 +717,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Konto-ID: Android-Log und iPhone Http Catcher.</b> Der Konto-ID-Bereich akzeptiert jetzt auch eine Android-Bluetooth-HCI-Snoop-Log-Datei (der Datei-Picker ist direkt in der App verfügbar, kein nativer Import nötig) sowie einen Http-Catcher-JSON-Export vom iPhone. Beides liest die ID lokal aus - nichts wird hochgeladen.",
       "<b>Patcher-Anleitung.</b> Am Anfang des Patcher-Screens gibt es jetzt eine aufklappbare Schritt-für-Schritt-Anleitung.",
       "<b>N65i II bestätigt.</b> Der N65i-II-Speed-Patch ist am Gerät bestätigt (40 km/h erreicht). Die Ungetestet-Warnung entfällt.",
       "<b>Bluetooth-Verbindungsstabilität.</b> Die App fordert direkt nach dem Verbinden eine hochpriore BLE-Verbindung an. Das behebt zufällige Verbindungsabbrüche auf Samsung Galaxy S25 / Android 16 und ähnlichen Geräten, deren Bluetooth-Stack die Standard-Verbindung abbricht.",
@@ -1159,8 +1168,15 @@ window.I18N = {
     "settings.account.log.title": "Konto-ID aus einem Bluetooth-Log holen (Android)",
     "settings.account.log.steps": "1. Einstellungen, dann Entwickleroptionen, \"Bluetooth-HCI-Snoop-Protokoll aktivieren\" einschalten. 2. Die NAVEE-App ganz schließen, dann öffnen und einmal mit dem Roller verbinden. 3. Einen Fehlerbericht erstellen (Entwickleroptionen, dann Fehlerbericht) oder die Datei btsnoop_hci.log suchen. 4. Auf den Knopf unten tippen und diese Datei auswählen. Die App liest die Konto-ID direkt auf dem Handy heraus. Nichts wird hochgeladen.",
     "settings.account.log.pick": "Aus Bluetooth-Log importieren",
+    "settings.account.log.web": "Log-Datei direkt laden",
+    "settings.account.log.parsing": "Log wird gescannt...",
     "settings.account.log.ok": "Konto-ID im Log gefunden und gespeichert",
     "settings.account.log.none": "In dieser Datei wurde keine Konto-ID gefunden",
+    "settings.account.json.title": "iPhone: Http Catcher",
+    "settings.account.json.steps": "Auf dem iPhone: Http Catcher installieren, HTTPS-Entschlüsselung aktivieren, die NAVEE-App starten und einloggen. Dann die Session als JSON exportieren und den vollständigen JSON-Text unten einfügen. Die ID wird lokal ausgelesen - nichts wird hochgeladen.",
+    "settings.account.json.placeholder": "Http-Catcher-JSON-Export hier einfügen...",
+    "settings.account.json.parse": "ID ermitteln",
+    "settings.account.json.empty": "Zuerst das Http-Catcher-JSON einfügen",
     "settings.scooter.info.action": "&#8505; Scooter-Info",
     "settings.scooter.info.hint": "Seriennummer und Firmware-Versionen",
     "settings.scooter.navigation.action": "&#129517; Navigation",
