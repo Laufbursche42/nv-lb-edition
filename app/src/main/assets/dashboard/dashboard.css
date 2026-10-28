@@ -641,6 +641,39 @@ html, body {
   background: color-mix(in srgb, var(--danger) 12%, transparent); font-size: var(--fs-sm); line-height: 1.5;
 }
 .fw-warn b { color: var(--danger); }
+/* Patcher guide accordion */
+details.guide-acc {
+  border: 1px solid var(--border); border-radius: 10px;
+  margin-bottom: 4px; overflow: hidden;
+}
+details.guide-acc summary {
+  padding: 10px 12px; font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px;
+  color: var(--label); user-select: none;
+}
+details.guide-acc summary::-webkit-details-marker { display: none; }
+details.guide-acc summary::before {
+  content: '▶'; font-size: 9px; transition: transform .2s; flex-shrink: 0;
+}
+details.guide-acc[open] summary::before { transform: rotate(90deg); }
+details.guide-acc .guide-body {
+  padding: 0 12px 10px; font-size: var(--fs-sm); line-height: 1.6; color: var(--text);
+}
+details.guide-acc .guide-body b { color: var(--text); font-weight: var(--fw-bold); }
+details.guide-acc .guide-step {
+  display: flex; gap: 8px; margin-bottom: 8px;
+}
+details.guide-acc .guide-step-num {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: var(--fs-xs); font-weight: var(--fw-bold);
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+details.guide-acc .guide-step-text { flex: 1; }
+details.guide-acc .guide-hint {
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+  color: var(--label); font-size: var(--fs-xs); line-height: 1.5;
+}
 .fw-danger {
   border: 1px solid var(--danger); border-radius: 10px; padding: 10px 12px; margin-bottom: 4px;
   background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger);

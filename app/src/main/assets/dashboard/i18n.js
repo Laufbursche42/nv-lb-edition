@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Patcher guide.</b> A collapsible step-by-step guide now sits at the top of the patcher screen - tap to expand.",
       "<b>N65i II confirmed.</b> The N65i II speed patch is hardware-confirmed (40 km/h reached). The untested warning is removed.",
       "<b>Bluetooth connection stability.</b> The app now requests a high-priority connection right after pairing with the scooter. This fixes random disconnects on Samsung Galaxy S25 / Android 16 and similar devices whose Bluetooth stack drops the default connection.",
       "<b>Manual model override.</b> If the app auto-detected the wrong model, pick the correct one from the new dropdown in the model banner. The choice is stored locally and held across reconnects; choose \"Auto-detect\" to go back.",
@@ -466,6 +467,8 @@ window.I18N = {
     "settings.firmware.update.hint": "Flash patched or your own firmware onto the scooter over Bluetooth (scooter must be connected)",
     "patch.page.title": "Firmware Patcher",
     "patch.warn.intro": "<b>Read this first.</b> The patcher downloads the stock firmware that matches your scooter, saves it into the Downloads folder and writes an unlocked copy (speed, kickstart, cruise) next to it. It then moves on to Firmware Update, where you can flash the patched file. Own device on private ground only.",
+    "guide.summary": "&#9654; How it works",
+    "guide.body": "<div class=\"guide-step\"><div class=\"guide-step-num\">1</div><div class=\"guide-step-text\"><b>Connect your scooter.</b> The app detects the model automatically once it is paired.</div></div><div class=\"guide-step\"><div class=\"guide-step-num\">2</div><div class=\"guide-step-text\"><b>Tap “Download and patch.”</b> The matching stock firmware is fetched and patched - speed unlock, kick-start and cruise control depending on your model. The patched file lands in Downloads.</div></div><div class=\"guide-step\"><div class=\"guide-step-num\">3</div><div class=\"guide-step-text\"><b>Flash via Firmware Update.</b> Go back, open Firmware Update, pick the patched file and tap Flash. Keep the app in the foreground and the scooter powered on and close throughout.</div></div><div class=\"guide-hint\"><b>Error 255?</b> Your scooter is bound to an account - enter your account ID under Settings → Account.<br><b>Flash interrupted?</b> Harmless - the scooter only commits a fully transferred image. Just retry.</div>",
     "patch.section.model.title": "Detected model",
     "patch.model.wait": "Connect the scooter so the model can be detected.",
     "patch.model.connect": "Connect the scooter so the model can be detected.",
@@ -706,6 +709,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Patcher-Anleitung.</b> Am Anfang des Patcher-Screens gibt es jetzt eine aufklappbare Schritt-für-Schritt-Anleitung.",
       "<b>N65i II bestätigt.</b> Der N65i-II-Speed-Patch ist am Gerät bestätigt (40 km/h erreicht). Die Ungetestet-Warnung entfällt.",
       "<b>Bluetooth-Verbindungsstabilität.</b> Die App fordert direkt nach dem Verbinden eine hochpriore BLE-Verbindung an. Das behebt zufällige Verbindungsabbrüche auf Samsung Galaxy S25 / Android 16 und ähnlichen Geräten, deren Bluetooth-Stack die Standard-Verbindung abbricht.",
       "<b>Manueller Modell-Override.</b> Wenn die App das falsche Modell erkannt hat, im neuen Dropdown im Modell-Banner das richtige wählen. Die Wahl wird lokal gespeichert und bleibt über Reconnects erhalten; „Auto-Erkennung“ wählen um zurückzusetzen.",
@@ -1167,6 +1171,8 @@ window.I18N = {
     "settings.firmware.update.hint": "Gepatchte oder eigene Firmware über Bluetooth auf den Roller flashen (Roller muss verbunden sein)",
     "patch.page.title": "Firmware Patcher",
     "patch.warn.intro": "<b>Erst lesen.</b> Dieser Patcher lädt die zu deinem Roller passende Original-Firmware herunter, legt sie im Ordner Downloads ab und schreibt eine entdrosselte Kopie (Speed, Kickstart, Tempomat) daneben. Danach geht es weiter zum Firmware Update, wo du die gepatchte Datei flashen kannst. Nur eigenes Gerät auf Privatgelände.",
+    "guide.summary": "&#9654; So funktioniert's",
+    "guide.body": "<div class=\"guide-step\"><div class=\"guide-step-num\">1</div><div class=\"guide-step-text\"><b>Roller verbinden.</b> Das Modell wird automatisch erkannt, sobald die Verbindung steht.</div></div><div class=\"guide-step\"><div class=\"guide-step-num\">2</div><div class=\"guide-step-text\"><b>„Herunterladen und patchen“ tippen.</b> Die passende Original-Firmware wird geladen und gepatcht - Speed-Entsperrung, Kickstart und Tempomat je nach Modell. Die gepatchte Datei landet im Downloads-Ordner.</div></div><div class=\"guide-step\"><div class=\"guide-step-num\">3</div><div class=\"guide-step-text\"><b>Flashen über Firmware Update.</b> Zurück, Firmware Update öffnen, gepatchte Datei wählen und auf Flash tippen. App im Vordergrund lassen, Roller eingeschaltet und in der Nähe halten.</div></div><div class=\"guide-hint\"><b>Fehler 255?</b> Der Roller ist an ein Konto gebunden - Konto-ID unter Einstellungen → Konto eintragen.<br><b>Flash unterbrochen?</b> Kein Problem - der Roller übernimmt nur ein vollständig übertragenes Image. Einfach nochmal starten.</div>",
     "patch.section.model.title": "Erkanntes Modell",
     "patch.model.wait": "Roller verbinden, damit das Modell erkannt wird.",
     "patch.model.connect": "Roller verbinden, damit das Modell erkannt wird.",

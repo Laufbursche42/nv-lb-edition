@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.87
+- Patcher guide: a collapsible "How it works" accordion at the top of the patcher screen explains the three steps (connect, patch, flash) and common errors, in German and English.
+
 ## 1.0.86
 - N65i II BLDC patch is now confirmed on hardware (40 km/h reached); the untested warning is removed.
 - N65i II meter patch entries no longer carry the blocked flag (DFU flash confirmed working).
