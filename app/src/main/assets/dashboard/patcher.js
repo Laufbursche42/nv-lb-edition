@@ -1798,7 +1798,6 @@ patches: [
     verify: { size: 0x23000, crcOff: 0x13, crcStock: 0xfaf, lenOff: 0x10, lenStock: 0x022c00 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    blocked: 'This meter is not patched: it hosts BLE and is the only route back from a failed controller update, so a bad meter commit cannot be undone. Its patches were never confirmed on hardware.',
     patches: [],
   },
 
@@ -1810,7 +1809,6 @@ patches: [
     verify: { size: 0x23800, crcOff: 0x13, crcStock: 0xa321, lenOff: 0x10, lenStock: 0x023400 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    blocked: 'This meter is not patched: it hosts BLE and is the only route back from a failed controller update, so a bad meter commit cannot be undone. Its patches were never confirmed on hardware.',
     patches: [],
   },
 
@@ -2221,7 +2219,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterUT5Max', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcN65iII10701', 'bldcN65iII6001', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterUT5Max', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {

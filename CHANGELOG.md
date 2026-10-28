@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.86
+- N65i II BLDC patch is now confirmed on hardware (40 km/h reached); the untested warning is removed.
+- N65i II meter patch entries no longer carry the blocked flag (DFU flash confirmed working).
+
 ## 1.0.85
 - Bluetooth connection stability: the app now requests a high-priority BLE connection (shorter connection interval) immediately after notifications are enabled. This fixes random disconnects on Samsung Galaxy S25 / Android 16 and other Android devices whose BLE stack drops the default balanced-priority connection.
 
