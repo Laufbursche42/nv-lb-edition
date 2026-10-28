@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.89
+- GT3 Max, GT3, ST3 family: zero-start level 0 (fully off) and levels 1-2 now visible in the start-speed dropdown. Decompile of the shared 2.0.4.6 meter confirms no region gate exists in the kick-start handler; the app was hiding them for EU units unnecessarily.
+
 ## 1.0.88
 - Account ID: web-based Bluetooth log file picker (no native import needed) and Http Catcher JSON paste (iPhone) added to the account-ID section. Both paths extract the userId locally; nothing is uploaded. i18n for both new keys added (DE + EN).
 

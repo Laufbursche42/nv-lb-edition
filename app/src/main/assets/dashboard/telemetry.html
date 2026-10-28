@@ -3674,7 +3674,13 @@ function naveeSkuOf(region) {
 // never report these marker versions.
 const NAVEE_METER_PATCHED_FW = ['5022', '5020', '0050'];
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
-function naveeZeroStartFull() { return naveeSkuOf(liveRaw().region) === 'USA' || meterKickstartPatched(); }
+// ST3/GT3 family (meter 2.0.4.6): kickstart handler has NO region gate and accepts level 0 directly.
+// Verified from decompile of FUN_08010ecc: only clamps at 5, no minimum enforced.
+const NAVEE_FULL_KICK_PIDS = ['2345', '2401', '2402', '2403', '2418', '2704', '2714'];
+function naveeZeroStartFull() {
+  const pid = (_modelPidOverride || liveRaw().pid || '').trim();
+  return naveeSkuOf(liveRaw().region) === 'USA' || meterKickstartPatched() || NAVEE_FULL_KICK_PIDS.indexOf(pid) >= 0;
+}
 function setRegionStatus(msg) { const el = document.getElementById('region-status'); if (el) el.textContent = msg; }
 // Raw NAVEE frame builders; checksum = sum of bytes & 0xFF, normal frames end FE FD, factory AE AD.
 function naveeCk(b) { let s = 0; for (const x of b) s = (s + x) & 0xFF; return s; }
