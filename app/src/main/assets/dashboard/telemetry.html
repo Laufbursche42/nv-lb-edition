@@ -3707,6 +3707,9 @@ const _lightHold = {};
 function holdLight(id) { _lightHold[id] = Date.now() + 8000; }
 function lightHeld(id) { return (_lightHold[id] || 0) > Date.now(); }
 
+var _pendingWrite = {};
+function _isPending(key) { return (_pendingWrite[key] || 0) + 3000 > Date.now(); }
+
 // Region write via factory 0xA2 in line-test; hard-gated on the real pid (naveeRegionAllowed).
 async function naveeWriteRegion(code) {
   code = (code || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
@@ -3760,7 +3763,7 @@ function prefillScooterSettings(live) {
   if (typeof d.ambientLight === 'number' && !lightHeld('ss-ambient')) setC('ss-ambient', d.ambientLight > 0);
   if ((d.tailLight === 0 || d.tailLight === 1) && !lightHeld('ss-tail')) setC('ss-tail', d.tailLight === 1);
   // Zero-start / startup-speed level (0 = zero start, 1..5 = kick-off threshold).
-  if (typeof d.startSpeed === 'number' && d.startSpeed >= 0 && d.startSpeed <= 5) setV('ss-zerostart', d.startSpeed);
+  if (typeof d.startSpeed === 'number' && d.startSpeed >= 0 && d.startSpeed <= 5 && !_isPending('zerostart')) setV('ss-zerostart', d.startSpeed);
   // Levels 0-2 are USA-SKU only (the meter clamps them to 3 elsewhere); hide them on non-USA units.
   const zsel = document.getElementById('ss-zerostart');
   if (zsel) { const full = naveeZeroStartFull(); zsel.querySelectorAll('option').forEach(o => { if (parseInt(o.value, 10) < 3) o.hidden = !full; }); }
@@ -3796,6 +3799,7 @@ function wireScooterSettings() {
   const zero = document.getElementById('ss-zerostart');
   if (zero) zero.addEventListener('change', e => {
     if (!naveeGuard()) return;
+    _pendingWrite['zerostart'] = Date.now();
     pushSetting(NAVEE_CMD.zerostart, parseInt(e.target.value, 10) || 0);
   });
   const tcs = document.getElementById('ss-tcs');

@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>GT3 Max / GT3 / ST3: zero-start level no longer snaps back to 3 after you change it.</b> The live-status refresh was overwriting the selector before the scooter confirmed the write. A write-pending guard now suppresses the override for 3 seconds.",
+      "<b>Write-pending guard for BLE settings.</b> After any setting change the live-status refresh is held off for 3 seconds so the UI does not flicker back to the old value while the scooter confirms the write.",
       "<b>GT3 Max, GT3, ST3 family: zero-start level 0 (fully off) and levels 1-2 now available.</b> A decompile of the shared 2.0.4.6 meter firmware confirms there is no region gate in the kick-start handler: it accepts any level from 0 to 5 directly. The app was hiding levels 0-2 for EU units unnecessarily. No firmware flash needed.",
       "<b>GT3 Max: cruise control and kick-start work via Bluetooth without flashing.</b> Both settings appear in the app as soon as you connect. The meter firmware handles them natively; no patch is required.",
       "<b>Account ID: Android log and iPhone Http Catcher.</b> The account-ID section now also accepts an Android Bluetooth HCI snoop log file (the file picker is available directly in the app, no native import needed) and an Http Catcher JSON export from iPhone. Both extract the ID locally; nothing is uploaded.",
@@ -719,6 +721,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>GT3 Max / GT3 / ST3: Anfahrstufe springt nach dem Ändern nicht mehr auf 3 zurück.</b> Die Live-Statusaktualisierung hat den Selektor überschrieben, bevor der Scooter den Schreibvorgang bestätigt hatte. Ein Schreib-Guard unterdrückt die Überschreibung jetzt für 3 Sekunden.",
+      "<b>Schreib-Guard für BLE-Einstellungen.</b> Nach jeder Einstellungsänderung wird die Live-Statusaktualisierung für 3 Sekunden angehalten, damit die Oberfläche nicht zum alten Wert zurückspringt, während der Scooter den Schreibvorgang bestätigt.",
       "<b>GT3 Max, GT3, ST3-Familie: Anfahrstufe 0 (komplett aus) und Stufen 1-2 jetzt verfügbar.</b> Eine Analyse der gemeinsamen 2.0.4.6-Meter-Firmware zeigt: der Kickstart-Handler hat keine Region-Sperre und akzeptiert Stufen 0 bis 5 direkt. Die App hat Stufen 0-2 für EU-Geräte unnötig versteckt. Kein Firmware-Flash nötig.",
       "<b>GT3 Max: Tempomat und Kickstart per Bluetooth, kein Flash nötig.</b> Beide Einstellungen erscheinen in der App direkt nach dem Verbinden. Die Meter-Firmware verarbeitet sie nativ.",
       "<b>Konto-ID: Android-Log und iPhone Http Catcher.</b> Der Konto-ID-Bereich akzeptiert jetzt auch eine Android-Bluetooth-HCI-Snoop-Log-Datei (der Datei-Picker ist direkt in der App verfügbar, kein nativer Import nötig) sowie einen Http-Catcher-JSON-Export vom iPhone. Beides liest die ID lokal aus - nichts wird hochgeladen.",

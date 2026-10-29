@@ -21,6 +21,40 @@
 
 set -u
 
+# =================================================================
+# RELEASE-COMMIT COUNT GATE
+# Block a push that carries more than one app/src commit ahead of
+# origin/main. Each such commit bumps the versionName (by the
+# commit-count formula in build.gradle); a push must produce exactly
+# one version bump = one release.
+#
+# If you have several dev commits, squash them first:
+#   git reset --soft origin/main
+#   (combine CHANGELOG.md into one ## <version> section)
+#   (combine i18n.js whatsnew into one block, >=2 points per language)
+#   git add -A && git commit
+#
+# Skip this gate: SKIP_RELEASE_GATE=1 git push  (genuine edge cases only)
+# Auto-bypassed: when origin/main does not exist yet (first push to remote).
+# =================================================================
+if [ -z "${SKIP_RELEASE_GATE:-}" ] && git rev-parse origin/main >/dev/null 2>&1; then
+  AHEAD=$(git log --oneline origin/main..HEAD -- app/src/main/ 2>/dev/null \
+          | wc -l | tr -d '[:space:]')
+  if [ "${AHEAD:-0}" -gt 1 ]; then
+    echo "pre-push BLOCKED: ${AHEAD} app/src commits are ahead of origin/main."
+    echo "  Each commit touching app/src bumps the version; a push must produce"
+    echo "  exactly ONE version bump and ONE release. Squash your commits first:"
+    echo "    git reset --soft origin/main"
+    echo "    (edit CHANGELOG.md: one ## <version> section for all the work)"
+    echo "    (edit i18n.js: one whatsnew block, >=2 points per language)"
+    echo "    git add -A && git commit"
+    echo "  Then push."
+    echo "  Override (genuine edge cases only): SKIP_RELEASE_GATE=1 git push"
+    exit 1
+  fi
+  echo "OK    [release-gate] ${AHEAD} app/src commit(s) ahead of origin/main -- one release, push allowed."
+fi
+
 if [ -n "${SKIP_SAST:-}" ]; then
   echo "pre-push: SKIP_SAST set -> SAST scan skipped."
   exit 0
