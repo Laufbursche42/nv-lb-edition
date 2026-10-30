@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Patcher: ABE disclaimer now shows in the correct language.</b> The text was accidentally built from both language blocks at once, so the German disclaimer always included the English version underneath it.",
+      "<b>Patcher: private-ground notice no longer appears twice.</b> The general intro at the top of the patcher already mentions private ground; the model-specific disclaimer below now shows only the ABE-specific part.",
       "<b>GT3 Max / GT3 / ST3: zero-start level no longer snaps back to 3 after you change it.</b> The live-status refresh was overwriting the selector before the scooter confirmed the write. A write-pending guard now suppresses the override for 3 seconds.",
       "<b>Write-pending guard for BLE settings.</b> After any setting change the live-status refresh is held off for 3 seconds so the UI does not flicker back to the old value while the scooter confirms the write.",
       "<b>GT3 Max, GT3, ST3 family: zero-start level 0 (fully off) and levels 1-2 now available.</b> A decompile of the shared 2.0.4.6 meter firmware confirms there is no region gate in the kick-start handler: it accepts any level from 0 to 5 directly. The app was hiding levels 0-2 for EU units unnecessarily. No firmware flash needed.",
@@ -512,7 +514,7 @@ window.I18N = {
     "feat.beep-overspeed": "Silence over-speed warning",
     "feat.beep-alarm": "Silence alarm / find-me tone",
     "feat.beep-melody": "Silence startup / error melody",
-    "patch.disclaimer": "Private ground only. Speed unlock voids the road approval (ABE); the scooter may then no longer be used in public road traffic.",
+    "patch.disclaimer": "Speed unlock voids the road approval (ABE); the scooter may then no longer be used in public road traffic.",
     "patch.launchdrop": "Heads up for this controller (NT5 Max / Max+ / Turbo): unlocking the speed lowers the launch torque - pull-away current drops from about 22 A to 18 A. The strong launch is tied to the 22 km/h lock in the stock firmware, so unlocking removes it. By design, not recoverable without a brick-risk firmware extension.",
     "patch.status.download_fail": "Download of {kind} failed. Check your connection.",
     "patch.status.done": "Done. The patched files are in Downloads.",
@@ -721,6 +723,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Patcher: ABE-Hinweis erscheint jetzt in der richtigen Sprache.</b> Der Text wurde versehentlich aus beiden Sprachblöcken zusammengebaut, sodass beim deutschen Hinweis immer auch die englische Fassung darunter stand.",
+      "<b>Patcher: Privatgelände-Hinweis erscheint nicht mehr doppelt.</b> Der allgemeine Einleitungstext oben im Patcher enthält den Hinweis bereits; der modellspezifische Hinweis darunter zeigt jetzt nur noch den ABE-spezifischen Teil.",
       "<b>GT3 Max / GT3 / ST3: Anfahrstufe springt nach dem Ändern nicht mehr auf 3 zurück.</b> Die Live-Statusaktualisierung hat den Selektor überschrieben, bevor der Scooter den Schreibvorgang bestätigt hatte. Ein Schreib-Guard unterdrückt die Überschreibung jetzt für 3 Sekunden.",
       "<b>Schreib-Guard für BLE-Einstellungen.</b> Nach jeder Einstellungsänderung wird die Live-Statusaktualisierung für 3 Sekunden angehalten, damit die Oberfläche nicht zum alten Wert zurückspringt, während der Scooter den Schreibvorgang bestätigt.",
       "<b>GT3 Max, GT3, ST3-Familie: Anfahrstufe 0 (komplett aus) und Stufen 1-2 jetzt verfügbar.</b> Eine Analyse der gemeinsamen 2.0.4.6-Meter-Firmware zeigt: der Kickstart-Handler hat keine Region-Sperre und akzeptiert Stufen 0 bis 5 direkt. Die App hat Stufen 0-2 für EU-Geräte unnötig versteckt. Kein Firmware-Flash nötig.",
@@ -1228,7 +1232,7 @@ window.I18N = {
     "feat.beep-overspeed": "Warnton (Tempo) stumm",
     "feat.beep-alarm": "Alarm-/Find-me-Ton stumm",
     "feat.beep-melody": "Start-/Fehlermelodie stumm",
-    "patch.disclaimer": "Nur auf Privatgelände. Die Entdrosselung hebt die ABE auf; der Roller darf dann nicht mehr im öffentlichen Straßenverkehr genutzt werden.",
+    "patch.disclaimer": "Die Entdrosselung hebt die ABE auf; der Roller darf dann nicht mehr im öffentlichen Straßenverkehr genutzt werden.",
     "patch.launchdrop": "Hinweis zu diesem Controller (NT5 Max / Max+ / Turbo): Das Entsperren der Geschwindigkeit senkt die Anfahrkraft - der Anfahrstrom fällt von etwa 22 A auf 18 A. Der starke Anfahr-Schub ist in der Werks-Firmware an die 22-km/h-Sperre gekoppelt, entsperrt entfällt er. Bauartbedingt, ohne Brick-Risiko nicht rückholbar.",
     "patch.status.download_fail": "Download von {kind} fehlgeschlagen. Verbindung prüfen.",
     "patch.status.done": "Fertig. Die gepatchten Dateien liegen in Downloads.",

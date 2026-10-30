@@ -4691,9 +4691,7 @@ function renderPatchFeatures(det) {
     }
   }
   if (disc) {
-    const de = (window.I18N.de && window.I18N.de['patch.disclaimer']) || '';
-    const en = (window.I18N.en && window.I18N.en['patch.disclaimer']) || '';
-    disc.textContent = de + (de && en ? '  ' : '') + en;
+    disc.textContent = t('patch.disclaimer');
     disc.classList.remove('is-hidden');
   }
 }

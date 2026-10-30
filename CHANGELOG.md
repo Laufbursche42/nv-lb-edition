@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.91
+- Patcher page: fixed the ABE disclaimer showing in English even when the app language is set to German. The text was concatenated from both language blocks instead of using the active language.
+- Patcher page: the "private ground only" note no longer appears twice when a supported scooter is connected. The general intro already carries it; the model-specific disclaimer now shows only the ABE-specific part.
+
 ## 1.0.90
 - GT3 Max / GT3 / ST3: fixed zero-start level snapping back to 3 when live status refreshes. A write-pending guard suppresses the live-refresh override for 3 seconds after a BLE write.
 
