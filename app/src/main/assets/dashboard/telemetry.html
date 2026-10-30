@@ -3670,13 +3670,15 @@ function naveeSkuOf(region) {
   return 'EUR';
 }
 // A kickstart-patched meter carries a marker version (NT5 3.0.2.2 -> "5022", XT5 3.0.2.0 -> "5020",
-// UT5 Max 0.0.3.0 -> "0050") and then accepts launch levels 0-2 on any region. Stock NAVEE meters
-// never report these marker versions.
-const NAVEE_METER_PATCHED_FW = ['5022', '5020', '0050'];
+// UT5 Max 0.0.3.0 -> "0050", ST3/GT3 2.0.4.6 -> "5046") and then accepts launch levels 0-2 on any
+// region. Stock NAVEE meters never report these marker versions.
+const NAVEE_METER_PATCHED_FW = ['5022', '5020', '0050', '5046'];
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
-// ST3/GT3 family (meter 2.0.4.6): kickstart handler has NO region gate and accepts level 0 directly.
-// Verified from decompile of FUN_08010ecc: only clamps at 5, no minimum enforced.
-const NAVEE_FULL_KICK_PIDS = ['2345', '2401', '2402', '2403', '2418', '2704', '2714'];
+// Stock meters re-clamp the launch level to a minimum of 3 outside the USA SKU (meter-side, the periodic
+// drive-state builder forces any sub-3 value back to 3). No model is exempt by pid: levels 0-2 become
+// available only on the USA SKU or on a meter carrying the kickstart marker (see NAVEE_METER_PATCHED_FW).
+// The ST3/GT3 meter gets that marker from the experimental zero-start patch in the firmware patcher.
+const NAVEE_FULL_KICK_PIDS = [];
 function naveeZeroStartFull() {
   const pid = (_modelPidOverride || liveRaw().pid || '').trim();
   return naveeSkuOf(liveRaw().region) === 'USA' || meterKickstartPatched() || NAVEE_FULL_KICK_PIDS.indexOf(pid) >= 0;
@@ -4574,10 +4576,10 @@ function fwPatchStatus(msg) {
 }
 // Models whose meter must never be patched, whatever the manifest offers: the meter hosts BLE and is the
 // only route back from a failed controller update, and these have no confirmed in-place meter patch, so
-// the raised top gear sits in the controller alone. ST3/GT3 family: same reason. The UT5 Max (8901) is
-// NOT here - its meter has an in-place patch (drossel, kickstart, cruise) applied as one atomic set and
-// offered with the untested warning.
-const METER_BLOCKED_IDS = ['9601', '12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401',
+// the raised top gear sits in the controller alone. The UT5 Max (8901) and the ST3/GT3 family are NOT
+// here - their meters have an in-place patch (UT5 Max: drossel + kickstart + cruise atomic; ST3/GT3:
+// zero-start level 0-2 unlock) offered with the red untested warning plus an extra confirmation.
+const METER_BLOCKED_IDS = ['9601', '12401',
   '5401', '8501', '8401', '10501', '12701', '5701', '5601', '10201', '10701', '6001',
   '10101', '9101', '701', '1101', '1201', '1301', '1601', '2501', '4201', '4401', '9901',
   '4001', '4101', '10001', '10301', '10601', '12801', '12901',
@@ -4589,7 +4591,12 @@ function patchFeatureList(det) {
   if (det.bldc && (!naveeIsXT(det.name) || ['5301', '5901'].indexOf(String(det.id)) >= 0)) feats.push('speed'); // XT5 Pro/Max (5301/5901) have a controller speed selector
   // XT5 Pro/Max controller only: the drive-mode ramp step (mode 4 gets mode 5's 3 counts per pass)
   if (det.bldc && ['5301', '5901'].indexOf(String(det.id)) >= 0) feats.push('launchramp');
-  if (det.meter && !naveeMeterPatchBlocked(det)) feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
+  if (det.meter && !naveeMeterPatchBlocked(det)) {
+    // ST3/GT3 meter 2.0.4.6: the only in-place meter patch is the zero-start (kickstart) unlock; this meter
+    // has no cruise or beep patch sites, so offer kickstart alone (not the NT5 feature set).
+    if (['12501', '3801', '3401', '12601', '3701', '3501', '3601'].indexOf(String(det.id)) >= 0) feats.push('kickstart');
+    else feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
+  }
   return feats;
 }
 function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v === k ? f : v; }

@@ -5,12 +5,12 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>GT3 Max / GT3 / ST3: zero-start (launch level 0-2) needs a one-time meter patch.</b> An earlier note said it worked over Bluetooth without flashing - that was wrong. The meter firmware re-clamps any level below 3 back to 3, so on a stock scooter levels 0-2 never stick. The firmware patcher now offers an experimental zero-start unlock for these displays; flash it once and you can then set level 0, 1 or 2 live in the app and it holds (and is kept on the scooter).",
+      "<b>The ST3/GT3 zero-start patch is experimental and clearly flagged.</b> This display hosts Bluetooth and has no confirmed recovery path, so the patcher shows a red untested warning and asks for an extra confirmation before it flashes. Only patch it if you accept the risk of an unrecoverable display.",
       "<b>Patcher: ABE disclaimer now shows in the correct language.</b> The text was accidentally built from both language blocks at once, so the German disclaimer always included the English version underneath it.",
       "<b>Patcher: private-ground notice no longer appears twice.</b> The general intro at the top of the patcher already mentions private ground; the model-specific disclaimer below now shows only the ABE-specific part.",
       "<b>GT3 Max / GT3 / ST3: zero-start level no longer snaps back to 3 after you change it.</b> The live-status refresh was overwriting the selector before the scooter confirmed the write. A write-pending guard now suppresses the override for 3 seconds.",
       "<b>Write-pending guard for BLE settings.</b> After any setting change the live-status refresh is held off for 3 seconds so the UI does not flicker back to the old value while the scooter confirms the write.",
-      "<b>GT3 Max, GT3, ST3 family: zero-start level 0 (fully off) and levels 1-2 now available.</b> A decompile of the shared 2.0.4.6 meter firmware confirms there is no region gate in the kick-start handler: it accepts any level from 0 to 5 directly. The app was hiding levels 0-2 for EU units unnecessarily. No firmware flash needed.",
-      "<b>GT3 Max: cruise control and kick-start work via Bluetooth without flashing.</b> Both settings appear in the app as soon as you connect. The meter firmware handles them natively; no patch is required.",
       "<b>Account ID: Android log and iPhone Http Catcher.</b> The account-ID section now also accepts an Android Bluetooth HCI snoop log file (the file picker is available directly in the app, no native import needed) and an Http Catcher JSON export from iPhone. Both extract the ID locally; nothing is uploaded.",
       "<b>Patcher guide.</b> A collapsible step-by-step guide now sits at the top of the patcher screen - tap to expand.",
       "<b>N65i II confirmed.</b> The N65i II speed patch is hardware-confirmed (40 km/h reached). The untested warning is removed.",
@@ -723,12 +723,12 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>GT3 Max / GT3 / ST3: Zero-Start (Anfahrstufe 0-2) braucht einen einmaligen Meter-Patch.</b> Ein früherer Hinweis sagte, es gehe per Bluetooth ohne Flashen - das war falsch. Die Meter-Firmware zwingt jede Stufe unter 3 wieder auf 3 zurück, auf einem Serien-Roller bleiben 0-2 also nie stehen. Der Firmware-Patcher bietet jetzt eine experimentelle Zero-Start-Freischaltung für diese Displays; einmal flashen und danach lässt sich Stufe 0, 1 oder 2 live in der App einstellen und sie bleibt (und wird im Roller gespeichert).",
+      "<b>Der ST3/GT3-Zero-Start-Patch ist experimentell und klar gekennzeichnet.</b> Dieses Display hostet Bluetooth und hat keinen bestätigten Rettungsweg, daher zeigt der Patcher eine rote Ungetestet-Warnung und fragt vor dem Flashen extra nach. Flash ihn nur, wenn du das Risiko eines nicht mehr rückholbaren Displays akzeptierst.",
       "<b>Patcher: ABE-Hinweis erscheint jetzt in der richtigen Sprache.</b> Der Text wurde versehentlich aus beiden Sprachblöcken zusammengebaut, sodass beim deutschen Hinweis immer auch die englische Fassung darunter stand.",
       "<b>Patcher: Privatgelände-Hinweis erscheint nicht mehr doppelt.</b> Der allgemeine Einleitungstext oben im Patcher enthält den Hinweis bereits; der modellspezifische Hinweis darunter zeigt jetzt nur noch den ABE-spezifischen Teil.",
       "<b>GT3 Max / GT3 / ST3: Anfahrstufe springt nach dem Ändern nicht mehr auf 3 zurück.</b> Die Live-Statusaktualisierung hat den Selektor überschrieben, bevor der Scooter den Schreibvorgang bestätigt hatte. Ein Schreib-Guard unterdrückt die Überschreibung jetzt für 3 Sekunden.",
       "<b>Schreib-Guard für BLE-Einstellungen.</b> Nach jeder Einstellungsänderung wird die Live-Statusaktualisierung für 3 Sekunden angehalten, damit die Oberfläche nicht zum alten Wert zurückspringt, während der Scooter den Schreibvorgang bestätigt.",
-      "<b>GT3 Max, GT3, ST3-Familie: Anfahrstufe 0 (komplett aus) und Stufen 1-2 jetzt verfügbar.</b> Eine Analyse der gemeinsamen 2.0.4.6-Meter-Firmware zeigt: der Kickstart-Handler hat keine Region-Sperre und akzeptiert Stufen 0 bis 5 direkt. Die App hat Stufen 0-2 für EU-Geräte unnötig versteckt. Kein Firmware-Flash nötig.",
-      "<b>GT3 Max: Tempomat und Kickstart per Bluetooth, kein Flash nötig.</b> Beide Einstellungen erscheinen in der App direkt nach dem Verbinden. Die Meter-Firmware verarbeitet sie nativ.",
       "<b>Konto-ID: Android-Log und iPhone Http Catcher.</b> Der Konto-ID-Bereich akzeptiert jetzt auch eine Android-Bluetooth-HCI-Snoop-Log-Datei (der Datei-Picker ist direkt in der App verfügbar, kein nativer Import nötig) sowie einen Http-Catcher-JSON-Export vom iPhone. Beides liest die ID lokal aus - nichts wird hochgeladen.",
       "<b>Patcher-Anleitung.</b> Am Anfang des Patcher-Screens gibt es jetzt eine aufklappbare Schritt-für-Schritt-Anleitung.",
       "<b>N65i II bestätigt.</b> Der N65i-II-Speed-Patch ist am Gerät bestätigt (40 km/h erreicht). Die Ungetestet-Warnung entfällt.",

@@ -171,8 +171,16 @@ const IMAGES = {
     verify: { size: 0x22800, crcOff: 0x13, crcStock: 0x9bce, lenOff: 0x10, lenStock: 0x022400 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    blocked: 'The ST3/GT3 meter is never patched: it hosts BLE and is the only route back for a failed controller update, so a bad meter commit cannot be undone. The controller carries the raised top gear on its own.',
-    patches: [],
+    // Zero-start (launch level): the periodic drive-state builder re-clamps any level below 3 back to 3
+    // (meter-side, FUN_0800f1e0, store @ VA 0x0800f37e, gated on the reported BLDC version flag). NOP the
+    // sub-3 branch so levels 0-2 persist; the >5 high clamp is left intact. The version marker flips the
+    // reported meter version '2'->'5' (fwMeter "2046"->"5046") so the app offers levels 0-2 only on a
+    // patched meter. Experimental: this meter hosts BLE and has no confirmed SWD recovery, so a failed
+    // flash can be unrecoverable - it carries the red untested warning plus an extra confirmation.
+    patches: [
+      { off: 0xf374, from: [0x03, 0xd3], to: [0x00, 0xbf], id: 'kickstart' },   // sub-3 launch-level force-to-3 bcc -> nop
+      { off: 0x10770, from: [0x32], to: [0x35], id: 'version-marker' },         // reported meter version 2.0.4.6 -> 5.0.4.6 ("5046")
+    ],
   },
 
   // Meter 0.0.0.7, NT3 Pro (12401). 146432 bytes. Beep-silence (buzzer gate) so a de-capped controller stays quiet.
@@ -2207,6 +2215,7 @@ const FLASH_ENABLED = new Set([
   'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
   'meterXT5',                                                     // XT5 meter
   'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + cruise, experimental)
+  'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + version marker, experimental)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
   'bldcUT5Max',                                                   // UT5 Max controller (permanent 40 km/h top gear, meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
@@ -2219,7 +2228,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterUT5Max', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {

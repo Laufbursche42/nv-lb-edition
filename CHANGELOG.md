@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.92
+- GT3 Max / GT3 / ST3: zero-start levels 0-2 now need a one-time meter patch, offered in the firmware patcher as an experimental, untested unlock. The earlier note (1.0.89) that the 2.0.4.6 meter had no region gate was wrong: the meter re-clamps any level below 3 back to 3 (periodic drive-state builder), so on a stock scooter 0-2 never persist. The patch removes that clamp and writes a version marker so the app offers 0-2 only on a patched meter; 0-2 are no longer shown on stock GT3/ST3.
+- The ST3/GT3 zero-start meter patch carries the red untested warning and an extra confirmation: this display hosts Bluetooth and has no confirmed recovery path, so a failed flash can be unrecoverable. The controller does not own the launch level, so no controller flash is involved.
+
 ## 1.0.91
 - Patcher page: fixed the ABE disclaimer showing in English even when the app language is set to German. The text was concatenated from both language blocks instead of using the active language.
 - Patcher page: the "private ground only" note no longer appears twice when a supported scooter is connected. The general intro already carries it; the model-specific disclaimer now shows only the ABE-specific part.
