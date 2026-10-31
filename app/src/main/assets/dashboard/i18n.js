@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: silence the find-me alarm and the fault/error beep individually.</b> When you patch the UT5 Max speedometer, the find-me alarm tone and the fault/error-code beep are now separate options in the firmware patcher - tick either to silence it (both off by default, so the stock tones stay). This meter has no over-speed warning tone, so that option is not shown.",
+      "<b>UT5 Max: the switchable meter patch and the permanent controller patch now exclude each other.</b> Picking the controller speed unlock (permanent 40 km/h) clears the meter options and vice versa - a permanent controller cap overrides the meter and would silently kill the live limiter switch. The switchable meter path is preselected.",
       "<b>GT3 Max / GT3 / ST3: zero-start (launch level 0-2) needs a one-time meter patch.</b> An earlier note said it worked over Bluetooth without flashing - that was wrong. The meter firmware re-clamps any level below 3 back to 3, so on a stock scooter levels 0-2 never stick. The firmware patcher now offers an experimental zero-start unlock for these displays; flash it once and you can then set level 0, 1 or 2 live in the app and it holds (and is kept on the scooter).",
       "<b>The ST3/GT3 zero-start patch is experimental and clearly flagged.</b> This display hosts Bluetooth and has no confirmed recovery path, so the patcher shows a red untested warning and asks for an extra confirmation before it flashes. Only patch it if you accept the risk of an unrecoverable display.",
       "<b>Patcher: ABE disclaimer now shows in the correct language.</b> The text was accidentally built from both language blocks at once, so the German disclaimer always included the English version underneath it.",
@@ -498,6 +500,7 @@ window.I18N = {
     "patch.run.pickvariant": "Pick your board variant above.",
     "patch.run.unsupported": "This model is not supported by the patcher yet.",
     "patch.meter.never": "Only the controller is patched on this model. The speedometer is never touched: it hosts the Bluetooth link and is the only way back from a failed controller update, so a bad update there could not be undone. That is why there is no cruise control and no kickstart option here.",
+    "patch.ut5max.exclusive": "UT5 Max: pick one path. The switchable meter patch (speed toggle between 22 and open over Bluetooth, plus kickstart and cruise) needs a stock controller. The controller patch is a permanent 40 km/h and overrides the meter - the toggle would then do nothing. They cannot be combined - selecting one automatically deselects the other. The switchable meter path is preselected and recommended.",
     "patch.run.experimental": "No patching for this model here. Flash a firmware file you were provided on the Firmware page instead.",
     "patch.status.download": "Downloading {kind}...",
     "patch.status.patch": "Patching {kind}...",
@@ -723,6 +726,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: Find-me-Alarmton und Fehler-/Warnton einzeln stummschalten.</b> Beim Patchen des UT5-Max-Tachos sind der Find-me-Alarmton und der Fehlercode-Ton jetzt getrennte Optionen im Firmware-Patcher - Haken setzen schaltet den jeweiligen Ton stumm (beide standardmäßig aus, die Serientöne bleiben also). Dieser Tacho hat keinen Überspeed-Warnton, die Option erscheint daher nicht.",
+      "<b>UT5 Max: Schaltbarer Tacho-Patch und dauerhafter Controller-Patch schließen sich jetzt aus.</b> Wählst du die dauerhafte Controller-Entsperrung (fix 40 km/h), werden die Tacho-Optionen abgewählt und umgekehrt - ein dauerhafter Controller-Deckel überschreibt den Tacho und würde den Live-Drossel-Schalter still aushebeln. Der schaltbare Tacho-Weg ist vorausgewählt.",
       "<b>GT3 Max / GT3 / ST3: Zero-Start (Anfahrstufe 0-2) braucht einen einmaligen Meter-Patch.</b> Ein früherer Hinweis sagte, es gehe per Bluetooth ohne Flashen - das war falsch. Die Meter-Firmware zwingt jede Stufe unter 3 wieder auf 3 zurück, auf einem Serien-Roller bleiben 0-2 also nie stehen. Der Firmware-Patcher bietet jetzt eine experimentelle Zero-Start-Freischaltung für diese Displays; einmal flashen und danach lässt sich Stufe 0, 1 oder 2 live in der App einstellen und sie bleibt (und wird im Roller gespeichert).",
       "<b>Der ST3/GT3-Zero-Start-Patch ist experimentell und klar gekennzeichnet.</b> Dieses Display hostet Bluetooth und hat keinen bestätigten Rettungsweg, daher zeigt der Patcher eine rote Ungetestet-Warnung und fragt vor dem Flashen extra nach. Flash ihn nur, wenn du das Risiko eines nicht mehr rückholbaren Displays akzeptierst.",
       "<b>Patcher: ABE-Hinweis erscheint jetzt in der richtigen Sprache.</b> Der Text wurde versehentlich aus beiden Sprachblöcken zusammengebaut, sodass beim deutschen Hinweis immer auch die englische Fassung darunter stand.",
@@ -1216,6 +1221,7 @@ window.I18N = {
     "patch.run.pickvariant": "Oben die Board-Variante wählen.",
     "patch.run.unsupported": "Dieses Modell unterstützt der Patcher noch nicht.",
     "patch.meter.never": "Bei diesem Modell wird nur der Controller gepatcht. Der Tacho wird nie angefasst: er beherbergt die Bluetooth-Verbindung und ist der einzige Rückweg aus einem fehlgeschlagenen Controller-Update, ein Fehlschlag dort wäre also nicht rückholbar. Deshalb gibt es hier keinen Tempomat und keine Anfahrstufen.",
+    "patch.ut5max.exclusive": "UT5 Max: wähle einen Weg. Der schaltbare Tacho-Patch (Geschwindigkeit per Bluetooth zwischen 22 und offen umschaltbar plus Kickstart und Tempomat) braucht einen Serien-Controller. Der Controller-Patch ist dauerhaft 40 km/h und überschreibt den Tacho - der Schalter wäre dann wirkungslos. Beides zusammen geht nicht - wählst du eine Seite, wird die andere automatisch abgewählt. Der schaltbare Tacho-Weg ist vorausgewählt und empfohlen.",
     "patch.run.experimental": "Für dieses Modell hier kein Patchen. Flashe stattdessen auf der Firmware-Seite eine fertige Firmware-Datei, die du bekommen hast.",
     "patch.status.download": "{kind} wird heruntergeladen...",
     "patch.status.patch": "{kind} wird gepatcht...",

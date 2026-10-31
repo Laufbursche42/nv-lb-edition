@@ -4595,6 +4595,9 @@ function patchFeatureList(det) {
     // ST3/GT3 meter 2.0.4.6: the only in-place meter patch is the zero-start (kickstart) unlock; this meter
     // has no cruise or beep patch sites, so offer kickstart alone (not the NT5 feature set).
     if (['12501', '3801', '3401', '12601', '3701', '3501', '3601'].indexOf(String(det.id)) >= 0) feats.push('kickstart');
+    // UT5 Max meter: no over-speed tone exists on this platform (speed is controller-side); only the
+    // find-me alarm and the fault/error-code beep can be silenced. cruise+kickstart are the core set.
+    else if (String(det.id) === '8901') feats.push('cruise', 'kickstart', 'beep-alarm', 'beep-melody');
     else feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   }
   return feats;
@@ -4678,6 +4681,23 @@ function renderPatchFeatures(det) {
           const h = document.createElement('div'); h.className = 'hint'; h.style.margin = '0 0 6px 20px';
           h.textContent = expl; box.appendChild(h);
         }
+      }
+      // UT5 Max: the switchable meter patch (BLE speed toggle between 22 and open, plus kickstart and
+      // cruise) needs a stock controller; the controller patch is a permanent 40 that overrides the meter
+      // and kills the toggle. Mutually exclusive - checking one auto-unchecks the other. Default: meter path.
+      if (String(det.id) === '8901') {
+        const nx = document.createElement('div');
+        nx.className = 'patch-disclaimer'; nx.style.margin = '6px 0 2px';
+        nx.textContent = t('patch.ut5max.exclusive');
+        box.appendChild(nx);
+        const cbsX = Array.from(box.querySelectorAll('input[type=checkbox]'));
+        const ctrlX = cbsX.filter(c => c.value === 'speed');
+        const meterX = cbsX.filter(c => c.value !== 'speed');
+        ctrlX.forEach(c => { c.checked = false; });   // recommended default: switchable meter path
+        cbsX.forEach(c => c.addEventListener('change', function () {
+          if (!c.checked) return;
+          (c.value === 'speed' ? meterX : ctrlX).forEach(o => { o.checked = false; });
+        }));
       }
       const spd = naveeSpeedOpts(det);
       if (spd) {

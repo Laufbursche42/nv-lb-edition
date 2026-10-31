@@ -1737,15 +1737,18 @@ patches: [
     verify: { size: 0x25c00, crcOff: 0x13, crcStock: 0x010a, lenOff: 0x10, lenStock: 0x025800 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    // Atomic image: the drossel gate, its boot companion, kickstart, cruise and the '0050' version
-    // marker always apply together. The app keys the BLE drossel toggle off that marker, so a partial
-    // patch (marker present, gate missing) would show a dead toggle - never split this set.
-    atomic: true,
+    // Core set (drossel gate + boot companion + kickstart + cruise + '0050' marker) always applies as a
+    // unit: the app keys kickstart (launch 0-2) and the BLE drossel toggle off that marker, so a partial
+    // core (marker present, a part missing) would show a dead feature. The beep silences are NOT
+    // certified by the marker, so they stay individually selectable (core forced, beeps honour selection).
+    coreFeatures: ['speed', 'kickstart', 'cruise'],
     patches: [
       { off: 0x133ae, from: [0x04, 0xf0, 0x98, 0xfa], to: [0x95, 0xf8, 0x2e, 0x00], id: 'drossel-gate' }, // frame-builder region gate (bl FUN_080178e2) -> ldrb.w r0,[r5,#0x2e] = BLE flag 0x0020ab0e
       { off: 0x169c6, from: [0x00, 0xf0, 0x8c, 0xff], to: [0x94, 0xf8, 0x34, 0x00], id: 'drossel-boot' }, // boot-init companion gate -> ldrb.w r0,[r4,#0x34] = same flag 0x0020ab0e
       { off: 0x1438f, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bhs) -> unconditional, launch levels 0-2 accepted in every region
       { off: 0x14068, from: [0x0b, 0xd0], to: [0x00, 0xbf], id: 'cruise' }, // cruise/tempomat DE sub-gate (beq) -> nop, enable bit forwarded in every region
+      { off: 0x159fc, from: [0xff, 0xf7, 0x1f, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/anti-theft alarm bl (FUN_0801543e) -> nop
+      { off: 0x15ae4, from: [0xff, 0xf7, 0xd0, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // fault/error-code announce bl (FUN_08015488) -> nop; silences every fault tone on this meter
       { off: 0x1a7da, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version '0030' -> '0050' (fwMeter "0050"), app patched-FW detection
     ],
   },
@@ -2291,9 +2294,10 @@ function imageFeatures(u8) {
   const key = identify(u8);
   if (!key) return null;
   const feats = [];
+  const core = new Set(IMAGES[key].coreFeatures || []);   // forced features are not user-choosable
   for (const p of IMAGES[key].patches) {
     const f = featureOf(p.id);
-    if (f !== 'marker' && feats.indexOf(f) < 0) feats.push(f);
+    if (f !== 'marker' && !core.has(f) && feats.indexOf(f) < 0) feats.push(f);
   }
   return { image: key, kind: IMAGES[key].kind, features: feats };
 }
@@ -2339,9 +2343,12 @@ function patchFirmware(arrayBuffer, selected, variantKey) {
   if (patchList.some(p => p.off === 0x84)) {
     throw new Error('This build type (firmware length-extension) is disabled: it bricks the controller. Recovery needs SWD.');
   }
-  // Atomic images patch as a complete set regardless of feature selection (see spec.atomic): their
-  // version marker tells the app that every part of the patch is present.
-  const applied = applyPatches(u8, patchList, spec.atomic ? null : selected);
+  // coreFeatures always apply (the drossel+marker set the app keys its toggle and launch 0-2 off); any
+  // other feature (beep silences) honours the selection. Legacy atomic (whole set) still forces all.
+  const sel = spec.atomic ? null
+    : spec.coreFeatures ? Array.from(new Set((selected || []).concat(spec.coreFeatures)))
+    : selected;
+  const applied = applyPatches(u8, patchList, sel);
   spec.reseal(u8);
 
   return {
