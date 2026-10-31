@@ -1266,6 +1266,26 @@ patches: [
     ],
   },
 
+  // XT5 Pro/Max BLDC 0.0.1.3 (3553G/T2416): NAVEE OTA removed the explicit mode-4 case, so mode 4
+  // defaults to the stock 0xb5 (~10 km/h). Patch: redirect the cap-select cmp at raw 0x47d8 from
+  // `cmp r2,#5` -> `cmp r2,#4` (OTA 0x48d8: 05 2a -> 04 2a). Mode 4 then falls into the mode-5
+  // branch which loads the meter-driven cap cell (PTR_DAT_00004b68, ~816 counts = 45 km/h with meter
+  // patch active). No clamp problem: mode 4 is already at-or-below the cap by construction.
+  // Version 0.0.1.3 writes fwBldc at notification[r1+1..4] (vs [r1+4..7] in 0.0.1.0), so
+  // fwBldc[0]='3' (0x33) for unpatched; marker patch changes that to '5' (0x35).
+  bldcXT5ProMax0013: {
+    label: 'XT5 Pro/Max BLDC 0.0.1.3 (5301/5901)',
+    kind: 'bldc',
+    match: (u8) => u8.length === 0xe500 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x03]) && beRead(u8, 0xb0, 2) === 0x9757,
+    verify: { size: 0xe500, lenOff: 0x84, lenStock: 0x0000e400, crcOff: 0xb0, crcStock: 0x9757 },
+    reseal: bldcResealErpm,
+    stdSpeedKmh: 45,
+    patches: [
+      { off: 0x48d8, from: [0x05, 0x2a], to: [0x04, 0x2a], id: 'speed' },        // cmp r2,#5->4: mode-4 -> cap cell (raw 0x47d8)
+      { off: 0x0908e, from: [0x33, 0x20], to: [0x35, 0x20], id: 'marker' },      // fwBldc[0]: '3' -> '5'
+    ],
+  },
+
   // S2 BLDC 0.0.0.1 (9901). Same design. The pointer is reloaded with a different struct right after
   // the clamp, so the stores further down belong to that second pointer, not to the limit cell.
   bldcS2: {
@@ -2222,7 +2242,8 @@ const FLASH_ENABLED = new Set([
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
   'bldcUT5Max',                                                   // UT5 Max controller (permanent 40 km/h top gear, meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
-  'bldcXT5ProMax',                                                // XT5 Pro/Max controller (target-speed selector 22-40, experimental)
+  'bldcXT5ProMax',                                                // XT5 Pro/Max controller 0.0.1.0 (target-speed selector 22-40, experimental)
+  'bldcXT5ProMax0013',                                            // XT5 Pro/Max controller 0.0.1.3 (45 km/h via meter cap, experimental)
   'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', // ST3/GT3 controllers
   'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', // 02831 in-place target-speed selector (experimental) (raised top gear, meter never flashed, experimental)
   'bldcNT3Pro',                                                  // NT3 Pro controller (experimental; meter not yet enabled)
@@ -2231,7 +2252,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {

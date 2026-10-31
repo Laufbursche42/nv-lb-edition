@@ -4521,6 +4521,15 @@ function fwDetectModel() {
   const M = window.FW_MANIFEST;
   const pid4 = (liveRaw().pid || '').trim();
   if (!M || !pid4) return { state: 'nomodel' };
+  // XT5 Pro/Max: controller 0.0.1.0 and 0.0.1.3 need different patches. Resolve by the live fwBldc
+  // layout so ONLY the firmware matching this device is offered (no manual variant pick). A 0.0.1.3
+  // controller reports fwBldc[1]='\r' (0x0d); byte[0] is '3' (0x33) stock or '5' (0x35) once patched.
+  if (pid4 === '2416' || pid4 === '2529') {
+    const fw = (liveRaw().fwBldc || '');
+    const is0013 = fw.charCodeAt(1) === 13 && (fw.charCodeAt(0) === 51 || fw.charCodeAt(0) === 53);
+    if (pid4 === '2416') return fwModelEntry(is0013 ? '5302' : '5301');
+    return fwModelEntry(is0013 ? '5902' : '5901');
+  }
   const ids = (M.pidIndex && M.pidIndex[pid4]) || [];
   if (!ids.length) return { state: 'unknown', pid: pid4 };
   if (ids.length === 1) return fwModelEntry(ids[0]);
@@ -4609,7 +4618,7 @@ function naveeMeterPatchBlocked(det) { return !!det && METER_BLOCKED_IDS.indexOf
 // Feature checkboxes on the patcher page: which features the detected model can take, plus the selection.
 function patchFeatureList(det) {
   const feats = [];
-  if (det.bldc && (!naveeIsXT(det.name) || ['5301', '5901'].indexOf(String(det.id)) >= 0)) feats.push('speed'); // XT5 Pro/Max (5301/5901) have a controller speed selector
+  if (det.bldc && (!naveeIsXT(det.name) || ['5301', '5901', '5302', '5902'].indexOf(String(det.id)) >= 0)) feats.push('speed'); // XT5 Pro/Max: 5301/5901 = 0.0.1.0 (speed selector), 5302/5902 = 0.0.1.3 (single 45, no selector)
   // XT5 Pro/Max controller only: the drive-mode ramp step (mode 4 gets mode 5's 3 counts per pass)
   if (det.bldc && ['5301', '5901'].indexOf(String(det.id)) >= 0) feats.push('launchramp');
   if (det.meter && !naveeMeterPatchBlocked(det)) {

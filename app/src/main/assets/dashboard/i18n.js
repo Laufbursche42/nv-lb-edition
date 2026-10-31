@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>XT5 Pro / XT5 Max: the patcher now uses the firmware that matches your controller.</b> NAVEE shipped a newer 0.0.1.3 controller by OTA that needs a different patch (fixed 45 km/h) than the 0.0.1.0 one. The app now detects your running version and offers only the firmware for your device - no wrong version, no downgrade.",
+      "<b>Already patched an XT5 Pro/Max on 0.0.1.3? Flash again.</b> If you ran the earlier patch on a 0.0.1.3 controller, open the firmware patcher and flash once more - you will now get the correct 0.0.1.3 patch.",
       "<b>New: 'Anonymize log' switch, on by default.</b> Debug settings now have an 'Anonymize log' toggle. With it on (the default), the recorded log has Bluetooth MAC addresses and ids stripped out before you save or share it, so nothing device-identifying leaves your phone.",
       "<b>Bug reports and logs no longer leak the scooter's Bluetooth address.</b> The debug capture also recorded Android's own Bluetooth log lines, which contained the raw MAC. Those are now scrubbed, and a bug report you send is always anonymized regardless of the toggle.",
       "<b>UT5 Max: silence the find-me alarm and the fault/error beep individually.</b> When you patch the UT5 Max speedometer, the find-me alarm tone and the fault/error-code beep are now separate options in the firmware patcher - tick either to silence it (both off by default, so the stock tones stay). This meter has no over-speed warning tone, so that option is not shown.",
@@ -730,6 +732,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>XT5 Pro / XT5 Max: der Patcher nutzt jetzt die Firmware, die zu deinem Controller passt.</b> NAVEE hat per OTA einen neueren 0.0.1.3-Controller ausgespielt, der einen anderen Patch braucht (fix 45 km/h) als die 0.0.1.0. Die App erkennt jetzt deine laufende Version und bietet nur die Firmware deines Geräts an - keine falsche Version, kein Downgrade.",
+      "<b>Schon einen XT5 Pro/Max auf 0.0.1.3 gepatcht? Flash neu.</b> Wenn du den früheren Patch auf einem 0.0.1.3-Controller gefahren hast, öffne den Firmware-Patcher und flashe noch einmal - du bekommst jetzt den korrekten 0.0.1.3-Patch.",
       "<b>Neu: Schalter 'Log anonymisieren', standardmäßig an.</b> In den Debug-Einstellungen gibt es jetzt einen Schalter 'Log anonymisieren'. Ist er an (Standard), werden Bluetooth-MAC-Adressen und IDs aus dem aufgezeichneten Log entfernt bevor du es speicherst oder teilst - nichts Geräteidentifizierendes verlässt dein Handy.",
       "<b>Fehlerberichte und Logs geben die Bluetooth-Adresse des Rollers nicht mehr preis.</b> Die Debug-Aufzeichnung enthielt auch Androids eigene Bluetooth-Log-Zeilen mit der rohen MAC. Die werden jetzt entfernt und ein gesendeter Fehlerbericht ist immer anonymisiert, unabhängig vom Schalter.",
       "<b>UT5 Max: Find-me-Alarmton und Fehler-/Warnton einzeln stummschalten.</b> Beim Patchen des UT5-Max-Tachos sind der Find-me-Alarmton und der Fehlercode-Ton jetzt getrennte Optionen im Firmware-Patcher - Haken setzen schaltet den jeweiligen Ton stumm (beide standardmäßig aus, die Serientöne bleiben also). Dieser Tacho hat keinen Überspeed-Warnton, die Option erscheint daher nicht.",

@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.95
+- XT5 Pro / XT5 Max: the firmware patcher now serves the controller firmware that matches the device's running version. NAVEE's newer 0.0.1.3 controller (OTA) needs a different patch (fixed ~45 km/h) than 0.0.1.0; the app detects the running version from fwBldc and offers only the matching firmware, so a 0.0.1.3 device no longer gets the 0.0.1.0 bin (which would be a downgrade).
+- If you already flashed the XT5 Pro/Max patch on a 0.0.1.3 controller under an earlier version, re-flash - you now get the correct 0.0.1.3 patch.
+
 ## 1.0.94
 - Privacy: new "Anonymize log" toggle in Debug settings (on by default). The recorded debug log now has Bluetooth MAC addresses and ids stripped out before it is saved or shared.
 - The debug capture also recorded Android's own Bluetooth framework log lines, which carried the raw scooter MAC; those are now scrubbed at the source, and a bug report sent from the app is always anonymized regardless of the toggle.
