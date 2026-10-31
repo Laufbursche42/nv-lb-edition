@@ -43,52 +43,27 @@ if (keystorePropertiesFile.exists()) {
 // keystore can never break gradle evaluation, sync or the debug build.
 def hasReleaseSigning = releaseSigning.storeFile != null && !releaseSigning.storeFile.toString().trim().isEmpty()
 
-// ── Automatic versioning from the git commit count ───────────────────────────
-// The series lives in version.properties in the repo root, which the release workflow
-// reads as well so the tag and the number inside the APK cannot drift apart:
+// ── Versioning from version.properties ───────────────────────────────────────
+// releaseCount is the patch of the LAST PUBLISHED release.
+// The CI release workflow increments it once per push (push = one release).
+// Individual dev commits do NOT change this value, so the shown version only ever
+// moves when a release is actually published.
 //
-//   versionName = <major>.<minor>.<commit count - patchZeroAt>
-//   versionCode = codeBase + <commit count>
-//
-// No manual bump: each commit raises the patch level. versionCode counts straight
-// through a series change and never goes backwards, so a build always installs over
-// the one before it. Falls back to the baseline when git is not available (e.g. a
-// source zip without .git) so the build never breaks.
+//   versionName (release) = major.minor.(releaseCount + 1)   <- CI bumps before building
+//   versionName (debug)   = major.minor.(releaseCount + 1)-dev   <- local dev builds
+//   versionCode           = codeBase + releaseCount + 1      <- one step per release
 def versionProps = new Properties()
 rootProject.file('version.properties').withInputStream { versionProps.load(it) }
 def VERSION_MAJOR = versionProps.getProperty('major').toInteger()
 def VERSION_MINOR = versionProps.getProperty('minor').toInteger()
-def PATCH_ZERO_AT = versionProps.getProperty('patchZeroAt').toInteger()
-def VERSION_BASE = versionProps.getProperty('codeBase').toInteger()
-def gitCountAll = {
-    try {
-        def proc = ['git', 'rev-list', '--count', 'HEAD'].execute(null, rootProject.projectDir)
-        def out = proc.text
-        proc.waitFor()
-        return proc.exitValue() == 0 ? out.trim().toInteger() : 0
-    } catch (ignored) {
-        return 0
-    }
-}()
-def gitCountApp = {
-    try {
-        def proc = ['git', 'rev-list', '--count', 'HEAD', '--', 'app/src'].execute(null, rootProject.projectDir)
-        def out = proc.text
-        proc.waitFor()
-        return proc.exitValue() == 0 ? out.trim().toInteger() : 0
-    } catch (ignored) {
-        return 0
-    }
-}()
-// versionName counts only commits that touch app/, so a docs/CI/version-config commit does not bump the
-// shown version. versionCode counts every commit so it only ever grows and never blocks an install.
-def appVersionCode = VERSION_BASE + gitCountAll
-def appVersionName = "${VERSION_MAJOR}.${VERSION_MINOR}.${Math.max(0, gitCountApp - PATCH_ZERO_AT)}"
+def RELEASE_COUNT = versionProps.getProperty('releaseCount').toInteger()
+def VERSION_BASE  = versionProps.getProperty('codeBase').toInteger()
+def appVersionCode = VERSION_BASE + RELEASE_COUNT + 1
+def appVersionName = "${VERSION_MAJOR}.${VERSION_MINOR}.${RELEASE_COUNT + 1}"
 
-// CI override: the release workflow decides the version (series starts at 1.0.0 and the patch level
-// goes up by one on every substantial push) and passes it in with -PverName / -PverCode, so the
-// number baked into the APK matches the GitHub Release tag exactly. Local builds keep the
-// git-commit-count scheme above.
+// CI override: the release workflow computes the next version (releaseCount + 1) and passes it in
+// with -PverName / -PverCode, so the number baked into the APK matches the GitHub Release tag
+// exactly instead of being bumped a second time here. Local builds keep the releaseCount scheme.
 if (project.hasProperty('verName') && project.property('verName')?.trim()) {
     appVersionName = project.property('verName').trim()
 }
@@ -135,8 +110,10 @@ android {
 
     buildTypes {
         // Debug is intentionally left unchanged: automatic debug key, no minify.
+        // The -dev suffix marks a local build so it is never mistaken for the published release.
         debug {
             minifyEnabled = false
+            versionNameSuffix "-dev"
         }
         release {
             minifyEnabled = false

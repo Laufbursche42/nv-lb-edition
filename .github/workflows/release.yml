@@ -1,13 +1,13 @@
 # Release build - fully automatic, no manual tagging.
 #
-# On every push to `main` that touches more than docs (see paths-ignore below) this builds a SIGNED
-# release APK and publishes a GitHub Release. The version comes from the git commit count with the
-# EXACT same formula as app/build.gradle (versionName = major.minor.(commitCount - patchZeroAt),
-# versionCode = codeBase + commitCount, all read from version.properties), so a local build and the
-# published release always show the same number and can never drift apart.
-# A push that only changes README/markdown/screenshots/CI/licence does NOT trigger this workflow, so it
-# neither builds nor releases; those commits still raise the commit count, so the next real release
-# just carries the matching higher number. Manual runs (Actions -> Run workflow) behave the same.
+# On every push to `main` that touches more than docs (see paths-ignore below) this computes the
+# version from version.properties, builds a SIGNED release APK and publishes a GitHub Release tagged
+# `v<major>.<minor>.<n>` with the APK attached. releaseCount in version.properties is the patch of the
+# LAST PUBLISHED release, so the next release is releaseCount + 1; the counter is advanced (and
+# committed back with [skip ci]) only AFTER a successful publish, so a failed or skipped build never
+# burns a version number. Push to main = one release, regardless of how many commits it carries.
+# A push that only changes README/markdown/screenshots/CI/licence/version.properties does NOT trigger
+# this workflow. Manual runs (Actions -> Run workflow) behave the same.
 # The version/versionCode are passed to Gradle with -PverName / -PverCode and match the release tag.
 #
 # Required repository Secrets (Settings -> Secrets and variables -> Actions):
@@ -30,6 +30,7 @@ on:
       - '.github/**'
       - '.githooks/**'
       - '_portspec/**'
+      - 'version.properties'
   workflow_dispatch:
 
 permissions:
@@ -45,27 +46,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Compute the version - app/src commits for the name, all commits for the code
+      - name: Compute the next version (no bump yet)
         id: ver
         run: |
+          # releaseCount in version.properties is the patch of the LAST PUBLISHED release, so the
+          # next release is releaseCount + 1. NOTHING is written back here: the counter is advanced
+          # only AFTER the release is published (final step), so a failed or skipped build never
+          # burns a version number. The version is passed to gradle with -PverName/-PverCode, so the
+          # APK number matches the tag exactly (no second +1 in build.gradle).
           MAJOR=$(sed -n 's/^major=//p' version.properties)
           MINOR=$(sed -n 's/^minor=//p' version.properties)
-          PATCH_ZERO_AT=$(sed -n 's/^patchZeroAt=//p' version.properties)
           CODE_BASE=$(sed -n 's/^codeBase=//p' version.properties)
-          # versionName counts only app/src commits (identical to app/build.gradle), so docs/CI/config
-          # commits never bump it; the duplicate-tag guard below then skips a release that has no new app.
-          APP_COMMITS=$(git rev-list --count HEAD -- app/src)
-          ALL_COMMITS=$(git rev-list --count HEAD)
-          PATCH=$(( APP_COMMITS - PATCH_ZERO_AT ))
-          if [ "$PATCH" -lt 0 ]; then PATCH=0; fi
-          VERSION="$MAJOR.$MINOR.$PATCH"
-          TAG="v$VERSION"
-          # versionCode grows with every commit and never goes backwards.
-          VCODE=$(( CODE_BASE + ALL_COMMITS ))
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          OLD_COUNT=$(sed -n 's/^releaseCount=//p' version.properties)
+          NEXT=$(( OLD_COUNT + 1 ))
+          VCODE=$(( CODE_BASE + NEXT + 1 ))
+          echo "version=$MAJOR.$MINOR.$NEXT" >> "$GITHUB_OUTPUT"
+          echo "tag=v$MAJOR.$MINOR.$NEXT" >> "$GITHUB_OUTPUT"
           echo "vcode=$VCODE" >> "$GITHUB_OUTPUT"
-          echo "Version $TAG (versionCode $VCODE): $APP_COMMITS app/src commits, $ALL_COMMITS total - same as the local build"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Next release: $MAJOR.$MINOR.$NEXT (versionCode $VCODE); releaseCount stays $OLD_COUNT until published."
 
       - name: Guard against a duplicate tag (re-run safety)
         id: exists
@@ -139,6 +138,20 @@ jobs:
             --target "${{ github.sha }}" \
             --title "nv-lb-edition ${{ steps.ver.outputs.tag }}" \
             --notes-file "$RUNNER_TEMP/release-notes.md"
+
+      - name: Advance releaseCount and commit it back (only after a successful publish)
+        if: steps.exists.outputs.exists == 'false'
+        run: |
+          # The release is now published, so this version number is used up: advance releaseCount to
+          # it. version.properties is in paths-ignore and the message carries [skip ci], so this
+          # commit never retriggers the workflow. If anything above failed, this step never runs and
+          # the counter stays put, so the same number is retried next push (one release = one bump).
+          sed -i "s/^releaseCount=.*/releaseCount=${{ steps.ver.outputs.next }}/" version.properties
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.properties
+          git commit -m "ci: release ${{ steps.ver.outputs.tag }} [skip ci]"
+          git push
 
       - name: Refresh the profile-page roster so the new APK shows at once
         if: steps.exists.outputs.exists == 'false'
