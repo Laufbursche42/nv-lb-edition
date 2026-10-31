@@ -46,7 +46,7 @@ The app was built and checked against the **NAVEE XT5 family**. It connects to a
 
 Other NAVEE models that use the same protocol are **expected** to work, but they are **not verified** - nobody has confirmed them on hardware. Treat anything outside the XT5 family as untested: the connection and the read-only pages are the likely case, while a setting your model does not implement is simply ignored by the scooter. Which functions a given unit supports depends on its firmware, so a switch that has no effect on your scooter means the firmware did not accept it, not that the app failed to send it.
 
-Firmware patching is confirmed on real hardware for the **NT5 family**, the **XT5** and the **N65i II**. The **ST3/GT3 family** (ST3 Pro, ST3, GT3, GT3 Pro, GT3 Max) is now patchable too, but **experimental and not yet confirmed on hardware** - only flash it if you can recover the controller (SWD or a spare). Every other NAVEE model can still connect, read its status and use the live controls, but firmware patching for those models is **disabled in this version** while the patches are re-checked.
+Firmware patching is confirmed on real hardware for the **NT5 family**, the **XT5** and the **N65i II**. Every other NAVEE model is patchable too, but **experimental and not confirmed on hardware**: the patch carries a red untested-firmware warning and an extra confirmation, and a failed controller flash is recoverable only over SWD or with a spare, so only flash where you can recover the unit. Coverage now reaches about 50 of the 58 models NAVEE ships firmware for - the ST3/GT3 family and GT5 Pro/Max gained a meter patch (zero-start plus a switchable speed limiter over Bluetooth), the UT5 Max has both a meter and a controller patch, and a large set of controller-only models (the G5 family, the E-series, K100, the V-series and more) get one raised top gear.
 
 | Model | Speed | Kick-start | Cruise | Warning beeps |
 | --- | --- | --- | --- | --- |
@@ -54,9 +54,12 @@ Firmware patching is confirmed on real hardware for the **NT5 family**, the **XT
 | NT5 Ultra X | patcher | stock | stock | patcher |
 | XT5 Pro, Ultra, Max | flash-free | patcher | stock | patcher |
 | N65i II | patcher | - | - | - |
-| ST3 Pro, ST3, GT3, GT3 Pro, GT3 Max (experimental, untested) | patcher | patcher | patcher | patcher |
+| ST3 Pro, ST3, GT3, GT3 Pro (experimental) | patcher | patcher | - | - |
+| GT5 Pro, GT5 Max (experimental) | patcher | - | - | - |
+| UT5 Max (experimental) | patcher | patcher | patcher | - |
+| Further controller-only models (experimental) | patcher | - | - | - |
 
-Legend: `patcher` a switchable lock/unlock patch (boots throttled to ~22 km/h, opens the top gear per ride, re-locks on restart); `flash-free` lifted live over Bluetooth per ride, no flash; `stock` already works in every region with no patch; `-` not patched for this model.
+Legend: `patcher` a switchable lock/unlock patch (boots throttled to ~22 km/h, opens the top gear per ride, re-locks on restart); on a patched meter (XT5, the ST3/GT3 family, GT5) the open speed is a **switchable speed limiter** - pick your top speed in the app, then triple-tap the km/h tile to toggle between 22 and that value, live over Bluetooth with no re-flash; `flash-free` lifted live over Bluetooth per ride, no flash; `stock` already works in every region with no patch; `-` not patched for this model.
 
 - **Pick what to patch, keep your beeps.** After it detects your model the patcher shows a checkbox per feature - speed, cruise, zero start plus the individual warning beeps - and writes only the ticked ones. Nothing is silenced by default, so the confirmation beep stays. A private-ground / ABE disclaimer sits before the patch button, in the app and in the web patcher.
 
@@ -117,10 +120,10 @@ Everything below is implemented and shipping in the app.
 
 These change how fast the scooter runs. **On public roads they are not legal: they void the operating permit (ABE) and the insurance cover.** Use them on your own scooter, on private ground.
 
-- **Speed release** - one button (and a triple-tap on the km/h tile on the main screen) puts the scooter into its top drive mode, so it runs at its built-in top speed instead of the restricted one. The firmware sets the actual figure, so it is a range rather than a number you dial in. Supported on four families (XT5 Ultra/Pro/Max, UT5 Ultra X, E45/E60 Pro); every other model simply ignores it.
+- **Speed release / switchable limiter** - one button (and a triple-tap on the km/h tile on the main screen) toggles the top speed. On a scooter with a **patched meter** (XT5, the ST3/GT3 family, GT5) you first pick your own top speed in the scooter settings, and the triple-tap then switches live between 22 km/h (locked) and that value, over Bluetooth, with nothing re-flashed. On the flash-free families (XT5 Ultra/Pro/Max, UT5 Ultra X, E45/E60 Pro) it instead drops the scooter into its built-in top drive mode - a firmware figure rather than a number you dial in. Every other model simply ignores it.
 - **Region** - on non-XT5 models a panel writes a two-letter region code (for example US or DE) to test whether a more permissive region raises the limit. It is **blocked on the XT5 family** and asks you to confirm first, because the screen goes dark for a moment and the scooter usually restarts. It only has an effect where the scooter accepts the write; on the non-XT5 models the real limit sits in the firmware itself, so the write does nothing - confirmed on a German NT5, where it did not raise the speed. Lifting the speed there needs patched firmware, not this panel.
 
-The quickest way to the speed release is a hidden gesture: **triple-tap the km/h VCU tile** on the main screen. The tile turns red while the release is active; triple-tap it again to lock the speed back to normal.
+The quickest way to the speed release is a hidden gesture: **triple-tap the km/h VCU tile** on the main screen. The tile turns red while the higher speed is active; triple-tap it again to lock back to 22 km/h. Where your meter is patched, the speed it opens to is exactly the one you picked in the settings.
 
 <p align="center"><img src="screenshots/livetoggle.png" width="260" alt="Triple-tap the km/h VCU tile to release or re-lock the speed over Bluetooth"></p>
 
