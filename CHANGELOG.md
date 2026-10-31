@@ -4,7 +4,7 @@ Notable changes to Laufbursche Edition (NAVEE), newest first.
 
 This history starts fresh with the NAVEE port. The app was forked from a Laufbursche Edition written for a different make of scooter, and none of that release history describes what this app does, so none of it is carried over.
 
-The version series lives in `version.properties`, which both the gradle build and the release workflow read. `versionName` is `<major>.<minor>.<n>` where `n` counts the commits since the series began, so the number rises by one on every release with no manual editing. `versionCode` counts straight through a series change and never goes backwards.
+The version series lives in `version.properties`, which both the gradle build and the release workflow read. `versionName` is `<major>.<minor>.<releaseCount + 1>`; `releaseCount` is the patch of the last published release and CI advances it by one after each successful release, so the number rises once per release and individual commits do not change it. `versionCode` counts straight through a series change and never goes backwards.
 
 Release notes are built automatically for each release: if this file has a section whose heading matches the released version it is used verbatim, otherwise the commit subjects since the previous release are listed. Either way a fixed Disclaimer and a "phoning home" note are appended (see `.github/release-footer.md`).
 
