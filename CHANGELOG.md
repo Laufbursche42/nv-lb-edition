@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.94
+- Privacy: new "Anonymize log" toggle in Debug settings (on by default). The recorded debug log now has Bluetooth MAC addresses and ids stripped out before it is saved or shared.
+- The debug capture also recorded Android's own Bluetooth framework log lines, which carried the raw scooter MAC; those are now scrubbed at the source, and a bug report sent from the app is always anonymized regardless of the toggle.
+
 ## 1.0.93
 - UT5 Max: the find-me alarm tone and the fault/error-code beep can now be silenced individually in the firmware patcher when patching the speedometer (both off by default). This meter has no over-speed warning tone, so that option is not offered.
 - UT5 Max: the switchable meter patch and the permanent 40 km/h controller patch are now mutually exclusive in both patchers (app and web). Selecting one clears the other, with a note explaining why - a permanent controller cap overrides the meter and would make the live limiter switch do nothing.

@@ -878,10 +878,24 @@ public class MainActivity extends Activity {
                     int nl = s.indexOf('\n');
                     if (nl >= 0 && nl < s.length() - 1) s = s.substring(nl + 1);
                 }
-                return s;
+                // The report body goes to a PUBLIC issue, so anonymize unconditionally here,
+                // regardless of the in-app anonymize-log toggle.
+                return DebugLog.scrub(s);
             } catch (Throwable t) {
                 return "";
             }
+        }
+
+        /** Persist/apply the anonymize-log flag (strips MAC/ids from the log before save/share). */
+        @JavascriptInterface
+        public void setLogRedact(boolean on) {
+            try { if (debugLog != null) debugLog.setRedact(on); } catch (Throwable t) { Log.e(TAG, "setLogRedact failed", t); }
+        }
+
+        /** @return the anonymize-log flag (default true). */
+        @JavascriptInterface
+        public boolean logRedact() {
+            try { return debugLog == null || debugLog.isRedact(); } catch (Throwable t) { return true; }
         }
 
         // -- App update --

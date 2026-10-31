@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>New: 'Anonymize log' switch, on by default.</b> Debug settings now have an 'Anonymize log' toggle. With it on (the default), the recorded log has Bluetooth MAC addresses and ids stripped out before you save or share it, so nothing device-identifying leaves your phone.",
+      "<b>Bug reports and logs no longer leak the scooter's Bluetooth address.</b> The debug capture also recorded Android's own Bluetooth log lines, which contained the raw MAC. Those are now scrubbed, and a bug report you send is always anonymized regardless of the toggle.",
       "<b>UT5 Max: silence the find-me alarm and the fault/error beep individually.</b> When you patch the UT5 Max speedometer, the find-me alarm tone and the fault/error-code beep are now separate options in the firmware patcher - tick either to silence it (both off by default, so the stock tones stay). This meter has no over-speed warning tone, so that option is not shown.",
       "<b>UT5 Max: the switchable meter patch and the permanent controller patch now exclude each other.</b> Picking the controller speed unlock (permanent 40 km/h) clears the meter options and vice versa - a permanent controller cap overrides the meter and would silently kill the live limiter switch. The switchable meter path is preselected.",
       "<b>GT3 Max / GT3 / ST3: zero-start (launch level 0-2) needs a one-time meter patch.</b> An earlier note said it worked over Bluetooth without flashing - that was wrong. The meter firmware re-clamps any level below 3 back to 3, so on a stock scooter levels 0-2 never stick. The firmware patcher now offers an experimental zero-start unlock for these displays; flash it once and you can then set level 0, 1 or 2 live in the app and it holds (and is kept on the scooter).",
@@ -413,6 +415,8 @@ window.I18N = {
     "settings.debug.group.title": "Debug",
     "settings.debug.mode.hint": "Records logs for troubleshooting",
     "settings.debug.mode.label": "Debug mode",
+    "settings.debug.redact.label": "Anonymize log",
+    "settings.debug.redact.hint": "Removes MAC addresses and ids before the log is saved or shared (recommended, on by default)",
     "settings.display.colors.action": "&#127912; Display settings",
     "settings.display.dark.label": "Dark mode",
     "settings.display.fullscreen.hint": "Hide the Android status bar",
@@ -726,6 +730,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Neu: Schalter 'Log anonymisieren', standardmäßig an.</b> In den Debug-Einstellungen gibt es jetzt einen Schalter 'Log anonymisieren'. Ist er an (Standard), werden Bluetooth-MAC-Adressen und IDs aus dem aufgezeichneten Log entfernt bevor du es speicherst oder teilst - nichts Geräteidentifizierendes verlässt dein Handy.",
+      "<b>Fehlerberichte und Logs geben die Bluetooth-Adresse des Rollers nicht mehr preis.</b> Die Debug-Aufzeichnung enthielt auch Androids eigene Bluetooth-Log-Zeilen mit der rohen MAC. Die werden jetzt entfernt und ein gesendeter Fehlerbericht ist immer anonymisiert, unabhängig vom Schalter.",
       "<b>UT5 Max: Find-me-Alarmton und Fehler-/Warnton einzeln stummschalten.</b> Beim Patchen des UT5-Max-Tachos sind der Find-me-Alarmton und der Fehlercode-Ton jetzt getrennte Optionen im Firmware-Patcher - Haken setzen schaltet den jeweiligen Ton stumm (beide standardmäßig aus, die Serientöne bleiben also). Dieser Tacho hat keinen Überspeed-Warnton, die Option erscheint daher nicht.",
       "<b>UT5 Max: Schaltbarer Tacho-Patch und dauerhafter Controller-Patch schließen sich jetzt aus.</b> Wählst du die dauerhafte Controller-Entsperrung (fix 40 km/h), werden die Tacho-Optionen abgewählt und umgekehrt - ein dauerhafter Controller-Deckel überschreibt den Tacho und würde den Live-Drossel-Schalter still aushebeln. Der schaltbare Tacho-Weg ist vorausgewählt.",
       "<b>GT3 Max / GT3 / ST3: Zero-Start (Anfahrstufe 0-2) braucht einen einmaligen Meter-Patch.</b> Ein früherer Hinweis sagte, es gehe per Bluetooth ohne Flashen - das war falsch. Die Meter-Firmware zwingt jede Stufe unter 3 wieder auf 3 zurück, auf einem Serien-Roller bleiben 0-2 also nie stehen. Der Firmware-Patcher bietet jetzt eine experimentelle Zero-Start-Freischaltung für diese Displays; einmal flashen und danach lässt sich Stufe 0, 1 oder 2 live in der App einstellen und sie bleibt (und wird im Roller gespeichert).",
@@ -1134,6 +1140,8 @@ window.I18N = {
     "settings.debug.group.title": "Debug",
     "settings.debug.mode.hint": "Zeichnet Logs zur Fehlersuche auf",
     "settings.debug.mode.label": "Debug-Modus",
+    "settings.debug.redact.label": "Log anonymisieren",
+    "settings.debug.redact.hint": "Entfernt MAC-Adressen und IDs bevor das Log gespeichert oder geteilt wird (empfohlen, standardmäßig an)",
     "settings.display.colors.action": "&#127912; Anzeige-Einstellungen",
     "settings.display.dark.label": "Dunkelmodus",
     "settings.display.fullscreen.hint": "Blendet die Android-Statusleiste aus",

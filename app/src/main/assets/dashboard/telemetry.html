@@ -415,6 +415,16 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <label class="toggle-label" for="toggle-debug"></label>
       </div>
     </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.debug.redact.label">Anonymize log</div>
+        <div class="settings-row-sublabel" data-i18n="settings.debug.redact.hint">Removes MAC addresses and ids before the log is saved or shared (recommended)</div>
+      </div>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-log-redact" checked>
+        <label class="toggle-label" for="toggle-log-redact"></label>
+      </div>
+    </div>
     <button class="mt-10" id="btn-export-logs" data-i18n="settings.debug.export.action">&#128228; Export debug logs</button>
     <div class="settings-row-sublabel m-6-0-2" data-i18n="settings.debug.export.hint">Share the recorded log file (email/message)</div>
   </div>
@@ -997,6 +1007,8 @@ function syncDebugUI() {
   if (t) t.checked = on;
   const b = document.getElementById('debug-banner');
   if (b) b.style.display = on ? 'block' : 'none';
+  const rc = document.getElementById('toggle-log-redact');
+  if (rc) { try { rc.checked = (typeof LB === 'undefined' || !LB.logRedact) ? true : !!LB.logRedact(); } catch (e) { rc.checked = true; } }
 }
 // Forward uncaught JS errors + console.error/warn to the native log file (only while debug is ON).
 (function installDebugForwarding() {
@@ -4428,6 +4440,15 @@ function wireEvents() {
       else showToast(t('msg.app.only.in.app'));
     } catch (err) {}
     syncDebugUI();
+  });
+
+  // Anonymize-log toggle: default on; strips MAC addresses and ids from the log before save/share.
+  const redactToggle = document.getElementById('toggle-log-redact');
+  if (redactToggle) redactToggle.addEventListener('change', e => {
+    try {
+      if (typeof LB !== 'undefined' && LB.setLogRedact) LB.setLogRedact(e.target.checked);
+      else showToast(t('msg.app.only.in.app'));
+    } catch (err) {}
   });
 
   // Export debug logs: share the recorded log file via the native chooser.
