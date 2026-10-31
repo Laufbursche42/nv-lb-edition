@@ -38,8 +38,12 @@ if [ -z "${SKIP_VERSION_GATE:-}" ] && git rev-parse origin/main >/dev/null 2>&1;
   [ -n "$OG_MAJOR" ] && [ "$HD_MAJOR" != "$OG_MAJOR" ] && SERIES=1
   [ -n "$OG_MINOR" ] && [ "$HD_MINOR" != "$OG_MINOR" ] && SERIES=1
   VG_OK=1
-  if [ "$SERIES" = "0" ]; then
-    if [ -n "$OG_RC" ] && [ "$HD_RC" != "$OG_RC" ]; then
+  # Migration boundary: if origin has no releaseCount it is still on the old per-commit
+  # scheme, so the one push that introduces releaseCount/codeBase is allowed through (the
+  # duplicate-tag check below still guards it). After it, origin carries the new counters
+  # and normal gating resumes.
+  if [ "$SERIES" = "0" ] && [ -n "$OG_RC" ]; then
+    if [ "$HD_RC" != "$OG_RC" ]; then
       echo "BLOCK: releaseCount changed vs origin/main (origin=$OG_RC, HEAD=$HD_RC) without a series bump."
       echo "  releaseCount is CI-managed; commits must never change it."
       echo "  -> if your branch is behind the last CI release bump: git pull --rebase origin main"
