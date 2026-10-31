@@ -578,6 +578,28 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       </div>
     </div>
 
+    <!-- XT5 live speed selector: on a PATCHED XT5 meter (fwMeter 5020 / 5023) the meter forwards the BLE-set
+         speed byte to the controller; class 0x6E sub1 sets the live cap. Shown only on a patched XT5 meter. -->
+    <div id="xt5speed-panel" style="display:none">
+      <div class="section-hdr sub-hdr" data-i18n="scooter.xt5speed.section.title">Live-Geschwindigkeit (gepatchter Tacho)</div>
+      <div class="settings-group pt-4">
+        <div class="settings-row-sublabel mb-8" data-i18n="scooter.xt5speed.intro">
+          Gepatchter Tacho auf XT5 Pro, XT5 Max oder XT5 Ultra: die Höchstgeschwindigkeit ist live per Bluetooth wählbar (keine Flash-Änderung nötig). XT5 Ultra erreicht höhere Werte als Pro/Max. Der Wert liegt nur im Arbeitsspeicher - die App sendet ihn beim Verbinden neu. Braucht den Speed-Selektor im Tacho-Patch; ohne diesen bleibt die Auswahl wirkungslos.
+        </div>
+        <div class="fw-warn" data-i18n="scooter.xt5speed.legal">
+          <b>Nur auf privatem Grund.</b> Über 22 km/h erlischt die Betriebserlaubnis und der Versicherungsschutz; auf öffentlichen Wegen nicht erlaubt.
+        </div>
+        <div class="settings-row no-bottom-rule">
+          <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.xt5speed.label">Wunsch-Höchstgeschwindigkeit (offen)</div><div class="settings-row-sublabel" data-i18n="scooter.xt5speed.sub">Der Trippel-Tipp auf die km/h-Kachel schaltet zwischen 22 (gesperrt) und diesem Wert</div></div>
+          <select class="set-ctrl" id="ss-xt5speed">
+            <option value="22">22 km/h</option>
+            <option value="32">32 km/h</option>
+            <option value="45">45 km/h</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- Region test panel: 0xA2 factory write, non-XT only, gated on naveeRegionAllowed. -->
     <div id="region-panel" style="display:none">
       <div class="section-hdr sub-hdr" data-i18n="scooter.region.section.title">Region / Land (Test)</div>
@@ -1712,6 +1734,16 @@ function updateBLEUI(data) {
   if (naveeRealModel() === 'UT5 Max' && meterKickstartPatched() && !_ut5DrosselSynced) {
     _ut5DrosselSynced = true;
     try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x81, [0x01, _speedReleased ? 0x01 : 0x00])); } catch (e) {}
+  }
+  // XT5 live speed selector: once per connection to a patched XT5 meter, push the app-remembered live speed
+  // (class 0x6E sub1 = target km/h; the value lives only in RAM, default 22 = stock DE throttle).
+  if (connected && !wasConnected) _xt5SpeedSynced = false;
+  if (naveeLiveSpeedSteps(naveeRealModel()) && meterKickstartPatched() && !_xt5SpeedSynced) {
+    _xt5SpeedSynced = true;
+    const st = naveeLiveSpeedSteps(naveeRealModel());
+    let open = 0; try { open = parseInt(storage.get('lb_xt5speed') || '', 10) || 0; } catch (e) {}
+    if (st.indexOf(open) < 0) open = st[st.length - 1];
+    try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x6E, [0x01, _speedReleased ? open : 22])); } catch (e) {}
   }
   // Auto re-arm the XT5 speed release after a manual drive-mode change (opt-in, experimental).
   // The XT5 release is a live gear-4 command that a mode switch wipes; when the rider turned on
@@ -3160,6 +3192,29 @@ function applyModelPanels(modelName) {
   if (rp) rp.style.display = (modelName && !naveeIsXT(modelName)) ? '' : 'none';
   const rc = document.getElementById('region-current');
   if (rc) rc.textContent = liveRaw().region || '-';
+  // Live speed selector: on a patched meter whose region gate was opened (XT5 / ST3-GT3 / GT5), the meter
+  // forwards the BLE-set speed byte, so class 0x6E sub1 selects the live top speed. Steps are per-family.
+  const xp = document.getElementById('xt5speed-panel');
+  if (xp) {
+    const steps = (modelName && meterKickstartPatched()) ? naveeLiveSpeedSteps(modelName) : null;
+    xp.style.display = steps ? '' : 'none';
+    const xs = document.getElementById('ss-xt5speed');
+    if (steps && xs) {
+      // The dropdown is the rider's chosen MAX (the "open" value the triple-tap toggles to); default = family max.
+      let cur = ''; try { cur = storage.get('lb_xt5speed') || ''; } catch (e) {}
+      xs.innerHTML = '';
+      steps.forEach(k => xs.appendChild(new Option(k + ' km/h', String(k))));
+      xs.value = Array.prototype.some.call(xs.options, o => o.value === cur) ? cur : String(steps[steps.length - 1]);
+    }
+  }
+}
+// Live-speed steps per patched-meter family (byte10 / 0x6E sub1 selector). Null = no live selector.
+function naveeLiveSpeedSteps(name) {
+  if (!name) return null;
+  if (naveeIsXT(name)) return [22, 32, 45];        // XT5 Pro/Max/Ultra (controller ceiling ~45-50)
+  if (/^(ST3|GT3)/.test(name)) return [22, 30, 40]; // ST3/GT3 family (follow-cell [22..40])
+  if (/^GT5/.test(name)) return [22, 30, 40];       // GT5 Pro/Max
+  return null;
 }
 
 
@@ -3684,7 +3739,7 @@ function naveeSkuOf(region) {
 // A kickstart-patched meter carries a marker version (NT5 3.0.2.2 -> "5022", XT5 3.0.2.0 -> "5020",
 // UT5 Max 0.0.3.0 -> "0050", ST3/GT3 2.0.4.6 -> "5046") and then accepts launch levels 0-2 on any
 // region. Stock NAVEE meters never report these marker versions.
-const NAVEE_METER_PATCHED_FW = ['5022', '5020', '0050', '5046'];
+const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '5046', '5004'];
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
 // Stock meters re-clamp the launch level to a minimum of 3 outside the USA SKU (meter-side, the periodic
 // drive-state builder forces any sub-3 value back to 3). No model is exempt by pid: levels 0-2 become
@@ -3837,6 +3892,16 @@ function wireScooterSettings() {
     if (!naveeGuard()) return;
     pushSetting(NAVEE_CMD.drivemode, parseInt(e.target.value, 10) || 0);
   });
+  // Live speed selector (patched meter): the dropdown is the rider's chosen MAX (open value). Picking it
+  // stores the choice and applies it now (opens to it); the triple-tap then toggles 22 <-> this value.
+  const xs = document.getElementById('ss-xt5speed');
+  if (xs) xs.addEventListener('change', e => {
+    if (!naveeGuard()) return;
+    const n = parseInt(e.target.value, 10) || 22;
+    try { storage.set('lb_xt5speed', String(n)); } catch (err) {}
+    try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x6E, [0x01, n])); } catch (err) {}
+    setSpeedReleasedFlag(n > 22);   // picking a max above 22 counts as "open"; triple-tap toggles 22 <-> this
+  });
   const alight = document.getElementById('ss-alight');
   if (alight) alight.addEventListener('change', e => {
     if (!naveeGuard()) { e.target.checked = !e.target.checked; return; }
@@ -3915,6 +3980,7 @@ function wireSpeedRelease() {
 // Last release state; persisted so the triple-tap keeps its direction across restart/reload.
 let _speedReleased = (function () { try { return storage.get('lb_speedreleased') === '1'; } catch (e) { return false; } })();
 let _ut5DrosselSynced = false;  // one-shot guard: push the UT5 Max drossel state once per connection
+let _xt5SpeedSynced = false;    // one-shot guard: push the XT5 live speed byte once per connection
 function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb_speedreleased', on ? '1' : '0'); } catch (e) {} }
 // Opt-in (XT5): re-send the gear-4 release automatically after a rider drive-mode change, which
 // otherwise wipes the live release. App-side state only; "off" is always clean stock.
@@ -3964,6 +4030,21 @@ function speedReleaseGear(on) {
 }
 
 function sendSpeedRelease(on) {
+  // Patched meter with the switchable byte10 drossel (XT5 Pro/Max/Ultra, ST3/GT3 family, GT5 Pro/Max): the
+  // triple-tap toggles the live speed cell between the locked default (22) and the rider's chosen max
+  // (lb_xt5speed, set in the dropdown) via class 0x6E sub1. This is the core quick-toggle. For XT5 the drive
+  // gear is sent too, so a meter patched for kickstart only (gate closed) still opens via gear 4.
+  if (naveeLiveSpeedSteps(naveeRealModel()) && meterKickstartPatched()) {
+    if (typeof LB === 'undefined' || !LB.sendRaw) { showToast(t('msg.app.only.in.app')); return false; }
+    const st = naveeLiveSpeedSteps(naveeRealModel());
+    let open = 0; try { open = parseInt(storage.get('lb_xt5speed') || '', 10) || 0; } catch (e) {}
+    if (st.indexOf(open) < 0) open = st[st.length - 1];   // default open target = family max
+    LB.sendRaw(naveeNormalHex(0x6E, [0x01, on ? open : 22]));
+    if (naveeIsXT(naveeRealModel())) { try { pushSetting(NAVEE_CMD.drivemode, on ? 4 : 3); } catch (e) {} }
+    setSpeedReleasedFlag(on);
+    setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));
+    return true;
+  }
   // UT5 Ultra X: its meter ignores drive-mode cmd 0x58 (no-op stub). The gear that trips the patched
   // controller latch is set via cmd 0x6d (group 4 = gear, index 0). Gear 4 -> unlock, 3 -> lock.
   if (naveeRealModel() === 'UT5 Ultra X') {
@@ -4610,7 +4691,7 @@ function fwPatchStatus(msg) {
 // here - their meters have an in-place patch (UT5 Max: drossel + kickstart + cruise atomic; ST3/GT3:
 // zero-start level 0-2 unlock) offered with the red untested warning plus an extra confirmation.
 const METER_BLOCKED_IDS = ['9601', '12401',
-  '5401', '8501', '8401', '10501', '12701', '5701', '5601', '10201', '10701', '6001',
+  '5401', '10501', '12701', '5701', '5601', '10201', '10701', '6001',
   '10101', '9101', '701', '1101', '1201', '1301', '1601', '2501', '4201', '4401', '9901',
   '4001', '4101', '10001', '10301', '10601', '12801', '12901',
   '5001', '5101', '5201'];
@@ -4622,12 +4703,15 @@ function patchFeatureList(det) {
   // XT5 Pro/Max controller only: the drive-mode ramp step (mode 4 gets mode 5's 3 counts per pass)
   if (det.bldc && ['5301', '5901'].indexOf(String(det.id)) >= 0) feats.push('launchramp');
   if (det.meter && !naveeMeterPatchBlocked(det)) {
-    // ST3/GT3 meter 2.0.4.6: the only in-place meter patch is the zero-start (kickstart) unlock; this meter
-    // has no cruise or beep patch sites, so offer kickstart alone (not the NT5 feature set).
-    if (['12501', '3801', '3401', '12601', '3701', '3501', '3601'].indexOf(String(det.id)) >= 0) feats.push('kickstart');
-    // UT5 Max meter: no over-speed tone exists on this platform (speed is controller-side); only the
-    // find-me alarm and the fault/error-code beep can be silenced. cruise+kickstart are the core set.
-    else if (String(det.id) === '8901') feats.push('cruise', 'kickstart', 'beep-alarm', 'beep-melody');
+    const mid = String(det.id);
+    // ST3/GT3 meter 2.0.4.6: zero-start (kickstart) unlock plus the switchable BT drossel (speedsel gate).
+    if (['12501', '3801', '3401', '12601', '3701', '3501', '3601', '3702'].indexOf(mid) >= 0) feats.push('kickstart', 'drossel');
+    // GT5 meter 1.0.0.4: only the switchable BT drossel (speedsel gate); no kickstart/cruise/beep sites.
+    else if (['8401', '8501', '8402', '8502'].indexOf(mid) >= 0) feats.push('drossel');
+    // XT5 meter: kickstart + the switchable drossel (byte10 gate) + beeps; this meter has no cruise patch.
+    else if (['5301', '5901', '5801', '5302', '5902'].indexOf(mid) >= 0) feats.push('kickstart', 'drossel', 'beep-overspeed', 'beep-alarm', 'beep-melody');
+    // UT5 Max meter: no over-speed tone (speed is controller-side); cruise+kickstart are the core set.
+    else if (['8901', '8902'].indexOf(mid) >= 0) feats.push('cruise', 'kickstart', 'beep-alarm', 'beep-melody');
     else feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   }
   return feats;
@@ -4641,14 +4725,16 @@ function naveeSpeedOpts(det) {
   if (['9301', '9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family (3553G, cap ~40)
   // XT5 Pro/Max: the top-gear immediate carries 40 stock and the scale reaches 50 exactly.
   if (['5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50];
-  if (String(det.id) === '8901') return null;  // UT5 Max: controller is one fixed 40 build (no dropdown); the meter drossel is the app on/off toggle
+  if (['8901', '8902'].indexOf(String(det.id)) >= 0) return null;  // UT5 Max (0.0.1.0 + 0.0.1.3): controller is one fixed build (no dropdown); the meter drossel is the app on/off toggle
   if (['12501', '3801', '3401', '12601', '3701', '3501', '3601', '12401'].indexOf(String(det.id)) >= 0) return null; // ST3/GT3/NT3 Pro: one permanently raised top gear, no selector and no toggle
   // UT5 Ultra X: the firmware clamps the cap to 600, which 60 still passes.
   if (String(det.id) === '9601') return [22, 25, 27, 30, 35, 40, 45, 50, 55, 60];
   // 02831 in-place selector: the offered steps are the ones whose unit value exists as a flash
   // halfword in that build, so the pick lands in the firmware without rounding.
   if (String(det.id) === '5401') return [20, 25, 27, 30, 32, 35, 40, 45, 50];   // G5
-  if (['8501', '8401', '10501'].indexOf(String(det.id)) >= 0) return [25, 27, 32, 35, 40, 45, 50]; // GT5 Max, GT5 Pro, UT3 Max
+  if (['8501', '8401', '10501'].indexOf(String(det.id)) >= 0) return [25, 27, 32, 35, 40, 45, 50]; // GT5 Max, GT5 Pro, UT3 Max (0.0.1.3/0.0.1.1/0.0.0.5)
+  if (['8402', '8502'].indexOf(String(det.id)) >= 0) return [25, 27, 30, 32, 35, 40, 50];   // GT5 Pro/Max 0.0.1.6 (22/45 have no flash constant in this build)
+  if (String(det.id) === '10502') return [25, 27, 30, 32, 35, 40];                          // UT3 Max 1.0.0.7
   if (String(det.id) === '12701') return [20, 25, 27, 30, 32, 35, 40, 45];      // NT3 Max
   if (['5701', '5601'].indexOf(String(det.id)) >= 0) return [20, 25, 27, 30, 32, 35, 40, 45]; // G5 Max, G5 Pro
   if (String(det.id) === '10201') return [20, 25, 27, 30, 32, 35, 40, 50];      // V45i
@@ -4715,7 +4801,21 @@ function renderPatchFeatures(det) {
       // UT5 Max: the switchable meter patch (BLE speed toggle between 22 and open, plus kickstart and
       // cruise) needs a stock controller; the controller patch is a permanent 40 that overrides the meter
       // and kills the toggle. Mutually exclusive - checking one auto-unchecks the other. Default: meter path.
-      if (String(det.id) === '8901') {
+      if (['8901', '8902'].indexOf(String(det.id)) >= 0) {
+        // Live conflict check: the controller patch (fwBldc "0080") and the meter patch (fwMeter "0050")
+        // cannot be prevented across separate flash sessions, so warn when the connected device already
+        // carries one or both. Both on at once = the controller overrides the meter, toggle is dead.
+        const liveB = (liveRaw().fwBldc || '').trim();
+        const liveM = (liveRaw().fwMeter || '').trim();
+        const ctrlPatched = liveB === '0080' || liveB === '0083';   // 0.0.1.0 -> "0080", 0.0.1.3 -> "0083"
+        const meterPatched = liveM === '0050';
+        const conflict = (ctrlPatched && meterPatched) ? 'both' : ctrlPatched ? 'ctrl' : meterPatched ? 'meter' : '';
+        if (conflict) {
+          const cw = document.createElement('div');
+          cw.className = 'patch-disclaimer'; cw.style.margin = '0 0 8px'; cw.style.fontWeight = '600';
+          cw.textContent = t('patch.ut5max.conflict.' + conflict);
+          box.insertBefore(cw, box.firstChild);
+        }
         const nx = document.createElement('div');
         nx.className = 'patch-disclaimer'; nx.style.margin = '6px 0 2px';
         nx.textContent = t('patch.ut5max.exclusive');
@@ -4764,7 +4864,17 @@ function fwRunPatcher() {
   const wantsSpeed = sel.indexOf('speed') >= 0;      // the only bldc-side feature
   const wantsMeter = sel.some(f => f !== 'speed');   // any meter-side feature (cruise/kickstart/beep-*)
   const comps = [];
-  if (det.meter && wantsMeter && !naveeMeterPatchBlocked(det)) comps.push({ kind: 'meter', url: det.meter.url, name: fwReadableName(det, 'meter', det.meter.vn) });
+  // XT5 shares its meter across Pro/Max/Ultra; serve the version matching the device: 3.0.2.3 (fwMeter 3023
+  // stock / 5023 patched) gets the meter3023 bin, else the stock 3.0.2.0 meter. identify() keys the patch off
+  // the downloaded bytes, so the right meter image is applied either way.
+  let meterUrl = det.meter && det.meter.url, meterVn = det.meter && det.meter.vn;
+  try {
+    const mdl = window.FW_MANIFEST && window.FW_MANIFEST.models[det.id];
+    const m3023 = mdl && mdl.comps && mdl.comps.meter3023;
+    const fm = (liveRaw().fwMeter || '').trim();
+    if (m3023 && (fm === '3023' || fm === '5023')) { meterUrl = m3023.url; meterVn = m3023.vn; }
+  } catch (e) {}
+  if (det.meter && wantsMeter && !naveeMeterPatchBlocked(det)) comps.push({ kind: 'meter', url: meterUrl, name: fwReadableName(det, 'meter', meterVn) });
   if (det.bldc && wantsSpeed) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
   if (!comps.length) { showToast(t('patch.run.noselection'), 3000, 'err'); return; }
   fwState.staged = { meter: null, bldc: null };

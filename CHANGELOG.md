@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.96
+- Firmware patcher now offers the newer NAVEE firmware for more models when your device runs it: UT5 Max controller 0.0.1.3, ST3 controller 0.0.1.2, GT5 Pro/Max controller 0.0.1.6, UT3 Max controller 1.0.0.7, and the XT5 meter 3.0.2.3 (Pro/Max/Ultra). The variant picker shows your controller version so you flash the firmware that matches your device, not an older one.
+- If your scooter has one of these newer firmware versions (for example after a NAVEE OTA update), re-run the firmware patcher and flash again to get the patch that matches your version.
+- New switchable speed limiter over Bluetooth for patched meters: XT5 Pro/Max/Ultra, the ST3/GT3 family and GT5 Pro/Max. Flash the meter drossel patch once, choose your top speed in the scooter settings, and the triple-tap on the km/h tile then toggles between 22 (locked) and that speed, live with no re-flash. Steps and the ceiling depend on the model (XT5 to ~45-50, ST3/GT3/GT5 to ~40). Experimental: it flashes the meter, which hosts Bluetooth, so the red untested warning applies.
+- UT5 Max: the patcher now warns when the connected scooter already carries both the permanent controller patch (0.0.8.0) and the switchable meter patch (0.0.5.0) - the controller overrides the meter, so the live limiter switch does nothing until one side is flashed back to stock.
+
 ## 1.0.95
 - XT5 Pro / XT5 Max: the firmware patcher now serves the controller firmware that matches the device's running version. NAVEE's newer 0.0.1.3 controller (OTA) needs a different patch (fixed ~45 km/h) than 0.0.1.0; the app detects the running version from fwBldc and offers only the matching firmware, so a 0.0.1.3 device no longer gets the 0.0.1.0 bin (which would be a downgrade).
 - If you already flashed the XT5 Pro/Max patch on a 0.0.1.3 controller under an earlier version, re-flash - you now get the correct 0.0.1.3 patch.

@@ -155,11 +155,35 @@ const IMAGES = {
     patches: [
       { off: 0x14a49, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bcs) -> unconditional, levels 0-2 accepted in every region
       { off: 0x14bba, from: [0x33], to: [0x35], id: 'version-marker' }, // meter version builder leading digit '3' -> '5', reported meter version 3.0.2.0 -> 5.0.2.0 (fwMeter "5020")
+      { off: 0x13164, from: [0x00, 0x21], to: [0x00, 0xbf], id: 'speedsel' }, // region gate NOP (movs r1,#0 -> nop): frame byte10 then follows the BLE speed cell in every region, so live 0x6E sub1 selects 22/32/45 (controller governor; byte10==0 keeps the stock default cap, never a stop). Experimental, offline top = persisted cell, HW-unconfirmed
       { off: 0x15b3e, from: [0xff, 0xf7, 0x4f, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
       { off: 0x15b5e, from: [0xff, 0xf7, 0x3f, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed2' }, // over-speed 2nd bl -> nop
       { off: 0x15b8c, from: [0xcb, 0xf7, 0x8c, 0xd9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
       { off: 0x15be4, from: [0xff, 0xf7, 0xfd, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm2' }, // find-me/alarm 2nd bl -> nop
       { off: 0x15c50, from: [0xff, 0xf7, 0xea, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // startup/error melody bl -> nop
+    ],
+  },
+
+  // Meter 3.0.2.3 - newer NAVEE build, shared across XT5 Pro (5301) / Max (5901) / Ultra (5801), byte-identical.
+  // Same patch set as meterXT5 but the meter firmware was restructured, so all offsets were re-located and
+  // byte-verified against the stock 3.0.2.3 image; reseal CRC16-XMODEM over [0x400:eof] reproduces 0x6a2f.
+  // The marker base is '3023' here (not '3020'), so the version-marker flip yields fwMeter '5023'.
+  meterXT5_3023: {
+    label: 'XT5 meter 3.0.2.3 (5301/5801/5901)',
+    kind: 'meter',
+    match: (u8) => u8.length === 0x24c00 && bytesAt(u8, 0, ascii('T2202')) && beRead(u8, 0x13, 2) === 0x6a2f,
+    verify: { size: 0x24c00, crcOff: 0x13, crcStock: 0x6a2f, lenOff: 0x10, lenStock: 0x024800 },
+    bodyBase: 0x400,
+    reseal: meterReseal,
+    patches: [
+      { off: 0x14c13, from: [0xd2], to: [0xe0], id: 'kickstart' },                                      // zero-start region floor (bhs) -> unconditional, launch levels 0-2 in every region
+      { off: 0x14d8e, from: [0x33], to: [0x35], id: 'version-marker' },                                  // marker byte0 '3' -> '5', fwMeter '3023' -> '5023'
+      { off: 0x131ce, from: [0x00, 0x21], to: [0x00, 0xbf], id: 'speedsel' },                            // region gate NOP (movs r1,#0 -> nop): frame byte10 follows the BLE speed cell, live 0x6E sub1 selects 22/32/45
+      { off: 0x15d92, from: [0xff, 0xf7, 0x4b, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' },  // over-speed warning bl -> nop
+      { off: 0x15db2, from: [0xff, 0xf7, 0x3b, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed2' }, // over-speed 2nd bl -> nop
+      { off: 0x15e24, from: [0xcb, 0xf7, 0x40, 0xd8], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' },      // find-me/alarm bl -> nop
+      { off: 0x15e7c, from: [0xff, 0xf7, 0xb3, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm2' },     // find-me/alarm 2nd bl -> nop
+      { off: 0x15ee8, from: [0xff, 0xf7, 0xa0, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' },     // startup/error melody bl -> nop
     ],
   },
 
@@ -179,6 +203,12 @@ const IMAGES = {
     // flash can be unrecoverable - it carries the red untested warning plus an extra confirmation.
     patches: [
       { off: 0xf374, from: [0x03, 0xd3], to: [0x00, 0xbf], id: 'kickstart' },   // sub-3 launch-level force-to-3 bcc -> nop
+      // Switchable BT drossel (feature 'speed'): DE region gate on the outbound 0x51 frame speed byte (cell
+      // 0x20c663). (1) retarget the DE force-22 beq to the follow-cell path, (2) lower the follow-cell floor
+      // 32 -> 22. After this, frame byte10 follows the live BLE cell over [22..40] (<25 -> 22, >40 pre-clamped),
+      // set live by class 0x6E sub1 (22 = locked, 40 = open); boot/unset 0 floors to 22 = safe locked default.
+      { off: 0xf306, from: [0x26, 0xd0], to: [0x12, 0xd0], id: 'speedsel' },         // DE beq force-22 -> follow-cell
+      { off: 0xf336, from: [0x20, 0x20], to: [0x16, 0x20], id: 'speedsel-floor' },   // follow-cell floor 32 -> 22
       { off: 0x10770, from: [0x32], to: [0x35], id: 'version-marker' },         // reported meter version 2.0.4.6 -> 5.0.4.6 ("5046")
     ],
   },
@@ -215,8 +245,14 @@ const IMAGES = {
     verify: { size: 0x23400, crcOff: 0x13, crcStock: 0xc780, lenOff: 0x10, lenStock: 0x023000 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    blocked: 'The GT5 meter is never patched: it hosts BLE and is the only route back from a failed controller update. The controller carries the raised top gear on its own.',
-    patches: [],
+    // Switchable BT drossel (feature 'speed'): NOP the DE zero-store of the forwarded speed cell config+0x1b
+    // (strb r7,[r4,#0x1b], r7=0) inside the 0x51 frame builder; frame byte10 then follows the live BLE cell
+    // in every region, set by class 0x6E sub1 (22 = locked, 40 = open). In-place, no len-extend, no cave.
+    // Experimental: BLE-host meter, no confirmed SWD recovery -> red untested warning plus extra confirmation.
+    patches: [
+      { off: 0x12c22, from: [0xe7, 0x76], to: [0x00, 0xbf], id: 'speedsel' },        // NOP DE zero-store of config+0x1b
+      { off: 0x14126, from: [0x31], to: [0x35], id: 'version-marker' },              // fwMeter "1004" -> "5004"
+    ],
   },
 
   // BLDC 9701 (bldc 0.0.1.0, NT5 Max).
@@ -677,6 +713,164 @@ const IMAGES = {
         { off: 0x733a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
         { off: 0x3950, from: [0x62, 0x03], to: [0xd3, 0x03], id: 'speed-cap-ceiling' }, // 979 (45.0 km/h)
         { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+    },
+  },
+
+  // Newer ST3 controller 0.0.1.2 (3701). Same in-place ST3-family speed lever as 0.0.1.1 (force meter byte10
+  // via speed-source + set the ceiling/mode-4 cap constant), offsets re-located and byte-verified; the 02831
+  // dual-CRC reseal (crc@0xb0 over [0x100,0x100+len] + crc@0x13 over [0x80,eof]) reproduces 0x0482 and 0xf57e.
+  // Stock version string is '0012', so the marker flip yields fwBldc '3312'. Scale unchanged (stock ceiling 866).
+  bldcST3_0102: {
+    label: 'ST3 BLDC 0.0.1.2 (3701)',
+    kind: 'bldc',
+    match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x02]) && beRead(u8, 0xb0, 2) === 0x0482,
+    verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b65c, crcOff: 0xb0, crcStock: 0x0482 },
+    reseal: bldcResealLz,
+    patches: [
+      { off: 0x75ec, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
+      { off: 0x3bec, from: [0x62, 0x03], to: [0x66, 0x03], id: 'speed-cap-ceiling' }, // ceiling+mode4 866 -> 870 (40.0 km/h)
+      { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' }, // fwBldc '0012' -> '3312'
+    ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0x75ec, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
+        { off: 0x3bec, from: [0x62, 0x03], to: [0xde, 0x01], id: 'speed-cap-ceiling' }, // 478 (22.0 km/h)
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x75ec, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
+        { off: 0x3bec, from: [0x62, 0x03], to: [0x20, 0x02], id: 'speed-cap-ceiling' }, // 544 (25.0 km/h)
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x75ec, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
+        { off: 0x3bec, from: [0x62, 0x03], to: [0x8c, 0x02], id: 'speed-cap-ceiling' }, // 652 (30.0 km/h)
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x75ec, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
+        { off: 0x3bec, from: [0x62, 0x03], to: [0xf9, 0x02], id: 'speed-cap-ceiling' }, // 761 (35.0 km/h)
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+      speed45: { experimental: true, speedKmh: 45, patches: [
+        { off: 0x75ec, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
+        { off: 0x3bec, from: [0x62, 0x03], to: [0xd3, 0x03], id: 'speed-cap-ceiling' }, // 979 (45.0 km/h)
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
+      ] },
+    },
+  },
+
+  // GT5 Pro/Max BLDC 0.0.1.6 (shared 8401/8501, byte-identical). Ported from 0.0.1.3. 02831 speed-cap
+  // pointer-retarget: the speed-cap literal @0x40c8 (= RAM pointer 0x20000362) is retargeted to a FLASH
+  // address X whose LE16 halfword at file (X+0x100) holds floor(2089*km/h/100). Mapping file=X+0x100 proven
+  // on all 7 old entries; every chosen address was re-read to hold the exact count, even-aligned, in bounds.
+  // Dual-CRC reseal (crc@0xb0 over [0x100,0x100+len] + crc@0x13 over [0x80,eof]) reproduces 0x0b1d/0x47ac.
+  // 22 and 45 km/h have no even-aligned constant in this build -> intentionally not offered.
+  bldcGT5_0016: {
+    label: 'GT5 Pro/Max BLDC 0.0.1.6 (8401/8501)',
+    kind: 'bldc',
+    match: (u8) => u8.length === 0xd880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x06]) && beRead(u8, 0xb0, 2) === 0x0b1d,
+    verify: { size: 0xd880, lenOff: 0x84, lenStock: 0x0000d160, crcOff: 0xb0, crcStock: 0x0b1d },
+    reseal: bldcResealLz,
+    patches: [
+      { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
+      { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
+      { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0xd8, 0x3f, 0x00, 0x00], id: 'speed-cap' }, // X=0x3fd8 (835 = 40.0 km/h)
+      { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' }, // fwBldc "0016" -> "4416"
+    ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
+        { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x00, 0x37, 0x00, 0x00], id: 'speed-cap' }, // X=0x3700 (522)
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed27: { experimental: true, speedKmh: 27, patches: [
+        { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
+        { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x54, 0x37, 0x00, 0x00], id: 'speed-cap' }, // X=0x3754 (564)
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
+        { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0xc0, 0x0a, 0x00, 0x00], id: 'speed-cap' }, // X=0x0ac0 (626)
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed32: { experimental: true, speedKmh: 32, patches: [
+        { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
+        { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0xc0, 0x0d, 0x00, 0x00], id: 'speed-cap' }, // X=0x0dc0 (668)
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
+        { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x0c, 0xb9, 0x00, 0x00], id: 'speed-cap' }, // X=0xb90c (731)
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+      speed50: { experimental: true, speedKmh: 50, patches: [
+        { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
+        { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x04, 0xd1, 0x00, 0x00], id: 'speed-cap' }, // X=0xd104 (1044)
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
+      ] },
+    },
+  },
+
+  // UT3 Max BLDC 1.0.0.7 (10501). Ported from 0.0.0.5 (big version jump). Same 02831 speed-cap pointer-retarget
+  // (literal @0x3da4 = RAM pointer 0x2000035e -> flash address X holding floor(2089*km/h/100) at file X+0x100),
+  // scale + mapping proven on the old UT3 Max entries; every address re-read exact, even-aligned, in bounds.
+  // Dual-CRC reseal reproduces 0x01f3/0xde61. mode3 dispatch restructured: 0x3a02 0x23->0x04 retargets to the
+  // mode5 skip. 22/45/50 km/h have no even-aligned constant -> not offered. CAVEAT: the version-marker builder
+  // is RAM-sourced, so the resulting fwBldc string cannot be byte-verified statically - app patched-detection
+  // for UT3 Max needs a hardware read to confirm the string (speed patch itself is independent of the marker).
+  bldcUT3Max_1007: {
+    label: 'UT3 Max BLDC 1.0.0.7 (10501)',
+    kind: 'bldc',
+    match: (u8) => u8.length === 0xc080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x01, 0x00, 0x00, 0x07]) && beRead(u8, 0xb0, 2) === 0x01f3,
+    verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000bee8, crcOff: 0xb0, crcStock: 0x01f3 },
+    reseal: bldcResealLz,
+    patches: [
+      { off: 0x39fe, from: [0x05], to: [0x06], id: 'speed-mode5' },
+      { off: 0x3a02, from: [0x23], to: [0x04], id: 'speed-mode3' }, // restructured dispatch: retarget mode3 beq to the mode5 skip
+      { off: 0x3da4, from: [0x5e, 0x03, 0x00, 0x20], to: [0x18, 0x6a, 0x00, 0x00], id: 'speed-cap' }, // X=0x6a18 (835 = 40.0 km/h)
+      { off: 0x8546, from: [0x30], to: [0x38], id: 'version-marker' }, // RAM-sourced builder, leading digit; resulting fwBldc not statically verifiable
+    ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0x39fe, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x3a02, from: [0x23], to: [0x04], id: 'speed-mode3' },
+        { off: 0x3da4, from: [0x5e, 0x03, 0x00, 0x20], to: [0x44, 0x34, 0x00, 0x00], id: 'speed-cap' }, // X=0x3444 (522)
+        { off: 0x8546, from: [0x30], to: [0x38], id: 'version-marker' },
+      ] },
+      speed27: { experimental: true, speedKmh: 27, patches: [
+        { off: 0x39fe, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x3a02, from: [0x23], to: [0x04], id: 'speed-mode3' },
+        { off: 0x3da4, from: [0x5e, 0x03, 0x00, 0x20], to: [0x94, 0x34, 0x00, 0x00], id: 'speed-cap' }, // X=0x3494 (564)
+        { off: 0x8546, from: [0x30], to: [0x38], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0x39fe, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x3a02, from: [0x23], to: [0x04], id: 'speed-mode3' },
+        { off: 0x3da4, from: [0x5e, 0x03, 0x00, 0x20], to: [0xa0, 0x0d, 0x00, 0x00], id: 'speed-cap' }, // X=0x0da0 (626)
+        { off: 0x8546, from: [0x30], to: [0x38], id: 'version-marker' },
+      ] },
+      speed32: { experimental: true, speedKmh: 32, patches: [
+        { off: 0x39fe, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x3a02, from: [0x23], to: [0x04], id: 'speed-mode3' },
+        { off: 0x3da4, from: [0x5e, 0x03, 0x00, 0x20], to: [0xe4, 0x0d, 0x00, 0x00], id: 'speed-cap' }, // X=0x0de4 (668)
+        { off: 0x8546, from: [0x30], to: [0x38], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0x39fe, from: [0x05], to: [0x06], id: 'speed-mode5' },
+        { off: 0x3a02, from: [0x23], to: [0x04], id: 'speed-mode3' },
+        { off: 0x3da4, from: [0x5e, 0x03, 0x00, 0x20], to: [0x24, 0xa6, 0x00, 0x00], id: 'speed-cap' }, // X=0xa624 (731)
+        { off: 0x8546, from: [0x30], to: [0x38], id: 'version-marker' },
       ] },
     },
   },
@@ -1682,6 +1876,46 @@ patches: [
       ] },
     },
   },
+
+  // Newer UT5 Max controller 0.0.1.3 (8901). Same in-place speed lever as 0.0.1.0 (force meter byte10 to the
+  // target AND NOP the master clamp @speed-clamp-nop), offsets re-located and byte-verified against the stock
+  // 0.0.1.3 image; reseal CRC16-XMODEM over [0x100,0x100+len] reproduces 0x8c7c. Marker moved to movs r1 (r2
+  // in 0.0.1.0) and the stock version string is '0013', so the flip yields fwBldc '0083'.
+  bldcUT5Max_0013: {
+    label: 'UT5 Max BLDC 0.0.1.3 (8901)',
+    kind: 'bldc',
+    match: (u8) => u8.length === 0xfd00 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x03]) && beRead(u8, 0xb0, 2) === 0x8c7c,
+    verify: { size: 0xfd00, lenOff: 0x84, lenStock: 0x0000fc00, crcOff: 0xb0, crcStock: 0x8c7c },
+    reseal: bldcResealErpm,
+    patches: [
+      { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x28, 0x00], id: 'speed-source' }, // ldrb.w r0,[lr,#0xa] -> movw r0,#40 (meter byte10 forced to 40 km/h)
+      { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp strh.gt r0,[r1,#0x18]
+      { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' }, // movs r1,#0x31('1')->#0x38('8'): fwBldc '0013' -> '0083'
+    ],
+    stdSpeedKmh: 40,
+    variants: {
+      speed22: { experimental: true, speedKmh: 22, patches: [
+        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x16, 0x00], id: 'speed-source' }, // movw r0,#22
+        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
+      ] },
+      speed25: { experimental: true, speedKmh: 25, patches: [
+        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x19, 0x00], id: 'speed-source' }, // movw r0,#25
+        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
+      ] },
+      speed30: { experimental: true, speedKmh: 30, patches: [
+        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x1e, 0x00], id: 'speed-source' }, // movw r0,#30
+        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
+      ] },
+      speed35: { experimental: true, speedKmh: 35, patches: [
+        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x23, 0x00], id: 'speed-source' }, // movw r0,#35
+        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
+        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
+      ] },
+    },
+  },
   // S2 meter 2.0.0.1 (9901). Drive-mode clamped -> one-shot trampoline routes app nibble 5/6 into the control frame for bldcS2. Kickstart gate flip.
   meterS2: {
     label: 'S2 meter 2.0.0.1 (9901)',
@@ -2236,23 +2470,24 @@ IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
 // need an extra confirmation before patching; none of the experimental speed patches is confirmed on hardware.
 const FLASH_ENABLED = new Set([
   'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
-  'meterXT5',                                                     // XT5 meter
+  'meterXT5', 'meterXT5_3023',                                    // XT5 meter (3.0.2.0 plus newer 3.0.2.3)
   'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + cruise, experimental)
-  'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + version marker, experimental)
+  'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + switchable drossel + version marker, experimental)
+  'meterGT5',                                                     // GT5 meter (switchable drossel + version marker, experimental; previously blocked)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
-  'bldcUT5Max',                                                   // UT5 Max controller (permanent 40 km/h top gear, meter never flashed, experimental)
+  'bldcUT5Max', 'bldcUT5Max_0013',                                // UT5 Max controller (permanent top gear 22-40; 0.0.1.0 plus newer 0.0.1.3; meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
   'bldcXT5ProMax',                                                // XT5 Pro/Max controller 0.0.1.0 (target-speed selector 22-40, experimental)
   'bldcXT5ProMax0013',                                            // XT5 Pro/Max controller 0.0.1.3 (45 km/h via meter cap, experimental)
-  'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', // ST3/GT3 controllers
-  'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', // 02831 in-place target-speed selector (experimental) (raised top gear, meter never flashed, experimental)
+  'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', // ST3/GT3 controllers
+  'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', // 02831 in-place target-speed selector (experimental) (raised top gear, meter never flashed, experimental)
   'bldcNT3Pro',                                                  // NT3 Pro controller (experimental; meter not yet enabled)
   'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcN65iII10701', 'bldcN65iII6001', 'bldcS2', 'bldcV40iProII', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcN65i', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max', // 02831 shared-store builds: clamp nop plus cap repoint (experimental)
 ]);
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'bldcUT5Max', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcUT3Max', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'meterGT5', 'meterXT5_3023', 'bldcUT5Max', 'bldcUT5Max_0013', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {
@@ -2281,6 +2516,7 @@ function featureOf(id) {
   if (id.indexOf('beep-alarm') === 0) return 'beep-alarm';
   if (id.indexOf('beep-melody') === 0) return 'beep-melody';
   if (id.indexOf('beep-') === 0) return id; // beep-silence legacy or any other single beep patch
+  if (id.indexOf('speedsel') === 0) return 'drossel'; // meter region-gate -> switchable BT drossel (separate from controller 'speed')
   if (id.indexOf('version-marker') === 0) return 'marker';
   if (id.indexOf('launch-ramp') === 0) return 'launchramp';   // 'launch-degate' stays part of the speed set
   return 'speed';
