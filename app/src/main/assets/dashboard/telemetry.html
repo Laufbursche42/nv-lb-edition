@@ -5090,7 +5090,13 @@ function fwStart() {
   if (!cons || !cons.checked) { showToast(t('fw.hint.consent'), 3000, 'err'); return; }
   document.getElementById('confirm-title').textContent = t('fw.confirm.title');
   const warn = document.getElementById('confirm-warn');
-  if (warn) { warn.textContent = (fwState.raw ? t('fw.rawwarn') + '  ' : (fwState.experimental ? t('scooter.untested.fw') + '  ' : '')) + t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block'; }
+  if (warn) {
+    // Flashing a meter writes the Bluetooth host; a bound scooter can drop the link mid-flash and brick it
+    // unless the NAVEE account ID is stored. Warn only when a meter is in the flash set and no ID is stored.
+    let acctWarn = '';
+    try { if (list.some(x => x.kind === 'meter') && !(typeof LB !== 'undefined' && LB.hasAccountId && LB.hasAccountId())) acctWarn = t('fw.confirm.accountid.warn') + '  '; } catch (e) {}
+    warn.textContent = (fwState.raw ? t('fw.rawwarn') + '  ' : (fwState.experimental ? t('scooter.untested.fw') + '  ' : '')) + acctWarn + t('fw.confirm.warn'); warn.classList.remove('is-hidden'); warn.style.display = 'block';
+  }
   document.getElementById('confirm-msg').textContent = tf('fw.confirm.body', { file: list.map(x => x.name).join(', ') });
   document.getElementById('confirm-ok').textContent = t('fw.confirm.ok');
   state.confirmCb = () => { fwState.flashQueue = list.map(x => x.kind); fwState.flashDone = []; fwFlashNext(); };
