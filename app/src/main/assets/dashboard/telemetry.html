@@ -1954,6 +1954,13 @@ function updateBLEUI(data) {
   // Universal hero "current" slot a theme may offer (nv's standard fold has no such cell -> no-op there).
   { const _cv = document.getElementById('current-val'); if (_cv) _cv.textContent = data.currentValid ? ((-data.current) > 0 ? '+' : '') + (-data.current).toFixed(1) : '-'; }
 
+  // Aggregate motor cells a theme may offer. NAVEE has no per-motor telemetry, so a theme's front/rear motor
+  // cells stay hidden by availability; only the TOTAL pack current and POWER (V x I, kW) are real. Same sign
+  // basis as current-val. No-ops on nv's standard fold (those ids live only in an injected theme).
+  { const _cur = data.currentValid ? -data.current : null;
+    setTxt('m-total-cur', _cur != null ? ((_cur > 0 ? '+' : '') + _cur.toFixed(1)) : '-');
+    setTxt('m-power', _cur != null ? (data.volt * _cur / 1000).toFixed(2) : '-'); }
+
   // All values
   renderAllValues(data);
 }
@@ -5329,6 +5336,8 @@ function applyThemeControlCaps() { try { naveeApplyCaps(); } catch (e) {} }
 // sections collapse. The theme keeps its own data-i18n labels (nv-i18n provides the text).
 var NV_DATA_SLOTS = {
   'ble-speed': 1, 'gps-speed': 1, 'soc-val': 1, 'gear-val': 1, 'current-val': 1,
+  // Aggregate motor cells only (NAVEE has no per-motor telemetry; front/rear motor ids stay OUT -> hidden).
+  'm-power': 1, 'm-total-cur': 1,
   'dg-volt': 1, 'dg-current': 1, 'dg-soh': 1, 'dg-total': 1, 'dg-single': 1, 'dg-max': 1,
   'dg-rssi': 1, 'dg-err': 1, 'dg-range': 1, 'dg-btemp': 1, 'dg-cycles': 1,
   'dg-limit': 1, 'dg-startspeed': 1, 'dg-brake': 1, 'dg-drivemode': 1,
