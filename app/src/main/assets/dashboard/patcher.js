@@ -1949,8 +1949,19 @@ patches: [
     verify: { size: 0x24800, crcOff: 0x13, crcStock: 0x9e11, lenOff: 0x10, lenStock: 0x024400 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    blocked: 'This meter is not patched: it hosts BLE and is the only route back from a failed controller update, so a bad meter commit cannot be undone. Its patches were never confirmed on hardware.',
-    patches: [],
+    // Switchable BT drossel (feature 'drossel'): the meter forwards a 0x51 drive frame whose byte10 is the
+    // governed speed (config cell 0x20aa13); a region gate (FUN_08016e26: country in {6,7,8} open, else DE
+    // clamp) zeroes it. NOP the frame-builder clamp (0x12e4e) so a set value is forwarded, and NOP the
+    // setter region-skip (0x13e1e) so class 0x6E sub1 can write the cell (22 = locked, up = open) in DE.
+    // The boot-init clamp is left intact, so it boots at the stock DE default and only opens on a BLE write.
+    // In-place, length untouched, resealed. Experimental and HW-UNCONFIRMED: there is no ST5 controller
+    // image, so whether the controller honours the forwarded byte can only be shown on hardware; BLE-host
+    // meter with no confirmed SWD recovery -> red untested warning plus extra confirmation.
+    patches: [
+      { off: 0x12e4e, from: [0xee, 0x72], to: [0x00, 0xbf], id: 'speedsel' },        // NOP frame-builder DE zero-store of byte10
+      { off: 0x13e1e, from: [0x47, 0xd0], to: [0x00, 0xbf], id: 'speedsel-setter' }, // NOP setter region-skip (allow 0x6E write in DE)
+      { off: 0x1938c, from: [0x30], to: [0x35], id: 'version-marker' },              // fwMeter "0024" -> "5024"
+    ],
   },
 
   // K100 Max meter 0.0.1.4 (5001). Meter feature patches (no speed latch on this family). 
@@ -2474,6 +2485,7 @@ const FLASH_ENABLED = new Set([
   'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + cruise, experimental)
   'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + switchable drossel + version marker, experimental)
   'meterGT5',                                                     // GT5 meter (switchable drossel + version marker, experimental; previously blocked)
+  'st5_meter',                                                    // ST5 Pro/Max meter (switchable drossel + version marker, experimental; no ST5 controller image, HW-unconfirmed; previously blocked)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
   'bldcUT5Max', 'bldcUT5Max_0013',                                // UT5 Max controller (permanent top gear 22-40; 0.0.1.0 plus newer 0.0.1.3; meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
@@ -2487,7 +2499,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'meterGT5', 'meterXT5_3023', 'bldcUT5Max', 'bldcUT5Max_0013', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'meterGT5', 'st5_meter', 'meterXT5_3023', 'bldcUT5Max', 'bldcUT5Max_0013', 'bldcUT5UltraX', 'bldcXT5ProMax', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {
