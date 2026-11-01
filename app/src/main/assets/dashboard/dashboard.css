@@ -174,8 +174,8 @@ html, body {
 
 /* ── Hero Metrics ──────────────────────────────────────────── */
 /* Hero cells and motor cells are the same kind of tile row, so they share one grid. */
-#hero-row {
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
+#hero-row, #tele-row {
+  display: grid; grid-template-columns: 1fr 1fr;
   gap: var(--gap);
 }
 .hero-cell {

@@ -76,55 +76,48 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <div class="hc-unit" data-i18n="dash.hero.gear.label">Gear</div>
         <div class="hc-tag is-hidden" id="gear-tag"></div>
       </div>
-      <div class="hero-cell" id="current-cell" data-cell-id="hero-current" data-tile-id="tile-hero-cur" data-tile-label="A Current" data-i18n-tile-label="tile.label.current">
-        <div class="hc-val" id="current-val">-</div>
-        <div class="hc-unit" data-i18n="dash.hero.current.unit">A Current</div>
-      </div>
     </div>
 
-    <!-- Motors: universal scaffold (same as the themes). One value per cell; temps + power in row 1,
-         currents in row 2. The driver fills what it has; availability hides the rest. -->
-    <div id="motors-section" data-section-container>
-    <div class="section-hdr sub-hdr">
-      <span data-i18n="dash.motors.section">Motors</span>
+    <!-- Live telemetry: shared motor-row grid scaffold (data-cell-id per cell) for theme + editor parity. -->
+    <div class="section-hdr sub-hdr" id="tele-hdr">
+      <span data-i18n="dash.tele.section">Antrieb &amp; Akku</span>
     </div>
-    <div id="motor-area">
-      <div id="motor-row" data-tile-id="tile-motor-r1" data-tile-label="Motors row 1" data-i18n-tile-label="tile.label.motor.r1">
-        <div class="motor-cell" data-cell-id="motor-rear-t">
-          <div class="mc-title" data-i18n="dash.motor.rear.title">REAR</div>
-          <div class="mc-main"><span id="mr-temp">-</span></div>
-          <div class="mc-unit" data-i18n="dash.motor.rear.temp.unit">&deg;C</div>
-        </div>
-        <div class="motor-cell" data-cell-id="motor-front-t">
-          <div class="mc-title" data-i18n="dash.motor.front.title">FRONT</div>
-          <div class="mc-main"><span id="mf-temp">-</span></div>
-          <div class="mc-unit" data-i18n="dash.motor.front.temp.unit">&deg;C</div>
-        </div>
-        <div class="motor-cell" data-cell-id="motor-power">
-          <div class="mc-title" data-i18n="dash.motor.power.title">POWER</div>
-          <div class="mc-main"><span id="m-power">-</span></div>
-          <div class="mc-unit" data-i18n="dash.motor.power.unit">kW</div>
-        </div>
+    <div id="motor-row" data-tile-id="tile-tele-r1" data-tile-label="Power / Voltage" data-i18n-tile-label="tile.label.tele.r1">
+      <div class="motor-cell" data-cell-id="tele-power">
+        <div class="mc-title" data-i18n="dash.tele.power.title">LEISTUNG</div>
+        <div class="mc-main"><span id="tl-power">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.power.unit">W</div>
       </div>
-      <div id="motor-row-2" data-tile-id="tile-motor-r2" data-tile-label="Motors row 2" data-i18n-tile-label="tile.label.motor.r2">
-        <div class="motor-cell" data-cell-id="motor-rear-a">
-          <div class="mc-title" data-i18n="dash.motor.rear.title">REAR</div>
-          <div class="mc-main"><span id="mr-cur">-</span></div>
-          <div class="mc-unit" data-i18n="dash.motor.rear.current.unit">A</div>
-        </div>
-        <div class="motor-cell" data-cell-id="motor-front-a">
-          <div class="mc-title" data-i18n="dash.motor.front.title">FRONT</div>
-          <div class="mc-main"><span id="mf-cur">-</span></div>
-          <div class="mc-unit" data-i18n="dash.motor.front.current.unit">A</div>
-        </div>
-        <div class="motor-cell" data-cell-id="motor-total-a">
-          <div class="mc-title" data-i18n="dash.motor.current.total.title">TOTAL</div>
-          <div class="mc-main"><span id="m-total-cur">-</span></div>
-          <div class="mc-unit" data-i18n="dash.motor.rear.current.unit">A</div>
-        </div>
+      <div class="motor-cell" data-cell-id="tele-volt">
+        <div class="mc-title" data-i18n="dash.tele.volt.title">SPANNUNG</div>
+        <div class="mc-main"><span id="tl-volt">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.volt.unit">V</div>
       </div>
     </div>
-    </div><!-- end #motors-section -->
+    <div id="motor-row-2" data-tile-id="tile-tele-r2" data-tile-label="Battery / Health" data-i18n-tile-label="tile.label.tele.r2">
+      <div class="motor-cell" data-cell-id="tele-temp">
+        <div class="mc-title" data-i18n="dash.tele.temp.title">AKKU</div>
+        <div class="mc-main"><span id="tl-temp">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.temp.unit">&deg;C</div>
+      </div>
+      <div class="motor-cell" data-cell-id="tele-soh">
+        <div class="mc-title" data-i18n="dash.tele.soh.title">AKKU-ZUSTAND</div>
+        <div class="mc-main"><span id="tl-soh">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.soh.unit">%</div>
+      </div>
+    </div>
+    <div id="motor-row-3" data-tile-id="tile-tele-r3" data-tile-label="Range / Total" data-i18n-tile-label="tile.label.tele.r3">
+      <div class="motor-cell" data-cell-id="tele-range">
+        <div class="mc-title" data-i18n="dash.tele.range.title">REICHWEITE</div>
+        <div class="mc-main"><span id="tl-range">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.range.unit">km</div>
+      </div>
+      <div class="motor-cell" data-cell-id="tele-odo">
+        <div class="mc-title" data-i18n="dash.tele.odo.title">GESAMT</div>
+        <div class="mc-main"><span id="tl-odo">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.odo.unit">km</div>
+      </div>
+    </div>
 
     <!-- Quick controls: empty skin container; the driver fills it via renderQuickControls(). -->
     <div id="quick-grid" class="dq-disabled" role="group" aria-label="Drive mode quick toggles" data-i18n-aria="dash.drive.quick.group" data-tile-id="quick-actions" data-tile-label="Quick Buttons" data-tile-no-editor="true"></div>
@@ -5433,29 +5426,12 @@ var NV_DATA_SLOTS = {
 // Availability pass for an active theme: hide every value slot the driver does not fill, then collapse
 // empty rows, tiles and sections. Generic - knows no manufacturer.
 function applyThemeTelemetry() {
-  // Runs for EVERY theme (Default included): the fold is the universal scaffold, so the driver fills
-  // what it has and availability hides the rest - identical across Default, Carbon and Lambo.
+  if (!(_themeActive && _themeActive !== 'Default')) return;
   var scr = document.getElementById('scroller'); if (!scr) return;
   scr.querySelectorAll('.sd-val[id], .hc-val[id], .mc-main span[id], .dg-value[id]').forEach(function(v) {
     var host = v.closest('.dg-cell, .motor-cell, .hero-cell, .speed-drum');
     if (host) host.style.display = NV_DATA_SLOTS[v.id] ? '' : 'none';
   });
-  // Consolidate the still-visible motor cells into the first motor row, so 1-2 aggregate tiles sit side
-  // by side instead of stacked one-per-row when the driver has no per-motor data (Teverun with full
-  // rows keeps both rows: >3 visible cells are left as-is).
-  var mArea = scr.querySelector('#motor-area');
-  if (mArea) {
-    var mRows = Array.prototype.filter.call(mArea.children, function(c) { return c.id && c.id.indexOf('motor-row') === 0; });
-    if (mRows.length > 1) {
-      var visCells = [];
-      mRows.forEach(function(r) { Array.prototype.forEach.call(r.querySelectorAll(':scope > .motor-cell'), function(c) { if (c.style.display !== 'none') visCells.push(c); }); });
-      if (visCells.length > 0 && visCells.length <= 3) {
-        visCells.forEach(function(c) { mRows[0].appendChild(c); });
-        mRows[0].style.display = '';
-        for (var i = 1; i < mRows.length; i++) mRows[i].style.display = 'none';
-      }
-    }
-  }
   scr.querySelectorAll('.dg-row').forEach(function(row) {
     var cells = row.querySelectorAll('.dg-cell');
     var anyVis = cells.length === 0 || Array.prototype.some.call(cells, function(c) { return c.style.display !== 'none'; });
