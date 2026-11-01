@@ -1817,16 +1817,22 @@ function distUnit() { return state.useMph ? 'mi' : 'km'; }
 
 function setTxt(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
 
+// Session average speed for a theme's Avg-speed cell (dg-avg); reset on each (dis)connect, like sf/tr.
+let _spdSum = 0, _spdCnt = 0;
+function resetSpeedStats() { _spdSum = 0; _spdCnt = 0; }
+
 function updateBLEUI(data) {
   const bleDot = document.getElementById('ble-dot');
 
   document.querySelector('.ble-drum .sd-unit').textContent = speedUnit();
   document.querySelector('.gps-drum .sd-unit').textContent = speedUnitGPS();
 
-  const DASH = ['ble-speed','soc-val','gear-val','dg-current','dg-range','dg-max',
+  const DASH = ['ble-speed','soc-val','gear-val','dg-current','dg-range','dg-max','dg-avg',
     'dg-volt','dg-btemp','dg-soh','dg-cycles','dg-total','dg-single','dg-rssi','dg-err',
     'tl-power','tl-volt','tl-temp','tl-range','tl-odo','tl-soh',
-    'dg-limit','dg-startspeed','dg-brake','dg-drivemode'];
+    'dg-limit','dg-startspeed','dg-brake','dg-drivemode',
+    // Custom-theme fold slots filled with NAVEE values (present only in Teverun-shaped themes).
+    'current-val','mr-temp','mf-temp','m-power','mr-cur','mf-cur','m-total-cur'];
 
   if (!data) {
     DASH.forEach(id => setTxt(id, '-'));
@@ -1840,7 +1846,7 @@ function updateBLEUI(data) {
   state.bleConnected = connected;
   state.ble = data;
 
-  if (connected !== wasConnected) onBLEConnectionChange(connected);
+  if (connected !== wasConnected) { onBLEConnectionChange(connected); resetSpeedStats(); }
 
   bleDot.classList.toggle('connected', connected);
   const connBtn = document.getElementById('btn-connect');
@@ -1865,6 +1871,10 @@ function updateBLEUI(data) {
     const spEl = document.getElementById('ble-speed');
     if (spEl) spEl.style.color = _speedReleased ? 'var(--danger)' : '';
   }
+  // Session avg speed for a theme's Avg-speed cell (dg-avg). No-op on nv's native grid (no such id);
+  // dg-max below stays the reported max-speed PARAMETER.
+  _spdSum += data.speed; _spdCnt++;
+  setTxt('dg-avg', convSpeed(_spdCnt ? _spdSum / _spdCnt : 0) + ' ' + (state.useMph ? 'mph' : 'km/h'));
   // Old NT5 latch firmware is bypassable at the boost button: flag it so the owner re-flashes.
   { const to = document.getElementById('tune-outdated'); if (to) to.classList.toggle('is-hidden', OUTDATED_LATCH_BLDC.indexOf((data.fwBldc || '').trim()) < 0); }
   // Untested model: flag when an unconfirmed (experimental) scooter is connected.
@@ -1956,15 +1966,16 @@ function updateBLEUI(data) {
   setTxt('tl-odo', Math.round(convDist(data.totalMile)));
   setTxt('tl-soh', Math.round(data.soh));
 
-  // Universal hero "current" slot a theme may offer (nv's standard fold has no such cell -> no-op there).
+  // Custom (Teverun-shaped) theme fold slots: fill the theme's hero current cell and six motor cells with
+  // real NAVEE values. applyThemeTelemetry() has relabelled them (Voltage/Power/SOH/Battery/Range/Total)
+  // via _NV_FOLD_MAP; formatting matches nv's grid. nv's native fold has none of these ids -> harmless no-ops.
   { const _cv = document.getElementById('current-val'); if (_cv) _cv.textContent = data.currentValid ? ((-data.current) > 0 ? '+' : '') + (-data.current).toFixed(1) : '-'; }
-
-  // Aggregate motor cells a theme may offer. NAVEE has no per-motor telemetry, so a theme's front/rear motor
-  // cells stay hidden by availability; only the TOTAL pack current and POWER (V x I, kW) are real. Same sign
-  // basis as current-val. No-ops on nv's standard fold (those ids live only in an injected theme).
-  { const _cur = data.currentValid ? -data.current : null;
-    setTxt('m-total-cur', _cur != null ? ((_cur > 0 ? '+' : '') + _cur.toFixed(1)) : '-');
-    setTxt('m-power', _cur != null ? (data.volt * _cur / 1000).toFixed(2) : '-'); }
+  setTxt('mr-temp', data.volt.toFixed(1));                                                     // Voltage (V)
+  setTxt('mf-temp', data.currentValid ? (data.volt * data.current / 1000).toFixed(2) : '-');   // Power (V*I, kW)
+  setTxt('m-power', Math.round(data.soh));                                                      // Battery SOH (%)
+  setTxt('mr-cur', Math.round(data.btemp));                                                     // Battery temp (°C)
+  setTxt('mf-cur', Math.round(convDist(data.range)));                                           // Range (km/mi)
+  setTxt('m-total-cur', Math.round(convDist(data.totalMile)));                                  // Total odo (km/mi)
 
   // All values
   renderAllValues(data);
@@ -3714,6 +3725,21 @@ function renderBatteryPage() {
   push(t('msg2.battery.pack.soh'),            (typeof d.soh === 'number') ? dash(d.soh) + ' %' : '-');
   push(t('msg2.battery.pack.temp'),           (typeof d.temp === 'number') ? dash(d.temp) + ' °C' : '-');
   push(t('msg2.battery.pack.charge_cycles'),  dash(d.cycles));
+  // 0x79 battery-extra state flags (raw; value meaning unconfirmed).
+  if (typeof d.batTempState === 'number')    push(t('msg2.battery.pack.temp_state'),    String(d.batTempState));
+  if (typeof d.batCurrentState === 'number') push(t('msg2.battery.pack.current_state'), String(d.batCurrentState));
+  // EU-spec BMS lifetime block (0x72, only when the pack reports it). Raw unscaled - official divisor unconfirmed.
+  if (d.euRule) {
+    push(t('msg2.battery.pack.energy_throughput'),      (typeof d.energyThroughput === 'number')   ? String(d.energyThroughput)   : '-');
+    push(t('msg2.battery.pack.capacity_throughput'),    (typeof d.capacityThroughput === 'number') ? String(d.capacityThroughput) : '-');
+    push(t('msg2.battery.pack.deep_discharge'),         (typeof d.deepDischarge === 'number')      ? String(d.deepDischarge)      : '-');
+    push(t('msg2.battery.pack.self_discharge'),         (typeof d.selfDischargeRate === 'number')  ? String(d.selfDischargeRate)  : '-');
+    push(t('msg2.battery.pack.rated_capacity'),         (typeof d.ratedCapacity === 'number')      ? String(d.ratedCapacity)      : '-');
+    if (d.genDate) push(t('msg2.battery.pack.generation_date'), d.genDate);
+    if (typeof d.highTempHours === 'number')
+      push(t('msg2.battery.pack.hightemp_duration'), tf('msg2.battery.pack.duration_hm', { h: d.highTempHours, m: (d.highTempMin || 0) }));
+    push(t('msg2.battery.pack.extreme_weather_charge'), (typeof d.extremeWeatherChargeTime === 'number') ? String(d.extremeWeatherChargeTime) : '-');
+  }
   const pack = document.getElementById('bat-pack');
   if (pack) {
     pack.innerHTML = rows.map(r =>
@@ -5410,48 +5436,63 @@ function reattachQuickGridHandlers() {
 // Capability-gate the controls via the driver.
 function applyThemeControlCaps() { try { naveeApplyCaps(); } catch (e) {} }
 
-// Value-slot ids the driver fills with real data on this scooter. A theme offers a neutral superset of
-// slots; any slot whose id is not here has no data available and is hidden, then empty rows/tiles/
-// sections collapse. The theme keeps its own data-i18n labels (nv-i18n provides the text).
-var NV_DATA_SLOTS = {
-  'ble-speed': 1, 'gps-speed': 1, 'soc-val': 1, 'gear-val': 1, 'current-val': 1,
-  // Aggregate motor cells only (NAVEE has no per-motor telemetry; front/rear motor ids stay OUT -> hidden).
-  'm-power': 1, 'm-total-cur': 1,
-  'dg-volt': 1, 'dg-current': 1, 'dg-soh': 1, 'dg-total': 1, 'dg-single': 1, 'dg-max': 1,
-  'dg-rssi': 1, 'dg-err': 1, 'dg-range': 1, 'dg-btemp': 1, 'dg-cycles': 1,
-  'dg-limit': 1, 'dg-startspeed': 1, 'dg-brake': 1, 'dg-drivemode': 1,
-  'dg-dist': 1, 'dg-time': 1, 'dg-ride-avg': 1, 'dg-alt': 1, 'dg-hm': 1, 'dg-gps': 1, 'dg-pts': 1
-};
+// The app OWNS the fold telemetry set; a custom (Teverun-shaped) theme supplies only the fold LAYOUT
+// (gauge + hero + two 3-cell motor rows). updateBLEUI fills every fold slot with a real NAVEE value, and
+// this map relabels each theme cell to that value's NAVEE label (+ unit). cell = theme data-cell-id;
+// value id written by updateBLEUI: hero-gear=gear-val, motor-rear-t=mr-temp, motor-front-t=mf-temp,
+// motor-power=m-power, motor-rear-a=mr-cur, motor-front-a=mf-cur, motor-total-a=m-total-cur.
+var _NV_FOLD_MAP = [
+  { cell: 'hero-gear',     lbl: '.hc-unit',  lblKey: 'dash.hero.gear.label'  },
+  { cell: 'motor-rear-t',  lbl: '.mc-title', lblKey: 'dash.tele.volt.title',  unit: 'dash.tele.volt.unit'  },
+  { cell: 'motor-front-t', lbl: '.mc-title', lblKey: 'dash.tele.power.title', unit: 'dash.motor.power.unit' },
+  { cell: 'motor-power',   lbl: '.mc-title', lblKey: 'dash.tele.soh.title',   unit: 'dash.tele.soh.unit'   },
+  { cell: 'motor-rear-a',  lbl: '.mc-title', lblKey: 'dash.tele.temp.title',  unit: 'dash.tele.temp.unit'  },
+  { cell: 'motor-front-a', lbl: '.mc-title', lblKey: 'dash.tele.range.title', unit: 'dash.tele.range.unit' },
+  { cell: 'motor-total-a', lbl: '.mc-title', lblKey: 'dash.tele.odo.title',   unit: 'dash.tele.odo.unit'   }
+];
+// Below-the-fold theme tiles that now duplicate a fold value (Voltage/SOH/Total) or are Teverun-only
+// (per-gear params) -> dropped. Same set tr/sf drop for the same reason.
+var _NV_THEME_DROP = ['sect-gear', 'tile-dg-volt', 'tile-dg-soh', 'tile-dg-odo'];
 
-// Availability pass for an active theme: hide every value slot the driver does not fill, then collapse
-// empty rows, tiles and sections. Generic - knows no manufacturer.
+// Custom-theme only: relabel the 7 fold slots to NAVEE labels, drop the duplicate/N-A below-fold tiles and
+// collapse emptied sections. Label/layout only (values come from updateBLEUI), so one run at theme-apply
+// time is enough; re-run from applyTileConfig after any tile change. Default keeps its native grid (no-op).
 function applyThemeTelemetry() {
   if (!(_themeActive && _themeActive !== 'Default')) return;
   var scr = document.getElementById('scroller'); if (!scr) return;
-  scr.querySelectorAll('.sd-val[id], .hc-val[id], .mc-main span[id], .dg-value[id]').forEach(function(v) {
-    var host = v.closest('.dg-cell, .motor-cell, .hero-cell, .speed-drum');
-    if (host) host.style.display = NV_DATA_SLOTS[v.id] ? '' : 'none';
+
+  // (0) The theme's "Motors" header now carries NAVEE live values -> relabel to the live-values header.
+  var mh = scr.querySelector('#motors-section .section-hdr [data-i18n], #motors-section .section-hdr span');
+  if (mh) { mh.setAttribute('data-i18n', 'dash.tele.section'); mh.textContent = t('dash.tele.section'); }
+
+  // (1) Relabel each fold slot to the NAVEE value updateBLEUI writes into it; keep it visible.
+  _NV_FOLD_MAP.forEach(function(m) {
+    var cell = scr.querySelector('[data-cell-id="' + m.cell + '"]'); if (!cell) return;
+    cell.style.display = '';
+    var lbl = cell.querySelector(m.lbl);
+    if (lbl) { lbl.setAttribute('data-i18n', m.lblKey); lbl.textContent = t(m.lblKey); }
+    if (m.unit) {
+      var u = cell.querySelector('.mc-unit');
+      if (u) { u.setAttribute('data-i18n', m.unit); u.textContent = t(m.unit); }
+    }
   });
-  scr.querySelectorAll('.dg-row').forEach(function(row) {
-    var cells = row.querySelectorAll('.dg-cell');
-    var anyVis = cells.length === 0 || Array.prototype.some.call(cells, function(c) { return c.style.display !== 'none'; });
-    row.style.display = anyVis ? '' : 'none';
+
+  // (2) Drop the duplicate / Teverun-only tiles below the fold; keep them out of the tile editor too.
+  _NV_THEME_DROP.forEach(function(id) {
+    var el = document.getElementById(id) || scr.querySelector('[data-tile-id="' + id + '"]');
+    if (el) { el.style.display = 'none'; el.dataset.capHidden = '1'; }
   });
-  scr.querySelectorAll('[data-tile-id]').forEach(function(tile) {
-    if (tile.dataset.tileNoEditor) return;
-    var parts = tile.querySelectorAll('.dg-row, .motor-cell, .hero-cell');
-    if (!parts.length) return;
-    var anyVis = Array.prototype.some.call(parts, function(c) { return c.style.display !== 'none'; });
-    tile.style.display = anyVis ? '' : 'none';
-    tile.dataset.capHidden = anyVis ? '' : '1';
-  });
+
+  // (3) Collapse section wrappers whose tiles are all hidden; a wrapper explicitly dropped above stays hidden.
   scr.querySelectorAll('[data-section-container]').forEach(function(sect) {
     if (sect.dataset.tileId) return;
+    if (_NV_THEME_DROP.indexOf(sect.id) >= 0) { sect.style.display = 'none'; return; }
     var tiles = sect.querySelectorAll('[data-tile-id]');
     var anyVis = tiles.length === 0;
     Array.prototype.forEach.call(tiles, function(tl) { if (tl.style.display !== 'none') anyVis = true; });
     sect.style.display = anyVis ? '' : 'none';
   });
+
   try { scheduleFitFold(); } catch (e) {}
 }
 

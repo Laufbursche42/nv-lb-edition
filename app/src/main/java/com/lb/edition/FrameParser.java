@@ -30,6 +30,12 @@ final class FrameParser {
     private Integer maxSpeed, limitSpeed, limitOn, startSpeed, lock, unit, breakSpeed, driveMode, cruise, tcs, eco;
     private Integer tailLight, autoLight, drl, logoLight, ambientLight;   // light switches from the 0x70 report (offsets 4/8/24/23/10)
     private Integer packMv, packMa, soh, temp, cycles;
+    // EU-spec BMS lifetime block in the 0x72 report (present only when payload length > 15 = europeanRule).
+    // RAW unscaled integers - the official display divisor is NOT confirmed (DeviceBatteryInfoActivity.k0 did not decompile).
+    private Integer euRule, energyThroughput, capacityThroughput, deepDischarge, selfDischargeRate, ratedCapacity, extremeWeatherChargeTime;
+    private Integer genYear, genMonth, genDay, highTempHours, highTempMin;   // generation date + high-temp exposure (confirmed)
+    // 0x79 battery-extra report (temperature-/current-state flags)
+    private Integer batTempState, batCurrentState;
     // realtime-only fields (0x90/0x91/0x92 push): charging + trip context, not in the 0x70/0x72 reads
     private Integer chargingState, batteryStatus, drivingStatus, tripMile, tripDuration, tripMax, tripAvg;
     private String fwMeter = "", fwBldc = "", fwBms = "", fwScreen = "", fwUwb = "";
@@ -91,13 +97,14 @@ final class FrameParser {
         int dataStart = 6, dataLen = Math.max(0, len - 1);
         if (dataStart + dataLen > f.length - 3) dataLen = Math.max(0, f.length - 3 - dataStart);
         byte[] p = Arrays.copyOfRange(f, dataStart, dataStart + dataLen);
-        if (err != 0 && (cmd == 0x70 || cmd == 0x72 || cmd == 0x73 || cmd == 0x74)) {
+        if (err != 0 && (cmd == 0x70 || cmd == 0x72 || cmd == 0x73 || cmd == 0x74 || cmd == 0x79)) {
             Log.w(TAG, "cmd 0x" + Integer.toHexString(cmd) + " err " + err);
             return;
         }
         switch (cmd) {
             case 0x70: decodeParams(p); break;
             case 0x72: decodeBattery(p); break;
+            case 0x79: decode79(p); break;
             case 0x73: decodeFirmware(p); break;
             case 0x74: decodeSN(p); break;
             case 0x90: case 0x91: case 0x92: decodeRealtime(cmd, p); break;
@@ -143,6 +150,31 @@ final class FrameParser {
         soh = rd(p, 10, 1, false);
         temp = rd(p, 11, 1, false);
         cycles = rd(p, 13, 2, false);
+        // EU-spec BMS lifetime fields (BleHandler$4.e case 114): present only when europeanRule (payload > 15).
+        // Big-endian reads except the single-byte selfDischargeRate; raw/unscaled (divisor unconfirmed).
+        if (p.length > 15) {
+            euRule = 1;
+            energyThroughput = rd(p, 15, 3, true);       // off15 len3 BE
+            capacityThroughput = rd(p, 18, 2, true);     // off18 len2 BE
+            deepDischarge = rd(p, 20, 2, true);          // off20 len2 BE
+            selfDischargeRate = rd(p, 22, 1, false);     // off22 len1
+            ratedCapacity = rd(p, 23, 2, true);          // off23 len2 BE
+            Integer gy = rd(p, 25, 1, false);            // generation date: year=2000+p[25], month=p[26], day=p[27]
+            if (gy != null) genYear = 2000 + gy;
+            genMonth = rd(p, 26, 1, false);
+            genDay = rd(p, 27, 1, false);
+            Integer yrs = rd(p, 28, 1, false), mos = rd(p, 29, 1, false), dys = rd(p, 30, 1, false), hrs = rd(p, 31, 1, false);
+            highTempMin = rd(p, 32, 1, false);           // p[33] is read-and-discarded by the official app
+            if (yrs != null && mos != null && dys != null && hrs != null)
+                highTempHours = yrs * 8760 + mos * 720 + dys * 24 + hrs;   // official total-hours formula
+            extremeWeatherChargeTime = rd(p, 34, 2, true); // off34 len2 BE
+        }
+    }
+
+    /** 0x79 battery-extra report (BleHandler$4.e case 121): temperature-/current-state flags. Raw values. */
+    private void decode79(byte[] p) {
+        batTempState = u8(p, 0);       // off0 len1
+        batCurrentState = u8(p, 1);    // off1 len1
     }
 
     private void decodeFirmware(byte[] p) {
@@ -229,6 +261,15 @@ final class FrameParser {
             put(o, "logoLight", logoLight); put(o, "ambientLight", ambientLight);
             put(o, "packMv", packMv); put(o, "packMa", packMa); put(o, "soh", soh);
             put(o, "temp", temp); put(o, "cycles", cycles);
+            // EU-spec BMS lifetime block (0x72) + 0x79 extra. Raw/unscaled where noted in decodeBattery.
+            put(o, "euRule", euRule);
+            put(o, "energyThroughput", energyThroughput); put(o, "capacityThroughput", capacityThroughput);
+            put(o, "deepDischarge", deepDischarge); put(o, "selfDischargeRate", selfDischargeRate);
+            put(o, "ratedCapacity", ratedCapacity); put(o, "extremeWeatherChargeTime", extremeWeatherChargeTime);
+            put(o, "highTempHours", highTempHours); put(o, "highTempMin", highTempMin);
+            if (genYear != null && genMonth != null && genDay != null)
+                o.put("genDate", String.format(java.util.Locale.ENGLISH, "%04d-%02d-%02d", genYear, genMonth, genDay));
+            put(o, "batTempState", batTempState); put(o, "batCurrentState", batCurrentState);
             put(o, "chargingState", chargingState); put(o, "batteryStatus", batteryStatus);
             put(o, "drivingStatus", drivingStatus); put(o, "tripMile", tripMile);
             put(o, "tripDuration", tripDuration); put(o, "tripMax", tripMax); put(o, "tripAvg", tripAvg);

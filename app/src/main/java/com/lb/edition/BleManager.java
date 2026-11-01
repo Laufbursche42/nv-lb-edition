@@ -732,14 +732,17 @@ final class BleManager {
                 Log.e(TAG, "push failed", t);
             }
             try { if (gatt != null) gatt.readRemoteRssi(); } catch (Throwable ignored) {}
-            // Poll 0x70 every ~2 s and 0x72 every ~5 s (not in the realtime push).
+            // Poll 0x70 every ~2 s and 0x72 + 0x79 every ~5 s (not in the realtime push).
             pushTicks++;
             long per = Math.max(1, PUSH_INTERVAL_MS);
             if (notifyReady) {
                 // Poll 0x90 so the warn/fault code is captured even when not riding.
                 enqueueWrite(CommandBuilder.read(0x90));
                 if (pushTicks % Math.max(1, (2000 / per)) == 0) enqueueWrite(CommandBuilder.read(0x70));
-                if (pushTicks % Math.max(1, (5000 / per)) == 0) enqueueWrite(CommandBuilder.read(0x72));
+                if (pushTicks % Math.max(1, (5000 / per)) == 0) {
+                    enqueueWrite(CommandBuilder.read(0x72));
+                    enqueueWrite(CommandBuilder.read(0x79));   // battery extra (temp/current state + EU lifetime)
+                }
             }
             main.postDelayed(this, PUSH_INTERVAL_MS);
         }
@@ -831,6 +834,7 @@ final class BleManager {
         enqueueWrite(CommandBuilder.read(0x74));   // serial (region + model pid)
         enqueueWrite(CommandBuilder.read(0x70));   // full param block (speeds, toggles)
         enqueueWrite(CommandBuilder.read(0x72));   // battery telemetry
+        enqueueWrite(CommandBuilder.read(0x79));   // battery extra (temp/current state + EU lifetime)
         enqueueWrite(CommandBuilder.read(0x73));   // firmware versions
     }
 
