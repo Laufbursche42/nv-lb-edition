@@ -22,6 +22,9 @@ on:
     branches: [ main ]
     paths-ignore:
       - '**.md'
+      - '**.pdf'
+      - 'THEME-GUIDE.version'
+      - 'tools/**'
       - 'screenshots/**'
       - 'LICENSE'
       - 'license.md'

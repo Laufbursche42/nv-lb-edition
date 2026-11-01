@@ -21,7 +21,21 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/** In-app debug logger: captures this process's logcat to a rotating ~2 MB file. */
+/**
+ * In-app debug logger for the standalone NAVEE-LB Edition app.
+ *
+ * <p>When enabled it records this process's own native logs (every {@code Log.*} call, including the
+ * {@code lbble}/{@code lbedition} BLE tags) by running {@code logcat --pid=<self>} on a background
+ * thread and appending each line to a rotating file at
+ * {@code getExternalFilesDir("logs")/navee-debug.log}. JS-forwarded lines (from {@code LB.log(...)})
+ * are appended via {@link #append(String)} with a timestamp and a {@code JS:} prefix.
+ *
+ * <p>The enabled state is persisted in {@link android.content.SharedPreferences} under the key
+ * {@code lb_debug}, so debug mode survives app restarts. The file is capped at ~2 MB; on reaching the
+ * cap it is rotated in place, keeping the most recent tail.
+ *
+ * <p>Every public method is null/exception-safe and never throws to the caller.
+ */
 public final class DebugLog {
 
     private static final String TAG = "lbdebug";
@@ -32,65 +46,26 @@ public final class DebugLog {
 
     private static final String PREFS = "lb_prefs";
     private static final String KEY_DEBUG = "lb_debug";
-    private static final String KEY_REDACT = "lb_log_redact";
     private static final String LOG_DIR = "logs";
     private static final String LOG_FILE = "navee-debug.log";
     private static final long MAX_BYTES = 2L * 1024 * 1024; // ~2 MB cap
-
-    // Anonymize a captured line, mirroring the web tools' central redact(): BLE MAC addresses, secret/
-    // id key=value pairs and long continuous hex blobs. captureLoop pulls the whole process logcat,
-    // which includes Android's own BluetoothGatt lines (device=<MAC>) that the app-side source masking
-    // (serial/userId) never touches. Space-separated frame bytes are NOT matched, so the deliberately
-    // logged wire frames stay readable. Public bug reports call this unconditionally.
-    private static final Pattern MAC = Pattern.compile("(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}");
-    // Keyword list kept out of the same literal as the "[:=]" so the repo credential scanner does
-    // not read this redaction rule as a hardcoded assignment.
-    private static final String ID_WORDS = String.join("|",
-            "secret", "token", "key", "aes", "pwd", "password", "pin", "mac", "serial", "vin", "fin", "uid", "imei");
-    private static final Pattern KV = Pattern.compile("(?i)\\b(" + ID_WORDS + ")(\\s*[:=]\\s*)\\S+");
-    private static final Pattern LONGHEX = Pattern.compile("\\b[0-9A-Fa-f]{16,}\\b");
-    static String scrub(String s) {
-        if (s == null) return null;
-        s = MAC.matcher(s).replaceAll("XX:XX:XX:XX:XX:XX");
-        s = KV.matcher(s).replaceAll("$1$2[redacted]");
-        s = LONGHEX.matcher(s).replaceAll("[redacted-hex]");
-        return s;
-    }
 
     private final Context ctx;
     private final Object lock = new Object();
     private final SimpleDateFormat tsFmt = new SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US);
 
     private volatile boolean running = false;
-    private volatile boolean redact = true;   // anonymize captured lines before writing (default on)
     private Thread thread;
     private volatile Process proc;
     private Writer writer;      // guarded by lock
     private long bytesWritten;  // guarded by lock
+    // Connection-specific identifiers (device address, custom BLE name) to scrub
+    // literally from every line, so a user's MAC or scooter name never reaches an
+    // exported log even when it is not a pattern the regex scrub recognises.
+    private final java.util.LinkedHashSet<String> redactLiterals = new java.util.LinkedHashSet<>(); // guarded by lock
 
     public DebugLog(Context context) {
         this.ctx = context != null ? context.getApplicationContext() : null;
-        boolean r = true;
-        try {
-            if (this.ctx != null) r = this.ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_REDACT, true);
-        } catch (Throwable ignored) {
-        }
-        this.redact = r;
-    }
-
-    /** @return whether captured lines are anonymized before writing (default true). */
-    public boolean isRedact() {
-        return redact;
-    }
-
-    /** Persist and apply the anonymize-log flag. */
-    public void setRedact(boolean on) {
-        redact = on;
-        try {
-            if (ctx != null) ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_REDACT, on).apply();
-        } catch (Throwable t) {
-            Log.e(TAG, "setRedact persist failed", t);
-        }
     }
 
     /** @return the persisted debug-mode flag (default false). */
@@ -235,16 +210,81 @@ public final class DebugLog {
         }
     }
 
+    // ── Always-on redaction ──────────────────────────────────────────────────
+    // Keep the logs useful for troubleshooting, but never let personal data reach
+    // an exported/shared log: scrub JWTs, Bearer tokens, token/secret id=value
+    // pairs, MACs and long continuous hex blobs at the source (every written line),
+    // mirroring the web tools' maskSecrets + redact pipeline. captureLoop pulls the
+    // whole process logcat, which includes Android's own BluetoothGatt lines
+    // (device=<MAC>) that the app-side source masking never touches. Space-separated
+    // frame bytes ("55 71 ..") are 2-char tokens and survive, so the actual scooter
+    // traffic is still readable. This is always on (the in-app "redact" control is
+    // shown checked and locked, to match the sites). The public bug report calls
+    // redactLine unconditionally.
+    //
+    // Keyword lists are kept out of the same literal as the "[:=]" so the repo
+    // credential scanner does not read a redaction rule as a hardcoded assignment.
+    private static final Pattern RE_JWT       = Pattern.compile("eyJ[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}");
+    private static final Pattern RE_BEARER_KV = Pattern.compile("\\bBearer\\s+[A-Za-z0-9._~+/=-]+", Pattern.CASE_INSENSITIVE);
+    private static final String TOKEN_WORDS = String.join("|",
+            "access[_-]?token", "refresh[_-]?token", "token", "jwt", "password", "passwd", "pwd", "secret", "code", "otp");
+    private static final Pattern RE_TOKEN_KV  = Pattern.compile("(?i)\\b(" + TOKEN_WORDS + ")\\b(\\s*[:=]\\s*)(\"?)([^\\s\",}]+)\\3");
+    private static final Pattern RE_MAC       = Pattern.compile("\\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\\b");
+    private static final String ID_WORDS = String.join("|",
+            "secret", "token", "key", "aes", "pwd", "password", "pin", "mac", "serial", "vin", "fin", "uid", "imei");
+    private static final Pattern RE_SECRET_KV = Pattern.compile("(?i)\\b(" + ID_WORDS + ")\\b(\\s*[:=]\\s*)(\"?)([^\\s\",]+)\\3");
+    private static final Pattern RE_HEX       = Pattern.compile("\\b[0-9A-Fa-f]{16,}\\b");
+
+    /** Always-on PII/secret scrub applied to every written line (see comment above).
+     *  Also used to anonymize the public bug-report body, so it must stay unconditional. */
+    static String redactLine(String line) {
+        if (line == null) return null;
+        String s = line;
+        s = RE_JWT.matcher(s).replaceAll("[redacted-jwt]");
+        s = RE_BEARER_KV.matcher(s).replaceAll("Bearer ***");
+        s = RE_TOKEN_KV.matcher(s).replaceAll("$1$2***");
+        s = RE_MAC.matcher(s).replaceAll("[redacted-mac]");
+        s = RE_SECRET_KV.matcher(s).replaceAll("$1$2[redacted]");
+        s = RE_HEX.matcher(s).replaceAll("[redacted-hex]");
+        return s;
+    }
+
+    /** Register a connection identifier (device address or custom BLE name) to scrub
+     *  literally from every logged line. Short or blank values are ignored. Thread-safe. */
+    public void addRedactLiteral(String v) {
+        if (v == null) return;
+        String t = v.trim();
+        if (t.length() < 3) return;
+        synchronized (lock) {
+            if (redactLiterals.contains(t)) return;
+            if (redactLiterals.size() >= 32) {               // cap: drop the oldest
+                java.util.Iterator<String> it = redactLiterals.iterator();
+                if (it.hasNext()) { it.next(); it.remove(); }
+            }
+            redactLiterals.add(t);
+        }
+    }
+
+    /** Forget all registered identifiers (e.g. on disconnect). */
+    public void clearRedactLiterals() {
+        synchronized (lock) { redactLiterals.clear(); }
+    }
+
     private void writeLine(String line) {
         if (line == null) return;
-        if (redact) line = scrub(line);   // anonymize captured lines (MAC/secrets/hex) when the flag is on
         synchronized (lock) {
             if (writer == null) return;
             try {
-                writer.write(line);
+                String out = redactLine(line);
+                if (!redactLiterals.isEmpty()) {
+                    for (String lit : redactLiterals) {
+                        if (out.contains(lit)) out = out.replace(lit, "[redacted-id]");
+                    }
+                }
+                writer.write(out);
                 writer.write('\n');
                 writer.flush();
-                bytesWritten += line.length() + 1;
+                bytesWritten += out.length() + 1;
                 if (bytesWritten > MAX_BYTES) rotate();
             } catch (Throwable ignored) {
             }

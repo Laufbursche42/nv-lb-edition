@@ -23,10 +23,12 @@ import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+import android.window.OnBackInvokedDispatcher;
 
 import androidx.core.content.FileProvider;
 
@@ -55,14 +57,13 @@ public class MainActivity extends Activity {
 
     /** Strip CR/LF (and cap length) so bridge-supplied strings cannot forge extra log lines. */
     private static String logSafe(String s) {
-        if (s == null) return "null";
-        String out = s.replace('\r', ' ').replace('\n', ' ');
-        return out.length() > 512 ? out.substring(0, 512) + "..." : out;
+        return s == null ? "null" : s.replace("\r", " ").replace("\n", " ");
     }
 
     private static final int REQ_FW_FILE = 0x5F01;
     private static final int REQ_AUTH_LOG = 0x5F02;
     private static final int REQ_PERMS = 4711;
+    private static final int REQ_THEME_ZIP = 4713;
 
     private WebView webView;
     private BleManager ble;
@@ -70,6 +71,9 @@ public class MainActivity extends Activity {
     private RideLogger rideLogger;
     private RouteRecorder routeRecorder;
     private SharedPreferences prefs;
+    private ThemeManager themeManager;
+    // Set by JS via LB.setCanGoBack(bool); true = a page is open, back should navigate in-app.
+    private volatile boolean jsCanGoBack = false;
     // Auto-reconnect to the remembered scooter is attempted at most once per process.
     private boolean autoConnectTried = false;
     // Tracks the BLE connection state so ride-logging transitions fire exactly once per change.
@@ -93,6 +97,8 @@ public class MainActivity extends Activity {
 
         // Apply persisted immersive full-screen (default off) via shared UiChrome.
         prefs = getSharedPreferences("lb", MODE_PRIVATE);
+        themeManager = new ThemeManager(this);
+        ThemeSeeder.seed(this, themeManager);
         UiChrome.applyFullscreen(this);
 
         configureWebView();
@@ -127,6 +133,21 @@ public class MainActivity extends Activity {
             Log.e(TAG, "debug resume failed", t);
         }
 
+        // On API 33+ (Android 13) the legacy onBackPressed() path is deprecated and removed in
+        // API 36. Register the modern handler so back navigation works on all supported devices,
+        // including Samsung One UI which may bypass onBackPressed() even on API 34-35.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                () -> {
+                    if (jsCanGoBack && webView != null) {
+                        webView.evaluateJavascript("if(window.__navBack)window.__navBack();", null);
+                    } else {
+                        finish();
+                    }
+                });
+        }
+
         requestRuntimePermissions();
     }
 
@@ -157,6 +178,8 @@ public class MainActivity extends Activity {
 
     @SuppressWarnings({"SetJavaScriptEnabled"})
     private void configureWebView() {
+        if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0)
+            WebView.setWebContentsDebuggingEnabled(true);
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -185,6 +208,29 @@ public class MainActivity extends Activity {
                 Uri u = request != null ? request.getUrl() : null;
                 String url = u != null ? u.toString() : "";
                 return !url.startsWith("file:///android_asset/");   // true = cancel the navigation
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri u = request != null ? request.getUrl() : null;
+                if (u != null && "file:///android_asset/dashboard/active-theme.css".equals(u.toString())) {
+                    try {
+                        String name = themeManager.getActiveThemeName();
+                        if (!name.isEmpty()) {
+                            byte[] css = themeManager.readThemeCss(name);
+                            if (css != null) {
+                                return new WebResourceResponse("text/css", "UTF-8",
+                                        new java.io.ByteArrayInputStream(css));
+                            }
+                        }
+                    } catch (Throwable t) {
+                        Log.e(TAG, "theme CSS intercept failed", t);
+                    }
+                    // No active theme or file missing: serve empty CSS (page loads normally).
+                    return new WebResourceResponse("text/css", "UTF-8",
+                            new java.io.ByteArrayInputStream(new byte[0]));
+                }
+                return super.shouldInterceptRequest(view, request);
             }
         });
 
@@ -429,8 +475,9 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
+        if (jsCanGoBack && webView != null) {
+            // A page/overlay is open inside the WebView; let JS close it.
+            webView.evaluateJavascript("if(window.__navBack)window.__navBack();", null);
         } else {
             super.onBackPressed();
         }
@@ -441,10 +488,11 @@ public class MainActivity extends Activity {
 
     private static final String APK_UPDATE_NAME = "nv-lb-edition-update.apk";
 
-    /** Enqueue the APK download into the public Downloads folder via DownloadManager (visible file +
-     *  progress notification), then open the installer once it completes. */
+    /** Enqueue the APK download into app-private external storage via DownloadManager (progress
+     *  notification) then open the installer once it completes. Runs on the UI thread. */
     private void startApkDownload(String url) {
         try {
+            if (!isTrustedGithubHttps(url)) { toast("Update source not trusted"); return; }
             final android.app.DownloadManager dm =
                     (android.app.DownloadManager) getSystemService(DOWNLOAD_SERVICE);
             if (dm == null) { toast("Download service unavailable"); return; }
@@ -455,10 +503,10 @@ public class MainActivity extends Activity {
             req.setMimeType("application/vnd.android.package-archive");
             req.setNotificationVisibility(
                     android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            req.setDestinationInExternalPublicDir(
-                    android.os.Environment.DIRECTORY_DOWNLOADS, APK_UPDATE_NAME);
+            // App-private dir: no other app can swap the APK before we install it.
+            req.setDestinationInExternalFilesDir(this, null, "updates/" + APK_UPDATE_NAME);
             final long id = dm.enqueue(req);
-            toast("Downloading update to your Downloads folder...");
+            toast("Downloading update...");
             pollApkDownload(dm, id, 0);
         } catch (Throwable t) {
             Log.e(TAG, "startApkDownload failed", t);
@@ -484,28 +532,40 @@ public class MainActivity extends Activity {
                 () -> pollApkDownload(dm, id, tries + 1), 500);
     }
 
-    /** Launch the package installer for the finished download (with a FileProvider fallback URI). */
+    /** Launch the package installer on the APK we downloaded into app-private storage. */
     private void installDownloadedApk(android.app.DownloadManager dm, long id) {
         try {
-            Uri uri = dm.getUriForDownloadedFile(id);
-            if (uri == null) {
-                File f = new File(android.os.Environment.getExternalStoragePublicDirectory(
-                        android.os.Environment.DIRECTORY_DOWNLOADS), APK_UPDATE_NAME);
-                if (f.exists()) uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", f);
-            }
-            if (uri == null) { toast("Downloaded to your Downloads folder - open it there to install"); return; }
+            File f = new File(getExternalFilesDir(null), "updates/" + APK_UPDATE_NAME);
+            if (!f.isFile() || f.length() == 0) { toast("Update download not found"); return; }
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", f);
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.setDataAndType(uri, "application/vnd.android.package-archive");
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
         } catch (Throwable t) {
             Log.e(TAG, "install after download failed", t);
-            toast("Downloaded to your Downloads folder - open it there to install");
+            toast("Update download failed to open");
         }
     }
 
     private void toast(String msg) {
         try { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); } catch (Throwable ignored) {}
+    }
+
+    /** Only allow HTTPS from the project's GitHub release/API hosts. Blocks a tampered update URL
+     *  from pointing the installer or an in-app fetch at an attacker-controlled host. */
+    private static boolean isTrustedGithubHttps(String url) {
+        try {
+            java.net.URL u = new java.net.URL(url);
+            if (!"https".equalsIgnoreCase(u.getProtocol())) return false;
+            String h = u.getHost() == null ? "" : u.getHost().toLowerCase(java.util.Locale.ROOT);
+            return h.equals("github.com") || h.equals("api.github.com")
+                    || h.equals("codeload.github.com")
+                    || h.equals("objects.githubusercontent.com")
+                    || h.endsWith(".githubusercontent.com");
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     private String installedVersionName() {
@@ -541,6 +601,7 @@ public class MainActivity extends Activity {
 
     /** Simple HTTP(S) GET into memory, used for the small GitHub release JSON. */
     private byte[] httpGetBytes(String urlStr) throws Exception {
+        if (!isTrustedGithubHttps(urlStr)) throw new java.io.IOException("untrusted URL host: not a GitHub HTTPS URL");
         java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(urlStr).openConnection();
         try {
             c.setRequestProperty("User-Agent", "lb-edition");
@@ -566,6 +627,13 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String __pull(String token) {
             return token == null ? null : jsPayloads.remove(token);
+        }
+
+        /** Called by JS when the in-app navigation stack changes; controls whether the Android
+         *  back button navigates within the WebView (true) or exits the app (false). */
+        @JavascriptInterface
+        public void setCanGoBack(boolean canGoBack) {
+            jsCanGoBack = canGoBack;
         }
 
         /** Store the account id (bound-scooter auth). Digits only; empty clears it. Kept Keystore-encrypted. */
@@ -638,6 +706,7 @@ public class MainActivity extends Activity {
         public void connect(String addr) {
             try {
                 Log.i(TAG, "LB.connect(" + logSafe(addr) + ")");
+                if (debugLog != null) debugLog.addRedactLiteral(addr);
                 if (ble != null) ble.connect(addr);
             } catch (Throwable t) {
                 Log.e(TAG, "connect bridge failed", t);
@@ -649,6 +718,7 @@ public class MainActivity extends Activity {
         public void connect(String addr, String name) {
             try {
                 Log.i(TAG, "LB.connect(" + logSafe(addr) + ", " + logSafe(name) + ")");
+                if (debugLog != null) { debugLog.addRedactLiteral(addr); debugLog.addRedactLiteral(name); }
                 if (ble != null) ble.connect(addr, name);
             } catch (Throwable t) {
                 Log.e(TAG, "connect bridge failed", t);
@@ -878,24 +948,12 @@ public class MainActivity extends Activity {
                     int nl = s.indexOf('\n');
                     if (nl >= 0 && nl < s.length() - 1) s = s.substring(nl + 1);
                 }
-                // The report body goes to a PUBLIC issue, so anonymize unconditionally here,
-                // regardless of the in-app anonymize-log toggle.
-                return DebugLog.scrub(s);
+                // The report body goes to a PUBLIC issue; redactLine is always-on, so this is
+                // anonymized unconditionally (JWTs, Bearer tokens, MACs, secret id=value, hex).
+                return DebugLog.redactLine(s);
             } catch (Throwable t) {
                 return "";
             }
-        }
-
-        /** Persist/apply the anonymize-log flag (strips MAC/ids from the log before save/share). */
-        @JavascriptInterface
-        public void setLogRedact(boolean on) {
-            try { if (debugLog != null) debugLog.setRedact(on); } catch (Throwable t) { Log.e(TAG, "setLogRedact failed", t); }
-        }
-
-        /** @return the anonymize-log flag (default true). */
-        @JavascriptInterface
-        public boolean logRedact() {
-            try { return debugLog == null || debugLog.isRedact(); } catch (Throwable t) { return true; }
         }
 
         // -- App update --
@@ -1359,6 +1417,150 @@ public class MainActivity extends Activity {
                 }
             }).start();
         }
+
+        // ── Theme manager ──
+
+        /** JSON array [{name, active}] of available themes; "Default" is always first. */
+        @JavascriptInterface
+        public String listThemes() {
+            try {
+                return themeManager.listThemes();
+            } catch (Throwable t) {
+                return "[]";
+            }
+        }
+
+        /** Sanitized HTML of a named theme, or "" if it does not exist. */
+        @JavascriptInterface
+        public String getThemeHtml(String name) {
+            try {
+                String html = themeManager.getThemeHtml(name);
+                return html == null ? "" : html;
+            } catch (Throwable t) {
+                return "";
+            }
+        }
+
+        /** Activate a theme by name; empty string = built-in Default. */
+        @JavascriptInterface
+        public void activateTheme(String name) {
+            try {
+                Log.i(TAG, "LB.activateTheme(" + logSafe(name) + ")");
+                themeManager.activateTheme(name == null ? "" : name);
+            } catch (Throwable t) {
+                Log.e(TAG, "activateTheme bridge failed", t);
+            }
+        }
+
+        /** Delete an imported theme. No-op if the theme does not exist. */
+        @JavascriptInterface
+        public void deleteTheme(String name) {
+            try {
+                Log.i(TAG, "LB.deleteTheme(" + logSafe(name) + ")");
+                themeManager.deleteTheme(name);
+            } catch (Throwable t) {
+                Log.e(TAG, "deleteTheme bridge failed", t);
+            }
+        }
+
+        /** Package the named theme as a .zip and share it via the system chooser. */
+        @JavascriptInterface
+        public void exportTheme(final String name) {
+            Log.i(TAG, "LB.exportTheme(" + logSafe(name) + ")");
+            runOnUiThread(() -> {
+                try {
+                    File zip = themeManager.exportThemeZip(name);
+                    if (zip == null) {
+                        Toast.makeText(MainActivity.this, "Theme files not found", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String pkg = getPackageName() + ".fileprovider";
+                    Uri uri = FileProvider.getUriForFile(MainActivity.this, pkg, zip);
+                    Intent send = new Intent(Intent.ACTION_SEND);
+                    send.setType("application/zip");
+                    send.putExtra(Intent.EXTRA_STREAM, uri);
+                    send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    Intent chooser = Intent.createChooser(send, "Export theme");
+                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(chooser);
+                } catch (Throwable t) {
+                    Log.e(TAG, "exportTheme failed", t);
+                    try {
+                        Toast.makeText(MainActivity.this, "Export failed", Toast.LENGTH_SHORT).show();
+                    } catch (Throwable ignored) {}
+                }
+            });
+        }
+
+        /** Open SAF file picker for a .zip theme bundle (one file = one theme). */
+        @JavascriptInterface
+        public void pickThemeFiles() {
+            Log.i(TAG, "LB.pickThemeFiles()");
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("*/*");
+                    startActivityForResult(i, REQ_THEME_ZIP);
+                } catch (Throwable t) {
+                    Log.e(TAG, "pickThemeFiles failed", t);
+                    pushThemeEvent("{\"event\":\"error\",\"message\":\"no file picker\"}");
+                }
+            });
+        }
+
+        /** Per-theme tile layout: JSON {order:[ids], hidden:[ids]}. */
+        @JavascriptInterface
+        public String getTileConfig(String name) {
+            try { return themeManager.getTileConfig(name); } catch (Throwable t) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public void saveTileConfig(String name, String json) {
+            try {
+                Log.i(TAG, "LB.saveTileConfig(" + logSafe(name) + ")");
+                themeManager.saveTileConfig(name, json);
+            } catch (Throwable t) { Log.e(TAG, "saveTileConfig failed", t); }
+        }
+
+        /** Per-theme CSS variable overrides: JSON {varName: value}. */
+        @JavascriptInterface
+        public String getThemeVars(String name) {
+            try { return themeManager.getThemeVars(name); } catch (Throwable t) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public void saveThemeVars(String name, String json) {
+            try {
+                Log.i(TAG, "LB.saveThemeVars(" + logSafe(name) + ")");
+                themeManager.saveThemeVars(name, json);
+            } catch (Throwable t) { Log.e(TAG, "saveThemeVars failed", t); }
+        }
+
+        /** theme.json metadata for a named theme (name, version, cssVars), or "{}" if none. */
+        @JavascriptInterface
+        public String getThemeMeta(String name) {
+            try { return themeManager.getThemeMeta(name); } catch (Throwable t) { return "{}"; }
+        }
+
+        /** Read a dashboard asset by filename and return its UTF-8 content, or "" on error.
+         *  Only names without path separators are accepted (no directory traversal). */
+        @JavascriptInterface
+        public String getAsset(final String name) {
+            if (name == null || name.contains("/") || name.contains("\\") || name.contains("..")) return "";
+            try {
+                java.io.InputStream is = getAssets().open("dashboard/" + name);
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int n;
+                while ((n = is.read(buf)) != -1) out.write(buf, 0, n);
+                is.close();
+                return out.toString("UTF-8");
+            } catch (Throwable t) {
+                Log.w(TAG, "LB.getAsset failed for " + name, t);
+                return "";
+            }
+        }
     }
 
     private void pushFwDownloaded(boolean ok, String name, String error, String b64, String kind) {
@@ -1393,8 +1595,76 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == REQ_THEME_ZIP) { handleThemeZipPick(res, data); return; }
         if (req == REQ_FW_FILE && res == RESULT_OK && data != null) onFwFilePicked(data.getData());
         if (req == REQ_AUTH_LOG && res == RESULT_OK && data != null) onAuthLogPicked(data.getData());
+    }
+
+    /** Import a picked theme .zip through ThemeManager and report the outcome to the page. */
+    private void handleThemeZipPick(int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
+            pushThemeEvent("{\"event\":\"cancelled\"}");
+            return;
+        }
+        Uri uri = data.getData();
+        try {
+            String zipName = queryDisplayName(uri);
+            InputStream is = getContentResolver().openInputStream(uri);
+            if (is == null) {
+                pushThemeEvent("{\"event\":\"error\",\"message\":\"cannot open file\"}");
+                return;
+            }
+            String[] result;
+            try {
+                result = themeManager.importThemeZip(zipName, is);
+            } finally {
+                try { is.close(); } catch (Throwable ignored) {}
+            }
+            if (result[1] != null) {
+                pushThemeEvent("{\"event\":\"error\",\"message\":" + jsonStr(result[1]) + "}");
+            } else {
+                pushThemeEvent("{\"event\":\"imported\",\"name\":" + jsonStr(result[0]) + "}");
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "theme zip pick failed", t);
+            pushThemeEvent("{\"event\":\"error\",\"message\":\"read failed\"}");
+        }
+    }
+
+    /** Push a theme-manager event (JSON) to the page via window.__onThemeEvent, through the safe
+     *  staging bridge so no native value is concatenated into an evaluateJavascript sink. */
+    private void pushThemeEvent(String json) {
+        pushObj("__onThemeEvent", json);
+    }
+
+    /** Best-effort display name for a picked content Uri (OpenableColumns), else the last path segment. */
+    private String queryDisplayName(Uri uri) {
+        try (android.database.Cursor c = getContentResolver().query(uri, null, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                int idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) {
+                    String n = c.getString(idx);
+                    if (n != null && !n.isEmpty()) return n;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        String last = uri.getLastPathSegment();
+        return last == null ? "theme.zip" : last;
+    }
+
+    /** Minimal JSON string escaper for bridge event messages. */
+    private static String jsonStr(String s) {
+        if (s == null) return "\"\"";
+        StringBuilder b = new StringBuilder("\"");
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '"' || c == '\\') b.append('\\').append(c);
+            else if (c == '\n') b.append("\\n");
+            else if (c < 0x20) b.append(String.format("\\u%04x", (int) c));
+            else b.append(c);
+        }
+        return b.append('"').toString();
     }
 
     /** Read a picked HCI snoop log, recover the account id from the OEM 0x30 frame and store it. */

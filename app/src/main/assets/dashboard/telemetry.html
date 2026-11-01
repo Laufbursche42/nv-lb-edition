@@ -13,6 +13,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Telemetry - Laufbursche Edition (NAVEE)</title>
 <link rel="stylesheet" href="dashboard.css">
+<link id="theme-css-link" rel="stylesheet" href="active-theme.css">
 </head>
 <body>
 <div id="app">
@@ -31,8 +32,18 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     </div>
   </div>
 
-  <!-- Debug-mode banner: shown just under the topbar while native debug logging records. -->
-  <div class="debug-banner" id="debug-banner" data-i18n="dash.debug.banner">&#9888; DEBUG MODE ON: recording logs</div>
+  <!-- ── Top banners (debug + warnings) ── -->
+  <div id="topbanners">
+    <!-- Debug-mode banner: shown just under the topbar while native debug logging records. -->
+    <div class="debug-banner" id="debug-banner" data-i18n="dash.debug.banner">&#9888; DEBUG MODE ON: recording logs</div>
+  </div>
+
+  <!-- ── Bottom navigation bar (shown when bottom-nav mode is active) ── -->
+  <div id="bottombar">
+    <button class="icon-btn bb-btn" id="bb-btn-left" aria-label="Left shortcut"></button>
+    <button class="icon-btn bb-btn" id="bb-btn-settings" aria-label="Settings" data-i18n-aria="dash.topbar.settings" data-i18n="dash.topbar.settings.icon">&#9881;</button>
+    <button class="icon-btn bb-btn" id="bb-btn-right" aria-label="Right shortcut"></button>
+  </div>
 
   <!-- ── Scrollable Content ─────────────────────────── -->
   <div id="scroller">
@@ -42,83 +53,80 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
      <div id="fold-inner">
 
     <!-- Speed Drums -->
-    <div id="speed-row">
-      <div class="speed-drum ble-drum">
+    <div id="speed-row" data-section-container>
+      <div class="speed-drum ble-drum" data-tile-id="tile-speed-ble" data-tile-label="Speed VCU" data-i18n-tile-label="tile.label.speed.ble">
         <div class="sd-val" id="ble-speed">-</div>
         <div class="sd-unit" data-i18n="dash.speed.vcu.unit">km/h &middot; VCU</div>
       </div>
-      <div class="speed-drum gps-drum">
+      <div class="speed-drum gps-drum" data-tile-id="tile-speed-gps" data-tile-label="Speed GPS" data-i18n-tile-label="tile.label.speed.gps">
         <div class="sd-val" id="gps-speed">-</div>
         <div class="sd-unit" data-i18n="dash.speed.gps.unit">km/h &middot; GPS</div>
       </div>
     </div>
 
     <!-- Hero Metrics -->
-    <div id="hero-row">
-      <div class="hero-cell">
+    <div id="hero-row" data-section-container>
+      <div class="hero-cell" data-cell-id="hero-battery" data-tile-id="tile-hero-soc" data-tile-label="Battery %" data-i18n-tile-label="tile.label.battery">
         <div class="hc-val" id="soc-val">-</div>
         <div class="hc-unit" data-i18n="dash.hero.battery.unit">Battery %</div>
       </div>
-      <div class="hero-cell">
+      <div class="hero-cell" data-cell-id="hero-gear" data-tile-id="tile-hero-gear" data-tile-label="Gear" data-i18n-tile-label="tile.label.gear">
         <div class="hc-val" id="gear-val">-</div>
         <div class="hc-unit" data-i18n="dash.hero.gear.label">Gear</div>
         <div class="hc-tag is-hidden" id="gear-tag"></div>
       </div>
     </div>
 
-    <!-- Live telemetry tiles, two per row. -->
-    <div class="section-hdr sub-hdr">
+    <!-- Live telemetry: shared motor-row grid scaffold (data-cell-id per cell) for theme + editor parity. -->
+    <div class="section-hdr sub-hdr" id="tele-hdr">
       <span data-i18n="dash.tele.section">Antrieb &amp; Akku</span>
     </div>
-    <div id="tele-area">
-      <div id="tele-row">
-        <div class="tele-cell">
-          <div class="tc-title" data-i18n="dash.tele.power.title">LEISTUNG</div>
-          <div class="tc-main"><span id="tl-power">-</span></div>
-          <div class="tc-unit" data-i18n="dash.tele.power.unit">W</div>
-        </div>
-        <div class="tele-cell">
-          <div class="tc-title" data-i18n="dash.tele.volt.title">SPANNUNG</div>
-          <div class="tc-main"><span id="tl-volt">-</span></div>
-          <div class="tc-unit" data-i18n="dash.tele.volt.unit">V</div>
-        </div>
-        <div class="tele-cell">
-          <div class="tc-title" data-i18n="dash.tele.temp.title">AKKU</div>
-          <div class="tc-main"><span id="tl-temp">-</span></div>
-          <div class="tc-unit" data-i18n="dash.tele.temp.unit">&deg;C</div>
-        </div>
-        <div class="tele-cell">
-          <div class="tc-title" data-i18n="dash.tele.soh.title">AKKU-ZUSTAND</div>
-          <div class="tc-main"><span id="tl-soh">-</span></div>
-          <div class="tc-unit" data-i18n="dash.tele.soh.unit">%</div>
-        </div>
-        <div class="tele-cell">
-          <div class="tc-title" data-i18n="dash.tele.range.title">REICHWEITE</div>
-          <div class="tc-main"><span id="tl-range">-</span></div>
-          <div class="tc-unit" data-i18n="dash.tele.range.unit">km</div>
-        </div>
-        <div class="tele-cell">
-          <div class="tc-title" data-i18n="dash.tele.odo.title">GESAMT</div>
-          <div class="tc-main"><span id="tl-odo">-</span></div>
-          <div class="tc-unit" data-i18n="dash.tele.odo.unit">km</div>
-        </div>
+    <div id="motor-row" data-tile-id="tile-tele-r1" data-tile-label="Power / Voltage" data-i18n-tile-label="tile.label.tele.r1">
+      <div class="motor-cell" data-cell-id="tele-power">
+        <div class="mc-title" data-i18n="dash.tele.power.title">LEISTUNG</div>
+        <div class="mc-main"><span id="tl-power">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.power.unit">W</div>
+      </div>
+      <div class="motor-cell" data-cell-id="tele-volt">
+        <div class="mc-title" data-i18n="dash.tele.volt.title">SPANNUNG</div>
+        <div class="mc-main"><span id="tl-volt">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.volt.unit">V</div>
+      </div>
+    </div>
+    <div id="motor-row-2" data-tile-id="tile-tele-r2" data-tile-label="Battery / Health" data-i18n-tile-label="tile.label.tele.r2">
+      <div class="motor-cell" data-cell-id="tele-temp">
+        <div class="mc-title" data-i18n="dash.tele.temp.title">AKKU</div>
+        <div class="mc-main"><span id="tl-temp">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.temp.unit">&deg;C</div>
+      </div>
+      <div class="motor-cell" data-cell-id="tele-soh">
+        <div class="mc-title" data-i18n="dash.tele.soh.title">AKKU-ZUSTAND</div>
+        <div class="mc-main"><span id="tl-soh">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.soh.unit">%</div>
+      </div>
+    </div>
+    <div id="motor-row-3" data-tile-id="tile-tele-r3" data-tile-label="Range / Total" data-i18n-tile-label="tile.label.tele.r3">
+      <div class="motor-cell" data-cell-id="tele-range">
+        <div class="mc-title" data-i18n="dash.tele.range.title">REICHWEITE</div>
+        <div class="mc-main"><span id="tl-range">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.range.unit">km</div>
+      </div>
+      <div class="motor-cell" data-cell-id="tele-odo">
+        <div class="mc-title" data-i18n="dash.tele.odo.title">GESAMT</div>
+        <div class="mc-main"><span id="tl-odo">-</span></div>
+        <div class="mc-unit" data-i18n="dash.tele.odo.unit">km</div>
       </div>
     </div>
 
-    <!-- Quick drive-mode toggles. Same controller keys as the scooter-settings sheet, but written
-         immediately instead of on Save. Greyed out until the scooter is connected. -->
-    <div id="drive-quick" class="dq-disabled" role="group" aria-label="Drive mode quick toggles" data-i18n-aria="dash.drive.quick.group">
-      <button type="button" class="dq-btn" data-dq="zerostart" aria-label="Toggle zero start" data-i18n-aria="dash.drive.quick.kickstart.aria" data-i18n="dash.drive.quick.kickstart">Zero-Start</button>
-      <button type="button" class="dq-btn" data-dq="cruise" aria-label="Toggle cruise control" data-i18n-aria="dash.drive.quick.cruise.aria" data-i18n="dash.drive.quick.cruise">Tempomat</button>
-      <button type="button" class="dq-btn" data-dq="tcs" aria-label="Toggle traction control" data-i18n-aria="dash.drive.quick.tcs.aria" data-i18n="dash.drive.quick.tcs">TCS</button>
-      <button type="button" class="dq-btn" data-dq="lock" aria-label="Toggle immobilizer" data-i18n-aria="dash.drive.quick.lock.aria" data-i18n="dash.drive.quick.lock">Sperre</button>
-    </div>
+    <!-- Quick controls: empty skin container; the driver fills it via renderQuickControls(). -->
+    <div id="quick-grid" class="dq-disabled" role="group" aria-label="Drive mode quick toggles" data-i18n-aria="dash.drive.quick.group" data-tile-id="quick-actions" data-tile-label="Quick Buttons" data-tile-no-editor="true"></div>
 
      </div>
     </div>
     <!-- end of fold -->
 
-    <!-- Data Grid -->
+    <!-- Data Grid - Vehicle & battery -->
+    <div id="sect-vehicle" data-section-container>
     <div class="section-hdr sub-hdr" data-i18n="dash.grid.vehicle.section">Vehicle &amp; battery</div>
     <div id="data-grid">
       <div class="dg-row">
@@ -155,10 +163,12 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <div class="dg-cell"><span class="dg-label" data-i18n="dash.grid.error">Error</span><span class="dg-value" id="dg-err">-</span></div>
       </div>
     </div>
+    </div><!-- /sect-vehicle -->
 
     <!-- Current ride (GPS) -->
+    <div id="sect-ride" data-section-container>
     <div class="section-hdr sub-hdr" data-i18n="dash.ride.section">Current ride (GPS)</div>
-    <div id="data-grid">
+    <div id="data-grid-ride">
       <div class="dg-row">
         <div class="dg-cell"><span class="dg-label" data-i18n="dash.ride.distance">Distance</span><span class="dg-value" id="dg-dist">-</span></div>
         <div class="dg-cell"><span class="dg-label" data-i18n="dash.ride.time">Time</span><span class="dg-value" id="dg-time">-</span></div>
@@ -178,16 +188,22 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <button type="button" id="btn-stop-ride" class="ride-stop-btn" data-i18n="dash.ride.stop">Stop ride</button>
       </div>
     </div>
+    </div><!-- /sect-ride -->
 
     <!-- All battery/cell values (scrollable like Lite) -->
+    <div id="sect-allvals" data-section-container data-tile-id="tile-allvals" data-tile-label="All values" data-i18n-tile-label="tile.label.allvals">
     <div class="section-hdr sub-hdr" data-i18n="dash.allvalues.section">All values</div>
     <div id="all-values">
       <div class="no-routes" id="all-values-empty" data-i18n="dash.allvalues.empty">Connect the scooter to see all values</div>
     </div>
+    </div><!-- /sect-allvals -->
 
     <!-- Bottom Spacer -->
     <div class="icon-16"></div>
   </div><!-- /scroller -->
+  <!-- Standard tile pool: Standard-tile DOM nodes park here while a custom theme is active.
+       display:none keeps it invisible; element IDs stay live so data-update getElementById calls work. -->
+  <div id="std-tile-pool"></div>
 </div><!-- /app -->
 
 <!-- ── Routes page ────────────────────────────────── -->
@@ -244,12 +260,15 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 </div>
 
 <!-- ── Settings Overlay ────────────────────────────── -->
-<div id="settings-overlay"></div>
 <div id="settings-sheet">
-  <div class="settings-topbar">
-    <h2 data-i18n="routes.settings.title">Settings</h2>
-    <button class="icon-btn" id="btn-close-settings" data-i18n="settings.close.symbol">&#10005;</button>
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-close-settings" aria-label="Back" data-i18n-aria="settings.connect.back.aria" data-i18n="settings.connect.back.symbol">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="routes.settings.title">Settings</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
   </div>
+  <div id="settings-scroller">
 
   <div id="update-banners">
     <button type="button" id="upd-app" class="update-banner is-hidden">
@@ -350,6 +369,16 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <option value="30" data-i18n="settings.gps.interval.option.30s">30 s</option>
       </select>
     </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.ridebanner.dock.label">Pin recording banner</div>
+        <div class="settings-row-sublabel" data-i18n="settings.ridebanner.dock.hint">Keeps banner at fixed position, not draggable</div>
+      </div>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-ride-banner-dock">
+        <label class="toggle-label" for="toggle-ride-banner-dock"></label>
+      </div>
+    </div>
     <button id="btn-open-routes" class="mt-10"><span data-i18n="settings.scooter.routes.action">&#128506; Recorded routes</span><span id="routes-count-badge"></span></button>
   </div>
 
@@ -398,7 +427,48 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <label class="toggle-label" for="toggle-fullscreen"></label>
       </div>
     </div>
-    <button id="btn-open-display" class="settings-btn mt-10"><span data-i18n="settings.display.colors.action">&#127912; Display settings</span></button>
+    <div class="settings-row mt-10">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.streaming.label">Streaming-Icon</div>
+        <div class="settings-row-sublabel" data-i18n="settings.streaming.hint">&#128225;-Button in der Topbar anzeigen</div>
+      </div>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-streaming-btn">
+        <label class="toggle-label" for="toggle-streaming-btn"></label>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.bottomnav.label">Navigation unten</div>
+        <div class="settings-row-sublabel" data-i18n="settings.bottomnav.hint">Men&uuml;leiste unten statt oben rechts</div>
+      </div>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-bottom-nav">
+        <label class="toggle-label" for="toggle-bottom-nav"></label>
+      </div>
+    </div>
+    <div id="bb-shortcut-rows">
+      <div class="settings-row-sublabel note-gap" data-i18n="settings.bottomnav.sc.hint">Scooter-Buttons erst sichtbar nach Verbinden</div>
+      <div class="settings-row mt-6">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="settings.bottomnav.left.label">Shortcut links</div></div>
+        <select class="set-ctrl" id="bb-left-sel"></select>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="settings.bottomnav.right.label">Shortcut rechts</div></div>
+        <select class="set-ctrl" id="bb-right-sel"></select>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.dashlock.label">Lock dashboard</div>
+        <div class="settings-row-sublabel" data-i18n="settings.dashlock.hint">Long-press tile drag disabled when active</div>
+      </div>
+      <div class="toggle-wrap">
+        <input type="checkbox" class="toggle-input" id="toggle-dash-lock">
+        <label class="toggle-label" for="toggle-dash-lock"></label>
+      </div>
+    </div>
+    <button id="btn-open-theme" class="settings-btn mt-10" data-i18n="theme.settings.action">&#127912; Theme manager</button>
   </div>
 
   <!-- Debug logging -->
@@ -417,12 +487,12 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     </div>
     <div class="settings-row">
       <div class="settings-row-left">
-        <div class="settings-row-label" data-i18n="settings.debug.redact.label">Anonymize log</div>
-        <div class="settings-row-sublabel" data-i18n="settings.debug.redact.hint">Removes MAC addresses and ids before the log is saved or shared (recommended)</div>
+        <div class="settings-row-label" data-i18n="settings.debug.redact.label">Redact personal data</div>
+        <div class="settings-row-sublabel" data-i18n="settings.debug.redact.hint">Always on - MACs, device names, IDs and secrets are removed before a log is shared</div>
       </div>
       <div class="toggle-wrap">
-        <input type="checkbox" class="toggle-input" id="toggle-log-redact" checked>
-        <label class="toggle-label" for="toggle-log-redact"></label>
+        <input type="checkbox" class="toggle-input" id="toggle-redact" checked disabled>
+        <label class="toggle-label" for="toggle-redact"></label>
       </div>
     </div>
     <button class="mt-10" id="btn-export-logs" data-i18n="settings.debug.export.action">&#128228; Export debug logs</button>
@@ -435,6 +505,8 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="settings-row-sublabel note-gap" data-i18n="settings.whatsnew.sub">What changed in this version</div>
     <button id="btn-version-info" data-i18n="settings.version.info.action">&#8505; Version Info &amp; Disclaimer</button>
   </div>
+
+  </div><!-- /settings-scroller -->
 </div>
 
 <!-- ── Connect page ───────────────────────────────── -->
@@ -868,6 +940,30 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m1.bot">Tile row 1 - unit (bottom)</div></div>
         <input class="set-ctrl" id="dsp-font-m1-bot" type="number" min="10" max="40" step="1" inputmode="numeric">
       </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m2.top">Tile row 2 - title (top)</div></div>
+        <input class="set-ctrl" id="dsp-font-m2-top" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m2.mid">Tile row 2 - value (middle)</div></div>
+        <input class="set-ctrl" id="dsp-font-m2-mid" type="number" min="10" max="48" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m2.bot">Tile row 2 - unit (bottom)</div></div>
+        <input class="set-ctrl" id="dsp-font-m2-bot" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m3.top">Tile row 3 - title (top)</div></div>
+        <input class="set-ctrl" id="dsp-font-m3-top" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m3.mid">Tile row 3 - value (middle)</div></div>
+        <input class="set-ctrl" id="dsp-font-m3-mid" type="number" min="10" max="48" step="1" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m3.bot">Tile row 3 - unit (bottom)</div></div>
+        <input class="set-ctrl" id="dsp-font-m3-bot" type="number" min="10" max="40" step="1" inputmode="numeric">
+      </div>
       <button type="button" id="btn-dsp-reset-fonts" class="settings-btn mt-10" data-i18n="display.fonts.reset">Reset font sizes</button>
     </div>
   </div>
@@ -951,6 +1047,42 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
 </div>
 
 <!-- ── Version Info & Disclaimer modal ─────────────── -->
+<!-- ── Theme manager page ────────────────────────── -->
+<div id="theme-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-theme-back" aria-label="Back" data-i18n-aria="fw.nav.back.label" data-i18n="fw.nav.back.icon">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="theme.page.title">Theme manager</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="theme-scroller">
+    <p class="settings-row-sublabel" data-i18n="theme.page.hint">Import a .zip bundle to customise the dashboard layout. The zip must contain theme.html and theme.css.</p>
+    <button type="button" id="btn-theme-import" class="settings-btn" data-i18n="theme.import.action">&#8682; Import theme (.zip)</button>
+    <p class="settings-row-sublabel m-6-0-2" data-i18n="theme.import.hint">Pick a single .zip file - one zip = one theme.</p>
+    <div id="theme-list"></div>
+    <div id="tile-editor"></div>
+    <div id="btn-row-editor"></div>
+    <div id="style-editor"></div>
+    <button type="button" id="btn-open-guide" class="settings-btn settings-btn-secondary" data-i18n="theme.guide.btn">&#128196; Theme creation guide</button>
+  </div>
+</div>
+
+<!-- ── Theme guide page ──────────────────────────── -->
+<div id="guide-page">
+  <div id="topbar">
+    <div class="tb-left">
+      <button class="icon-btn" id="btn-guide-back" aria-label="Back" data-i18n-aria="fw.nav.back.label" data-i18n="fw.nav.back.icon">&#8592;</button>
+    </div>
+    <span class="tb-title" data-i18n="theme.guide.title">Theme Guide</span>
+    <div class="tb-right"><span class="tb-spacer"></span></div>
+  </div>
+  <div id="guide-scroller">
+    <div id="guide-body"></div>
+  </div>
+  <button id="guide-totop" class="guide-totop" aria-hidden="true" data-i18n-aria="theme.guide.totop.aria">&#8679;</button>
+</div>
+
 <div id="verinfo-overlay">
   <div id="verinfo-box" role="dialog" aria-modal="true" aria-labelledby="verinfo-title">
     <h3 id="verinfo-title" data-i18n="fw.verinfo.title">Version Info &amp; Disclaimer</h3>
@@ -1029,8 +1161,10 @@ function syncDebugUI() {
   if (t) t.checked = on;
   const b = document.getElementById('debug-banner');
   if (b) b.style.display = on ? 'block' : 'none';
-  const rc = document.getElementById('toggle-log-redact');
-  if (rc) { try { rc.checked = (typeof LB === 'undefined' || !LB.logRedact) ? true : !!LB.logRedact(); } catch (e) { rc.checked = true; } }
+  // Redaction is always on and locked in native (DebugLog.redactLine); the checkbox is shown
+  // checked + disabled, so there is nothing to query.
+  const rc = document.getElementById('toggle-redact');
+  if (rc) { rc.checked = true; rc.disabled = true; }
 }
 // Forward uncaught JS errors + console.error/warn to the native log file (only while debug is ON).
 (function installDebugForwarding() {
@@ -1176,7 +1310,13 @@ const FONT_META = [
   { key: 'heroLbl',  varName: '--sz-hero-lbl',  id: 'dsp-font-hero-lbl',  def: 13, min: 10, max: 40 },
   { key: 'm1Top', varName: '--sz-m1-top', id: 'dsp-font-m1-top', def: 12, min: 10, max: 40 },
   { key: 'm1Mid', varName: '--sz-m1-mid', id: 'dsp-font-m1-mid', def: 32, min: 10, max: 48 },
-  { key: 'm1Bot', varName: '--sz-m1-bot', id: 'dsp-font-m1-bot', def: 12, min: 10, max: 40 }
+  { key: 'm1Bot', varName: '--sz-m1-bot', id: 'dsp-font-m1-bot', def: 12, min: 10, max: 40 },
+  { key: 'm2Top', varName: '--sz-m2-top', id: 'dsp-font-m2-top', def: 12, min: 10, max: 40 },
+  { key: 'm2Mid', varName: '--sz-m2-mid', id: 'dsp-font-m2-mid', def: 32, min: 10, max: 48 },
+  { key: 'm2Bot', varName: '--sz-m2-bot', id: 'dsp-font-m2-bot', def: 12, min: 10, max: 40 },
+  { key: 'm3Top', varName: '--sz-m3-top', id: 'dsp-font-m3-top', def: 12, min: 10, max: 40 },
+  { key: 'm3Mid', varName: '--sz-m3-mid', id: 'dsp-font-m3-mid', def: 32, min: 10, max: 48 },
+  { key: 'm3Bot', varName: '--sz-m3-bot', id: 'dsp-font-m3-bot', def: 12, min: 10, max: 40 }
 ];
 
 function loadDisplayCfg() {
@@ -1361,9 +1501,8 @@ function applyTheme(dark) {
   document.getElementById('toggle-dark').checked = dark;
   storage.set('lb_theme', dark ? 'dark' : 'light');
   // The rider's own colours are inline properties on :root and therefore outrank the stylesheet's
-  // theme block, so the other theme's set has to be written now that the theme has changed.
-  try { applyDisplay(); } catch (e) {}
-  try { applyFontSizes(); } catch (e) {}
+  // theme block, so the active theme's set has to be re-applied now that dark/light has changed.
+  try { injectThemeVars(); } catch (e) {}
 }
 
 function initTheme() {
@@ -1812,6 +1951,9 @@ function updateBLEUI(data) {
   setTxt('tl-odo', Math.round(convDist(data.totalMile)));
   setTxt('tl-soh', Math.round(data.soh));
 
+  // Universal hero "current" slot a theme may offer (nv's standard fold has no such cell -> no-op there).
+  { const _cv = document.getElementById('current-val'); if (_cv) _cv.textContent = data.currentValid ? ((-data.current) > 0 ? '+' : '') + (-data.current).toFixed(1) : '-'; }
+
   // All values
   renderAllValues(data);
 }
@@ -1820,6 +1962,7 @@ function tickBLE() {
   const raw = storage.get('lb_live_data');
   const data = parseBLE(raw);
   updateBLEUI(data);
+  updateThemeHooks(data);   // fill an active theme's data-lb hooks
   updateRideUI();
   // Mirror the NAVEE quick toggles onto the scooter state (~2x/s).
   reflectDriveQuick();
@@ -2672,13 +2815,13 @@ function stopSrtStream() {
 }
 
 function openSettings() {
-  document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-sheet').classList.add('open');
+  _updateNavState();
 }
 
 function closeSettings() {
-  document.getElementById('settings-overlay').classList.remove('open');
   document.getElementById('settings-sheet').classList.remove('open');
+  _updateNavState();
 }
 
 /* ── Language ──────────────────────────────────────────────── */
@@ -3122,7 +3265,7 @@ function naveeApplyCaps() {
   const setRow = (id, show) => { const el = document.getElementById(id); const row = el && el.closest('.settings-row'); if (row) row.style.display = show ? '' : 'none'; };
   setRow('ss-cruise', caps[0] !== 0);
   setRow('ss-zerostart', caps[1] !== 0);
-  const cq = document.querySelector('#drive-quick .dq-btn[data-dq="cruise"]');
+  const cq = document.querySelector('#quick-grid .dq-btn[data-dq="cruise"]');
   if (cq) cq.style.display = (caps[0] !== 0) ? '' : 'none';
 }
 
@@ -4127,42 +4270,33 @@ function toggleSpeedRelease() {
 /* -- Main-screen drive-mode quick toggles (Zero-Start / Tempomat / Sperre) -- */
 function toggleDriveQuick(key) {
   if (!naveeGuard()) return;
-  const d = liveRaw();
-  if (key === 'lock') {
-    const locked = (d.lock === 1);
-    try { LB.setLock(locked); showToast(locked ? t('msg2.navee.lock.off') : t('msg2.navee.lock.on')); }
-    catch (e) { showToast(tf('msg2.toast.error', { e: e })); }
-  } else if (key === 'cruise') {
-    pushSetting(NAVEE_CMD.cruise, (typeof d.cruise === 'number' && d.cruise > 0) ? 0 : 1);
-  } else if (key === 'tcs') {
-    pushSetting(NAVEE_CMD.tcs, (d.tcs === 1) ? 0 : 1);
-  } else if (key === 'zerostart') {
-    // Toggle between the default start-off level and zero-start (level 0).
+  // Zero-start is a level select: flip between the default start-off level and level 0.
+  if (key === 'zerostart') {
+    const d = liveRaw();
     const on = (typeof d.startSpeed === 'number' && d.startSpeed !== NAVEE_STARTSPEED_DEFAULT);
-    pushSetting(NAVEE_CMD.zerostart, on ? NAVEE_STARTSPEED_DEFAULT : 0);
+    const sel = document.getElementById('ss-zerostart');
+    if (sel) { sel.value = String(on ? NAVEE_STARTSPEED_DEFAULT : 0); sel.dispatchEvent(new Event('change')); }
+    return;
   }
+  // Every other control shadows its ss-* checkbox: flip it and reuse the wired handler (guard+command+hold).
+  const cb = document.getElementById('ss-' + key);
+  if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
 }
 
-/* Mirror the scooter state onto the three quick buttons (called every tickBLE). */
+/* Mirror the live scooter state onto the quick buttons (called every tickBLE). State per control comes
+   from the driver catalog's on(d); cruise mirrors the manufacturer (getCcsStatus() != 0, not == 1). */
 function reflectDriveQuick() {
-  const wrap = document.getElementById('drive-quick');
+  const wrap = document.getElementById('quick-grid');
   if (!wrap) return;
   const connected = !!state.bleConnected;
   wrap.classList.toggle('dq-disabled', !connected);
   const d = liveRaw();
-  const on = {
-    zerostart: (typeof d.startSpeed === 'number' && d.startSpeed !== NAVEE_STARTSPEED_DEFAULT),
-    // Cruise: mirror the manufacturer, which highlights on getCcsStatus() != 0, not an exact ==1.
-    // The numeric guard keeps a missing key (undefined) from reading as "on".
-    cruise: (typeof d.cruise === 'number' && d.cruise > 0),
-    tcs: (d.tcs === 1),
-    lock: (d.lock === 1)
-  };
-  wrap.querySelectorAll('.dq-btn[data-dq]').forEach(btn => {
-    btn.classList.toggle('active', connected && !!on[btn.dataset.dq]);
+  wrap.querySelectorAll('.dq-btn[data-dq]').forEach(function(btn) {
+    const c = NV_QUICK_BY_DQ[btn.dataset.dq];
+    btn.classList.toggle('active', connected && !!(c && c.on && c.on(d)));
   });
   // Zero-start (levels 0-2) is USA-SKU only; hide its quick button where the meter would clamp it away,
-  // and hide it entirely where the firmware has no zero-start at all (kick cap 0).
+  // and entirely where the firmware has no zero-start at all (kick cap 0).
   const zq = wrap.querySelector('.dq-btn[data-dq="zerostart"]');
   if (zq) zq.style.display = (naveeCaps()[1] !== 0 && naveeZeroStartFull()) ? '' : 'none';
   // Drop cruise/zero-start controls the connected model's firmware does not support.
@@ -4278,6 +4412,1216 @@ function ptDownloadApp() {
   try { LB.downloadAndInstallApk(a.url); } catch (e) { showToast(t('msg2.update.toast.failed')); }
 }
 
+// Universal theme/UI scaffold. Theme = neutral skin + layout; the driver supplies controls +
+// telemetry values/labels generically. The theme never carries manufacturer markup.
+let _themeActive = '';    // active theme at load / after activate+reload
+var _themeScope = 'fold'; // 'fold' = inject into #fold-inner; 'full' = replace #scroller
+
+// Driver control set: every on/off switch this manufacturer exposes. renderQuickControls() builds the
+// buttons and the button-editor dropdown is populated from the same list. on(d) reads the live state for
+// the active highlight; the toggle is routed through the matching ss-* control (see toggleDriveQuick).
+var NV_QUICK_CONTROLS = [
+  { dq: 'lock',      btnId: 'btn-dq-lock',    bb: 'dq-lock',    i18n: 'dash.drive.quick.lock',      aria: 'dash.drive.quick.lock.aria',      on: function(d){ return d.lock === 1; } },
+  { dq: 'cruise',    btnId: 'btn-dq-cruise',  bb: 'dq-cruise',  i18n: 'dash.drive.quick.cruise',    aria: 'dash.drive.quick.cruise.aria',    on: function(d){ return typeof d.cruise === 'number' && d.cruise > 0; } },
+  { dq: 'tcs',       btnId: 'btn-dq-tcs',     bb: 'dq-tcs',     i18n: 'dash.drive.quick.tcs',       aria: 'dash.drive.quick.tcs.aria',       on: function(d){ return d.tcs === 1; } },
+  { dq: 'zerostart', btnId: 'btn-dq-zero',    bb: 'dq-zero',    i18n: 'dash.drive.quick.kickstart', aria: 'dash.drive.quick.kickstart.aria', on: function(d){ return typeof d.startSpeed === 'number' && d.startSpeed !== NAVEE_STARTSPEED_DEFAULT; } },
+  { dq: 'eco',       btnId: 'btn-dq-eco',     bb: 'dq-eco',     i18n: 'dash.drive.quick.eco',       aria: 'dash.drive.quick.eco.aria',       on: function(d){ return d.eco === 1; } },
+  { dq: 'unit',      btnId: 'btn-dq-unit',    bb: 'dq-unit',    i18n: 'dash.drive.quick.unit',      aria: 'dash.drive.quick.unit.aria',      on: function(d){ return d.unit === 0; } },
+  { dq: 'alight',    btnId: 'btn-dq-alight',  bb: 'dq-alight',  i18n: 'dash.drive.quick.alight',    aria: 'dash.drive.quick.alight.aria',    on: function(d){ return d.autoLight === 1; } },
+  { dq: 'tail',      btnId: 'btn-dq-tail',    bb: 'dq-tail',    i18n: 'dash.drive.quick.tail',      aria: 'dash.drive.quick.tail.aria',      on: function(d){ return d.tailLight === 1; } },
+  { dq: 'drl',       btnId: 'btn-dq-drl',     bb: 'dq-drl',     i18n: 'dash.drive.quick.drl',       aria: 'dash.drive.quick.drl.aria',       on: function(d){ return d.drl === 1; } },
+  { dq: 'logo',      btnId: 'btn-dq-logo',    bb: 'dq-logo',    i18n: 'dash.drive.quick.logo',      aria: 'dash.drive.quick.logo.aria',      on: function(d){ return d.logoLight === 1; } },
+  { dq: 'ambient',   btnId: 'btn-dq-ambient', bb: 'dq-ambient', i18n: 'dash.drive.quick.ambient',   aria: 'dash.drive.quick.ambient.aria',   on: function(d){ return typeof d.ambientLight === 'number' && d.ambientLight > 0; } }
+];
+var NV_QUICK_BY_DQ = {}; NV_QUICK_CONTROLS.forEach(function(c){ NV_QUICK_BY_DQ[c.dq] = c; });
+
+// Build quick-control buttons from NV_QUICK_CONTROLS into a #quick-grid (standard or theme); wires
+// clicks, localises, capability-gates. Clears any markup already there (incl. theme placeholders).
+function renderQuickControls(grid) {
+  if (!grid) grid = document.getElementById('quick-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  NV_QUICK_CONTROLS.forEach(function(c) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'dq-btn';
+    b.dataset.dq = c.dq;
+    b.dataset.btnId = c.btnId;
+    b.dataset.bbShortcut = c.bb;
+    if (c.bbLabel) b.dataset.bbLabel = c.bbLabel;   // else the bottom-nav label falls back to localized text
+    b.setAttribute('data-i18n', c.i18n);
+    if (c.aria) b.setAttribute('data-i18n-aria', c.aria);
+    b.textContent = t(c.i18n);
+    b.addEventListener('click', function() { toggleDriveQuick(c.dq); });
+    grid.appendChild(b);
+  });
+  try { applyButtonRowConfig(); } catch (e) {}
+  try { initBtnDrag(); } catch (e) {}
+  try { naveeApplyCaps(); } catch (e) {}
+  try { reflectDriveQuick(); } catch (e) {}
+}
+
+// Bottom nav: fixed shortcuts + scooter shortcuts derived from the driver's [data-bb-shortcut] buttons.
+var BB_SHORTCUTS = {
+  'none':       { label: '',        labelKey: 'settings.bottomnav.sc.none' },
+  'connect':    { label: 'Connect', labelKey: 'settings.bottomnav.sc.connect', action: function() { openConnectPage(); } },
+  'theme':      { label: 'Theme',   labelKey: 'settings.bottomnav.sc.theme',   action: function() { openThemePage(); } },
+  'routes':     { label: 'Routes',  labelKey: 'settings.bottomnav.sc.routes',  action: function() { renderRoutes(); document.getElementById('routes-page').classList.add('open'); } },
+  'navigation': { label: 'Nav',     labelKey: 'settings.bottomnav.sc.nav',     action: function() { if (window.LB && LB.openNavigation) LB.openNavigation(); else showToast(t('msg.app.only.in.app')); } },
+};
+
+function _bbDashShortcuts() {
+  var result = [];
+  document.querySelectorAll('[data-bb-shortcut]').forEach(function(el) {
+    if (!el.isConnected || el.classList.contains('is-hidden')) return;
+    result.push({ key: el.dataset.bbShortcut, label: el.dataset.bbLabel || el.textContent.trim(), el: el });
+  });
+  return result;
+}
+
+function applyBottomShortcuts() {
+  var lKey = (typeof storage !== 'undefined' ? storage.get('lb_bb_left') : null) || 'none';
+  var rKey = (typeof storage !== 'undefined' ? storage.get('lb_bb_right') : null) || 'none';
+  var allSc = {};
+  Object.keys(BB_SHORTCUTS).forEach(function(k) { allSc[k] = BB_SHORTCUTS[k]; });
+  _bbDashShortcuts().forEach(function(d) { allSc[d.key] = { label: d.label, action: function() { d.el.click(); } }; });
+  function wire(btnId, key) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    var sc = allSc[key] || BB_SHORTCUTS['none'];
+    btn.textContent = sc.label || '';
+    btn.style.visibility = sc.label ? 'visible' : 'hidden';
+    btn.onclick = sc.action || null;
+  }
+  wire('bb-btn-left', lKey);
+  wire('bb-btn-right', rKey);
+}
+
+function applyBottomNav(enabled) {
+  document.body.classList.toggle('bottom-nav-active', !!enabled);
+  var bb = document.getElementById('bottombar');
+  if (bb) bb.style.display = enabled ? 'flex' : 'none';
+  var rows = document.getElementById('bb-shortcut-rows');
+  if (rows) rows.style.display = enabled ? 'block' : 'none';
+  if (enabled) applyBottomShortcuts();
+  try { scheduleFitFold(); } catch (e) {}
+}
+
+function applySrtVisibility(show) {
+  var btn = document.getElementById('btn-streaming');
+  if (btn) btn.style.display = show ? '' : 'none';
+}
+
+/* ── Android back-button navigation ─────────────────────────────────────────── */
+var _navCanGoBack = false;
+function _updateNavState() {
+  var open = false;
+  ['confirm-overlay','whatsnew-overlay','verinfo-overlay','disclaimer-overlay',
+   'guide-page','battery-page','error-reports-page','info-page','scooter-page',
+   'connect-page','theme-page','display-page','patcher-page','routes-page',
+   'streaming-page','settings-sheet'].some(function(id) {
+    var el = document.getElementById(id);
+    if (el && el.classList.contains('open')) { open = true; return true; }
+  });
+  if (open === _navCanGoBack) return;
+  _navCanGoBack = open;
+  try { if (typeof LB !== 'undefined' && LB.setCanGoBack) LB.setCanGoBack(open); } catch (e) {}
+}
+window.__navBack = function() {
+  var overlayMap = [
+    ['confirm-overlay',    function() { document.getElementById('confirm-overlay').classList.remove('open'); }],
+    ['whatsnew-overlay',   function() { var e = document.getElementById('whatsnew-overlay'); if (e) e.classList.remove('open'); }],
+    ['verinfo-overlay',    function() { var e = document.getElementById('verinfo-overlay'); if (e) e.classList.remove('open'); }],
+    ['disclaimer-overlay', function() { var e = document.getElementById('disclaimer-overlay'); if (e) e.classList.remove('open'); }]
+  ];
+  for (var i = 0; i < overlayMap.length; i++) {
+    var el = document.getElementById(overlayMap[i][0]);
+    if (el && el.classList.contains('open')) { overlayMap[i][1](); _updateNavState(); return; }
+  }
+  var pageMap = [
+    ['guide-page', closeGuidePage], ['battery-page', closeBatteryPage], ['error-reports-page', closeErrorReports],
+    ['info-page', closeInfoPage], ['scooter-page', closeScooterPage], ['connect-page', closeConnectPage],
+    ['theme-page', closeThemePage], ['display-page', closeDisplayPage],
+    ['routes-page', function() { document.getElementById('routes-page').classList.remove('open'); }],
+    ['streaming-page', function() { var e = document.getElementById('streaming-page'); if (e) e.classList.remove('open'); }],
+    ['settings-sheet', closeSettings]
+  ];
+  for (var j = 0; j < pageMap.length; j++) {
+    var pe = document.getElementById(pageMap[j][0]);
+    if (pe && pe.classList.contains('open')) { try { pageMap[j][1](); } catch (e) {} _updateNavState(); return; }
+  }
+};
+
+function openThemePage() {
+  document.getElementById('theme-page').classList.add('open');
+  renderThemeList();
+  _updateNavState();
+}
+function closeThemePage() {
+  document.getElementById('theme-page').classList.remove('open');
+  _updateNavState();
+}
+
+var _guideLoaded = false;
+function openGuidePage() {
+  document.getElementById('guide-page').classList.add('open');
+  _updateNavState();
+  if (!_guideLoaded) {
+    var body = document.getElementById('guide-body');
+    if (!body) return;
+    var html = '';
+    try { if (typeof LB !== 'undefined' && LB.getAsset) html = LB.getAsset('theme-guide.html'); } catch (e) {}
+    if (html) {
+      body.innerHTML = html; _guideLoaded = true;
+      body.addEventListener('click', function(e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!a) return;
+        var href = a.getAttribute('href') || '';
+        if (/^https?:/i.test(href)) { e.preventDefault(); openExt(href); }
+      });
+    } else body.textContent = 'Guide not available.';
+  }
+}
+function closeGuidePage() {
+  document.getElementById('guide-page').classList.remove('open');
+  _updateNavState();
+}
+(function() {
+  var _gs = document.getElementById('guide-scroller');
+  var _gt = document.getElementById('guide-totop');
+  if (!_gs || !_gt) return;
+  _gs.addEventListener('scroll', function() {
+    var show = _gs.scrollTop > 200;
+    _gt.classList.toggle('guide-totop--visible', show);
+    _gt.setAttribute('aria-hidden', show ? 'false' : 'true');
+  });
+  _gt.addEventListener('click', function() { _gs.scrollTo({ top: 0, behavior: 'smooth' }); });
+})();
+
+function renderThemeList() {
+  const list = document.getElementById('theme-list');
+  if (!list) return;
+  let themes = [];
+  try { if (typeof LB !== 'undefined' && LB.listThemes) themes = JSON.parse(LB.listThemes() || '[]'); } catch (e) {}
+  list.innerHTML = '';
+  let activeCustomTheme = null;
+
+  const toggle = document.createElement('div');
+  toggle.className = 'theme-list-toggle open';
+  const toggleLabel = document.createElement('span');
+  toggleLabel.className = 'theme-list-toggle-label';
+  toggleLabel.textContent = t('theme.list.label') || 'Themes';
+  const chevron = document.createElement('span');
+  chevron.className = 'theme-list-chevron';
+  chevron.textContent = '▶';
+  toggle.appendChild(toggleLabel); toggle.appendChild(chevron);
+  const body = document.createElement('div');
+  body.className = 'theme-list-body open';
+  toggle.addEventListener('click', () => { toggle.classList.toggle('open'); body.classList.toggle('open'); });
+  list.appendChild(toggle); list.appendChild(body);
+
+  themes.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'theme-row';
+    const left = document.createElement('div');
+    left.className = 'theme-row-left';
+    const namEl = document.createElement('span');
+    namEl.className = 'theme-name';
+    namEl.textContent = item.name.replace(/\s+v\d+(\.\d+)*\s*$/i, '').trim() || item.name;
+    left.appendChild(namEl);
+    if (item.name !== 'Default') {
+      try {
+        var _tmv = {};
+        if (typeof LB !== 'undefined' && LB.getThemeMeta) _tmv = JSON.parse(LB.getThemeMeta(item.name) || '{}');
+        const verEl = document.createElement('span');
+        verEl.className = 'theme-version';
+        verEl.textContent = _tmv.version ? ('v' + _tmv.version) : 'none';
+        left.appendChild(verEl);
+      } catch (e) {}
+    }
+    if (item.active) {
+      const badge = document.createElement('span');
+      badge.className = 'theme-active-badge';
+      badge.setAttribute('data-i18n', 'theme.badge.active');
+      badge.textContent = t('theme.badge.active');
+      left.appendChild(badge);
+      if (item.name !== 'Default') activeCustomTheme = item.name;
+    }
+    row.appendChild(left);
+    const actions = document.createElement('div');
+    actions.className = 'theme-row-actions';
+    if (!item.active) {
+      const btnAct = document.createElement('button');
+      btnAct.className = 'tm-btn-primary';
+      btnAct.textContent = t('theme.action.activate');
+      btnAct.addEventListener('click', () => activateTheme(item.name));
+      actions.appendChild(btnAct);
+    }
+    if (item.name !== 'Default') {
+      const btnExp = document.createElement('button');
+      btnExp.textContent = t('theme.action.export');
+      btnExp.addEventListener('click', () => {
+        if (typeof LB !== 'undefined' && LB.exportTheme) LB.exportTheme(item.name);
+        else showToast(t('msg.app.only.in.app'));
+      });
+      actions.appendChild(btnExp);
+      const btnDel = document.createElement('button');
+      btnDel.className = 'tm-btn-danger';
+      btnDel.textContent = t('theme.action.delete');
+      btnDel.addEventListener('click', () => confirmDeleteTheme(item.name));
+      actions.appendChild(btnDel);
+    }
+    row.appendChild(actions);
+    body.appendChild(row);
+  });
+  const editorTheme = activeCustomTheme || 'Default';
+  renderTileEditor(editorTheme);
+  renderButtonRowEditor(editorTheme);
+  renderStyleEditor(editorTheme);
+}
+
+function activateTheme(name) {
+  if (typeof LB === 'undefined' || !LB.activateTheme) { showToast(t('msg.app.only.in.app')); return; }
+  LB.activateTheme(name === 'Default' ? '' : name);
+  location.reload();
+}
+
+function renderTileEditor(themeName) {
+  var el = document.getElementById('tile-editor');
+  if (!el) return;
+  var tiles = Array.from(document.querySelectorAll('#scroller [data-tile-id]')).filter(function(t) { return !t.dataset.tileNoEditor && !t.dataset.capHidden; });
+  if (tiles.length === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  var cfg = {};
+  try { if (typeof LB !== 'undefined' && LB.getTileConfig) cfg = JSON.parse(LB.getTileConfig(themeName) || '{}'); } catch (e) {}
+  var hidden = cfg.hidden || [];
+  var order  = cfg.order  || tiles.map(function(t) { return t.dataset.tileId; });
+  tiles.forEach(function(t) { if (order.indexOf(t.dataset.tileId) < 0) order.push(t.dataset.tileId); });
+  el.innerHTML = '';
+  var foldEl = document.getElementById('fold');
+  var foldMap = {};
+  tiles.forEach(function(t) { if (foldEl && foldEl.contains(t)) foldMap[t.dataset.tileId] = true; });
+  var foldCount = Object.keys(foldMap).length;
+  var hasBothGroups = foldCount > 0 && foldCount < tiles.length;
+
+  function _addTileRow(id, tile) {
+    var rowLabel = tile.dataset.tileLabel || id;
+    var isHidden = hidden.indexOf(id) >= 0;
+    var row = document.createElement('div');
+    row.className = 'tile-editor-row'; row.dataset.id = id;
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'tile-toggle'; cb.dataset.id = id; cb.checked = !isHidden;
+    var lbl = document.createElement('span');
+    lbl.className = 'tile-edit-lbl'; lbl.textContent = rowLabel;
+    var handle = document.createElement('span');
+    handle.className = 'tile-drag-handle'; handle.textContent = '≡';
+    handle.setAttribute('aria-label', t('theme.drag.handle.aria'));
+    row.appendChild(cb); row.appendChild(lbl);
+    if (tile.dataset.tilePooled) {
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button'; removeBtn.className = 'tile-remove-btn';
+      removeBtn.textContent = '×'; removeBtn.title = t('theme.editor.remove.title');
+      (function(tileId) { removeBtn.addEventListener('click', function() { _deactivatePoolTile(tileId, themeName); }); })(id);
+      row.appendChild(removeBtn);
+    }
+    row.appendChild(handle);
+    el.appendChild(row);
+    cb.addEventListener('change', function() { _saveTileEditorState(themeName, el, order); });
+    _initEditorRowDrag(handle, row, el, order, themeName);
+  }
+
+  if (hasBothGroups) {
+    var hdr1 = document.createElement('div'); hdr1.className = 'theme-section-title'; hdr1.textContent = t('theme.editor.section.fold');
+    var h1hint = document.createElement('span'); h1hint.className = 'theme-hint'; h1hint.textContent = ' - ' + t('theme.editor.section.fold.hint'); hdr1.appendChild(h1hint);
+    el.appendChild(hdr1);
+    order.forEach(function(id) { var tile = tiles.find(function(t) { return t.dataset.tileId === id; }); if (tile && foldMap[id]) _addTileRow(id, tile); });
+    var hdr2 = document.createElement('div'); hdr2.className = 'theme-section-title'; hdr2.textContent = t('theme.editor.section.scroll');
+    var h2hint = document.createElement('span'); h2hint.className = 'theme-hint'; h2hint.textContent = ' - ' + t('theme.editor.section.scroll.hint'); hdr2.appendChild(h2hint);
+    el.appendChild(hdr2);
+    order.forEach(function(id) { var tile = tiles.find(function(t) { return t.dataset.tileId === id; }); if (tile && !foldMap[id]) _addTileRow(id, tile); });
+  } else {
+    var hdr = document.createElement('div'); hdr.className = 'theme-section-title'; hdr.textContent = t('theme.editor.section.tiles');
+    var hhint = document.createElement('span'); hhint.className = 'theme-hint'; hhint.textContent = ' - ' + t('theme.editor.section.tiles.hint'); hdr.appendChild(hhint);
+    el.appendChild(hdr);
+    order.forEach(function(id) { var tile = tiles.find(function(t) { return t.dataset.tileId === id; }); if (tile) _addTileRow(id, tile); });
+  }
+
+  var _pool = document.getElementById('std-tile-pool');
+  if (_pool) {
+    var _cfg2 = {};
+    try { if (typeof LB !== 'undefined' && LB.getTileConfig) _cfg2 = JSON.parse(LB.getTileConfig(themeName) || '{}'); } catch (e) {}
+    var _poolSrc = _cfg2.poolSources || {};
+    var _availCatalog = TILE_CATALOG.filter(function(concept) {
+      if (concept.sources) return concept.sources.some(function(s) { return _tileIsInPool(s.domId); });
+      return _tileIsInPool(concept.id);
+    });
+    if (_availCatalog.length > 0) {
+      var hdrAdd = document.createElement('div'); hdrAdd.className = 'theme-section-title'; hdrAdd.textContent = t('theme.editor.section.add');
+      var hdrAddHint = document.createElement('span'); hdrAddHint.className = 'theme-hint'; hdrAddHint.textContent = ' - ' + t('theme.editor.section.add.hint'); hdrAdd.appendChild(hdrAddHint);
+      el.appendChild(hdrAdd);
+      _availCatalog.forEach(function(concept) {
+        var row = document.createElement('div'); row.className = 'tile-editor-row tile-editor-add-row';
+        var lbl = document.createElement('span'); lbl.className = 'tile-edit-lbl'; lbl.textContent = _resolveVarLabel(concept.label); row.appendChild(lbl);
+        var _srcSel = null;
+        if (concept.sources) {
+          var availSrc = concept.sources.filter(function(s) { return _tileIsInPool(s.domId); });
+          _srcSel = document.createElement('select'); _srcSel.className = 'tile-source-sel';
+          availSrc.forEach(function(s) { var opt = document.createElement('option'); opt.value = s.val; opt.textContent = _resolveVarLabel(s.label); if ((_poolSrc[concept.id] || 'ble') === s.val) opt.selected = true; _srcSel.appendChild(opt); });
+          row.appendChild(_srcSel);
+        }
+        var addBtn = document.createElement('button'); addBtn.type = 'button'; addBtn.className = 'tile-add-btn'; addBtn.textContent = '+';
+        var _cid = concept.id, _sel = _srcSel;
+        addBtn.addEventListener('click', function() { _activatePoolTile(_cid, _sel ? _sel.value : null, themeName); });
+        row.appendChild(addBtn); el.appendChild(row);
+      });
+    }
+  }
+
+  var resetBtn = document.createElement('button');
+  resetBtn.type = 'button'; resetBtn.className = 'tile-editor-reset-btn'; resetBtn.textContent = t('theme.editor.tiles.show.all');
+  resetBtn.addEventListener('click', function() {
+    el.querySelectorAll('.tile-toggle').forEach(function(cb) { cb.checked = true; });
+    _saveTileEditorState(themeName, el, order);
+  });
+  el.appendChild(resetBtn);
+}
+
+function _saveTileEditorState(themeName, el, order) {
+  var hidden = [];
+  el.querySelectorAll('.tile-toggle').forEach(function(cb) { if (!cb.checked) hidden.push(cb.dataset.id); });
+  var existing = {};
+  try { if (typeof LB !== 'undefined' && LB.getTileConfig) existing = JSON.parse(LB.getTileConfig(themeName) || '{}'); } catch (e) {}
+  var cfg = JSON.stringify(Object.assign({}, existing, { order: order.slice(), hidden: hidden }));
+  if (typeof LB !== 'undefined' && LB.saveTileConfig) LB.saveTileConfig(themeName, cfg);
+  applyTileConfig();
+}
+
+/* Button-row configurator (per theme). Default = the driver's full control set. */
+var _BTN_ROW_DEFAULT = NV_QUICK_CONTROLS.map(function(c) { return c.btnId; });
+function _getBtnRowConfig(theme) {
+  var key = 'lb_btn_row_' + (theme || 'Default');
+  try { var s = (typeof storage !== 'undefined' ? storage.get(key) : null); var parsed = JSON.parse(s || 'null'); if (Array.isArray(parsed)) return parsed; } catch (e) {}
+  return _BTN_ROW_DEFAULT.slice();
+}
+function _saveBtnRowConfig(theme, cfg) {
+  var key = 'lb_btn_row_' + (theme || 'Default');
+  if (typeof storage !== 'undefined') storage.set(key, JSON.stringify(cfg));
+}
+function applyButtonRowConfig(theme) {
+  var grid = document.getElementById('quick-grid');
+  if (!grid) return;
+  var cfg = _getBtnRowConfig(theme || _themeActive || 'Default');
+  var btns = {};
+  grid.querySelectorAll('[data-btn-id]').forEach(function(b) { btns[b.dataset.btnId] = b; });
+  cfg.forEach(function(id) { if (btns[id]) grid.appendChild(btns[id]); });
+  var anyVisible = false, visCount = 0;
+  grid.querySelectorAll('[data-btn-id]').forEach(function(b) {
+    var visible = cfg.indexOf(b.dataset.btnId) >= 0;
+    b.style.display = visible ? '' : 'none';
+    if (visible) { anyVisible = true; visCount++; }
+  });
+  if (!anyVisible) { grid.querySelectorAll('[data-btn-id]').forEach(function(b) { b.style.display = ''; anyVisible = true; visCount++; }); }
+  grid.style.display = anyVisible ? '' : 'none';
+  if (anyVisible) {
+    var cols = Math.min(visCount, 4);
+    var align = '';
+    try { align = (typeof storage !== 'undefined' ? storage.get('lb_btn_row_align') : '') || ''; } catch (e) {}
+    if (align === 'center') { grid.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, auto))'; grid.style.justifyContent = 'center'; }
+    else if (align === 'edges') { grid.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, auto))'; grid.style.justifyContent = 'space-between'; }
+    else { grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)'; grid.style.justifyContent = ''; }
+  }
+}
+function renderButtonRowEditor(theme) {
+  var el = document.getElementById('btn-row-editor');
+  if (!el) return;
+  var grid = document.getElementById('quick-grid');
+  if (!grid) { el.style.display = 'none'; return; }
+  var allBtns = Array.from(grid.querySelectorAll('[data-btn-id]'));
+  if (allBtns.length === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  var labelMap = {};
+  allBtns.forEach(function(b) { labelMap[b.dataset.btnId] = b.dataset.bbLabel || b.textContent.trim(); });
+  var maxSlots = allBtns.length;
+  el.innerHTML = '';
+  var hdr = document.createElement('div'); hdr.className = 'theme-section-title'; hdr.textContent = t('theme.btnrow.section'); el.appendChild(hdr);
+  function _rebuildSlotRows() {
+    el.querySelectorAll('.btn-slot-row, .btn-slot-add').forEach(function(r) { r.remove(); });
+    var cfg = _getBtnRowConfig(theme);
+    cfg.forEach(function(btnId, idx) {
+      var row = document.createElement('div'); row.className = 'tile-editor-row btn-slot-row'; row.dataset.id = btnId;
+      var sel = document.createElement('select'); sel.className = 'theme-sel btn-slot-sel';
+      allBtns.forEach(function(b) { var opt = document.createElement('option'); opt.value = b.dataset.btnId; opt.textContent = labelMap[b.dataset.btnId]; sel.appendChild(opt); });
+      sel.value = btnId;
+      var handle = document.createElement('span'); handle.className = 'tile-drag-handle'; handle.textContent = '≡'; handle.setAttribute('aria-label', t('theme.drag.handle.aria'));
+      var delBtn = document.createElement('button'); delBtn.type = 'button'; delBtn.className = 'btn-slot-del'; delBtn.textContent = '×';
+      delBtn.addEventListener('click', function() { var c = _getBtnRowConfig(theme); c.splice(idx, 1); _saveBtnRowConfig(theme, c); applyButtonRowConfig(theme); _rebuildSlotRows(); });
+      row.appendChild(handle); row.appendChild(sel); row.appendChild(delBtn); el.appendChild(row);
+      sel.addEventListener('change', function() { var c = _getBtnRowConfig(theme); c[idx] = sel.value; _saveBtnRowConfig(theme, c); applyButtonRowConfig(theme); });
+      var order = _getBtnRowConfig(theme);
+      _initBtnSlotDrag(handle, row, el, order, theme);
+    });
+    if (cfg.length < maxSlots) {
+      var addRow = document.createElement('div'); addRow.className = 'tile-editor-row btn-slot-add';
+      var addSel = document.createElement('select'); addSel.className = 'theme-sel btn-slot-add-sel';
+      var emptyOpt = document.createElement('option'); emptyOpt.value = ''; emptyOpt.textContent = t('theme.editor.add.placeholder'); addSel.appendChild(emptyOpt);
+      var usedIds = _getBtnRowConfig(theme);
+      allBtns.forEach(function(b) { if (usedIds.indexOf(b.dataset.btnId) < 0) { var opt = document.createElement('option'); opt.value = b.dataset.btnId; opt.textContent = labelMap[b.dataset.btnId]; addSel.appendChild(opt); } });
+      addSel.addEventListener('change', function() {
+        if (!addSel.value) return;
+        var c = _getBtnRowConfig(theme);
+        if (c.indexOf(addSel.value) < 0 && c.length < maxSlots) { c.push(addSel.value); _saveBtnRowConfig(theme, c); applyButtonRowConfig(theme); _rebuildSlotRows(); }
+        addSel.value = '';
+      });
+      addRow.appendChild(addSel); el.appendChild(addRow);
+    }
+  }
+  _rebuildSlotRows();
+  var alignHdr = document.createElement('div'); alignHdr.className = 'theme-section-title'; alignHdr.textContent = t('theme.btnrow.align.section');
+  var alignHint = document.createElement('span'); alignHint.className = 'theme-hint'; alignHint.textContent = ' - ' + t('theme.btnrow.align.section.hint'); alignHdr.appendChild(alignHint); el.appendChild(alignHdr);
+  var alignRow = document.createElement('div'); alignRow.className = 'settings-row';
+  var alignSel = document.createElement('select'); alignSel.className = 'theme-sel';
+  [['fill', 'Verteilt (Reihe füllen)', 'settings.btnrow.align.fill'], ['center', 'Zentriert', 'settings.btnrow.align.center'], ['edges', 'Rand an Rand', 'settings.btnrow.align.edges']].forEach(function(opt) {
+    var o = document.createElement('option'); o.value = opt[0]; o.textContent = opt[1]; o.setAttribute('data-i18n', opt[2]); alignSel.appendChild(o);
+  });
+  var storedAlign = '';
+  try { storedAlign = (typeof storage !== 'undefined' ? storage.get('lb_btn_row_align') : '') || ''; } catch (e) {}
+  alignSel.value = storedAlign || 'fill';
+  alignRow.appendChild(alignSel); el.appendChild(alignRow);
+  alignSel.addEventListener('change', function() { if (typeof storage !== 'undefined') storage.set('lb_btn_row_align', alignSel.value); applyButtonRowConfig(theme); });
+}
+function _initBtnSlotDrag(handle, row, listEl, order, theme) {
+  var _edTarget = null;
+  handle.addEventListener('touchstart', function(e) {
+    e.stopPropagation(); row.classList.add('tile-drag-active');
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd, { once: true });
+  }, { passive: true });
+  function onMove(e) {
+    e.preventDefault();
+    var y = e.touches[0].clientY;
+    var rows = Array.from(listEl.querySelectorAll('.btn-slot-row')).filter(function(r) { return r !== row; });
+    rows.forEach(function(r) { r.classList.remove('tile-drop-above', 'tile-drop-below'); });
+    var best = null, bestDist = Infinity;
+    rows.forEach(function(r) { var rect = r.getBoundingClientRect(); var mid = rect.top + rect.height / 2; var d = Math.abs(y - mid); if (d < bestDist) { bestDist = d; best = { el: r, above: y < mid }; } });
+    if (best) best.el.classList.add(best.above ? 'tile-drop-above' : 'tile-drop-below');
+    _edTarget = best;
+  }
+  function onEnd() {
+    row.classList.remove('tile-drag-active');
+    document.removeEventListener('touchmove', onMove);
+    listEl.querySelectorAll('.tile-drop-above, .tile-drop-below').forEach(function(r) { r.classList.remove('tile-drop-above', 'tile-drop-below'); });
+    if (_edTarget) {
+      var id = row.dataset.id, targetId = _edTarget.el.dataset.id;
+      var cfg = _getBtnRowConfig(theme); var i = cfg.indexOf(id), ti = cfg.indexOf(targetId);
+      if (i >= 0 && ti >= 0 && i !== ti) {
+        cfg.splice(i, 1); var ni = cfg.indexOf(targetId);
+        _edTarget.above ? cfg.splice(ni, 0, id) : cfg.splice(ni + 1, 0, id);
+        _saveBtnRowConfig(theme, cfg); applyButtonRowConfig(theme); renderButtonRowEditor(theme);
+      }
+    }
+    _edTarget = null;
+  }
+}
+function _readCssVar(varName) {
+  try { var v = getComputedStyle(document.documentElement).getPropertyValue(varName).trim(); return v || null; } catch (e) { return null; }
+}
+function _resolveVarLabel(label) {
+  if (!label) return label;
+  if (typeof label === 'object') { return label[lang] || label.en || Object.values(label)[0] || ''; }
+  return t(label);
+}
+function renderStyleEditor(themeName) {
+  var el = document.getElementById('style-editor');
+  if (!el) return;
+  // Every theme is edited here, Default included; Default has no meta, so it resolves to DEFAULT_CSS_VARS.
+  var meta = {};
+  try { if (typeof LB !== 'undefined' && LB.getThemeMeta) meta = JSON.parse(LB.getThemeMeta(themeName) || '{}'); } catch (e) {}
+  var cssVars = {};
+  Object.keys(DEFAULT_CSS_VARS).forEach(function(k) { cssVars[k] = DEFAULT_CSS_VARS[k]; });
+  var themeCssVars = meta.cssVars || {};
+  Object.keys(themeCssVars).forEach(function(k) { cssVars[k] = themeCssVars[k]; });
+  var keys = Object.keys(cssVars);
+  if (keys.length === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  var saved = {};
+  try { if (typeof LB !== 'undefined' && LB.getThemeVars) saved = JSON.parse(LB.getThemeVars(themeName) || '{}'); } catch (e) {}
+  var _groupLabels = { dark: 'style.group.dark', light: 'style.group.light', accents: 'style.group.accents', fonts: 'style.group.fonts', tiles: 'style.group.tiles' };
+  var _lastGroup = null;
+  el.innerHTML = '';
+  keys.forEach(function(varName) {
+    var def = cssVars[varName];
+    if (varName === '--gauge-alpha' && !document.querySelector('#scroller .speed-drum svg, #scroller #speed-row svg')) return;
+    if (def.group && def.group !== _lastGroup) {
+      _lastGroup = def.group;
+      var ghdr = document.createElement('div'); ghdr.className = 'theme-section-title'; ghdr.textContent = t(_groupLabels[def.group]) || def.group; el.appendChild(ghdr);
+    }
+    var live = _readCssVar(varName);
+    if (live && def.type === 'color' && !/^#[0-9a-fA-F]{6}$/.test(live)) live = null;
+    var current = saved[varName] !== undefined ? String(saved[varName]) : (live || (def.default !== undefined ? String(def.default) : ''));
+    var row = document.createElement('div'); row.className = 'style-editor-row';
+    var lbl = document.createElement('label'); lbl.className = 'style-var-lbl'; lbl.textContent = _resolveVarLabel(def.label) || varName; row.appendChild(lbl);
+    if (def.type === 'color') {
+      var inp = document.createElement('input'); inp.type = 'color'; inp.className = 'style-var-color'; inp.value = current || def.default || '#ffffff';
+      inp.addEventListener('change', function() { _saveStyleVar(themeName, varName, inp.value); });
+      row.appendChild(inp);
+    } else if (def.type === 'number') {
+      var unit = def.unit || '';
+      var numInp = document.createElement('input'); numInp.type = 'number';
+      numInp.min = def.min !== undefined ? def.min : 1; numInp.max = def.max !== undefined ? def.max : 999;
+      numInp.value = parseInt(current) || def.default || 16; numInp.className = 'style-var-num';
+      (function(inp, d, u) { inp.addEventListener('change', function() { var mn = d.min !== undefined ? d.min : 1; var mx = d.max !== undefined ? d.max : 999; var v = Math.max(mn, Math.min(mx, parseInt(inp.value) || d.default || 16)); inp.value = v; _saveStyleVar(themeName, varName, v + u); }); })(numInp, def, unit);
+      row.appendChild(numInp);
+      if (unit) { var uSpan = document.createElement('span'); uSpan.className = 'style-var-unit'; uSpan.textContent = unit; row.appendChild(uSpan); }
+    } else if (def.type === 'range') {
+      var unit2 = def.unit || '';
+      var wrap = document.createElement('div'); wrap.className = 'style-var-range-wrap';
+      var rng = document.createElement('input'); rng.type = 'range';
+      rng.min = def.min !== undefined ? def.min : 8; rng.max = def.max !== undefined ? def.max : 120;
+      rng.value = (varName === '--tile-alpha' || varName === '--btn-alpha' || varName === '--gauge-alpha')
+        ? (saved[varName] !== undefined ? (parseInt(current) || 0) : Math.round((1 - (parseFloat(current) || 1)) * 100))
+        : (parseInt(current) || def.default || 16);
+      rng.className = 'style-var-range';
+      var valLbl = document.createElement('span'); valLbl.className = 'style-var-val'; valLbl.textContent = rng.value + unit2;
+      rng.addEventListener('input', function() {
+        valLbl.textContent = rng.value + unit2;
+        if (varName === '--tile-alpha' || varName === '--btn-alpha' || varName === '--gauge-alpha') {
+          var opacity = 1 - Math.max(0, Math.min(100, parseInt(rng.value) || 0)) / 100;
+          document.documentElement.style.setProperty(varName, String(opacity));
+        }
+      });
+      rng.addEventListener('change', function() { _saveStyleVar(themeName, varName, rng.value + unit2); });
+      wrap.appendChild(rng); wrap.appendChild(valLbl); row.appendChild(wrap);
+    }
+    el.appendChild(row);
+  });
+  var btnReset = document.createElement('button');
+  btnReset.textContent = t('style.editor.reset'); btnReset.className = 'style-reset-btn';
+  btnReset.addEventListener('click', function() { if (typeof LB !== 'undefined' && LB.saveThemeVars) LB.saveThemeVars(themeName, '{}'); injectThemeVars(); renderStyleEditor(themeName); });
+  el.appendChild(btnReset);
+}
+function _saveStyleVar(themeName, varName, value) {
+  var saved = {};
+  try { if (typeof LB !== 'undefined' && LB.getThemeVars) saved = JSON.parse(LB.getThemeVars(themeName) || '{}'); } catch (e) {}
+  saved[varName] = value;
+  if (typeof LB !== 'undefined' && LB.saveThemeVars) LB.saveThemeVars(themeName, JSON.stringify(saved));
+  injectThemeVars();
+}
+function confirmDeleteTheme(name) {
+  document.getElementById('confirm-title').textContent = t('theme.action.delete');
+  document.getElementById('confirm-msg').textContent = name;
+  state.confirmCb = () => {
+    if (typeof LB !== 'undefined' && LB.deleteTheme) LB.deleteTheme(name);
+    if (name === _themeActive) { location.reload(); return; }
+    renderThemeList();
+  };
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+/* ── Dashboard lock + long-press drag (tiles / cells / buttons) ─────────────── */
+function _isDashLocked() {
+  try { return (typeof storage !== 'undefined' ? storage.get('lb_dash_locked') : null) === 'true'; } catch (e) { return false; }
+}
+var _foldDragEl = null, _foldDragTarget = null, _foldLongTimer = null;
+function initTileDrag() {
+  document.querySelectorAll('#scroller [data-tile-id]').forEach(function(el) {
+    el.removeEventListener('touchstart', _onFoldTouchStart);
+    el.addEventListener('touchstart', _onFoldTouchStart, { passive: true });
+  });
+}
+function _onFoldTouchStart(e) {
+  if (_isDashLocked() || _foldDragEl) return;
+  if (this.dataset && this.dataset.cellId) return;
+  if (_foldLongTimer) { clearTimeout(_foldLongTimer); _foldLongTimer = null; }
+  var el = this, t0 = e.touches[0], ox = t0.clientX, oy = t0.clientY;
+  function _cancelFoldLong(e2) {
+    if (e2.type === 'touchmove' && e2.touches && e2.touches[0]) { var t2 = e2.touches[0]; if (Math.abs(t2.clientX - ox) < 12 && Math.abs(t2.clientY - oy) < 12) return; }
+    if (_foldLongTimer) { clearTimeout(_foldLongTimer); _foldLongTimer = null; }
+    document.removeEventListener('touchmove', _cancelFoldLong); document.removeEventListener('touchend', _cancelFoldLong); document.removeEventListener('touchcancel', _cancelFoldLong);
+  }
+  _foldLongTimer = setTimeout(function() {
+    _foldLongTimer = null;
+    document.removeEventListener('touchmove', _cancelFoldLong); document.removeEventListener('touchend', _cancelFoldLong); document.removeEventListener('touchcancel', _cancelFoldLong);
+    _beginFoldDrag(el);
+  }, 500);
+  document.addEventListener('touchmove', _cancelFoldLong, { passive: true });
+  document.addEventListener('touchend', _cancelFoldLong, { once: true });
+  document.addEventListener('touchcancel', _cancelFoldLong, { once: true });
+}
+function _beginFoldDrag(el) {
+  _foldDragEl = el; el.classList.add('tile-drag-active');
+  document.addEventListener('touchmove', _onFoldDragMove, { passive: false });
+  document.addEventListener('touchend', _onFoldDragEnd, { once: true });
+  document.addEventListener('touchcancel', _onFoldDragEnd, { once: true });
+}
+function _onFoldDragMove(e) {
+  if (!_foldDragEl) return;
+  e.preventDefault();
+  var t = e.touches[0], tx = t.clientX, ty = t.clientY, under = null;
+  document.querySelectorAll('#scroller [data-tile-id]').forEach(function(tile) {
+    if (tile === _foldDragEl || tile.dataset.tileNoEditor || tile.dataset.cellId) return;
+    var r = tile.getBoundingClientRect();
+    if (tx >= r.left && tx <= r.right && ty >= r.top && ty <= r.bottom) under = tile;
+  });
+  document.querySelectorAll('.tile-drop-target').forEach(function(s) { s.classList.remove('tile-drop-target'); });
+  if (!under) { _foldDragTarget = null; return; }
+  under.classList.add('tile-drop-target'); _foldDragTarget = under;
+}
+function _onFoldDragEnd(e) {
+  if (!_foldDragEl) return;
+  var el = _foldDragEl; el.classList.remove('tile-drag-active');
+  document.removeEventListener('touchmove', _onFoldDragMove); document.removeEventListener('touchcancel', _onFoldDragEnd);
+  document.querySelectorAll('.tile-drop-target').forEach(function(s) { s.classList.remove('tile-drop-target'); });
+  var cancelled = e && e.type === 'touchcancel';
+  if (_foldDragTarget && !cancelled) {
+    if (_foldDragTarget.parentElement === el.parentElement) {
+      var parent = el.parentElement, nodes = Array.from(parent.querySelectorAll(':scope > [data-tile-id]'));
+      var iDrag = nodes.indexOf(el), iTarget = nodes.indexOf(_foldDragTarget);
+      if (iDrag > iTarget) { parent.insertBefore(el, _foldDragTarget); }
+      else { var nxt = _foldDragTarget.nextSibling; nxt ? parent.insertBefore(el, nxt) : parent.appendChild(el); }
+    } else {
+      var phA = document.createElement('span'), phB = document.createElement('span');
+      el.parentElement.replaceChild(phA, el); _foldDragTarget.parentElement.replaceChild(phB, _foldDragTarget);
+      phA.parentElement.replaceChild(_foldDragTarget, phA); phB.parentElement.replaceChild(el, phB);
+    }
+    _saveTileOrder();
+    var eTheme = (_themeActive && _themeActive !== 'Default') ? _themeActive : 'Default';
+    renderTileEditor(eTheme);
+    try { scheduleFitFold(); } catch (e2) {}
+  }
+  _foldDragEl = null; _foldDragTarget = null;
+}
+function _saveTileOrder() {
+  var name = _themeActive || 'Default', cfg = {};
+  try { if (typeof LB !== 'undefined' && LB.getTileConfig) cfg = JSON.parse(LB.getTileConfig(name) || '{}'); } catch (e) {}
+  var allTiles = Array.from(document.querySelectorAll('#scroller [data-tile-id]'));
+  cfg.order = allTiles.map(function(t) { return t.dataset.tileId; });
+  var placements = {};
+  allTiles.forEach(function(t) { var p = t.parentElement; if (p && p.id) placements[t.dataset.tileId] = p.id; });
+  cfg.placements = placements;
+  if (typeof LB !== 'undefined' && LB.saveTileConfig) LB.saveTileConfig(name, JSON.stringify(cfg));
+}
+var _cellDragEl = null, _cellDropTarget = null, _cellLongTimer = null;
+var _CELL_ROWS = ['hero-row', 'motor-row', 'motor-row-2', 'motor-row-3'];
+function applyQuickCellOrder() {
+  var stored;
+  try { stored = JSON.parse((typeof storage !== 'undefined' ? storage.get('lb_cell_order') : null) || 'null'); } catch (e) {}
+  if (!stored) return;
+  var allCells = {};
+  document.querySelectorAll('[data-cell-id]').forEach(function(c) { allCells[c.dataset.cellId] = c; });
+  _CELL_ROWS.forEach(function(rowId) { var row = document.getElementById(rowId); if (!row || !stored[rowId]) return; stored[rowId].forEach(function(id) { if (allCells[id]) row.appendChild(allCells[id]); }); });
+}
+function initCellDrag() {
+  document.querySelectorAll('[data-cell-id]').forEach(function(el) { el.removeEventListener('touchstart', _onCellTouchStart); el.addEventListener('touchstart', _onCellTouchStart, { passive: true }); });
+}
+function _onCellTouchStart(e) {
+  e.stopPropagation();
+  if (_isDashLocked() || _cellDragEl) return;
+  if (_cellLongTimer) { clearTimeout(_cellLongTimer); _cellLongTimer = null; }
+  var el = this, t0 = e.touches[0], ox = t0.clientX, oy = t0.clientY;
+  function _cancelCellLong(e2) {
+    if (e2.type === 'touchmove' && e2.touches && e2.touches[0]) { var t2 = e2.touches[0]; if (Math.abs(t2.clientX - ox) < 12 && Math.abs(t2.clientY - oy) < 12) return; }
+    if (_cellLongTimer) { clearTimeout(_cellLongTimer); _cellLongTimer = null; }
+    document.removeEventListener('touchmove', _cancelCellLong); document.removeEventListener('touchend', _cancelCellLong); document.removeEventListener('touchcancel', _cancelCellLong);
+  }
+  _cellLongTimer = setTimeout(function() {
+    _cellLongTimer = null;
+    document.removeEventListener('touchmove', _cancelCellLong); document.removeEventListener('touchend', _cancelCellLong); document.removeEventListener('touchcancel', _cancelCellLong);
+    _beginCellDrag(el);
+  }, 500);
+  document.addEventListener('touchmove', _cancelCellLong, { passive: true });
+  document.addEventListener('touchend', _cancelCellLong, { once: true });
+  document.addEventListener('touchcancel', _cancelCellLong, { once: true });
+}
+function _beginCellDrag(el) {
+  _cellDragEl = el; el.classList.add('cell-drag-active');
+  document.addEventListener('touchmove', _onCellDragMove, { passive: false });
+  document.addEventListener('touchend', _onCellDragEnd, { once: true });
+  document.addEventListener('touchcancel', _onCellDragEnd, { once: true });
+}
+function _onCellDragMove(e) {
+  if (!_cellDragEl) return;
+  e.preventDefault();
+  var t = e.touches[0];
+  _cellDragEl.style.pointerEvents = 'none';
+  var under = document.elementFromPoint(t.clientX, t.clientY);
+  _cellDragEl.style.pointerEvents = '';
+  while (under && !(under.dataset && under.dataset.cellId)) under = under.parentElement;
+  document.querySelectorAll('.cell-drop-target').forEach(function(c) { c.classList.remove('cell-drop-target'); });
+  _cellDropTarget = (under && under !== _cellDragEl) ? under : null;
+  if (_cellDropTarget) _cellDropTarget.classList.add('cell-drop-target');
+}
+function _onCellDragEnd(e) {
+  if (!_cellDragEl) return;
+  var el = _cellDragEl; el.classList.remove('cell-drag-active');
+  document.removeEventListener('touchmove', _onCellDragMove); document.removeEventListener('touchcancel', _onCellDragEnd);
+  document.querySelectorAll('.cell-drop-target').forEach(function(c) { c.classList.remove('cell-drop-target'); });
+  var cancelled = e && e.type === 'touchcancel';
+  if (_cellDropTarget && !cancelled) { _reorderCellNode(el, _cellDropTarget); _saveCellOrder(); try { naveeApplyCaps(); } catch (e2) {} }
+  _cellDragEl = null; _cellDropTarget = null;
+}
+function _reorderCellNode(moving, target) {
+  var aParent = moving.parentNode, bParent = target.parentNode;
+  if (aParent === bParent) {
+    var nodes = Array.from(aParent.children), iM = nodes.indexOf(moving), iT = nodes.indexOf(target);
+    if (iM < iT) { var nxt = target.nextSibling; nxt ? aParent.insertBefore(moving, nxt) : aParent.appendChild(moving); }
+    else { aParent.insertBefore(moving, target); }
+  } else {
+    var aNext = moving.nextSibling, bNext = target.nextSibling;
+    if (moving.nextSibling === target) { aParent.insertBefore(target, moving); }
+    else if (target.nextSibling === moving) { bParent.insertBefore(moving, target); }
+    else { bParent.insertBefore(moving, bNext); aParent.insertBefore(target, aNext); }
+  }
+}
+function _saveCellOrder() {
+  var order = {};
+  _CELL_ROWS.forEach(function(rowId) { var row = document.getElementById(rowId); if (!row) return; order[rowId] = Array.from(row.querySelectorAll('[data-cell-id]')).map(function(c) { return c.dataset.cellId; }); });
+  if (typeof storage !== 'undefined') storage.set('lb_cell_order', JSON.stringify(order));
+}
+var _btnDragEl = null, _btnDragTarget = null, _btnLongTimer = null;
+function applyQuickBtnOrder() {
+  var stored;
+  try { stored = JSON.parse((typeof storage !== 'undefined' ? storage.get('lb_btn_order') : null) || 'null'); } catch (e) {}
+  if (!Array.isArray(stored)) return;
+  var grid = document.getElementById('quick-grid');
+  if (!grid) return;
+  var btns = {};
+  grid.querySelectorAll('[data-btn-id]').forEach(function(b) { btns[b.dataset.btnId] = b; });
+  stored.forEach(function(id) { if (btns[id]) grid.appendChild(btns[id]); });
+}
+function initBtnDrag() {
+  var grid = document.getElementById('quick-grid');
+  if (!grid) return;
+  grid.querySelectorAll('[data-btn-id]').forEach(function(el) { el.removeEventListener('touchstart', _onBtnTouchStart); el.addEventListener('touchstart', _onBtnTouchStart, { passive: true }); });
+}
+function _onBtnTouchStart(e) {
+  e.stopPropagation();
+  if (_isDashLocked() || _btnDragEl) return;
+  if (_btnLongTimer) { clearTimeout(_btnLongTimer); _btnLongTimer = null; }
+  var el = this, t0 = e.touches[0], ox = t0.clientX, oy = t0.clientY;
+  function _cancelBtnLong(e2) {
+    if (e2.type === 'touchmove' && e2.touches && e2.touches[0]) { var t2 = e2.touches[0]; if (Math.abs(t2.clientX - ox) < 12 && Math.abs(t2.clientY - oy) < 12) return; }
+    if (_btnLongTimer) { clearTimeout(_btnLongTimer); _btnLongTimer = null; }
+    document.removeEventListener('touchmove', _cancelBtnLong); document.removeEventListener('touchend', _cancelBtnLong); document.removeEventListener('touchcancel', _cancelBtnLong);
+  }
+  _btnLongTimer = setTimeout(function() {
+    _btnLongTimer = null;
+    document.removeEventListener('touchmove', _cancelBtnLong); document.removeEventListener('touchend', _cancelBtnLong); document.removeEventListener('touchcancel', _cancelBtnLong);
+    _beginBtnDrag(el);
+  }, 500);
+  document.addEventListener('touchmove', _cancelBtnLong, { passive: true });
+  document.addEventListener('touchend', _cancelBtnLong, { once: true });
+  document.addEventListener('touchcancel', _cancelBtnLong, { once: true });
+}
+function _beginBtnDrag(el) {
+  _btnDragEl = el; el.classList.add('btn-drag-active');
+  var grid = document.getElementById('quick-grid');
+  if (grid) {
+    var all = grid.querySelectorAll('[data-btn-id]');
+    all.forEach(function(b) { if (b.style.display === 'none') { b.style.display = ''; b.classList.add('btn-ghost-slot'); } });
+    if (all.length) { grid.style.gridTemplateColumns = 'repeat(' + Math.min(all.length, 4) + ', 1fr)'; grid.style.justifyContent = ''; }
+  }
+  document.addEventListener('touchmove', _onBtnDragMove, { passive: false });
+  document.addEventListener('touchend', _onBtnDragEnd, { once: true });
+  document.addEventListener('touchcancel', _onBtnDragEnd, { once: true });
+}
+function _onBtnDragMove(e) {
+  if (!_btnDragEl) return;
+  e.preventDefault();
+  var t = e.touches[0], tx = t.clientX, ty = t.clientY, under = null;
+  var grid = document.getElementById('quick-grid');
+  if (!grid) return;
+  grid.querySelectorAll('[data-btn-id]').forEach(function(btn) { if (btn === _btnDragEl) return; var r = btn.getBoundingClientRect(); if (tx >= r.left && tx <= r.right && ty >= r.top && ty <= r.bottom) under = btn; });
+  grid.querySelectorAll('.btn-drop-target').forEach(function(s) { s.classList.remove('btn-drop-target'); });
+  if (!under) { _btnDragTarget = null; return; }
+  under.classList.add('btn-drop-target'); _btnDragTarget = under;
+}
+function _onBtnDragEnd(e) {
+  if (!_btnDragEl) return;
+  var el = _btnDragEl; el.classList.remove('btn-drag-active');
+  document.removeEventListener('touchmove', _onBtnDragMove); document.removeEventListener('touchcancel', _onBtnDragEnd);
+  var grid = document.getElementById('quick-grid');
+  if (grid) grid.querySelectorAll('.btn-drop-target').forEach(function(s) { s.classList.remove('btn-drop-target'); });
+  if (grid) grid.querySelectorAll('.btn-ghost-slot').forEach(function(s) { s.classList.remove('btn-ghost-slot'); });
+  var cancelled = e && e.type === 'touchcancel';
+  if (_btnDragTarget && !cancelled) {
+    var parent = el.parentElement, nodes = Array.from(parent.querySelectorAll(':scope > [data-btn-id]'));
+    var iDrag = nodes.indexOf(el), iTarget = nodes.indexOf(_btnDragTarget);
+    if (iDrag > iTarget) { parent.insertBefore(el, _btnDragTarget); }
+    else { var nxt = _btnDragTarget.nextSibling; nxt ? parent.insertBefore(el, nxt) : parent.appendChild(el); }
+    _saveBtnOrder();
+  }
+  applyButtonRowConfig();
+  _btnDragEl = null; _btnDragTarget = null;
+}
+function _saveBtnOrder() {
+  var grid = document.getElementById('quick-grid');
+  if (!grid || typeof storage === 'undefined') return;
+  var order = Array.from(grid.querySelectorAll('[data-btn-id]')).map(function(b) { return b.dataset.btnId; });
+  storage.set('lb_btn_order', JSON.stringify(order));
+}
+function _initEditorRowDrag(handle, row, listEl, order, themeName) {
+  var _edTarget = null;
+  handle.addEventListener('touchstart', function(e) {
+    e.stopPropagation(); row.classList.add('tile-drag-active');
+    document.addEventListener('touchmove', onEdMove, { passive: false });
+    document.addEventListener('touchend', onEdEnd, { once: true });
+  }, { passive: true });
+  function onEdMove(e) {
+    e.preventDefault();
+    var y = e.touches[0].clientY;
+    var rows = Array.from(listEl.querySelectorAll('.tile-editor-row')).filter(function(r) { return r !== row; });
+    rows.forEach(function(r) { r.classList.remove('tile-drop-above', 'tile-drop-below'); });
+    var best = null, bestDist = Infinity;
+    rows.forEach(function(r) { var rect = r.getBoundingClientRect(); var mid = rect.top + rect.height / 2; var d = Math.abs(y - mid); if (d < bestDist) { bestDist = d; best = { el: r, above: y < mid }; } });
+    if (best) best.el.classList.add(best.above ? 'tile-drop-above' : 'tile-drop-below');
+    _edTarget = best;
+  }
+  function onEdEnd() {
+    row.classList.remove('tile-drag-active');
+    document.removeEventListener('touchmove', onEdMove);
+    listEl.querySelectorAll('.tile-drop-above, .tile-drop-below').forEach(function(r) { r.classList.remove('tile-drop-above', 'tile-drop-below'); });
+    if (_edTarget) {
+      var id = row.dataset.id, targetId = _edTarget.el.dataset.id, i = order.indexOf(id), ti = order.indexOf(targetId);
+      if (i >= 0 && ti >= 0 && i !== ti) {
+        order.splice(i, 1); var ni = order.indexOf(targetId);
+        _edTarget.above ? order.splice(ni, 0, id) : order.splice(ni + 1, 0, id);
+        _saveTileEditorState(themeName, listEl, order); renderTileEditor(themeName);
+      }
+    }
+    _edTarget = null;
+  }
+}
+
+// Fill data-lb / data-lb-state hooks in the active theme HTML (called each tick).
+function updateThemeHooks(data) {
+  if (!data) return;
+  var root = _themeScope === 'full' ? '#scroller' : '#fold-inner';
+  document.querySelectorAll(root + ' [data-lb]').forEach(function(el) {
+    var key = el.getAttribute('data-lb'); var val = data[key];
+    if (val !== undefined && val !== null) el.textContent = val;
+  });
+  document.querySelectorAll(root + ' [data-lb-state]').forEach(function(el) {
+    var spec = el.getAttribute('data-lb-state'); var sep = spec.indexOf(':');
+    if (sep < 0) return;
+    el.classList.toggle(spec.substring(sep + 1), !!data[spec.substring(0, sep)]);
+  });
+}
+
+// Re-attach the triple-tap speed-unlock listener after theme injection.
+function reattachSpeedUnlock() {
+  var root = _themeScope === 'full' ? '#scroller' : '#fold-inner';
+  document.querySelectorAll(root + ' [data-lb-action="speed-unlock"]').forEach(function(el) {
+    el.removeEventListener('click', onVcuTileTap); el.addEventListener('click', onVcuTileTap);
+  });
+}
+
+// Build the driver's controls into the theme's #quick-grid (the theme ships no manufacturer buttons).
+function reattachQuickGridHandlers() {
+  var grid = document.getElementById('quick-grid');
+  if (grid) renderQuickControls(grid);
+}
+
+// Capability-gate the controls via the driver.
+function applyThemeControlCaps() { try { naveeApplyCaps(); } catch (e) {} }
+
+// Value-slot ids the driver fills with real data on this scooter. A theme offers a neutral superset of
+// slots; any slot whose id is not here has no data available and is hidden, then empty rows/tiles/
+// sections collapse. The theme keeps its own data-i18n labels (nv-i18n provides the text).
+var NV_DATA_SLOTS = {
+  'ble-speed': 1, 'gps-speed': 1, 'soc-val': 1, 'gear-val': 1, 'current-val': 1,
+  'dg-volt': 1, 'dg-current': 1, 'dg-soh': 1, 'dg-total': 1, 'dg-single': 1, 'dg-max': 1,
+  'dg-rssi': 1, 'dg-err': 1, 'dg-range': 1, 'dg-btemp': 1, 'dg-cycles': 1,
+  'dg-limit': 1, 'dg-startspeed': 1, 'dg-brake': 1, 'dg-drivemode': 1,
+  'dg-dist': 1, 'dg-time': 1, 'dg-ride-avg': 1, 'dg-alt': 1, 'dg-hm': 1, 'dg-gps': 1, 'dg-pts': 1
+};
+
+// Availability pass for an active theme: hide every value slot the driver does not fill, then collapse
+// empty rows, tiles and sections. Generic - knows no manufacturer.
+function applyThemeTelemetry() {
+  if (!(_themeActive && _themeActive !== 'Default')) return;
+  var scr = document.getElementById('scroller'); if (!scr) return;
+  scr.querySelectorAll('.sd-val[id], .hc-val[id], .mc-main span[id], .dg-value[id]').forEach(function(v) {
+    var host = v.closest('.dg-cell, .motor-cell, .hero-cell, .speed-drum');
+    if (host) host.style.display = NV_DATA_SLOTS[v.id] ? '' : 'none';
+  });
+  scr.querySelectorAll('.dg-row').forEach(function(row) {
+    var cells = row.querySelectorAll('.dg-cell');
+    var anyVis = cells.length === 0 || Array.prototype.some.call(cells, function(c) { return c.style.display !== 'none'; });
+    row.style.display = anyVis ? '' : 'none';
+  });
+  scr.querySelectorAll('[data-tile-id]').forEach(function(tile) {
+    if (tile.dataset.tileNoEditor) return;
+    var parts = tile.querySelectorAll('.dg-row, .motor-cell, .hero-cell');
+    if (!parts.length) return;
+    var anyVis = Array.prototype.some.call(parts, function(c) { return c.style.display !== 'none'; });
+    tile.style.display = anyVis ? '' : 'none';
+    tile.dataset.capHidden = anyVis ? '' : '1';
+  });
+  scr.querySelectorAll('[data-section-container]').forEach(function(sect) {
+    if (sect.dataset.tileId) return;
+    var tiles = sect.querySelectorAll('[data-tile-id]');
+    var anyVis = tiles.length === 0;
+    Array.prototype.forEach.call(tiles, function(tl) { if (tl.style.display !== 'none') anyVis = true; });
+    sect.style.display = anyVis ? '' : 'none';
+  });
+  try { scheduleFitFold(); } catch (e) {}
+}
+
+// Apply saved tile visibility + order to all [data-tile-id] in #scroller.
+function applyTileConfig() {
+  var name = _themeActive || 'Default', cfg = {};
+  try { if (typeof LB !== 'undefined' && LB.getTileConfig) cfg = JSON.parse(LB.getTileConfig(name) || '{}'); } catch (e) {}
+  var hidden = cfg.hidden || [], order = cfg.order || [];
+  if (cfg.placements && typeof cfg.placements === 'object') {
+    Object.keys(cfg.placements).forEach(function(tileId) {
+      var tile = document.querySelector('#scroller [data-tile-id="' + tileId + '"]');
+      var savedParent = document.getElementById(cfg.placements[tileId]);
+      if (tile && savedParent && tile.parentElement !== savedParent) savedParent.appendChild(tile);
+    });
+  }
+  document.querySelectorAll('#scroller [data-tile-id]').forEach(function(el) {
+    if (el.dataset.tileNoEditor) return;
+    el.style.display = hidden.indexOf(el.dataset.tileId) >= 0 ? 'none' : '';
+  });
+  document.querySelectorAll('[data-section-container]').forEach(function(sect) {
+    if (sect.dataset.tileId) return;
+    var tiles = Array.from(sect.querySelectorAll('[data-tile-id]')).filter(function(t) { return !t.dataset.tileNoEditor; });
+    var anyVisible = tiles.length === 0 || tiles.some(function(t) { return t.style.display !== 'none'; });
+    sect.style.display = anyVisible ? '' : 'none';
+  });
+  var teleHdr = document.getElementById('tele-hdr');
+  if (teleHdr) {
+    var anyTele = ['motor-row', 'motor-row-2', 'motor-row-3'].some(function(id) {
+      var r = document.getElementById(id);
+      return r && r.style.display !== 'none' && r.parentElement && r.parentElement.id === 'fold-inner';
+    });
+    teleHdr.style.display = anyTele ? '' : 'none';
+  }
+  if (order.length > 0) {
+    var parents = [];
+    document.querySelectorAll('#scroller [data-tile-id]').forEach(function(el) { if (parents.indexOf(el.parentElement) < 0) parents.push(el.parentElement); });
+    parents.forEach(function(parent) {
+      var children = Array.from(parent.querySelectorAll(':scope > [data-tile-id]'));
+      children.sort(function(a, b) { var ai = order.indexOf(a.dataset.tileId); var bi = order.indexOf(b.dataset.tileId); return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi); });
+      children.forEach(function(c) { parent.appendChild(c); });
+    });
+  }
+  applyThemeTelemetry();
+  initTileDrag();
+  try { scheduleFitFold(); } catch (e2) {}
+}
+
+// Apply CSS-var overrides for the active theme via CSSOM (CSP-safe). Default => nv display settings;
+// custom theme => user overrides + theme-declared defaults, nv palette vars removed so theme CSS wins.
+function injectThemeVars() {
+  var name = _themeActive || 'Default';
+  var root = document.documentElement;
+  var vars = {}, themeCssVars = {};
+  try { if (typeof LB !== 'undefined' && LB.getThemeVars) vars = JSON.parse(LB.getThemeVars(name) || '{}'); } catch (e) {}
+  try { if (name !== 'Default' && typeof LB !== 'undefined' && LB.getThemeMeta) { var _tm = JSON.parse(LB.getThemeMeta(name) || '{}'); themeCssVars = _tm.cssVars || {}; } } catch (e) {}
+  function tdef(k) { var tc = themeCssVars[k]; if (tc === undefined) return undefined; if (typeof tc === 'string' || typeof tc === 'number') return String(tc); if (typeof tc === 'object' && tc && tc.default !== undefined) return String(tc.default); return undefined; }
+  function dv(k) { if (vars[k] !== undefined) return vars[k]; var td = tdef(k); if (td !== undefined) return td; var d = DEFAULT_CSS_VARS[k]; return d ? String(d.default) : ''; }
+  function sp(v, val) { if (val !== undefined && val !== '') root.style.setProperty(v, val); else root.style.removeProperty(v); }
+  var mode = root.getAttribute('data-theme') !== 'light' ? 'dark' : 'light';
+  var base = DISPLAY_ACCENTS[mode];
+  if (name === 'Default') {
+    // Default palette: user overrides (style editor) > DEFAULT_CSS_VARS, with the brightness slider
+    // dimming the accent colours (the same formula the old Display page used).
+    var lum = Math.max(0, Math.min(100, Number(dv('--' + mode + '-lum'))));
+    var kDim = 0.35 + 0.65 * (lum / 100);
+    var tcol = displayTextColors(mode, lum);
+    root.style.setProperty('--card', dv('--' + mode + '-card'));
+    root.style.setProperty('--bg',   dv('--' + mode + '-bg'));
+    root.style.setProperty('--text',  vars['--' + mode + '-text']  !== undefined ? vars['--' + mode + '-text']  : (tdef('--' + mode + '-text')  || tcol.text));
+    root.style.setProperty('--label', vars['--' + mode + '-label'] !== undefined ? vars['--' + mode + '-label'] : (tdef('--' + mode + '-label') || tcol.label));
+    sp('--border', vars['--' + mode + '-border'] !== undefined ? vars['--' + mode + '-border'] : tdef('--' + mode + '-border'));
+    Object.keys(base).forEach(function(n) {
+      var saved = vars['--' + n];
+      if (saved !== undefined) { root.style.setProperty('--' + n, saved); return; }
+      var td = tdef('--' + n);
+      if (td !== undefined) { root.style.setProperty('--' + n, td); return; }
+      var hsl = hexToHsl(base[n]);
+      if (hsl) { var l = mode === 'dark' ? hsl.l * kDim : 100 - (100 - hsl.l) * kDim; root.style.setProperty('--' + n, 'hsl(' + hsl.h.toFixed(0) + ' ' + hsl.s.toFixed(0) + '% ' + l.toFixed(1) + '%)'); }
+    });
+  } else {
+    sp('--card',   vars['--' + mode + '-card']   !== undefined ? vars['--' + mode + '-card']   : tdef('--' + mode + '-card'));
+    sp('--bg',     vars['--' + mode + '-bg']     !== undefined ? vars['--' + mode + '-bg']     : tdef('--' + mode + '-bg'));
+    sp('--text',   vars['--' + mode + '-text']   !== undefined ? vars['--' + mode + '-text']   : tdef('--' + mode + '-text'));
+    sp('--label',  vars['--' + mode + '-label']  !== undefined ? vars['--' + mode + '-label']  : tdef('--' + mode + '-label'));
+    sp('--border', vars['--' + mode + '-border'] !== undefined ? vars['--' + mode + '-border'] : tdef('--' + mode + '-border'));
+    Object.keys(base).forEach(function(n) {
+      var s = vars['--' + n];
+      if (s !== undefined) root.style.setProperty('--' + n, s);
+      else { var td = tdef('--' + n); if (td !== undefined) root.style.setProperty('--' + n, td); else root.style.removeProperty('--' + n); }
+    });
+  }
+  FONT_META.forEach(function(m) { var eff = vars[m.varName] !== undefined ? vars[m.varName] : tdef(m.varName); if (eff !== undefined) { var px = Math.max(m.min, Math.min(m.max, parseInt(eff, 10) || m.def)); root.style.setProperty(m.varName, px + 'px'); } });
+  ['--tile-h-speed', '--tile-h-hero', '--tile-h-motors', '--unlock'].forEach(function(v) { var eff = vars[v] !== undefined ? vars[v] : tdef(v); if (eff !== undefined) root.style.setProperty(v, eff); else root.style.removeProperty(v); });
+  ['--tile-alpha', '--btn-alpha', '--gauge-alpha'].forEach(function(v) {
+    var eff = vars[v] !== undefined ? vars[v] : tdef(v);
+    var tt = eff !== undefined ? parseFloat(String(eff).replace('%', '')) : (DEFAULT_CSS_VARS[v] ? DEFAULT_CSS_VARS[v].default : 0);
+    root.style.setProperty(v, String(1 - Math.max(0, Math.min(100, isNaN(tt) ? 0 : tt)) / 100));
+  });
+  try { scheduleFitFold(); } catch (e) {}
+}
+
+// Standard-tile pool helpers: park editable tiles during theme injection; let the editor re-add them.
+function _tileIsInPool(domId) { var pool = document.getElementById('std-tile-pool'); return !!(pool && pool.querySelector('[data-tile-id="' + domId + '"]')); }
+function _getOrCreateExtras() {
+  var el = document.getElementById('std-tile-extras');
+  if (!el) { el = document.createElement('div'); el.id = 'std-tile-extras'; var s = document.getElementById('scroller'); if (s) s.appendChild(el); }
+  return el;
+}
+function _activatePoolTile(conceptId, source, themeName) {
+  var pool = document.getElementById('std-tile-pool'); if (!pool) return;
+  var concept = null;
+  for (var ci = 0; ci < TILE_CATALOG.length; ci++) { if (TILE_CATALOG[ci].id === conceptId) { concept = TILE_CATALOG[ci]; break; } }
+  if (!concept) return;
+  var domIds = concept.sources ? concept.sources.filter(function(s) { return !source || s.val === source; }).map(function(s) { return s.domId; }) : [concept.id];
+  var extras = _getOrCreateExtras();
+  domIds.forEach(function(domId) {
+    var el = pool.querySelector('[data-tile-id="' + domId + '"]'); if (!el) return;
+    el.dataset.tilePooled = '1'; extras.appendChild(el);
+    if (domId === 'tile-speed-ble' || domId === 'tile-speed-gps') { el.removeEventListener('click', onVcuTileTap); el.addEventListener('click', onVcuTileTap); }
+  });
+  var cfg = {};
+  try { if (typeof LB !== 'undefined' && LB.getTileConfig) cfg = JSON.parse(LB.getTileConfig(themeName) || '{}'); } catch (e) {}
+  var poolEnabled = cfg.poolEnabled || [];
+  domIds.forEach(function(id) { if (poolEnabled.indexOf(id) < 0) poolEnabled.push(id); });
+  if (concept.sources && source) { cfg.poolSources = cfg.poolSources || {}; cfg.poolSources[conceptId] = source; }
+  cfg.poolEnabled = poolEnabled;
+  try { if (typeof LB !== 'undefined' && LB.saveTileConfig) LB.saveTileConfig(themeName, JSON.stringify(cfg)); } catch (e) {}
+  applyTileConfig(); initCellDrag(); renderTileEditor(themeName);
+}
+function _deactivatePoolTile(domId, themeName) {
+  var pool = document.getElementById('std-tile-pool'); if (!pool) return;
+  var el = document.querySelector('#std-tile-extras [data-tile-id="' + domId + '"]');
+  if (el) { delete el.dataset.tilePooled; pool.appendChild(el); }
+  var cfg = {};
+  try { if (typeof LB !== 'undefined' && LB.getTileConfig) cfg = JSON.parse(LB.getTileConfig(themeName) || '{}'); } catch (e) {}
+  cfg.poolEnabled = (cfg.poolEnabled || []).filter(function(id) { return id !== domId; });
+  try { if (typeof LB !== 'undefined' && LB.saveTileConfig) LB.saveTileConfig(themeName, JSON.stringify(cfg)); } catch (e) {}
+  applyTileConfig(); renderTileEditor(themeName);
+}
+function _restorePoolEnabled() {
+  if (!document.getElementById('std-tile-pool')) return;
+  var name = _themeActive || 'Default', cfg = {};
+  try { if (typeof LB !== 'undefined' && LB.getTileConfig) cfg = JSON.parse(LB.getTileConfig(name) || '{}'); } catch (e) {}
+  var poolEnabled = cfg.poolEnabled || []; if (poolEnabled.length === 0) return;
+  var extras = _getOrCreateExtras(), pool = document.getElementById('std-tile-pool');
+  poolEnabled.forEach(function(domId) {
+    var el = pool.querySelector('[data-tile-id="' + domId + '"]'); if (!el) return;
+    el.dataset.tilePooled = '1'; extras.appendChild(el);
+    if (domId === 'tile-speed-ble' || domId === 'tile-speed-gps') { el.removeEventListener('click', onVcuTileTap); el.addEventListener('click', onVcuTileTap); }
+  });
+}
+function _parkTilesBeforeInjection(isFullScope) {
+  var pool = document.getElementById('std-tile-pool'); if (!pool) return;
+  var root = isFullScope ? document.getElementById('scroller') : document.getElementById('fold-inner'); if (!root) return;
+  Array.from(root.querySelectorAll('[data-tile-id]')).forEach(function(el) { if (!el.dataset.tileNoEditor) pool.appendChild(el); });
+}
+function _cleanPoolAfterInjection() {
+  var pool = document.getElementById('std-tile-pool'); if (!pool) return;
+  var existing = {};
+  document.querySelectorAll('#scroller [data-tile-id]').forEach(function(el) { existing[el.dataset.tileId] = true; });
+  Array.from(pool.querySelectorAll('[data-tile-id]')).forEach(function(el) { if (existing[el.dataset.tileId]) pool.removeChild(el); });
+}
+
+// Inject the active custom theme's HTML (into #fold-inner or #scroller), then apply tiles + CSS vars.
+function initActiveTheme() {
+  if (typeof LB === 'undefined' || !LB.listThemes) { applyTileConfig(); return; }
+  try {
+    var themes = JSON.parse(LB.listThemes() || '[]'), active = null;
+    for (var i = 0; i < themes.length; i++) { if (themes[i].active) { active = themes[i]; break; } }
+    if (!active) { applyTileConfig(); return; }
+    _themeActive = active.name;
+    if (active.name !== 'Default' && LB.getThemeHtml) {
+      var html = LB.getThemeHtml(active.name);
+      if (html) {
+        var themeMeta = {};
+        try { if (LB.getThemeMeta) themeMeta = JSON.parse(LB.getThemeMeta(active.name) || '{}'); } catch (eMeta) {}
+        try { if (themeMeta.strings && window.I18N) { if (themeMeta.strings.en && window.I18N.en) Object.assign(window.I18N.en, themeMeta.strings.en); if (themeMeta.strings.de && window.I18N.de) Object.assign(window.I18N.de, themeMeta.strings.de); } } catch (eStr) {}
+        var isFullScope = themeMeta.scope === 'full';
+        _themeScope = isFullScope ? 'full' : 'fold';
+        var container = isFullScope ? document.getElementById('scroller') : document.getElementById('fold-inner');
+        if (container) {
+          _parkTilesBeforeInjection(isFullScope);
+          container.innerHTML = html;
+          _cleanPoolAfterInjection();
+          reattachSpeedUnlock();
+          reattachQuickGridHandlers();
+          try { applyLang(); } catch (eLang) {}
+        }
+      }
+    }
+    injectThemeVars(); _restorePoolEnabled(); applyTileConfig(); scheduleFitFold();
+  } catch (e) {
+    try { applyTileConfig(); } catch (e2) {}
+  } finally {
+    document.documentElement.removeAttribute('data-theme-loading');
+  }
+}
+
+window.__onThemeEvent = function(ev) {
+  if (!ev) return;
+  if (ev.event === 'imported') { renderThemeList(); showToast((ev.name || '') + ' imported'); }
+  else if (ev.event === 'error') { showToast(ev.message || 'import error', 4000, 'err'); }
+};
+
+// Tiles that can be re-added via the theme tile editor's "Available to add" list.
+var TILE_CATALOG = [
+  { id: 'tile-speed', label: 'tile.label.speed', sources: [ { val: 'ble', label: 'tile.label.speed.ble', domId: 'tile-speed-ble' }, { val: 'gps', label: 'tile.label.speed.gps', domId: 'tile-speed-gps' } ] },
+  { id: 'tile-hero-soc',      label: 'tile.label.battery'       },
+  { id: 'tile-hero-gear',     label: 'tile.label.gear'          },
+  { id: 'tile-tele-r1',       label: 'tile.label.tele.r1'       },
+  { id: 'tile-tele-r2',       label: 'tile.label.tele.r2'       },
+  { id: 'tile-tele-r3',       label: 'tile.label.tele.r3'       },
+  { id: 'tile-allvals',       label: 'tile.label.allvals'       }
+];
+
+// Theme style-editor variable catalog (defaults + types). Resolved per theme by injectThemeVars.
+const DEFAULT_CSS_VARS = {
+  '--dark-card':   { label: 'style.var.dark-card',   type: 'color', default: '#111420', group: 'dark'  },
+  '--dark-bg':     { label: 'style.var.dark-bg',     type: 'color', default: '#0A0C10', group: 'dark'  },
+  '--dark-border': { label: 'style.var.dark-border', type: 'color', default: '#1C2035', group: 'dark'  },
+  '--dark-text':   { label: 'style.var.dark-text',   type: 'color', default: '#E4EDF6', group: 'dark'  },
+  '--dark-label':  { label: 'style.var.dark-label',  type: 'color', default: '#C6D2E2', group: 'dark'  },
+  '--dark-lum':    { label: 'style.var.dark-lum',    type: 'range', default: 90, min: 0, max: 100, group: 'dark' },
+  '--light-card':   { label: 'style.var.light-card',   type: 'color', default: '#ffffff', group: 'light' },
+  '--light-bg':     { label: 'style.var.light-bg',     type: 'color', default: '#e8edf5', group: 'light' },
+  '--light-border': { label: 'style.var.light-border', type: 'color', default: '#CDD5E4', group: 'light' },
+  '--light-text':   { label: 'style.var.light-text',   type: 'color', default: '#0A0D18', group: 'light' },
+  '--light-label':  { label: 'style.var.light-label',  type: 'color', default: '#0A0D18', group: 'light' },
+  '--light-lum':    { label: 'style.var.light-lum',    type: 'range', default: 100, min: 0, max: 100, group: 'light' },
+  '--value':   { label: 'style.var.value',   type: 'color', default: '#BCEB39', group: 'accents' },
+  '--ble':     { label: 'style.var.ble',     type: 'color', default: '#B8F020', group: 'accents' },
+  '--gps':     { label: 'style.var.gps',     type: 'color', default: '#3DB8FF', group: 'accents' },
+  '--good':    { label: 'style.var.good',    type: 'color', default: '#1EE89A', group: 'accents' },
+  '--btnfill': { label: 'style.var.btnfill', type: 'color', default: '#B8F020', group: 'accents' },
+  '--warn':    { label: 'style.var.warn',    type: 'color', default: '#FFAA18', group: 'accents' },
+  '--danger':  { label: 'style.var.danger',  type: 'color', default: '#FF5050', group: 'accents' },
+  '--unlock':  { label: 'style.var.unlock',  type: 'color', default: '#FF5050', group: 'accents' },
+  '--sz-speed-val': { label: 'style.var.sz-speed-val', type: 'number', default: 64, min: 20, max: 72, unit: 'px', group: 'fonts' },
+  '--sz-speed-lbl': { label: 'style.var.sz-speed-lbl', type: 'number', default: 14, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-hero-val':  { label: 'style.var.sz-hero-val',  type: 'number', default: 38, min: 10, max: 48, unit: 'px', group: 'fonts' },
+  '--sz-hero-lbl':  { label: 'style.var.sz-hero-lbl',  type: 'number', default: 13, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-m1-top':    { label: 'style.var.sz-m1-top',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-m1-mid':    { label: 'style.var.sz-m1-mid',    type: 'number', default: 32, min: 10, max: 48, unit: 'px', group: 'fonts' },
+  '--sz-m1-bot':    { label: 'style.var.sz-m1-bot',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-m2-top':    { label: 'style.var.sz-m2-top',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-m2-mid':    { label: 'style.var.sz-m2-mid',    type: 'number', default: 32, min: 10, max: 48, unit: 'px', group: 'fonts' },
+  '--sz-m2-bot':    { label: 'style.var.sz-m2-bot',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-m3-top':    { label: 'style.var.sz-m3-top',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-m3-mid':    { label: 'style.var.sz-m3-mid',    type: 'number', default: 32, min: 10, max: 48, unit: 'px', group: 'fonts' },
+  '--sz-m3-bot':    { label: 'style.var.sz-m3-bot',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--tile-h-speed':  { label: 'style.var.tile-h-speed',  type: 'number', default: 0, min: 0, max: 400, unit: 'px', group: 'tiles' },
+  '--tile-h-hero':   { label: 'style.var.tile-h-hero',   type: 'number', default: 0, min: 0, max: 400, unit: 'px', group: 'tiles' },
+  '--tile-h-motors': { label: 'style.var.tile-h-motors', type: 'number', default: 0, min: 0, max: 400, unit: 'px', group: 'tiles' },
+  '--tile-alpha':  { label: 'style.var.tile-alpha',  type: 'range', default: 0, min: 0, max: 100, unit: '%', group: 'tiles' },
+  '--btn-alpha':   { label: 'style.var.btn-alpha',   type: 'range', default: 0, min: 0, max: 100, unit: '%', group: 'tiles' },
+  '--gauge-alpha': { label: 'style.var.gauge-alpha', type: 'range', default: 0, min: 0, max: 100, unit: '%', group: 'tiles' },
+};
+
 function wireEvents() {
   // Connect icon in the topbar: open the Connect page (scan / connect / disconnect).
   document.getElementById('btn-connect').addEventListener('click', openConnectPage);
@@ -4318,7 +5662,6 @@ function wireEvents() {
   // Settings open/close
   document.getElementById('btn-settings').addEventListener('click', openSettings);
   document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
-  document.getElementById('settings-overlay').addEventListener('click', closeSettings);
 
   // Connect scooter (settings sheet): open the Connect page.
   document.getElementById('btn-connect-scooter').addEventListener('click', () => {
@@ -4383,11 +5726,8 @@ function wireEvents() {
   document.getElementById('fw-consent').addEventListener('change', fwSyncStartEnabled);
   document.getElementById('fw-consent-link').addEventListener('click', () => openDisclaimer('read'));
 
-  document.getElementById('btn-open-display').addEventListener('click', () => {
-    closeSettings();
-    openDisplayPage();
-  });
-  document.getElementById('btn-display-back').addEventListener('click', closeDisplayPage);
+  // Display settings removed: its colours/fonts are now edited per-theme in the Theme manager's
+  // style editor (Default included). The display-page DOM is left unreachable, matching tr/sf.
 
   document.getElementById('btn-copy-btname').addEventListener('click', copyBtName);
   document.getElementById('btn-copy-serial').addEventListener('click', copySerial);
@@ -4405,11 +5745,33 @@ function wireEvents() {
     else showToast(t('msg.app.only.in.app'));
   });
 
-  // Main-screen NAVEE quick toggles: Zero-Start (0x6A) / Tempomat (0x52) / Sperre (0x51).
-  // (When disconnected the control has pointer-events:none, so these never fire.)
-  document.querySelectorAll('#drive-quick .dq-btn[data-dq]').forEach(btn => {
-    btn.addEventListener('click', () => toggleDriveQuick(btn.dataset.dq));
-  });
+  // Build the driver's quick controls into the standard #quick-grid (renderQuickControls wires clicks).
+  renderQuickControls();
+
+  // Theme manager + guide pages.
+  { const b = document.getElementById('btn-open-theme'); if (b) b.addEventListener('click', () => { closeSettings(); openThemePage(); }); }
+  { const b = document.getElementById('btn-theme-back'); if (b) b.addEventListener('click', closeThemePage); }
+  { const b = document.getElementById('btn-theme-import'); if (b) b.addEventListener('click', () => { if (typeof LB !== 'undefined' && LB.pickThemeFiles) LB.pickThemeFiles(); else showToast(t('msg.app.only.in.app')); }); }
+  { const b = document.getElementById('btn-open-guide'); if (b) b.addEventListener('click', openGuidePage); }
+  { const b = document.getElementById('btn-guide-back'); if (b) b.addEventListener('click', closeGuidePage); }
+
+  // Bottom-nav shortcut dropdowns: fixed + driver-derived options.
+  function populateBbSelect(selId, storageKey) {
+    var sel = document.getElementById(selId); if (!sel) return;
+    sel.innerHTML = '';
+    var opts = [];
+    Object.keys(BB_SHORTCUTS).forEach(function(k) { opts.push({ key: k, label: t(BB_SHORTCUTS[k].labelKey) || BB_SHORTCUTS[k].label }); });
+    _bbDashShortcuts().forEach(function(d) { if (!opts.some(function(o) { return o.key === d.key; })) opts.push({ key: d.key, label: d.label }); });
+    opts.forEach(function(o) { var op = document.createElement('option'); op.value = o.key; op.textContent = o.label; sel.appendChild(op); });
+    sel.value = (typeof storage !== 'undefined' ? storage.get(storageKey) : null) || 'none';
+    sel.addEventListener('change', function() { if (typeof storage !== 'undefined') storage.set(storageKey, sel.value); applyBottomShortcuts(); });
+  }
+  populateBbSelect('bb-left-sel', 'lb_bb_left');
+  populateBbSelect('bb-right-sel', 'lb_bb_right');
+  { const el = document.getElementById('toggle-bottom-nav'); if (el) { el.checked = (storage.get('lb_bottom_nav') === 'true'); el.addEventListener('change', e => { storage.set('lb_bottom_nav', e.target.checked ? 'true' : 'false'); applyBottomNav(e.target.checked); }); } }
+  { const el = document.getElementById('toggle-dash-lock'); if (el) { el.checked = (storage.get('lb_dash_locked') === 'true'); el.addEventListener('change', e => { storage.set('lb_dash_locked', e.target.checked ? 'true' : 'false'); }); } }
+  { const el = document.getElementById('toggle-streaming-btn'); if (el) { el.checked = (storage.get('lb_show_streaming') !== 'false'); el.addEventListener('change', e => { storage.set('lb_show_streaming', e.target.checked ? 'true' : 'false'); applySrtVisibility(e.target.checked); }); } }
+  { const el = document.getElementById('toggle-ride-banner-dock'); if (el) { el.checked = (storage.get('lb_ride_banner_dock') === 'true'); el.addEventListener('change', e => { storage.set('lb_ride_banner_dock', e.target.checked ? 'true' : 'false'); }); } }
 
   // Hidden gesture: triple-tap the VCU speed tile to toggle the speed release (drive mode 4).
   const vcuTile = document.querySelector('#speed-row .ble-drum');
@@ -4524,14 +5886,8 @@ function wireEvents() {
     syncDebugUI();
   });
 
-  // Anonymize-log toggle: default on; strips MAC addresses and ids from the log before save/share.
-  const redactToggle = document.getElementById('toggle-log-redact');
-  if (redactToggle) redactToggle.addEventListener('change', e => {
-    try {
-      if (typeof LB !== 'undefined' && LB.setLogRedact) LB.setLogRedact(e.target.checked);
-      else showToast(t('msg.app.only.in.app'));
-    } catch (err) {}
-  });
+  // Redaction is always on and locked in native (DebugLog.redactLine); the checkbox is shown
+  // checked + disabled, so there is no change handler here.
 
   // Export debug logs: share the recorded log file via the native chooser.
   const dbgExport = document.getElementById('btn-export-logs');
@@ -5210,6 +6566,10 @@ function init() {
   initNavBanner();
   initRideBanner();
   initDisplayPage();
+  initActiveTheme();   // inject the active custom theme (if any) before the fold is measured
+  initCellDrag();
+  try { applyBottomNav(storage.get('lb_bottom_nav') === 'true'); } catch (e) {}
+  try { applySrtVisibility(storage.get('lb_show_streaming') !== 'false'); } catch (e) {}
   initFold();      // after initLang, so the first measurement sees the rider's own label lengths
 
   // Start BLE polling
@@ -5247,6 +6607,14 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+// Keep the native back-button state in sync with every open/close (watches class changes).
+(function() {
+  try {
+    new MutationObserver(function() { _updateNavState(); })
+      .observe(document.documentElement, { subtree: true, attributeFilter: ['class'] });
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>

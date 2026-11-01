@@ -25,3 +25,6 @@ rides/
 analysis-tool/
 # Working notes from the Teverun -> NAVEE port - not part of the shipped app
 _portspec/
+
+# xelatex scratch dir from tools/build-guide.sh
+/tex/
