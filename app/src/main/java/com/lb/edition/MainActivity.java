@@ -64,6 +64,7 @@ public class MainActivity extends Activity {
     private static final int REQ_AUTH_LOG = 0x5F02;
     private static final int REQ_PERMS = 4711;
     private static final int REQ_THEME_ZIP = 4713;
+    private static final int REQ_BG_IMAGE = 4714;
 
     private WebView webView;
     private BleManager ble;
@@ -1509,6 +1510,23 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Pick a background image; the result is downscaled to a JPEG data URI and sent to
+            window.__onBgImagePicked(uri). The page stores + applies it per theme. */
+        @JavascriptInterface
+        public void pickBackgroundImage() {
+            Log.i(TAG, "LB.pickBackgroundImage()");
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("image/*");
+                    startActivityForResult(i, REQ_BG_IMAGE);
+                } catch (Throwable t) {
+                    Log.e(TAG, "pickBackgroundImage failed", t);
+                }
+            });
+        }
+
         /** Per-theme tile layout: JSON {order:[ids], hidden:[ids]}. */
         @JavascriptInterface
         public String getTileConfig(String name) {
@@ -1596,8 +1614,49 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
         if (req == REQ_THEME_ZIP) { handleThemeZipPick(res, data); return; }
+        if (req == REQ_BG_IMAGE) { handleBgImagePick(res, data); return; }
         if (req == REQ_FW_FILE && res == RESULT_OK && data != null) onFwFilePicked(data.getData());
         if (req == REQ_AUTH_LOG && res == RESULT_OK && data != null) onAuthLogPicked(data.getData());
+    }
+
+    /** Decode a picked image, downscale it to a compact JPEG data URI and hand it to the page. Runs off
+        the UI thread; big photos are sampled down first to avoid OOM. The page stores it per theme. */
+    private void handleBgImagePick(int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) return;
+        final Uri uri = data.getData();
+        new Thread(() -> {
+            try {
+                final int MAX = 1440;
+                android.graphics.BitmapFactory.Options bo = new android.graphics.BitmapFactory.Options();
+                bo.inJustDecodeBounds = true;
+                try (InputStream b = getContentResolver().openInputStream(uri)) {
+                    android.graphics.BitmapFactory.decodeStream(b, null, bo);
+                }
+                int sample = 1;
+                while (bo.outWidth / sample > MAX * 2 || bo.outHeight / sample > MAX * 2) sample *= 2;
+                android.graphics.BitmapFactory.Options o2 = new android.graphics.BitmapFactory.Options();
+                o2.inSampleSize = sample;
+                android.graphics.Bitmap bmp;
+                try (InputStream s = getContentResolver().openInputStream(uri)) {
+                    bmp = android.graphics.BitmapFactory.decodeStream(s, null, o2);
+                }
+                if (bmp == null) return;
+                int w = bmp.getWidth(), h = bmp.getHeight();
+                float scale = Math.min(1f, (float) MAX / Math.max(w, h));
+                if (scale < 1f) {
+                    android.graphics.Bitmap sb = android.graphics.Bitmap.createScaledBitmap(
+                            bmp, Math.round(w * scale), Math.round(h * scale), true);
+                    if (sb != bmp) { bmp.recycle(); bmp = sb; }
+                }
+                java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 82, bos);
+                bmp.recycle();
+                String uriStr = "data:image/jpeg;base64," + android.util.Base64.encodeToString(bos.toByteArray(), android.util.Base64.NO_WRAP);
+                pushStr("__onBgImagePicked", uriStr);
+            } catch (Throwable t) {
+                Log.e(TAG, "handleBgImagePick failed", t);
+            }
+        }).start();
     }
 
     /** Import a picked theme .zip through ThemeManager and report the outcome to the page. */
