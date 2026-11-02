@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Fully customizable dashboard.</b> Every live-value tile is now filled by your Navee's own driver into a shared layout - the app shows exactly what your scooter reports (battery health, temperature, range, trip, total, lock). In the Theme Manager a 'Live tiles' list lets you pick, per theme, which value each tile shows (a dropdown per tile, like the quick buttons).",
+      "<b>Carbon &amp; Lambo refreshed.</b> The built-in gauge themes now render your driver's values in their own skin, cap the fold tidily (9 tiles / 8 buttons), and mark 40-100 km/h dark red on the gauge for unlocked scooters that reach those speeds. They auto-update on this release.",
       "<b>NT5 Max: pick your top speed up to 60 km/h, and set the launch power.</b> The controller target-speed picker in the firmware patcher now reaches 60 (it was capped at 40) - this build has no sub-50 governor, so the higher settings take. 22 stays the locked step. There is also a new launch-current option (22 / 25 / 30 A): unlocking the speed normally softens the pull-away (about 22 A down to 18 A), and this sets it back or higher. Both are in-place changes with no size change, experimental and not yet hardware-confirmed by us - the red untested warning applies. Also in the web patcher.",
       "<b>Dashboard: shared Live-values layout.</b> The live telemetry area now matches the other Laufbursche apps - power reads in kW, TRIP and LOCK cells were added and the cells your scooter reports pack into one tidy grid (cells with no data are hidden).",
       "<b>More models get their matching new firmware.</b> The patcher now serves the newer NAVEE firmware when your device runs it - UT5 Max 0.0.1.3, ST3 0.0.1.2, GT5 Pro/Max 0.0.1.6, UT3 Max 1.0.0.7 and the XT5 3.0.2.3 meter. Pick your controller version and you flash exactly the firmware for your device, not an older one.",
@@ -676,7 +678,7 @@ window.I18N = {
     "fault.57": "Discharge under-temperature",
     "fault.60": "Battery overcharge",
     "fault.61": "Battery over-discharge",
-    "dash.tele.section": "Drive & battery",
+    "dash.tele.section": "Live values",
     "dash.tele.power.title": "POWER",
     "dash.tele.power.unit": "kW",
     "dash.tele.volt.title": "VOLTAGE",
@@ -787,6 +789,8 @@ window.I18N = {
     "theme.userbg.set": "Background image set",
     "theme.drag.handle.aria": "Reorder",
     "theme.editor.add.placeholder": "＋ Add…",
+    "theme.livetiles.section": "Live tiles",
+    "theme.livetiles.pick.aria": "Choose value",
     "theme.editor.remove.title": "Remove",
     "theme.editor.section.add": "Add",
     "theme.editor.section.add.hint": "activate standard tiles",
@@ -989,6 +993,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Voll anpassbares Dashboard.</b> Jede Live-Wert-Kachel wird jetzt vom Treiber deines Navee in ein geteiltes Layout gef&uuml;llt - die App zeigt genau das, was dein Roller meldet (Akku-Gesundheit, Temperatur, Reichweite, Trip, Gesamt, Sperre). Im Theme-Manager w&auml;hlst du &uuml;ber eine 'Live-Kacheln'-Liste pro Theme, welchen Wert jede Kachel zeigt (ein Dropdown pro Kachel, wie bei den Buttons).",
+      "<b>Carbon &amp; Lambo &uuml;berarbeitet.</b> Die eingebauten Gauge-Themes rendern jetzt die Treiber-Werte in eigener Optik, deckeln den Fold sauber (9 Kacheln / 8 Buttons) und markieren 40-100 km/h dunkelrot auf dem Tacho f&uuml;r entsperrte Roller. Sie aktualisieren sich mit diesem Release automatisch.",
       "<b>NT5 Max: Topspeed bis 60 km/h wählbar, plus einstellbare Anfahrleistung.</b> Die Controller-Zielgeschwindigkeit im Firmware-Patcher reicht jetzt bis 60 (vorher bei 40 gedeckelt) - dieser Build hat keinen Governor unter 50, die höheren Stufen greifen also. 22 bleibt die gesperrte Stufe. Dazu neu eine Strom-Option für die Anfahrt (22 / 25 / 30 A): das Entsperren der Geschwindigkeit nimmt sonst Anfahrkraft weg (etwa 22 A auf 18 A), das stellt sie zurück oder höher. Beides in-place ohne Größenänderung, experimentell und von uns noch nicht an Hardware bestätigt - die rote Ungetestet-Warnung gilt. Auch im Web-Patcher.",
       "<b>Dashboard: einheitliche Live-Werte.</b> Der Live-Bereich zeigt jetzt dasselbe Layout wie die anderen Laufbursche-Apps - die Leistung steht in kW, die Zellen TEILSTRECKE und SPERRE kamen dazu und die Werte deines Scooters packen sich in ein aufgeräumtes Raster (Zellen ohne Daten werden ausgeblendet).",
       "<b>Mehr Modelle bekommen ihre passende neue Firmware.</b> Der Patcher liefert jetzt die neuere NAVEE-Firmware aus, wenn dein Gerät sie fährt - UT5 Max 0.0.1.3, ST3 0.0.1.2, GT5 Pro/Max 0.0.1.6, UT3 Max 1.0.0.7 und der XT5-Meter 3.0.2.3. Du wählst deine Controller-Version und flasht genau die Firmware deines Geräts, nicht eine ältere.",
@@ -1660,7 +1666,7 @@ window.I18N = {
     "fault.57": "Untertemperatur beim Entladen",
     "fault.60": "Akku überladen",
     "fault.61": "Akku tiefentladen",
-    "dash.tele.section": "Antrieb und Akku",
+    "dash.tele.section": "Live-Werte",
     "dash.tele.power.title": "LEISTUNG",
     "dash.tele.power.unit": "kW",
     "dash.tele.volt.title": "SPANNUNG",
@@ -1771,6 +1777,8 @@ window.I18N = {
     "theme.userbg.set": "Hintergrundbild gesetzt",
     "theme.drag.handle.aria": "Verschieben",
     "theme.editor.add.placeholder": "＋ Hinzufügen…",
+    "theme.livetiles.section": "Live-Kacheln",
+    "theme.livetiles.pick.aria": "Wert wählen",
     "theme.editor.remove.title": "Entfernen",
     "theme.editor.section.add": "Hinzufügen",
     "theme.editor.section.add.hint": "Standard-Kacheln aktivieren",

@@ -960,6 +960,21 @@ select.set-ctrl { text-align: left; -webkit-appearance: none; appearance: none; 
 #motor-area.lb-packed { display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--gap); justify-content: center; align-content: start; }
 #motor-area.lb-packed > [id^="motor-row"] { display: contents; }
 #motor-area.lb-packed .motor-cell { flex: 0 1 calc((100% - 2 * var(--gap)) / 3); }
+/* Driver-rendered live-value cells (renderTelemetryCells) flow into one packed three-column grid;
+   presence-hidden cells drop out so the visible set packs and a partial last row centres. Same
+   contract in a theme's own #tele-fold, so the skin stays manufacturer-neutral. */
+#tele-fold {
+  display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--gap);
+  justify-content: center; align-content: start;
+}
+#tele-fold > .hero-cell, #tele-fold > .motor-cell {
+  flex: 0 1 calc((100% - 2 * var(--gap)) / 3);
+  overflow: hidden;
+}
+#tele-fold .hc-val { font-size: var(--sz-hero-val, clamp(22px, 6vw, 30px)); }
+#tele-fold .hc-val, #tele-fold .mc-main {
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 #motor-area .motor-cell.slot-hidden { display: none; }
 #motor-area .row-hidden { display: none; }
 #motors-section.sect-hidden { display: none; }
