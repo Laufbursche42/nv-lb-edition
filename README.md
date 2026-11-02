@@ -46,20 +46,32 @@ The app was built and checked against the **NAVEE XT5 family**. It connects to a
 
 Other NAVEE models that use the same protocol are **expected** to work, but they are **not verified** - nobody has confirmed them on hardware. Treat anything outside the XT5 family as untested: the connection and the read-only pages are the likely case, while a setting your model does not implement is simply ignored by the scooter. Which functions a given unit supports depends on its firmware, so a switch that has no effect on your scooter means the firmware did not accept it, not that the app failed to send it.
 
-Firmware patching is confirmed on real hardware for the **NT5 family**, the **XT5** and the **N65i II**. Every other NAVEE model is patchable too, but **experimental and not confirmed on hardware**: the patch carries a red untested-firmware warning and an extra confirmation, and a failed controller flash is recoverable only over SWD or with a spare, so only flash where you can recover the unit. Coverage now reaches about 50 of the 58 models NAVEE ships firmware for - the ST3/GT3 family and GT5 Pro/Max gained a meter patch (zero-start plus a switchable speed limiter over Bluetooth), the UT5 Max has both a meter and a controller patch, and a large set of controller-only models (the G5 family, the E-series, K100, the V-series and more) get one raised top gear.
+Firmware patching is confirmed on real hardware for the **NT5 family**, the **XT5** and the **N65i II**. Every other NAVEE model is patchable too, but **experimental and not confirmed on hardware**: the patch carries a red untested-firmware warning and an extra confirmation, and a failed controller flash is recoverable only over SWD or with a spare, so only flash where you can recover the unit. Coverage now reaches about 50 of the 58 models NAVEE ships firmware for - the ST3/GT3 family and GT5 Pro/Max gained a meter patch (zero-start plus a switchable speed limiter over Bluetooth), the UT5 Max has both a meter and a controller patch, and a large set of controller-only models (the G5 family, the E-series, K100, the V-series and more) get one permanently raised top gear.
+
+How the de-restriction behaves once applied depends on the patch, not just the model - some are **switchable** (toggle between the legal 22 and your open speed, live over Bluetooth), some are **permanent** (one raised top gear until you flash stock back). The Speed column says which.
 
 | Model | Speed | Kick-start | Cruise | Warning beeps |
 | --- | --- | --- | --- | --- |
-| NT5 Max, Max+, Turbo, Ultra | patcher | patcher | patcher | patcher |
-| NT5 Ultra X | patcher | stock | stock | patcher |
-| XT5 Pro, Ultra, Max | flash-free | patcher | stock | patcher |
-| N65i II | patcher | - | - | - |
-| ST3 Pro, ST3, GT3, GT3 Pro (experimental) | patcher | patcher | - | - |
-| GT5 Pro, GT5 Max (experimental) | patcher | - | - | - |
-| UT5 Max (experimental) | patcher | patcher | patcher | - |
-| Further controller-only models (experimental) | patcher | - | - | - |
+| NT5 Max, Max+, Turbo, Ultra | latch | patcher | patcher | patcher |
+| NT5 Ultra X | latch | stock | stock | patcher |
+| XT5 Pro, Ultra, Max | flash-free (+ meter) | patcher | stock | patcher |
+| N65i II | permanent | - | - | - |
+| ST3 Pro, ST3, GT3, GT3 Pro (experimental) | permanent (+ meter) | patcher | - | - |
+| GT5 Pro, GT5 Max (experimental) | permanent (+ meter) | - | - | - |
+| ST5 Pro, ST5 Max (experimental) | meter | - | - | - |
+| UT5 Max (experimental) | permanent or meter | patcher | patcher | - |
+| Further controller-only models (experimental) | permanent | - | - | - |
 
-Legend: `patcher` a switchable lock/unlock patch (boots throttled to ~22 km/h, opens the top gear per ride, re-locks on restart); on a patched meter (XT5, the ST3/GT3 family, GT5) the open speed is a **switchable speed limiter** - pick your top speed in the app, then triple-tap the km/h tile to toggle between 22 and that value, live over Bluetooth with no re-flash; `flash-free` lifted live over Bluetooth per ride, no flash; `stock` already works in every region with no patch; `-` not patched for this model.
+Legend for the **Speed** column:
+- `latch` - switchable firmware latch: boots at ~22 km/h, opens the top gear per ride, re-locks on restart; toggle it in the app or web tool.
+- `flash-free` - switchable, nothing flashed: lifted live over Bluetooth per ride, reverts on the next power cycle (XT5 only).
+- `meter` - switchable speed limiter on a patched meter: pick your top speed, then triple-tap the km/h tile (or the switch) to flip between 22 and that value, live, no re-flash.
+- `permanent` - the controller patch sets one raised top gear that stays until you flash the stock firmware back; no live toggle.
+- `(+ meter)` - the model also offers the switchable meter limiter as a separate patch.
+- `permanent or meter` - pick one path; they conflict (the permanent controller overrides the meter toggle, so flash only one).
+- `stock` - already open in every region, no patch. `-` - not patched for this model.
+
+Other columns: `patcher` the feature is flashed by the patcher; `stock` it already works; `-` not patched.
 
 - **Pick what to patch, keep your beeps.** After it detects your model the patcher shows a checkbox per feature - speed, cruise, zero start plus the individual warning beeps - and writes only the ticked ones. Nothing is silenced by default, so the confirmation beep stays. A private-ground / ABE disclaimer sits before the patch button, in the app and in the web patcher.
 
