@@ -63,6 +63,9 @@ Legend: `patcher` a switchable lock/unlock patch (boots throttled to ~22 km/h, o
 
 - **Pick what to patch, keep your beeps.** After it detects your model the patcher shows a checkbox per feature - speed, cruise, zero start plus the individual warning beeps - and writes only the ticked ones. Nothing is silenced by default, so the confirmation beep stays. A private-ground / ABE disclaimer sits before the patch button, in the app and in the web patcher.
 
+- **NT5 Max: higher top speed plus launch power.** The controller target-speed picker now reaches 60 km/h (this build has no sub-50 governor), and a new launch-current option (22 / 25 / 30 A) sets the pull-away power. Both are in-place changes, experimental and not yet confirmed by us on hardware.
+- **XT5 Pro/Max: pick your firmware version.** When a controller patch is involved the patcher offers the version matching your scooter - 0.0.1.0 or 0.0.1.3, the installed one preselected; both are the same hardware, so you can also move up to the newer one.
+
 The XT5 speed release is flash-free: it writes nothing to the meter or the controller and reverts on the next power cycle. The NT5 and N65i II firmware patches are confirmed on hardware and are reversible by flashing the stock firmware back (N65i II: controller patch only; the meter patch is not yet built). The **ST3/GT3 family is experimental**: built and statically verified but **not yet confirmed on hardware**, and a failed flash there is not recoverable over the air (SWD or a controller swap) - only flash it if you can recover the unit. Read the Disclaimer before use.
 
 ## Restore the original firmware
