@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Back button fixed.</b> The back arrows and the Android back button now step back exactly one level - a sub-page returns to Settings, not straight to the dashboard.",
       "<b>Fully customizable dashboard.</b> Every live-value tile is now filled by your Navee's own driver into a shared layout - the app shows exactly what your scooter reports (battery health, temperature, range, trip, total, lock). In the Theme Manager a 'Live tiles' list lets you pick, per theme, which value each tile shows (a dropdown per tile, like the quick buttons).",
       "<b>Carbon &amp; Lambo refreshed.</b> The built-in gauge themes now render your driver's values in their own skin, cap the fold tidily (9 tiles / 8 buttons), and mark 40-100 km/h dark red on the gauge for unlocked scooters that reach those speeds. They auto-update on this release.",
       "<b>NT5 Max: pick your top speed up to 60 km/h, and set the launch power.</b> The controller target-speed picker in the firmware patcher now reaches 60 (it was capped at 40) - this build has no sub-50 governor, so the higher settings take. 22 stays the locked step. There is also a new launch-current option (22 / 25 / 30 A): unlocking the speed normally softens the pull-away (about 22 A down to 18 A), and this sets it back or higher. Both are in-place changes with no size change, experimental and not yet hardware-confirmed by us - the red untested warning applies. Also in the web patcher.",
@@ -993,6 +994,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Zurück-Taste korrigiert.</b> Die Zurück-Pfeile und die Android-Zurück-Taste gehen jetzt genau eine Ebene zurück - eine Unterseite führt zurück zu den Einstellungen, nicht direkt aufs Dashboard.",
       "<b>Voll anpassbares Dashboard.</b> Jede Live-Wert-Kachel wird jetzt vom Treiber deines Navee in ein geteiltes Layout gef&uuml;llt - die App zeigt genau das, was dein Roller meldet (Akku-Gesundheit, Temperatur, Reichweite, Trip, Gesamt, Sperre). Im Theme-Manager w&auml;hlst du &uuml;ber eine 'Live-Kacheln'-Liste pro Theme, welchen Wert jede Kachel zeigt (ein Dropdown pro Kachel, wie bei den Buttons).",
       "<b>Carbon &amp; Lambo &uuml;berarbeitet.</b> Die eingebauten Gauge-Themes rendern jetzt die Treiber-Werte in eigener Optik, deckeln den Fold sauber (9 Kacheln / 8 Buttons) und markieren 40-100 km/h dunkelrot auf dem Tacho f&uuml;r entsperrte Roller. Sie aktualisieren sich mit diesem Release automatisch.",
       "<b>NT5 Max: Topspeed bis 60 km/h wählbar, plus einstellbare Anfahrleistung.</b> Die Controller-Zielgeschwindigkeit im Firmware-Patcher reicht jetzt bis 60 (vorher bei 40 gedeckelt) - dieser Build hat keinen Governor unter 50, die höheren Stufen greifen also. 22 bleibt die gesperrte Stufe. Dazu neu eine Strom-Option für die Anfahrt (22 / 25 / 30 A): das Entsperren der Geschwindigkeit nimmt sonst Anfahrkraft weg (etwa 22 A auf 18 A), das stellt sie zurück oder höher. Beides in-place ohne Größenänderung, experimentell und von uns noch nicht an Hardware bestätigt - die rote Ungetestet-Warnung gilt. Auch im Web-Patcher.",

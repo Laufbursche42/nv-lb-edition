@@ -5857,7 +5857,6 @@ function wireEvents() {
 
   // Routes sub-page open/close
   document.getElementById('btn-open-routes').addEventListener('click', () => {
-    closeSettings();
     renderRoutes();
     document.getElementById('routes-page').classList.add('open');
   });
@@ -5887,14 +5886,12 @@ function wireEvents() {
 
   // Connect scooter (settings sheet): open the Connect page.
   document.getElementById('btn-connect-scooter').addEventListener('click', () => {
-    closeSettings();
     openConnectPage();
   });
 
   // Scooter settings: open the in-app scooter settings page (requires a connected scooter).
   document.getElementById('btn-scooter-settings').addEventListener('click', () => {
     if (!state.bleConnected) { showToast(t('msg2.toast.no_scooter_connected'), 3000, 'err'); return; }
-    closeSettings();
     openScooterPage();
   });
   document.getElementById('btn-scooter-back').addEventListener('click', closeScooterPage);
@@ -5903,35 +5900,30 @@ function wireEvents() {
   // Read error reports: show current active faults/errors from live BLE data (requires connection).
   document.getElementById('btn-error-reports').addEventListener('click', () => {
     if (!state.bleConnected) { showToast(t('msg2.toast.no_scooter_connected'), 3000, 'err'); return; }
-    closeSettings();
     openErrorReports();
   });
   document.getElementById('btn-error-reports-back').addEventListener('click', closeErrorReports);
 
   // Scooter info: identity + firmware/app versions read from live BLE data.
   document.getElementById('btn-info').addEventListener('click', () => {
-    closeSettings();
     openInfoPage();
   });
   document.getElementById('btn-info-back').addEventListener('click', closeInfoPage);
 
   // Battery info: pack values read from live BLE data.
   document.getElementById('btn-battery').addEventListener('click', () => {
-    closeSettings();
     openBatteryPage();
   });
   document.getElementById('btn-battery-back').addEventListener('click', closeBatteryPage);
 
   // Firmware patcher: detect the model, auto-download the matching stock bins, patch, then hand off.
   document.getElementById('btn-fw-patcher').addEventListener('click', () => {
-    closeSettings();
     openPatcherPage();
   });
   document.getElementById('btn-patcher-back').addEventListener('click', closePatcherPage);
   document.getElementById('btn-patcher-run').addEventListener('click', fwRunPatcher);
   // Firmware update (flasher): flash a prepared or user-picked image over BLE (XMODEM-128 DFU).
   document.getElementById('btn-fw-flash').addEventListener('click', () => {
-    closeSettings();
     openFirmwarePage();
   });
   // Collapse the whole bound-scooter block behind one button; expand on tap.
@@ -5972,7 +5964,7 @@ function wireEvents() {
   renderTelemetryCells();   // likewise fill the theme's empty #tele-fold with the driver's cells
 
   // Theme manager + guide pages.
-  { const b = document.getElementById('btn-open-theme'); if (b) b.addEventListener('click', () => { closeSettings(); openThemePage(); }); }
+  { const b = document.getElementById('btn-open-theme'); if (b) b.addEventListener('click', () => { openThemePage(); }); }
   { const b = document.getElementById('btn-theme-back'); if (b) b.addEventListener('click', closeThemePage); }
   { const b = document.getElementById('btn-theme-import'); if (b) b.addEventListener('click', () => { if (typeof LB !== 'undefined' && LB.pickThemeFiles) LB.pickThemeFiles(); else showToast(t('msg.app.only.in.app')); }); }
   { const b = document.getElementById('btn-open-guide'); if (b) b.addEventListener('click', openGuidePage); }
@@ -6004,7 +5996,6 @@ function wireEvents() {
 
   // Version Info & Disclaimer (side-menu footer): open the modal (Close / backdrop / Escape).
   document.getElementById('btn-version-info').addEventListener('click', () => {
-    closeSettings();
     openVersionInfo();
   });
   document.getElementById('verinfo-close').addEventListener('click', closeVersionInfo);
@@ -6019,7 +6010,6 @@ function wireEvents() {
 
   // What is new: from the settings and Got it / backdrop / Escape to close.
   document.getElementById('btn-whatsnew').addEventListener('click', () => {
-    closeSettings();
     openWhatsNew();
   });
   document.getElementById('whatsnew-close').addEventListener('click', closeWhatsNew);
