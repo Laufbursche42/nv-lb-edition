@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>ST3/GT3: silence individual beeps.</b> On a patched ST3/GT3 family meter (ST3, ST3 Pro, GT3, GT3 Pro, GT3 Max) you can now turn off single tones in the firmware patcher - the over-speed warning (the continuous beep from about 30 km/h), the connect beep, the startup melody, the alarm / find-me tone and the fault tone, each on its own. The button / confirmation beep always stays. Experimental: it flashes the meter, so the red untested warning applies.",
       "<b>Back button fixed.</b> The back arrows and the Android back button now step back exactly one level - a sub-page returns to Settings, not straight to the dashboard.",
       "<b>Fully customizable dashboard.</b> Every live-value tile is now filled by your Navee's own driver into a shared layout - the app shows exactly what your scooter reports (battery health, temperature, range, trip, total, lock). In the Theme Manager a 'Live tiles' list lets you pick, per theme, which value each tile shows (a dropdown per tile, like the quick buttons).",
       "<b>Carbon &amp; Lambo refreshed.</b> The built-in gauge themes now render your driver's values in their own skin, cap the fold tidily (9 tiles / 8 buttons), and mark 40-100 km/h dark red on the gauge for unlocked scooters that reach those speeds. They auto-update on this release.",
@@ -565,6 +566,8 @@ window.I18N = {
     "feat.beep-overspeed": "Silence over-speed warning",
     "feat.beep-alarm": "Silence alarm / find-me tone",
     "feat.beep-melody": "Silence startup / error melody",
+    "feat.beep-connect": "Silence connect beep",
+    "feat.beep-fault": "Silence fault / warning tone",
     "patch.disclaimer": "Speed unlock voids the road approval (ABE); the scooter may then no longer be used in public road traffic.",
     "patch.launchdrop": "Heads up for this controller (NT5 Max / Max+ / Turbo): unlocking the speed lowers the launch torque - pull-away current drops from about 22 A to 18 A, because the strong launch is tied to the 22 km/h lock in the stock firmware. On the NT5 Max you can raise it back - and higher - with the launch-current option above (22/25/30 A), an in-place byte change. Experimental and not yet hardware-confirmed by us.",
     "patch.status.download_fail": "Download of {kind} failed. Check your connection.",
@@ -1010,6 +1013,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>ST3/GT3: einzelne Pieptöne abschalten.</b> Auf einem gepatchten Tacho der ST3/GT3-Familie (ST3, ST3 Pro, GT3, GT3 Pro, GT3 Max) kannst du jetzt im Firmware-Patcher einzelne Töne abschalten - den Warnton (den Dauerpiepton ab etwa 30 km/h), den Verbindungston, die Startmelodie, den Alarm-/Find-me-Ton und den Fehlerton, jeweils einzeln. Der Bestätigungston bleibt immer an. Experimentell: es flasht den Tacho, daher die rote Ungetestet-Warnung.",
       "<b>Zurück-Taste korrigiert.</b> Die Zurück-Pfeile und die Android-Zurück-Taste gehen jetzt genau eine Ebene zurück - eine Unterseite führt zurück zu den Einstellungen, nicht direkt aufs Dashboard.",
       "<b>Voll anpassbares Dashboard.</b> Jede Live-Wert-Kachel wird jetzt vom Treiber deines Navee in ein geteiltes Layout gef&uuml;llt - die App zeigt genau das, was dein Roller meldet (Akku-Gesundheit, Temperatur, Reichweite, Trip, Gesamt, Sperre). Im Theme-Manager w&auml;hlst du &uuml;ber eine 'Live-Kacheln'-Liste pro Theme, welchen Wert jede Kachel zeigt (ein Dropdown pro Kachel, wie bei den Buttons).",
       "<b>Carbon &amp; Lambo &uuml;berarbeitet.</b> Die eingebauten Gauge-Themes rendern jetzt die Treiber-Werte in eigener Optik, deckeln den Fold sauber (9 Kacheln / 8 Buttons) und markieren 40-100 km/h dunkelrot auf dem Tacho f&uuml;r entsperrte Roller. Sie aktualisieren sich mit diesem Release automatisch.",
@@ -1570,6 +1574,8 @@ window.I18N = {
     "feat.beep-overspeed": "Warnton (Tempo) stumm",
     "feat.beep-alarm": "Alarm-/Find-me-Ton stumm",
     "feat.beep-melody": "Start-/Fehlermelodie stumm",
+    "feat.beep-connect": "Verbindungston stumm",
+    "feat.beep-fault": "Fehler-/Warnton stumm",
     "patch.disclaimer": "Die Entdrosselung hebt die ABE auf; der Roller darf dann nicht mehr im öffentlichen Straßenverkehr genutzt werden.",
     "patch.launchdrop": "Hinweis zu diesem Controller (NT5 Max / Max+ / Turbo): Das Entsperren der Geschwindigkeit senkt die Anfahrkraft - der Anfahrstrom fällt von etwa 22 A auf 18 A, weil der kräftige Anfahr-Schub in der Werks-Firmware an die 22-km/h-Sperre gekoppelt ist. Beim NT5 Max kannst du ihn mit der Strom-Option oben (22/25/30 A) wieder anheben - und höher - als reine Byte-Änderung im Image. Experimentell und von uns noch nicht an Hardware bestätigt.",
     "patch.status.download_fail": "Download von {kind} fehlgeschlagen. Verbindung prüfen.",

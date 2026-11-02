@@ -6402,7 +6402,7 @@ function patchFeatureList(det) {
   if (det.meter && !naveeMeterPatchBlocked(det)) {
     const mid = String(det.id);
     // ST3/GT3 meter 2.0.4.6: zero-start (kickstart) unlock plus the switchable BT drossel (speedsel gate).
-    if (['12501', '3801', '3401', '12601', '3701', '3501', '3601', '3702'].indexOf(mid) >= 0) feats.push('kickstart', 'drossel');
+    if (['12501', '3801', '3401', '12601', '3701', '3501', '3601', '3702'].indexOf(mid) >= 0) feats.push('kickstart', 'drossel', 'beep-overspeed', 'beep-connect', 'beep-melody', 'beep-alarm', 'beep-fault');
     // GT5 meter 1.0.0.4: only the switchable BT drossel (speedsel gate); no kickstart/cruise/beep sites.
     else if (['8401', '8501', '8402', '8502'].indexOf(mid) >= 0) feats.push('drossel');
     // ST5 Pro/Max meter 0.0.2.4 (T2314): switchable BT drossel only; no ST5 controller image, HW-unconfirmed.

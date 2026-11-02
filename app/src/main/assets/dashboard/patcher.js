@@ -210,6 +210,19 @@ const IMAGES = {
       { off: 0xf306, from: [0x26, 0xd0], to: [0x12, 0xd0], id: 'speedsel' },         // DE beq force-22 -> follow-cell
       { off: 0xf336, from: [0x20, 0x20], to: [0x16, 0x20], id: 'speedsel-floor' },   // follow-cell floor 32 -> 22
       { off: 0x10770, from: [0x32], to: [0x35], id: 'version-marker' },         // reported meter version 2.0.4.6 -> 5.0.4.6 ("5046")
+      // Per-tone beep silences. Each site is a movs r0,#<on-duration>; FUN_0800d6a2 early-returns for
+      // dur < 2 (cmp r0,#2; bcc) without driving the buzzer or changing state, so #<dur> -> #1 mutes just
+      // that tone with control flow intact. The confirm/button beep (0xdab0/0xdab6/0xdadc/0xd9a2) is left on.
+      { off: 0xd92a,  from: [0x23, 0x20], to: [0x01, 0x20], id: 'beep-overspeed-nag' },  // continuous >~30 km/h over-speed nag
+      { off: 0x11b3e, from: [0x32, 0x20], to: [0x01, 0x20], id: 'beep-overspeed-m67a' }, // modes 6/7 over-speed onset
+      { off: 0x11bb4, from: [0x05, 0x20], to: [0x01, 0x20], id: 'beep-overspeed-m67b' }, // modes 6/7 over-speed cadence
+      { off: 0xd9d6,  from: [0x64, 0x20], to: [0x01, 0x20], id: 'beep-connect' },        // BLE connect beep
+      { off: 0xd75a,  from: [0x28, 0x20], to: [0x01, 0x20], id: 'beep-melody-a' },       // startup / not-ready chime
+      { off: 0xd778,  from: [0x05, 0x20], to: [0x01, 0x20], id: 'beep-melody-b' },       // startup / not-ready chime
+      { off: 0xd7a8,  from: [0x05, 0x20], to: [0x01, 0x20], id: 'beep-melody-c' },       // startup / not-ready chime
+      { off: 0xd990,  from: [0x0a, 0x20], to: [0x01, 0x20], id: 'beep-alarm-findmy' },   // find-my active alarm
+      { off: 0xd986,  from: [0x23, 0x20], to: [0x01, 0x20], id: 'beep-alarm-lock' },     // lock / find-my repeating alarm
+      { off: 0xd9ae,  from: [0x08, 0x20], to: [0x01, 0x20], id: 'beep-fault' },          // fault / warning tone
     ],
   },
 
