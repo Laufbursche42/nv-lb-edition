@@ -30,6 +30,10 @@ final class FrameParser {
     private String region = "", serial = "", pid = "", configRaw = "";
     private Integer maxSpeed, limitSpeed, limitOn, startSpeed, lock, unit, breakSpeed, driveMode, cruise, tcs, eco;
     private Integer tailLight, autoLight, drl, logoLight, ambientLight;   // light switches from the 0x70 report (offsets 4/8/24/23/10)
+    // Further 0x70 DeviceCarInfo params (authoritative offsets from the official BleHandler case 112). Raw device values.
+    private Integer bindingStatus, regen, mileageAlgo, tpms, turnSound, proximityKey, nightMode, mileageAlgoMode,
+            lightE, lightD, lightS, volume, reportLang, startChargeTime, chargeLimit, timedCharge,
+            lockTime, weather, slopeAssist, longRange, oscSwitch, osaSwitch;
     private Integer packMv, packMa, soh, temp, cycles;
     // EU-spec BMS lifetime block in the 0x72 report (present only when payload length > 15 = europeanRule).
     // RAW unscaled integers - the official display divisor is NOT confirmed (DeviceBatteryInfoActivity.k0 did not decompile).
@@ -144,6 +148,26 @@ final class FrameParser {
         drl = u8(p, 24);         // daytime running light (write opcode 0x6D sub 3)
         logoLight = u8(p, 23);   // logo / lettering light (write opcode 0x6D sub 2)
         ambientLight = u8(p, 10); // ambient / underglow light (write opcode 0x5E)
+        // Further 0x70 params, authoritative offsets from the official BleHandler (case 112). Raw values.
+        bindingStatus = u8(p, 0);
+        regen = u8(p, 5);            // ersStatus: energy recovery / regen level (raw)
+        mileageAlgo = u8(p, 6);
+        tpms = u8(p, 9);             // tyreSwitch: tyre-pressure monitor
+        turnSound = u8(p, 12);       // turn-signal sound
+        proximityKey = u8(p, 13);
+        nightMode = u8(p, 14);
+        mileageAlgoMode = u8(p, 15);
+        lightE = u8(p, 16); lightD = u8(p, 17); lightS = u8(p, 18);
+        volume = u8(p, 21);
+        reportLang = u8(p, 22);
+        startChargeTime = rd(p, 27, 4, true);  // scheduled-charge start, 4-byte BE
+        chargeLimit = u8(p, 31);
+        timedCharge = u8(p, 33);     // timedChargeOn
+        lockTime = u8(p, 34);
+        weather = u8(p, 36);
+        slopeAssist = u8(p, 37);     // slopeSup
+        longRange = u8(p, 38);
+        oscSwitch = u8(p, 39); osaSwitch = u8(p, 40);
         if (settings != null) settings.applyReportFrom70(p);
     }
 
@@ -290,6 +314,14 @@ final class FrameParser {
             put(o, "breakSpeed", breakSpeed); put(o, "cruise", cruise); put(o, "tcs", tcs); put(o, "eco", eco);
             put(o, "tailLight", tailLight); put(o, "autoLight", autoLight); put(o, "drl", drl);
             put(o, "logoLight", logoLight); put(o, "ambientLight", ambientLight);
+            put(o, "regen", regen); put(o, "nightMode", nightMode); put(o, "tpms", tpms);
+            put(o, "volume", volume); put(o, "slopeAssist", slopeAssist); put(o, "longRange", longRange);
+            put(o, "proximityKey", proximityKey); put(o, "turnSound", turnSound);
+            put(o, "lightE", lightE); put(o, "lightD", lightD); put(o, "lightS", lightS);
+            put(o, "timedCharge", timedCharge); put(o, "chargeLimit", chargeLimit); put(o, "startChargeTime", startChargeTime);
+            put(o, "lockTime", lockTime); put(o, "reportLang", reportLang); put(o, "weather", weather);
+            put(o, "oscSwitch", oscSwitch); put(o, "osaSwitch", osaSwitch);
+            put(o, "bindingStatus", bindingStatus); put(o, "mileageAlgo", mileageAlgo); put(o, "mileageAlgoMode", mileageAlgoMode);
             put(o, "packMv", packMv); put(o, "packMa", packMa); put(o, "soh", soh);
             put(o, "temp", temp); put(o, "cycles", cycles);
             // EU-spec BMS lifetime block (0x72) + 0x79 extra. Raw/unscaled where noted in decodeBattery.

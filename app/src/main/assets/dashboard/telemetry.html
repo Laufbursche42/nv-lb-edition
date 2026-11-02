@@ -1522,6 +1522,17 @@ function parseBLE(raw) {
       limitSpeed: num(d.limitSpeed),
       limitOn:  num(d.limitOn),
       breakSpeed: (typeof d.breakSpeed === 'number' ? d.breakSpeed : null),
+      regen: (typeof d.regen === 'number' ? d.regen : -1),
+      nightMode: (typeof d.nightMode === 'number' ? d.nightMode : -1),
+      tpms: (typeof d.tpms === 'number' ? d.tpms : -1),
+      volume: (typeof d.volume === 'number' ? d.volume : -1),
+      slopeAssist: (typeof d.slopeAssist === 'number' ? d.slopeAssist : -1),
+      longRange: (typeof d.longRange === 'number' ? d.longRange : -1),
+      proximityKey: (typeof d.proximityKey === 'number' ? d.proximityKey : -1),
+      turnSound: (typeof d.turnSound === 'number' ? d.turnSound : -1),
+      timedCharge: (typeof d.timedCharge === 'number' ? d.timedCharge : -1),
+      chargeLimit: (typeof d.chargeLimit === 'number' ? d.chargeLimit : -1),
+      lockTime: (typeof d.lockTime === 'number' ? d.lockTime : -1),
       fault:    num(d.fault),
       rssi:     num(d.rssi),
       btName:   d.btName || '',
@@ -1559,6 +1570,17 @@ function naveeAllValues(o) {
   if (o.tripMile >= 0) push('Trip', convDist(o.tripMile).toFixed(1) + ' ' + (state.useMph ? 'mi' : 'km'));
   if (typeof o.chargingState === 'number') push('Charging', o.chargingState ? 'yes' : 'no');
   if (typeof o.tcs === 'number' && o.tcs >= 0) push('Traction control', o.tcs ? 'on' : 'off');
+  if (o.regen >= 0) push('Energy recovery', String(o.regen));
+  if (o.nightMode >= 0) push('Night mode', o.nightMode ? 'on' : 'off');
+  if (o.tpms >= 0) push('Tyre pressure monitor', o.tpms ? 'on' : 'off');
+  if (o.volume >= 0) push('Volume', String(o.volume));
+  if (o.slopeAssist >= 0) push('Slope assist', o.slopeAssist ? 'on' : 'off');
+  if (o.longRange >= 0) push('Long range', o.longRange ? 'on' : 'off');
+  if (o.proximityKey >= 0) push('Proximity key', o.proximityKey ? 'on' : 'off');
+  if (o.turnSound >= 0) push('Turn-signal sound', o.turnSound ? 'on' : 'off');
+  if (o.timedCharge >= 0) push('Scheduled charging', o.timedCharge ? 'on' : 'off');
+  if (o.chargeLimit > 0) push('Charge limit', o.chargeLimit + ' %');
+  if (o.lockTime > 0) push('Auto-lock', String(o.lockTime));
   if (o.maxSpeed) push('Max Speed (param)', o.maxSpeed + ' km/h');
   if (o.limitSpeed) push('Speed Limit', o.limitSpeed + ' km/h' + (o.limitOn ? ' (on)' : ' (off)'));
   if (o.startSpeed >= 0) push('Start Speed', o.startSpeed + ' km/h');
