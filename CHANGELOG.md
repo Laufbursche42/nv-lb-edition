@@ -27,6 +27,8 @@ If no matching section exists the notes fall back to the commit messages, so kee
 - XT5 Pro/Max: the 0.0.1.0 controller speed patch no longer carries the untested warning - it is confirmed on hardware. The newer 0.0.1.3 controller patch keeps the warning until it is confirmed on its own.
 - XT5 Pro/Max/Ultra: the locked (legal) speed is now selectable too - 15, 18, 20, 22 or 25 km/h (default 22). The triple-tap toggles between that and your open speed; some EU regions allow 25. On ST3/GT3/GT5 the live toggle needs a stock controller - a note now explains that the permanent controller patch overrides it.
 - Back button returns one level. The on-screen back arrows and the Android back button now step back exactly one level (a sub-page returns to Settings, Settings to the dashboard) instead of sometimes jumping straight to the dashboard.
+- Trip stats as dashboard tiles. Your last ride's time, top speed and average speed (as the scooter reports them) can now be shown as live-value tiles - pick them per theme in the Theme Manager's Live-tiles list.
+- Read out the scooter's on-board ride log. Your Navee keeps a list of its recent individual rides on board (distance, duration, top and average speed); the app now reads that list and shows it at the top of the Recorded-routes page, separate from the app's own GPS route recorder.
 
 ## 1.0.96
 - Firmware patcher now offers the newer NAVEE firmware for more models when your device runs it: UT5 Max controller 0.0.1.3, ST3 controller 0.0.1.2, GT5 Pro/Max controller 0.0.1.6, UT3 Max controller 1.0.0.7, and the XT5 meter 3.0.2.3 (Pro/Max/Ultra). The variant picker shows your controller version so you flash the firmware that matches your device, not an older one.

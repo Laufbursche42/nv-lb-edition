@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Scooter ride log + trip stats.</b> The app can now read the rides your Navee stores on board (distance, time, top and average speed) and shows them on the Routes page, and your last ride\u0027s time / top / average speed are available as dashboard tiles.",
       "<b>ST3/GT3: silence individual beeps.</b> On a patched ST3/GT3 family meter (ST3, ST3 Pro, GT3, GT3 Pro, GT3 Max) you can now turn off single tones in the firmware patcher - the over-speed warning (the continuous beep from about 30 km/h), the connect beep, the startup melody, the alarm / find-me tone and the fault tone, each on its own. The button / confirmation beep always stays. Experimental: it flashes the meter, so the red untested warning applies.",
       "<b>Back button fixed.</b> The back arrows and the Android back button now step back exactly one level - a sub-page returns to Settings, not straight to the dashboard.",
       "<b>Fully customizable dashboard.</b> Every live-value tile is now filled by your Navee's own driver into a shared layout - the app shows exactly what your scooter reports (battery health, temperature, range, trip, total, lock). In the Theme Manager a 'Live tiles' list lets you pick, per theme, which value each tile shows (a dropdown per tile, like the quick buttons).",
@@ -1013,6 +1014,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Roller-Fahrtenbuch + Fahrt-Statistik.</b> Die App liest jetzt die im Roller gespeicherten Fahrten (Strecke, Zeit, Max- und \u00d8-Tempo) und zeigt sie auf der Routen-Seite, und Zeit / Max / \u00d8-Tempo deiner letzten Fahrt gibt es als Dashboard-Kacheln.",
       "<b>ST3/GT3: einzelne Pieptöne abschalten.</b> Auf einem gepatchten Tacho der ST3/GT3-Familie (ST3, ST3 Pro, GT3, GT3 Pro, GT3 Max) kannst du jetzt im Firmware-Patcher einzelne Töne abschalten - den Warnton (den Dauerpiepton ab etwa 30 km/h), den Verbindungston, die Startmelodie, den Alarm-/Find-me-Ton und den Fehlerton, jeweils einzeln. Der Bestätigungston bleibt immer an. Experimentell: es flasht den Tacho, daher die rote Ungetestet-Warnung.",
       "<b>Zurück-Taste korrigiert.</b> Die Zurück-Pfeile und die Android-Zurück-Taste gehen jetzt genau eine Ebene zurück - eine Unterseite führt zurück zu den Einstellungen, nicht direkt aufs Dashboard.",
       "<b>Voll anpassbares Dashboard.</b> Jede Live-Wert-Kachel wird jetzt vom Treiber deines Navee in ein geteiltes Layout gef&uuml;llt - die App zeigt genau das, was dein Roller meldet (Akku-Gesundheit, Temperatur, Reichweite, Trip, Gesamt, Sperre). Im Theme-Manager w&auml;hlst du &uuml;ber eine 'Live-Kacheln'-Liste pro Theme, welchen Wert jede Kachel zeigt (ein Dropdown pro Kachel, wie bei den Buttons).",
