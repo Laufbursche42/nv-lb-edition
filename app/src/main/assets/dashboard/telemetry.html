@@ -617,12 +617,15 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
           <b>Nur auf privatem Grund.</b> Über 22 km/h erlischt die Betriebserlaubnis und der Versicherungsschutz; auf öffentlichen Wegen nicht erlaubt.
         </div>
         <div class="settings-row no-bottom-rule">
-          <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.xt5speed.label">Wunsch-Höchstgeschwindigkeit (offen)</div><div class="settings-row-sublabel" data-i18n="scooter.xt5speed.sub">Der Trippel-Tipp auf die km/h-Kachel schaltet zwischen 22 (gesperrt) und diesem Wert</div></div>
-          <select class="set-ctrl" id="ss-xt5speed">
-            <option value="22">22 km/h</option>
-            <option value="32">32 km/h</option>
-            <option value="45">45 km/h</option>
-          </select>
+          <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.xt5speed.label">Wunsch-Höchstgeschwindigkeit (offen)</div><div class="settings-row-sublabel" data-i18n="scooter.xt5speed.sub">Der Trippel-Tipp auf die km/h-Kachel schaltet zwischen dem gesperrten Wert und diesem</div></div>
+          <select class="set-ctrl" id="ss-xt5speed"></select>
+        </div>
+        <div class="settings-row no-bottom-rule" id="xt5lock-row" style="display:none">
+          <div class="settings-row-left"><div class="settings-row-label" data-i18n="scooter.xt5lock.label">Gesperrte Geschwindigkeit (legal)</div><div class="settings-row-sublabel" data-i18n="scooter.xt5lock.sub">Der Wert, auf den der Trippel-Tipp zurückschaltet - manche Regionen erlauben 25 statt 22</div></div>
+          <select class="set-ctrl" id="ss-xt5lock"></select>
+        </div>
+        <div class="fw-warn" id="xt5speed-permctrl-hint" style="display:none" data-i18n="scooter.xt5speed.permctrl">
+          Hinweis: bei diesem Modell sitzt die Entdrosselung dauerhaft im Controller-Patch. Der Live-Umschalter wirkt nur mit einem Serien-Controller - der permanente Controller-Patch überschreibt ihn.
         </div>
       </div>
     </div>
@@ -1856,7 +1859,7 @@ function updateBLEUI(data) {
     const st = naveeLiveSpeedSteps(naveeRealModel());
     let open = 0; try { open = parseInt(storage.get('lb_xt5speed') || '', 10) || 0; } catch (e) {}
     if (st.indexOf(open) < 0) open = st[st.length - 1];
-    try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x6E, [0x01, _speedReleased ? open : 22])); } catch (e) {}
+    try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x6E, [0x01, _speedReleased ? open : naveeXtLock()])); } catch (e) {}
   }
   // Auto re-arm the XT5 speed release after a manual drive-mode change (opt-in, experimental).
   // The XT5 release is a live gear-4 command that a mode switch wipes; when the rider turned on
@@ -3315,6 +3318,21 @@ function applyModelPanels(modelName) {
       steps.forEach(k => xs.appendChild(new Option(k + ' km/h', String(k))));
       xs.value = Array.prototype.some.call(xs.options, o => o.value === cur) ? cur : String(steps[steps.length - 1]);
     }
+    // Locked (legal) speed: configurable on XT5 (the 0x6E path commands any value); default 22. Some EU
+    // regions allow 25. Other families keep the fixed 22 lock.
+    const isXT = naveeIsXT(modelName);
+    const lr = document.getElementById('xt5lock-row'); const xl = document.getElementById('ss-xt5lock');
+    if (lr) lr.style.display = (steps && isXT) ? '' : 'none';
+    if (steps && isXT && xl) {
+      let lk = ''; try { lk = storage.get('lb_xt5lock') || ''; } catch (e) {}
+      xl.innerHTML = '';
+      ['15', '18', '20', '22', '25'].forEach(k => xl.appendChild(new Option(k + ' km/h' + (k === '22' ? ' (Standard)' : ''), k)));
+      xl.value = ['15', '18', '20', '22', '25'].indexOf(lk) >= 0 ? lk : '22';
+    }
+    // Permanent-controller models (ST3/GT3/GT5): the live toggle needs a STOCK controller - the permanent
+    // controller patch overrides it. Make that clear instead of a dead-feeling switch.
+    const ph = document.getElementById('xt5speed-permctrl-hint');
+    if (ph) ph.style.display = (steps && PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) ? '' : 'none';
   }
 }
 // Live-speed steps per patched-meter family (byte10 / 0x6E sub1 selector). Null = no live selector.
@@ -4025,7 +4043,13 @@ function wireScooterSettings() {
     const n = parseInt(e.target.value, 10) || 22;
     try { storage.set('lb_xt5speed', String(n)); } catch (err) {}
     try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x6E, [0x01, n])); } catch (err) {}
-    setSpeedReleasedFlag(n > 22);   // picking a max above 22 counts as "open"; triple-tap toggles 22 <-> this
+    setSpeedReleasedFlag(n > naveeXtLock());   // picking a max above the locked value counts as "open"
+  });
+  // Locked (legal) speed picker (XT5): stores the value the triple-tap drops back to; default 22.
+  const xl = document.getElementById('ss-xt5lock');
+  if (xl) xl.addEventListener('change', e => {
+    const n = parseInt(e.target.value, 10) || 22;
+    try { storage.set('lb_xt5lock', String(n)); } catch (err) {}
   });
   const alight = document.getElementById('ss-alight');
   if (alight) alight.addEventListener('change', e => {
@@ -4147,6 +4171,11 @@ function isXT5ProMaxAntiTune() {
     return fw.charCodeAt(0) === 51 && fw.charCodeAt(1) === 13;
   } catch (e) { return false; }
 }
+// XT5 locked (legal) speed, configurable via lb_xt5lock (15-25, default 22); other families use fixed 22.
+function naveeXtLock() {
+  if (!naveeIsXT(naveeRealModel())) return 22;
+  try { const v = parseInt(storage.get('lb_xt5lock') || '', 10); return (v >= 10 && v <= 30) ? v : 22; } catch (e) { return 22; }
+}
 function speedReleaseGear(on) {
   // XT5 family (incl. the T2443 XT5 Ultra) unlocks on gear 4 and restricts on gear 3; the others use 5/2.
   const isXT = naveeIsXT(naveeRealModel());
@@ -4164,7 +4193,7 @@ function sendSpeedRelease(on) {
     const st = naveeLiveSpeedSteps(naveeRealModel());
     let open = 0; try { open = parseInt(storage.get('lb_xt5speed') || '', 10) || 0; } catch (e) {}
     if (st.indexOf(open) < 0) open = st[st.length - 1];   // default open target = family max
-    LB.sendRaw(naveeNormalHex(0x6E, [0x01, on ? open : 22]));
+    LB.sendRaw(naveeNormalHex(0x6E, [0x01, on ? open : naveeXtLock()]));
     if (naveeIsXT(naveeRealModel())) { try { pushSetting(NAVEE_CMD.drivemode, on ? 4 : 3); } catch (e) {} }
     setSpeedReleasedFlag(on);
     setTxt('tune-status', on ? t('msg2.navee.tune.sent') : t('msg2.navee.tune.restored'));

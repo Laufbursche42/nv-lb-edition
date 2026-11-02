@@ -24,6 +24,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 - XT5 Pro/Max/Ultra: the live Bluetooth top-speed selector (patched meter) now offers finer steps - 22, 25, 27, 30, 35, 40 and 45 km/h, instead of 22, 32 and 45. 45 is the live ceiling without re-flashing; the firmware patcher still goes to 50.
 - XT5 Pro/Max firmware patcher: you can now choose the controller firmware version (0.0.1.0 or 0.0.1.3) and the display firmware version (3.0.2.0 or 3.0.2.3). The version your scooter runs is preselected; picking a different one shows a warning that nobody has reported that combination working yet. A scooter on the older firmware can move up to the newer one this way. Only XT5 Pro/Max, where both versions are the same hardware.
 - XT5 Pro/Max: the 0.0.1.0 controller speed patch no longer carries the untested warning - it is confirmed on hardware. The newer 0.0.1.3 controller patch keeps the warning until it is confirmed on its own.
+- XT5 Pro/Max/Ultra: the locked (legal) speed is now selectable too - 15, 18, 20, 22 or 25 km/h (default 22). The triple-tap toggles between that and your open speed; some EU regions allow 25. On ST3/GT3/GT5 the live toggle needs a stock controller - a note now explains that the permanent controller patch overrides it.
 - Back button returns one level. The on-screen back arrows and the Android back button now step back exactly one level (a sub-page returns to Settings, Settings to the dashboard) instead of sometimes jumping straight to the dashboard.
 
 ## 1.0.96
