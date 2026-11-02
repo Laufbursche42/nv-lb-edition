@@ -2431,7 +2431,48 @@ function ntSpeedVariants(spec, sel) {
   return out;
 }
 
-IMAGES.bldc9301.stdSpeedKmh = 40; IMAGES.bldc9301.variants = ntSpeedVariants(IMAGES.bldc9301, { latchId: 'capz-latch', enc: 'movs8', find: [0xc8, 0x26] });
+// NT5 Max 9301 (02831) reaches higher than the shared NT5 set: no sub-50 governor on this build
+// (field: 49 km/h real at the 50 setting). capZ = imm8 << shift. imm8 = km/h*5 while <=255 (lsls #2);
+// above 51 km/h switch to lsls #3 so imm8 = round(km/h*2.5) fits one byte, and rescale the locked value
+// to 55 (55<<3 = 440 = 22 km/h) so the locked state stays identical. All in-place, no length change.
+function nt9301SpeedVariants(spec, find, kmhList) {
+  const out = {};
+  for (const kmh of kmhList) {
+    const patches = spec.patches.map((p) => ({ off: p.off, from: p.from, to: p.to.slice(), id: p.id }));
+    const lp = patches.find((p) => p.id === 'capz-latch');
+    if (!lp) throw new Error('nt9301SpeedVariants: capz-latch patch missing');
+    const at = findSub(lp.to, find);           // open immediate (movs r6,#imm8) inside the latch block
+    if (at < 0) throw new Error('nt9301SpeedVariants: open immediate not found');
+    if (kmh * 5 <= 255) {
+      lp.to[at] = (kmh * 5) & 0xff;             // open imm8 (<<2); locked 110 and lsls #2 stay stock
+    } else {
+      lp.to[at] = Math.round(kmh * 2.5) & 0xff; // open imm8 for lsls #3
+      lp.to[at + 4] = 55;                        // locked 55 (55 << 3 = 440 = 22 km/h)
+      lp.to[at + 6] = 0xf6;                      // lsls r6,r6,#3 (was 0xb6 = #2)
+    }
+    out['speed' + kmh] = { mark: spec.mark, experimental: true, speedKmh: kmh, patches: patches };
+  }
+  return out;
+}
+
+IMAGES.bldc9301.stdSpeedKmh = 40;
+IMAGES.bldc9301.variants = nt9301SpeedVariants(IMAGES.bldc9301, [0xc8, 0x26], [22, 25, 30, 35, 45, 50, 60]);
+// Current (power) scaler, independent axis: [0x2000020e]/[0x20000214] = raw * factor/10 (two movs #imm8
+// feeding muls). Stock 0x3384=22, 0x3390=18. Raising = more phase current (more launch/accel torque).
+// In-place single-byte immediates. Experimental, HW-unconfirmed by us (third party field-ran 22/25).
+IMAGES.bldc9301.currentVariants = {
+  cur22: { level: 22, patches: [
+    { off: 0x3390, from: [0x12], to: [0x16], id: 'current' },
+  ] },
+  cur25: { level: 25, patches: [
+    { off: 0x3384, from: [0x16], to: [0x19], id: 'current' },
+    { off: 0x3390, from: [0x12], to: [0x19], id: 'current' },
+  ] },
+  cur30: { level: 30, patches: [
+    { off: 0x3384, from: [0x16], to: [0x1e], id: 'current' },
+    { off: 0x3390, from: [0x12], to: [0x1e], id: 'current' },
+  ] },
+};
 IMAGES.bldc9207.stdSpeedKmh = 40; IMAGES.bldc9207.variants = ntSpeedVariants(IMAGES.bldc9207, { latchId: 'capz-latch', enc: 'movs8', find: [0xc8, 0x21] });
 IMAGES.bldc9701.stdSpeedKmh = 40; IMAGES.bldc9701.variants = ntSpeedVariants(IMAGES.bldc9701, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
 IMAGES.bldc9401.stdSpeedKmh = 40; IMAGES.bldc9401.variants = ntSpeedVariants(IMAGES.bldc9401, { latchId: 'latch-cave', enc: 'movw', find: [0x40, 0xf2, 0x20, 0x30], rd: 0 });
@@ -2531,6 +2572,7 @@ function featureOf(id) {
   if (id.indexOf('speedsel') === 0) return 'drossel'; // meter region-gate -> switchable BT drossel (separate from controller 'speed')
   if (id.indexOf('version-marker') === 0) return 'marker';
   if (id.indexOf('launch-ramp') === 0) return 'launchramp';   // 'launch-degate' stays part of the speed set
+  if (id.indexOf('current') === 0) return 'current';           // controller current (power) scaler, own axis
   return 'speed';
 }
 
@@ -2571,6 +2613,18 @@ function imageFeatures(u8) {
   return { image: key, kind: IMAGES[key].kind, features: feats };
 }
 
+// Selectable current (power) levels of an identified image, for the UI to offer a second picker next to
+// the speed picker. Returns null when the image has no current axis. 'std' = stock current (no patch).
+function imageCurrentVariants(u8) {
+  const key = identify(u8);
+  const spec = key && IMAGES[key];
+  if (!spec || !spec.currentVariants) return null;
+  const keys = ['std'].concat(Object.keys(spec.currentVariants));
+  const level = {};
+  keys.forEach((c) => { level[c] = c === 'std' ? null : (spec.currentVariants[c].level || null); });
+  return { image: key, currents: keys, level: level };
+}
+
 // Selectable build variants of an identified image (e.g. std vs full-torque), for the UI to offer a
 // picker. Returns null when the image has only the default build.
 function imageVariants(u8) {
@@ -2592,7 +2646,7 @@ function imageVariants(u8) {
 // Take the stock .bin (ArrayBuffer), return the patched+resealed image. Throws on an unrecognised,
 // wrong or already-patched image (never returns a damaged file). variantKey picks a build variant
 // (default/'std' = spec.patches); a named variant supplies its own patch list, mark and experimental flag.
-function patchFirmware(arrayBuffer, selected, variantKey) {
+function patchFirmware(arrayBuffer, selected, variantKey, currentKey) {
   const u8 = new Uint8Array(arrayBuffer.slice(0)); // copy: never mutate the caller's buffer
   const key = identify(u8);
   if (!key) {
@@ -2618,6 +2672,9 @@ function patchFirmware(arrayBuffer, selected, variantKey) {
     : spec.coreFeatures ? Array.from(new Set((selected || []).concat(spec.coreFeatures)))
     : selected;
   const applied = applyPatches(u8, patchList, sel);
+  // Current (power) axis: independent of the speed variant, applied on top (own offsets, no overlap).
+  const curSpec = (currentKey && currentKey !== 'std' && spec.currentVariants) ? spec.currentVariants[currentKey] : null;
+  if (curSpec) applyPatches(u8, curSpec.patches, null).forEach((id) => applied.push(id));
   spec.reseal(u8);
 
   return {
@@ -2625,6 +2682,7 @@ function patchFirmware(arrayBuffer, selected, variantKey) {
     label: spec.label,
     kind: spec.kind,
     variant: variant ? variantKey : 'std',
+    current: curSpec ? currentKey : 'std',
     mark: (variant && variant.mark) || spec.mark || null,
     experimental: variant ? !!variant.experimental : isExperimental(key),
     applied: applied,
@@ -2634,8 +2692,8 @@ function patchFirmware(arrayBuffer, selected, variantKey) {
 }
 
 if (typeof window !== 'undefined') {
-  window.NVFW = { patchFirmware, identify, imageFeatures, imageVariants, isExperimental, crc16Xmodem, IMAGES };
+  window.NVFW = { patchFirmware, identify, imageFeatures, imageVariants, imageCurrentVariants, isExperimental, crc16Xmodem, IMAGES };
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { patchFirmware, identify, imageFeatures, imageVariants, isExperimental, featureOf, crc16Xmodem, beRead, beWrite, IMAGES };
+  module.exports = { patchFirmware, identify, imageFeatures, imageVariants, imageCurrentVariants, isExperimental, featureOf, crc16Xmodem, beRead, beWrite, IMAGES };
 }

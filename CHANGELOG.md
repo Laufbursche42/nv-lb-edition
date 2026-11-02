@@ -16,6 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.97
+- NT5 Max controller: the target-speed picker in the firmware patcher now goes up to 60 km/h (it was capped at 40). This build has no sub-50 governor, so the higher settings take; 22 stays the locked step. The change is in place with no firmware size change. Experimental and not yet confirmed by us on hardware.
+- NT5 Max controller: new launch-current (power) option - 22, 25 or 30 A. Unlocking the speed normally lowers the pull-away current (about 22 A to 18 A), because the strong launch is tied to the 22 km/h lock; this option sets it back, or higher, as an in-place byte change. Same untested-firmware warning. Both options are also in the web patcher.
+- Dashboard: the Live-values area now uses the shared layout of the other Laufbursche apps. Power reads in kW, the TRIP and LOCK cells were added and the cells your scooter actually reports pack into one tidy grid (cells with no data are hidden). The values themselves are unchanged.
+- XT5 Pro/Max/Ultra: the live Bluetooth top-speed selector (patched meter) now offers finer steps - 22, 25, 27, 30, 35, 40 and 45 km/h, instead of 22, 32 and 45. 45 is the live ceiling without re-flashing; the firmware patcher still goes to 50.
+- XT5 Pro/Max firmware patcher: you can now choose the controller firmware version (0.0.1.0 or 0.0.1.3) and the display firmware version (3.0.2.0 or 3.0.2.3). The version your scooter runs is preselected; picking a different one shows a warning that nobody has reported that combination working yet. A scooter on the older firmware can move up to the newer one this way. Only XT5 Pro/Max, where both versions are the same hardware.
+
 ## 1.0.96
 - Firmware patcher now offers the newer NAVEE firmware for more models when your device runs it: UT5 Max controller 0.0.1.3, ST3 controller 0.0.1.2, GT5 Pro/Max controller 0.0.1.6, UT3 Max controller 1.0.0.7, and the XT5 meter 3.0.2.3 (Pro/Max/Ultra). The variant picker shows your controller version so you flash the firmware that matches your device, not an older one.
 - If your scooter has one of these newer firmware versions (for example after a NAVEE OTA update), re-run the firmware patcher and flash again to get the patch that matches your version.

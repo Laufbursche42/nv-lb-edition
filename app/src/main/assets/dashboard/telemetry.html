@@ -76,51 +76,105 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <div class="hc-unit" data-i18n="dash.hero.gear.label">Gear</div>
         <div class="hc-tag is-hidden" id="gear-tag"></div>
       </div>
+      <div class="hero-cell" id="current-cell" data-cell-id="hero-current" data-tile-id="tile-hero-cur" data-tile-label="A Current" data-i18n-tile-label="tile.label.current">
+        <div class="hc-val" id="current-val">-</div>
+        <div class="hc-unit" data-i18n="dash.hero.current.unit">A Current</div>
+      </div>
     </div>
 
-    <!-- Live telemetry: shared motor-row grid scaffold (data-cell-id per cell) for theme + editor parity. -->
+    <!-- Live values: shared superset grid. Rows 1-2 mirror the themed motor geometry (two 3-cell
+         rows); rows 3-4 add the battery/distance cells. The driver fills only the ids it has data
+         for (DATA_SLOTS); availability hides unfilled cells and collapses empty rows/section. -->
+    <div id="motors-section" data-section-container>
     <div class="section-hdr sub-hdr" id="tele-hdr">
-      <span data-i18n="dash.tele.section">Antrieb &amp; Akku</span>
+      <span data-i18n="dash.tele.section">Live values</span>
     </div>
-    <div id="motor-row" data-tile-id="tile-tele-r1" data-tile-label="Power / Voltage" data-i18n-tile-label="tile.label.tele.r1">
-      <div class="motor-cell" data-cell-id="tele-power">
-        <div class="mc-title" data-i18n="dash.tele.power.title">LEISTUNG</div>
-        <div class="mc-main"><span id="tl-power">-</span></div>
-        <div class="mc-unit" data-i18n="dash.tele.power.unit">W</div>
+    <div id="motor-area">
+      <div id="motor-row" data-tile-id="tile-tele-r1" data-tile-label="Live row 1" data-i18n-tile-label="tile.label.tele.r1">
+        <div class="motor-cell" data-cell-id="motor-rear-t">
+          <div class="mc-title" data-i18n="dash.motor.rear.title">REAR</div>
+          <div class="mc-main"><span id="mr-temp">-</span></div>
+          <div class="mc-unit" data-i18n="dash.motor.rear.temp.unit">°C</div>
+        </div>
+        <div class="motor-cell" data-cell-id="motor-front-t">
+          <div class="mc-title" data-i18n="dash.motor.front.title">FRONT</div>
+          <div class="mc-main"><span id="mf-temp">-</span></div>
+          <div class="mc-unit" data-i18n="dash.motor.front.temp.unit">°C</div>
+        </div>
+        <div class="motor-cell" data-cell-id="motor-power">
+          <div class="mc-title" data-i18n="dash.motor.power.title">POWER</div>
+          <div class="mc-main"><span id="m-power">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.power.unit">W</div>
+        </div>
       </div>
-      <div class="motor-cell" data-cell-id="tele-volt">
-        <div class="mc-title" data-i18n="dash.tele.volt.title">SPANNUNG</div>
-        <div class="mc-main"><span id="tl-volt">-</span></div>
-        <div class="mc-unit" data-i18n="dash.tele.volt.unit">V</div>
+      <div id="motor-row-2" data-tile-id="tile-tele-r2" data-tile-label="Live row 2" data-i18n-tile-label="tile.label.tele.r2">
+        <div class="motor-cell" data-cell-id="motor-rear-a">
+          <div class="mc-title" data-i18n="dash.motor.rear.title">REAR</div>
+          <div class="mc-main"><span id="mr-cur">-</span></div>
+          <div class="mc-unit" data-i18n="dash.motor.rear.current.unit">A</div>
+        </div>
+        <div class="motor-cell" data-cell-id="motor-front-a">
+          <div class="mc-title" data-i18n="dash.motor.front.title">FRONT</div>
+          <div class="mc-main"><span id="mf-cur">-</span></div>
+          <div class="mc-unit" data-i18n="dash.motor.front.current.unit">A</div>
+        </div>
+        <div class="motor-cell" data-cell-id="motor-total-a">
+          <div class="mc-title" data-i18n="dash.motor.current.total.title">TOTAL</div>
+          <div class="mc-main"><span id="m-total-cur">-</span></div>
+          <div class="mc-unit" data-i18n="dash.motor.rear.current.unit">A</div>
+        </div>
+      </div>
+      <div id="motor-row-3" data-tile-id="tile-tele-r3" data-tile-label="Live row 3" data-i18n-tile-label="tile.label.tele.r3">
+        <div class="motor-cell" data-cell-id="tele-volt">
+          <div class="mc-title" data-i18n="dash.tele.volt.title">VOLTAGE</div>
+          <div class="mc-main"><span id="tl-volt">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.volt.unit">V</div>
+        </div>
+        <div class="motor-cell" data-cell-id="tele-soh">
+          <div class="mc-title" data-i18n="dash.tele.soh.title">SOH</div>
+          <div class="mc-main"><span id="tl-soh">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.soh.unit">%</div>
+        </div>
+        <div class="motor-cell" data-cell-id="tele-temp">
+          <div class="mc-title" data-i18n="dash.tele.temp.title">BATTERY</div>
+          <div class="mc-main"><span id="tl-temp">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.temp.unit">°C</div>
+        </div>
+      </div>
+      <div id="motor-row-4" data-tile-id="tile-tele-r4" data-tile-label="Live row 4" data-i18n-tile-label="tile.label.tele.r4">
+        <div class="motor-cell" data-cell-id="tele-range">
+          <div class="mc-title" data-i18n="dash.tele.range.title">RANGE</div>
+          <div class="mc-main"><span id="tl-range">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.range.unit">km</div>
+        </div>
+        <div class="motor-cell" data-cell-id="tele-odo">
+          <div class="mc-title" data-i18n="dash.tele.odo.title">TOTAL</div>
+          <div class="mc-main"><span id="tl-odo">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.odo.unit">km</div>
+        </div>
+        <div class="motor-cell" data-cell-id="tele-trip">
+          <div class="mc-title" data-i18n="dash.tele.trip.title">TRIP</div>
+          <div class="mc-main"><span id="tl-trip">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.odo.unit">km</div>
+        </div>
+      </div>
+      <div id="motor-row-5" data-tile-id="tile-tele-r5" data-tile-label="Live row 5" data-i18n-tile-label="tile.label.tele.r5">
+        <div class="motor-cell" data-cell-id="tele-energy">
+          <div class="mc-title" data-i18n="dash.tele.energy.title">ENERGY</div>
+          <div class="mc-main"><span id="tl-energy">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.energy.unit">Wh</div>
+        </div>
+        <div class="motor-cell" data-cell-id="tele-lock">
+          <div class="mc-title" data-i18n="dash.tele.lock.title">LOCK</div>
+          <div class="mc-main"><span id="tl-lock">-</span></div>
+          <div class="mc-unit" data-i18n="dash.tele.lock.unit">state</div>
+        </div>
       </div>
     </div>
-    <div id="motor-row-2" data-tile-id="tile-tele-r2" data-tile-label="Battery / Health" data-i18n-tile-label="tile.label.tele.r2">
-      <div class="motor-cell" data-cell-id="tele-temp">
-        <div class="mc-title" data-i18n="dash.tele.temp.title">AKKU</div>
-        <div class="mc-main"><span id="tl-temp">-</span></div>
-        <div class="mc-unit" data-i18n="dash.tele.temp.unit">&deg;C</div>
-      </div>
-      <div class="motor-cell" data-cell-id="tele-soh">
-        <div class="mc-title" data-i18n="dash.tele.soh.title">AKKU-ZUSTAND</div>
-        <div class="mc-main"><span id="tl-soh">-</span></div>
-        <div class="mc-unit" data-i18n="dash.tele.soh.unit">%</div>
-      </div>
-    </div>
-    <div id="motor-row-3" data-tile-id="tile-tele-r3" data-tile-label="Range / Total" data-i18n-tile-label="tile.label.tele.r3">
-      <div class="motor-cell" data-cell-id="tele-range">
-        <div class="mc-title" data-i18n="dash.tele.range.title">REICHWEITE</div>
-        <div class="mc-main"><span id="tl-range">-</span></div>
-        <div class="mc-unit" data-i18n="dash.tele.range.unit">km</div>
-      </div>
-      <div class="motor-cell" data-cell-id="tele-odo">
-        <div class="mc-title" data-i18n="dash.tele.odo.title">GESAMT</div>
-        <div class="mc-main"><span id="tl-odo">-</span></div>
-        <div class="mc-unit" data-i18n="dash.tele.odo.unit">km</div>
-      </div>
-    </div>
+    </div><!-- end #motors-section -->
 
     <!-- Quick controls: empty skin container; the driver fills it via renderQuickControls(). -->
-    <div id="quick-grid" class="dq-disabled" role="group" aria-label="Drive mode quick toggles" data-i18n-aria="dash.drive.quick.group" data-tile-id="quick-actions" data-tile-label="Quick Buttons" data-tile-no-editor="true"></div>
+    <div id="quick-grid" class="qg-disabled" role="group" aria-label="Function quick toggles" data-i18n-aria="dash.drive.quick.group" data-tile-id="quick-actions" data-tile-label="Quick Buttons" data-tile-no-editor="true"></div>
 
      </div>
     </div>
@@ -1829,10 +1883,10 @@ function updateBLEUI(data) {
 
   const DASH = ['ble-speed','soc-val','gear-val','dg-current','dg-range','dg-max','dg-avg',
     'dg-volt','dg-btemp','dg-soh','dg-cycles','dg-total','dg-single','dg-rssi','dg-err',
-    'tl-power','tl-volt','tl-temp','tl-range','tl-odo','tl-soh',
+    'tl-volt','tl-temp','tl-range','tl-odo','tl-soh','tl-trip','tl-lock',
     'dg-limit','dg-startspeed','dg-brake','dg-drivemode',
-    // Custom-theme fold slots filled with NAVEE values (present only in Teverun-shaped themes).
-    'current-val','mr-temp','mf-temp','m-power','mr-cur','mf-cur','m-total-cur'];
+    // Canonical Live-values + hero-current slots (per-motor cells unfilled on nv, hidden by applyDataSlots).
+    'current-val','m-power','mr-temp','mf-temp','mr-cur','mf-cur','m-total-cur'];
 
   if (!data) {
     DASH.forEach(id => setTxt(id, '-'));
@@ -1954,10 +2008,10 @@ function updateBLEUI(data) {
   setTxt('dg-brake', (typeof data.breakSpeed === 'number') ? String(data.breakSpeed) : '-');
   setTxt('dg-drivemode', String(data.gear));
 
-  // Live telemetry tiles. Power is derived: pack voltage times pack current.
+  // Live-values cells (canonical fold). Power is derived: pack voltage times pack current.
   const watt = data.volt * data.current;
-  setTxt('tl-power', Math.round(watt));
-  const pwEl = document.getElementById('tl-power');
+  setTxt('m-power', isNaN(watt) ? '-' : (watt / 1000).toFixed(2));   // kW (canonical fold unit)
+  const pwEl = document.getElementById('m-power');
   if (pwEl) pwEl.style.color = watt < -5 ? 'var(--good)' : '';   // negative = recuperating
   setTxt('tl-volt', data.volt.toFixed(1));
   setTxt('tl-temp', Math.round(data.btemp));
@@ -1965,17 +2019,13 @@ function updateBLEUI(data) {
   setTxt('tl-range', Math.round(convDist(data.range)));
   setTxt('tl-odo', Math.round(convDist(data.totalMile)));
   setTxt('tl-soh', Math.round(data.soh));
+  setTxt('tl-trip', (data.tripMile >= 0) ? convDist(data.tripMile).toFixed(1) : '-');
+  setTxt('tl-lock', (typeof data.lock === 'number') ? t(data.lock === 1 ? 'dash.tele.lock.on' : 'dash.tele.lock.off') : '-');
 
-  // Custom (Teverun-shaped) theme fold slots: fill the theme's hero current cell and six motor cells with
-  // real NAVEE values. applyThemeTelemetry() has relabelled them (Voltage/Power/SOH/Battery/Range/Total)
-  // via _NV_FOLD_MAP; formatting matches nv's grid. nv's native fold has none of these ids -> harmless no-ops.
-  { const _cv = document.getElementById('current-val'); if (_cv) _cv.textContent = data.currentValid ? ((-data.current) > 0 ? '+' : '') + (-data.current).toFixed(1) : '-'; }
-  setTxt('mr-temp', data.volt.toFixed(1));                                                     // Voltage (V)
-  setTxt('mf-temp', data.currentValid ? (data.volt * data.current / 1000).toFixed(2) : '-');   // Power (V*I, kW)
-  setTxt('m-power', Math.round(data.soh));                                                      // Battery SOH (%)
-  setTxt('mr-cur', Math.round(data.btemp));                                                     // Battery temp (°C)
-  setTxt('mf-cur', Math.round(convDist(data.range)));                                           // Range (km/mi)
-  setTxt('m-total-cur', Math.round(convDist(data.totalMile)));                                  // Total odo (km/mi)
+  // Hero current cell (canonical fold): rider-signed pack current, draw red, recuperation green.
+  { const _cv = document.getElementById('current-val');
+    if (_cv) { _cv.textContent = data.currentValid ? ((-data.current) > 0 ? '+' : '') + (-data.current).toFixed(1) : '-';
+      _cv.style.color = data.currentValid ? (data.current > 0 ? 'var(--danger)' : data.current < 0 ? 'var(--good)' : '') : ''; } }
 
   // All values
   renderAllValues(data);
@@ -3377,7 +3427,7 @@ function applyModelPanels(modelName) {
 // Live-speed steps per patched-meter family (byte10 / 0x6E sub1 selector). Null = no live selector.
 function naveeLiveSpeedSteps(name) {
   if (!name) return null;
-  if (naveeIsXT(name)) return [22, 32, 45];        // XT5 Pro/Max/Ultra (controller ceiling ~45-50)
+  if (naveeIsXT(name)) return [22, 25, 27, 30, 35, 40, 45]; // XT5 Pro/Max/Ultra: live (no-flash) ceiling ~45 (0x1c7 = 45.5; no field weakening in motoring above 45), 50 is patcher-only
   if (/^(ST3|GT3)/.test(name)) return [22, 30, 40]; // ST3/GT3 family (follow-cell [22..40])
   if (/^GT5/.test(name)) return [22, 30, 40];       // GT5 Pro/Max
   if (/^ST5/.test(name)) return [22, 30, 40];       // ST5 Pro/Max (T2314 meter, follow-cell [22..40]; controller unconfirmed)
@@ -4327,7 +4377,7 @@ function reflectDriveQuick() {
   const wrap = document.getElementById('quick-grid');
   if (!wrap) return;
   const connected = !!state.bleConnected;
-  wrap.classList.toggle('dq-disabled', !connected);
+  wrap.classList.toggle('qg-disabled', !connected);
   const d = liveRaw();
   wrap.querySelectorAll('.dq-btn[data-dq]').forEach(function(btn) {
     const c = NV_QUICK_BY_DQ[btn.dataset.dq];
@@ -5436,64 +5486,35 @@ function reattachQuickGridHandlers() {
 // Capability-gate the controls via the driver.
 function applyThemeControlCaps() { try { naveeApplyCaps(); } catch (e) {} }
 
-// The app OWNS the fold telemetry set; a custom (Teverun-shaped) theme supplies only the fold LAYOUT
-// (gauge + hero + two 3-cell motor rows). updateBLEUI fills every fold slot with a real NAVEE value, and
-// this map relabels each theme cell to that value's NAVEE label (+ unit). cell = theme data-cell-id;
-// value id written by updateBLEUI: hero-gear=gear-val, motor-rear-t=mr-temp, motor-front-t=mf-temp,
-// motor-power=m-power, motor-rear-a=mr-cur, motor-front-a=mf-cur, motor-total-a=m-total-cur.
-var _NV_FOLD_MAP = [
-  { cell: 'hero-gear',     lbl: '.hc-unit',  lblKey: 'dash.hero.gear.label'  },
-  { cell: 'motor-rear-t',  lbl: '.mc-title', lblKey: 'dash.tele.volt.title',  unit: 'dash.tele.volt.unit'  },
-  { cell: 'motor-front-t', lbl: '.mc-title', lblKey: 'dash.tele.power.title', unit: 'dash.motor.power.unit' },
-  { cell: 'motor-power',   lbl: '.mc-title', lblKey: 'dash.tele.soh.title',   unit: 'dash.tele.soh.unit'   },
-  { cell: 'motor-rear-a',  lbl: '.mc-title', lblKey: 'dash.tele.temp.title',  unit: 'dash.tele.temp.unit'  },
-  { cell: 'motor-front-a', lbl: '.mc-title', lblKey: 'dash.tele.range.title', unit: 'dash.tele.range.unit' },
-  { cell: 'motor-total-a', lbl: '.mc-title', lblKey: 'dash.tele.odo.title',   unit: 'dash.tele.odo.unit'   }
-];
-// Below-the-fold theme tiles that now duplicate a fold value (Voltage/SOH/Total) or are Teverun-only
-// (per-gear params) -> dropped. Same set tr/sf drop for the same reason.
-var _NV_THEME_DROP = ['sect-gear', 'tile-dg-volt', 'tile-dg-soh', 'tile-dg-odo'];
+// Default-fold availability. The Live-values grid is a shared superset across apps; this app fills only
+// the ids in DATA_SLOTS (plus the always-visible hero current cell). Hide the cells it has no data for,
+// give each row a visible-cell count (CSS sizes 1-/2-cell rows), collapse empty rows and the whole
+// section, so the pre-connect frame matches what will populate. Custom themes inject their own fold, so
+// this runs for Default only.
+var DATA_SLOTS = ['m-power','tl-volt','tl-soh','tl-temp','tl-range','tl-odo','tl-trip','tl-lock'];
 
-// Custom-theme only: relabel the 7 fold slots to NAVEE labels, drop the duplicate/N-A below-fold tiles and
-// collapse emptied sections. Label/layout only (values come from updateBLEUI), so one run at theme-apply
-// time is enough; re-run from applyTileConfig after any tile change. Default keeps its native grid (no-op).
-function applyThemeTelemetry() {
-  if (!(_themeActive && _themeActive !== 'Default')) return;
-  var scr = document.getElementById('scroller'); if (!scr) return;
-
-  // (0) The theme's "Motors" header now carries NAVEE live values -> relabel to the live-values header.
-  var mh = scr.querySelector('#motors-section .section-hdr [data-i18n], #motors-section .section-hdr span');
-  if (mh) { mh.setAttribute('data-i18n', 'dash.tele.section'); mh.textContent = t('dash.tele.section'); }
-
-  // (1) Relabel each fold slot to the NAVEE value updateBLEUI writes into it; keep it visible.
-  _NV_FOLD_MAP.forEach(function(m) {
-    var cell = scr.querySelector('[data-cell-id="' + m.cell + '"]'); if (!cell) return;
-    cell.style.display = '';
-    var lbl = cell.querySelector(m.lbl);
-    if (lbl) { lbl.setAttribute('data-i18n', m.lblKey); lbl.textContent = t(m.lblKey); }
-    if (m.unit) {
-      var u = cell.querySelector('.mc-unit');
-      if (u) { u.setAttribute('data-i18n', m.unit); u.textContent = t(m.unit); }
-    }
+function applyDataSlots() {
+  if (_themeActive && _themeActive !== 'Default') return;
+  var sect = document.getElementById('motors-section');
+  if (!sect) return;
+  var area = document.getElementById('motor-area');
+  if (area) area.classList.add('lb-packed');   // Default only: pack the filled cells into one tidy flow
+  var anyRow = false;
+  ['motor-row','motor-row-2','motor-row-3','motor-row-4','motor-row-5'].forEach(function(rid) {
+    var row = document.getElementById(rid);
+    if (!row) return;
+    var vis = 0;
+    row.querySelectorAll('.motor-cell').forEach(function(cell) {
+      var span = cell.querySelector('.mc-main span[id]');
+      var ok = !!(span && DATA_SLOTS.indexOf(span.id) !== -1);
+      cell.classList.toggle('slot-hidden', !ok);
+      if (ok) vis++;
+    });
+    row.setAttribute('data-vis', String(vis));
+    row.classList.toggle('row-hidden', vis === 0);
+    if (vis > 0) anyRow = true;
   });
-
-  // (2) Drop the duplicate / Teverun-only tiles below the fold; keep them out of the tile editor too.
-  _NV_THEME_DROP.forEach(function(id) {
-    var el = document.getElementById(id) || scr.querySelector('[data-tile-id="' + id + '"]');
-    if (el) { el.style.display = 'none'; el.dataset.capHidden = '1'; }
-  });
-
-  // (3) Collapse section wrappers whose tiles are all hidden; a wrapper explicitly dropped above stays hidden.
-  scr.querySelectorAll('[data-section-container]').forEach(function(sect) {
-    if (sect.dataset.tileId) return;
-    if (_NV_THEME_DROP.indexOf(sect.id) >= 0) { sect.style.display = 'none'; return; }
-    var tiles = sect.querySelectorAll('[data-tile-id]');
-    var anyVis = tiles.length === 0;
-    Array.prototype.forEach.call(tiles, function(tl) { if (tl.style.display !== 'none') anyVis = true; });
-    sect.style.display = anyVis ? '' : 'none';
-  });
-
-  try { scheduleFitFold(); } catch (e) {}
+  sect.classList.toggle('sect-hidden', !anyRow);
 }
 
 // Apply saved tile visibility + order to all [data-tile-id] in #scroller.
@@ -5535,7 +5556,7 @@ function applyTileConfig() {
       children.forEach(function(c) { parent.appendChild(c); });
     });
   }
-  applyThemeTelemetry();
+  try { applyDataSlots(); } catch (e5) {}   // Default fold: hide cells/rows this app has no data for
   try { applyRowAlign(); } catch (e3) {}
   try { applyUserBg(); } catch (e4) {}
   initTileDrag();
@@ -5725,9 +5746,12 @@ var TILE_CATALOG = [
   { id: 'tile-speed', label: 'tile.label.speed', sources: [ { val: 'ble', label: 'tile.label.speed.ble', domId: 'tile-speed-ble' }, { val: 'gps', label: 'tile.label.speed.gps', domId: 'tile-speed-gps' } ] },
   { id: 'tile-hero-soc',      label: 'tile.label.battery'       },
   { id: 'tile-hero-gear',     label: 'tile.label.gear'          },
+  { id: 'tile-hero-cur',      label: 'tile.label.current'       },
   { id: 'tile-tele-r1',       label: 'tile.label.tele.r1'       },
   { id: 'tile-tele-r2',       label: 'tile.label.tele.r2'       },
   { id: 'tile-tele-r3',       label: 'tile.label.tele.r3'       },
+  { id: 'tile-tele-r4',       label: 'tile.label.tele.r4'       },
+  { id: 'tile-tele-r5',       label: 'tile.label.tele.r5'       },
   { id: 'tile-allvals',       label: 'tile.label.allvals'       }
 ];
 
@@ -6131,6 +6155,19 @@ function fwDetectModel() {
   if (hit) return fwModelEntry(hit);
   return { state: 'variants', ids: ids, pid: pid4 };
 }
+// Controller firmware versions that are the SAME hardware, so cross-flashing is safe (NAVEE OTAs
+// between them). NOT inferred from pid/name: some models share a pid plus name across different
+// silicon - e.g. NT5 Max 9301 (02831/FS026) vs 9701 (3553G) - where cross-flashing would brick. Only
+// verified same-hardware groups are offered as alternative versions; every other model keeps its single
+// matching firmware.
+const FW_CTRL_GROUPS = [['5301', '5302'], ['5901', '5902']]; // XT5 Pro / XT5 Max: 0.0.1.0 and 0.0.1.3 (both T2416)
+function fwBldcVariants(id) {
+  const M = window.FW_MANIFEST; if (!M || !M.models[id]) return [];
+  const grp = FW_CTRL_GROUPS.find(function (g) { return g.indexOf(String(id)) >= 0; });
+  if (!grp) return [];
+  return grp.filter(function (k) { return M.models[k] && M.models[k].comps && M.models[k].comps.bldc; })
+    .sort(function (a, b) { return M.models[a].comps.bldc.vn < M.models[b].comps.bldc.vn ? -1 : 1; });
+}
 
 /* ── Patcher page: pick the matching stock bins, download, patch, hand off ──────── */
 function openPatcherPage() {
@@ -6153,6 +6190,18 @@ function renderPatcherModel(forcedId) {
   const det = forcedId ? fwModelEntry(forcedId) : fwDetectModel();
   if (det.state === 'ok') {
     fwState.model = det;
+    // Remember what the scooter actually runs (only on a fresh detect, not when the user forced a
+    // version): the version pickers default to this, and picking anything else flags an untested combo.
+    if (!forcedId) {
+      fwState.installedBldcVn = det.bldc ? det.bldc.vn : null;
+      try {
+        const _m = window.FW_MANIFEST.models[det.id];
+        const _m3023 = _m && _m.comps && _m.comps.meter3023;
+        const _fm = (liveRaw().fwMeter || '').trim();
+        fwState.installedMeterVn = (_m3023 && (_fm === '3023' || _fm === '5023')) ? _m3023.vn : (det.meter ? det.meter.vn : null);
+      } catch (e) { fwState.installedMeterVn = det.meter ? det.meter.vn : null; }
+      fwState.meterVariant = null;
+    }
     const parts = [];
     if (det.meter) parts.push('Meter ' + det.meter.vn);
     if (det.bldc) parts.push('Controller ' + det.bldc.vn);
@@ -6235,7 +6284,8 @@ function patchFeatureLabel(f) { const k = 'feat.' + f; const v = t(k); return v 
 // Only models whose bldc image carries speed variants appear here; other controllers keep the binary latch.
 function naveeSpeedOpts(det) {
   if (!det || !det.bldc) return null;
-  if (['9301', '9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family (3553G, cap ~40)
+  if (String(det.id) === '9301') return [22, 25, 30, 35, 40, 45, 50, 60]; // NT5 Max 9301 (02831/FS026): no sub-50 governor on this build, in-place cap selector reaches 60
+  if (['9701', '9401', '9201', '11101'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40]; // NT5 family (3553G, cap ~40)
   // XT5 Pro/Max: the top-gear immediate carries 40 stock and the scale reaches 50 exactly.
   if (['5301', '5901'].indexOf(String(det.id)) >= 0) return [22, 25, 27, 30, 35, 40, 45, 50];
   if (['8901', '8902'].indexOf(String(det.id)) >= 0) return null;  // UT5 Max (0.0.1.0 + 0.0.1.3): controller is one fixed build (no dropdown); the meter drossel is the app on/off toggle
@@ -6265,6 +6315,14 @@ function naveeSpeedOpts(det) {
 // 02831 in-place latch: the speed unlock overwrites the lock-gated launch boost, so launch torque drops
 // (~22 A -> ~18 A). Byte-verified on 9301; 9207 = Max+ 9201 / Turbo 11101. Other controllers keep it.
 function naveeIsLaunchDrop(det) { return !!(det && ['9301', '9201', '11101'].indexOf(String(det.id)) >= 0); }
+// Launch-current (phase-current scaler) levels for the 02831 in-place current axis. 9301 only: two movs
+// immediates at 0x3384/0x3390 feed the launch setpoint. std = stock; higher = more pull-away torque.
+// Mirrors the engine currentVariants keys (cur22/cur25/cur30). Experimental, HW-unconfirmed by us.
+function naveeCurrentOpts(det) {
+  if (!det || !det.bldc) return null;
+  if (String(det.id) === '9301') return [22, 25, 30];
+  return null;
+}
 function selectedPatchFeatures() {
   return Array.from(document.querySelectorAll('#patch-features input[type=checkbox]:checked')).map(c => c.value).filter(v => v !== 'full');
 }
@@ -6273,6 +6331,10 @@ function selectedPatchVariant() {   // target-speed dropdown wins; else the lega
   if (sp && sp.value) return sp.value;
   const cb = document.getElementById('patch-launch-full');
   return (cb && cb.checked) ? 'full' : 'std';
+}
+function selectedPatchCurrent() {   // launch-current dropdown; std = stock
+  const c = document.getElementById('patch-current');
+  return (c && c.value) ? c.value : 'std';
 }
 function hidePatchFeatures() {
   const b = document.getElementById('patch-features'); if (b) b.classList.add('is-hidden');
@@ -6290,6 +6352,54 @@ function renderPatchFeatures(det) {
       const head = document.createElement('div');
       head.className = 'settings-group-title'; head.textContent = t('patch.features.title');
       box.appendChild(head);
+      // Firmware-version pickers (controller + display), defaulting to what the scooter runs. Both axes
+      // treated the same. Picking a version other than the installed one flashes a combination nobody has
+      // reported working yet, so a combo warning shows.
+      (function () {
+        const M = window.FW_MANIFEST; if (!M || !M.models[det.id]) return;
+        const mdl = M.models[det.id];
+        const mbase = mdl.comps && mdl.comps.meter;
+        const m3023 = mdl.comps && mdl.comps.meter3023;
+        const combo = document.createElement('div');
+        combo.className = 'patch-disclaimer is-hidden'; combo.id = 'patch-combo-warn'; combo.style.margin = '6px 0';
+        combo.textContent = t('patch.combo.untested');
+        function updateComboWarn() {
+          const selCtrlVn = det.bldc ? det.bldc.vn : null;
+          const mv = document.getElementById('patch-meterver');
+          let selMeterVn = fwState.installedMeterVn;
+          if (mv) selMeterVn = (mv.value === '3023' && m3023) ? m3023.vn : (mbase ? mbase.vn : null);
+          const ctrlDiff = !!(selCtrlVn && fwState.installedBldcVn && selCtrlVn !== fwState.installedBldcVn);
+          const meterDiff = !!(selMeterVn && fwState.installedMeterVn && selMeterVn !== fwState.installedMeterVn);
+          combo.classList.toggle('is-hidden', !(ctrlDiff || meterDiff));
+        }
+        const sibs = fwBldcVariants(det.id);
+        if (sibs.length > 1) {
+          const ch = document.createElement('div'); ch.className = 'settings-group-title'; ch.style.marginTop = '8px'; ch.textContent = t('patch.ctrlver.title');
+          box.appendChild(ch);
+          const cs = document.createElement('select'); cs.id = 'patch-ctrlver'; cs.className = 'set-ctrl';
+          sibs.forEach(function (sid) {
+            const vn = M.models[sid].comps.bldc.vn;
+            const lab = vn + (vn === fwState.installedBldcVn ? ' (' + t('patch.ver.installed') + ')' : '');
+            const o = new Option(lab, sid); if (sid === det.id) o.selected = true; cs.appendChild(o);
+          });
+          cs.addEventListener('change', function () { renderPatcherModel(cs.value); });
+          box.appendChild(cs);
+        }
+        if (det.meter && m3023 && mbase && !naveeMeterPatchBlocked(det)) {
+          const dh = document.createElement('div'); dh.className = 'settings-group-title'; dh.style.marginTop = '8px'; dh.textContent = t('patch.meterver.title');
+          box.appendChild(dh);
+          const ms = document.createElement('select'); ms.id = 'patch-meterver'; ms.className = 'set-ctrl';
+          const def3023 = (fwState.meterVariant != null) ? (fwState.meterVariant === '3023') : (fwState.installedMeterVn === m3023.vn);
+          [['base', mbase.vn], ['3023', m3023.vn]].forEach(function (pair) {
+            const lab = pair[1] + (pair[1] === fwState.installedMeterVn ? ' (' + t('patch.ver.installed') + ')' : '');
+            const o = new Option(lab, pair[0]); if ((pair[0] === '3023') === def3023) o.selected = true; ms.appendChild(o);
+          });
+          ms.addEventListener('change', function () { fwState.meterVariant = ms.value; updateComboWarn(); });
+          box.appendChild(ms);
+        }
+        box.appendChild(combo);
+        updateComboWarn();
+      })();
       // Say WHY cruise and kickstart are missing on models whose speedometer we never patch,
       // instead of silently leaving the options out.
       if (det.meter && naveeMeterPatchBlocked(det)) {
@@ -6354,6 +6464,15 @@ function renderPatchFeatures(det) {
         });
         box.appendChild(sel);
       }
+      const cur = naveeCurrentOpts(det);
+      if (cur) {
+        const ch = document.createElement('div'); ch.className = 'settings-group-title'; ch.style.marginTop = '8px'; ch.textContent = t('patch.current.title');
+        box.appendChild(ch);
+        const csel = document.createElement('select'); csel.id = 'patch-current'; csel.className = 'set-ctrl';
+        csel.appendChild(new Option(t('patch.current.std'), 'std'));
+        cur.forEach(function (a) { csel.appendChild(new Option(a + ' A', 'cur' + a)); });
+        box.appendChild(csel);
+      }
       if (naveeIsLaunchDrop(det)) {
         const w = document.createElement('div'); w.className = 'patch-disclaimer'; w.style.marginTop = '8px';
         w.textContent = t('patch.launchdrop'); box.appendChild(w);
@@ -6373,6 +6492,7 @@ function fwRunPatcher() {
   if (isPatchBlocked()) { showToast(t('patch.run.experimental'), 4000, 'err'); return; }   // hard block: flash a provided file instead
   fwState.selected = selectedPatchFeatures();
   fwState.variant = selectedPatchVariant();           // std (speed only) vs full (speed + launch torque, untested)
+  fwState.current = selectedPatchCurrent();           // launch-current scaler (9301), std = stock
   const sel = fwState.selected;
   const wantsSpeed = sel.indexOf('speed') >= 0;      // the only bldc-side feature
   const wantsMeter = sel.some(f => f !== 'speed');   // any meter-side feature (cruise/kickstart/beep-*)
@@ -6384,8 +6504,11 @@ function fwRunPatcher() {
   try {
     const mdl = window.FW_MANIFEST && window.FW_MANIFEST.models[det.id];
     const m3023 = mdl && mdl.comps && mdl.comps.meter3023;
-    const fm = (liveRaw().fwMeter || '').trim();
-    if (m3023 && (fm === '3023' || fm === '5023')) { meterUrl = m3023.url; meterVn = m3023.vn; }
+    const mv = document.getElementById('patch-meterver');
+    let want3023;
+    if (mv) want3023 = mv.value === '3023';                              // user picked the display version
+    else { const fm = (liveRaw().fwMeter || '').trim(); want3023 = (fm === '3023' || fm === '5023'); }
+    if (m3023 && want3023) { meterUrl = m3023.url; meterVn = m3023.vn; }
   } catch (e) {}
   if (det.meter && wantsMeter && !naveeMeterPatchBlocked(det)) comps.push({ kind: 'meter', url: meterUrl, name: fwReadableName(det, 'meter', meterVn) });
   if (det.bldc && wantsSpeed) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
@@ -6523,7 +6646,7 @@ window.__onFwDownloaded = function(arg) {
   } catch (e) { /* fall through: patchFirmware surfaces any real error below */ }
   fwPatchStatus(tf('patch.status.patch', { kind: kind }));
   let r;
-  try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64), fwState.selected, fwState.variant); }
+  try { r = window.NVFW.patchFirmware(fwB64ToBuf(m.b64), fwState.selected, fwState.variant, fwState.current); }
   catch (e) {
     fwState.downloading = false;
     fwPatchStatus(t('fw.patch.error') + ' ' + (e && e.message ? e.message : e));

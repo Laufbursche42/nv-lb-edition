@@ -174,7 +174,11 @@ html, body {
 
 /* ── Hero Metrics ──────────────────────────────────────────── */
 /* Hero cells and motor cells are the same kind of tile row, so they share one grid. */
-#hero-row, #tele-row {
+#hero-row, #motor-row, #motor-row-2, #motor-row-3, #motor-row-4, #motor-row-5 {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--gap);
+}
+#tele-row {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: var(--gap);
 }
@@ -946,14 +950,19 @@ select.set-ctrl { text-align: left; -webkit-appearance: none; appearance: none; 
 /* ── Fold per-tile min-heights (style-editor tile heights; 0 = natural) ── */
 #speed-row { min-height: var(--tile-h-speed, 0px); }
 #hero-row  { min-height: var(--tile-h-hero, 0px); }
-#motor-row, #motor-row-2, #motor-row-3 { min-height: var(--tile-h-motors, 0px); }
+#motor-row, #motor-row-2, #motor-row-3, #motor-row-4, #motor-row-5 { min-height: var(--tile-h-motors, 0px); }
 
-/* ── Motor / telemetry tile grid ── */
-#motor-row, #motor-row-2, #motor-row-3 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--gap);
-}
+/* ── Live-values tile grid ── */
+/* Rows stack as per-row 3-col grids; a custom theme keeps this layout. */
+#motor-area { display: flex; flex-direction: column; gap: var(--gap); }
+/* Default only: applyDataSlots adds .lb-packed to #motor-area so the cells this app fills flow into ONE
+   shared row that wraps 3-up and centres a partial last row; a custom theme keeps its per-row grid. */
+#motor-area.lb-packed { display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--gap); justify-content: center; align-content: start; }
+#motor-area.lb-packed > [id^="motor-row"] { display: contents; }
+#motor-area.lb-packed .motor-cell { flex: 0 1 calc((100% - 2 * var(--gap)) / 3); }
+#motor-area .motor-cell.slot-hidden { display: none; }
+#motor-area .row-hidden { display: none; }
+#motors-section.sect-hidden { display: none; }
 .motor-cell {
   flex: 1; min-width: 0;
   background: var(--card); border: 1px solid var(--border);
@@ -977,8 +986,8 @@ select.set-ctrl { text-align: left; -webkit-appearance: none; appearance: none; 
 #motor-row-3 .mc-unit { font-size: var(--sz-m3-bot, var(--fs-sm)); }
 #current-val { color: var(--text); }
 
-/* ── Drive-mode quick toggles (#quick-grid). nv's driver toggles `dq-disabled` on the grid;
-   `qg-disabled` kept too for cross-app parity. Buttons share the universal .dq-btn look. ── */
+/* ── Quick toggles (#quick-grid). Driver toggles `qg-disabled` when disconnected.
+   Buttons share the universal .dq-btn look. ── */
 #quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: auto; gap: var(--gap); container-type: inline-size; }
 #quick-grid .dq-btn {
   flex: 1 1 0; min-width: 0; padding: 8px 1px;
@@ -996,7 +1005,7 @@ select.set-ctrl { text-align: left; -webkit-appearance: none; appearance: none; 
 #quick-grid .dq-btn:active { opacity: .7; }
 #quick-grid .dq-btn.active { background: var(--btnfill); color: #0A0C10; border-color: var(--btnfill); }
 #quick-grid .dq-btn.dq-locked { opacity: .45; }
-#quick-grid.qg-disabled, #quick-grid.dq-disabled { opacity: .4; filter: grayscale(1); }
+#quick-grid.qg-disabled { opacity: .4; filter: grayscale(1); }
 
 /* ── Bottom navigation bar + top banners ── */
 #bottombar {
