@@ -172,6 +172,19 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
   </div>
   <div id="routes-scroller">
     <div id="routes-section">
+      <!-- On-board drive history (0x76): trips the scooter itself stores, separate from the GPS recorder below. -->
+      <div class="section-hdr">
+        <span data-i18n="drivehistory.heading">On-board drive history</span>
+        <span class="label-strong" id="drivehistory-count"></span>
+      </div>
+      <div class="route-item">
+        <div class="route-info">
+          <div class="route-stats" data-i18n="drivehistory.subtext">Trips stored on the scooter itself. Separate from the GPS routes recorded by this app (below).</div>
+        </div>
+      </div>
+      <div id="drivehistory-list">
+        <div class="no-routes" id="no-drivehistory-msg" data-i18n="drivehistory.empty">No on-board rides recorded yet</div>
+      </div>
       <div class="section-hdr">
         <span data-i18n="routes.saved.heading">Recorded routes</span>
         <span class="label-strong" id="routes-count"></span>
@@ -1517,6 +1530,9 @@ function parseBLE(raw) {
       pid:      d.pid || '',
       fwMeter:  d.fwMeter || '', fwBldc: d.fwBldc || '', fwBms: d.fwBms || '',
       fwScreen: d.fwScreen || '', fwUwb: d.fwUwb || '',
+      // On-board trip records (0x76). Raw u16s; scaled at display time.
+      driveHistory: (Array.isArray(d.driveHistory) ? d.driveHistory : []),
+      driveHistoryVersion: (typeof d.driveHistoryVersion === 'number' ? d.driveHistoryVersion : 0),
       _keys:    Object.keys(d),
       ts:       d.ts
     };
@@ -2239,6 +2255,7 @@ function recoverStuckRides() {
 }
 
 function renderRoutes() {
+  renderDriveHistory();
   const routes = loadRoutes();
   state.routes = routes;
 
@@ -2329,6 +2346,57 @@ function makeRouteItem(route, live) {
   }
 
   return el;
+}
+
+/* ── On-board drive history (0x76) ─────────────────────────── */
+// Duration is raw minutes (same assumption as 0x92 duration).
+function fmtDriveHistoryMin(min) {
+  min = Math.max(0, Math.round(min || 0));
+  if (min < 60) return tf('drivehistory.dur.min', { m: min });
+  return tf('drivehistory.dur.hm', { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') });
+}
+
+function renderDriveHistory() {
+  const list = document.getElementById('drivehistory-list');
+  const noMsg = document.getElementById('no-drivehistory-msg');
+  const countEl = document.getElementById('drivehistory-count');
+  if (!list) return;
+
+  let d = null;
+  try { d = parseBLE(typeof storage !== 'undefined' ? storage.get('lb_live_data') : null); } catch (e) {}
+  const ver = (d && typeof d.driveHistoryVersion === 'number') ? d.driveHistoryVersion : 0;
+  const recs = (d && Array.isArray(d.driveHistory))
+    ? d.driveHistory.filter(r => r && (+r.mileage) > 0) : [];
+
+  list.innerHTML = '';
+  if (countEl) countEl.textContent = recs.length > 0 ? String(recs.length) : '';
+
+  if (recs.length === 0) {
+    if (noMsg) { noMsg.style.display = ''; list.appendChild(noMsg); }
+    return;
+  }
+
+  const su = state.useMph ? 'mph' : 'km/h';
+  const du = distUnit();
+  // Data arrives oldest->newest; show newest first to match the GPS list.
+  recs.slice().reverse().forEach((r, idx) => {
+    // mileage: v1 is deci-km, v0 is raw km. Speeds are deci-km/h (as 0x92 avg/max).
+    const km = (ver === 1) ? (+r.mileage) / 10 : (+r.mileage);
+    const dist = convDist(km).toFixed(2);
+    const dur = fmtDriveHistoryMin(+r.duration);
+    const mx = convSpeed((+r.maxSpeed) / 10);
+    const av = convSpeed((+r.avgSpeed) / 10);
+
+    const el = document.createElement('div');
+    el.className = 'route-item';
+    const info = document.createElement('div');
+    info.className = 'route-info';
+    info.innerHTML =
+      `<div class="route-date">${tf('drivehistory.item.title', { n: recs.length - idx })}</div>` +
+      `<div class="route-stats">${tf('drivehistory.item.stats', { dist: dist, du: du, dur: dur, max: mx, avg: av, su: su })}</div>`;
+    el.appendChild(info);
+    list.appendChild(el);
+  });
 }
 
 /* ── Show route on our offline map ────────────────────────── */

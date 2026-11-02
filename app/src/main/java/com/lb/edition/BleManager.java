@@ -836,6 +836,7 @@ final class BleManager {
         enqueueWrite(CommandBuilder.read(0x72));   // battery telemetry
         enqueueWrite(CommandBuilder.read(0x79));   // battery extra (temp/current state + EU lifetime)
         enqueueWrite(CommandBuilder.read(0x73));   // firmware versions
+        enqueueWrite(CommandBuilder.read(0x76));   // on-board drive history (trip records)
     }
 
     // ── Firmware flash (XMODEM-128 DFU) ──

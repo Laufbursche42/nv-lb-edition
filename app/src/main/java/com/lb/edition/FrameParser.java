@@ -6,6 +6,7 @@ package com.lb.edition;
 
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -39,6 +40,9 @@ final class FrameParser {
     // realtime-only fields (0x90/0x91/0x92 push): charging + trip context, not in the 0x70/0x72 reads
     private Integer chargingState, batteryStatus, drivingStatus, tripMile, tripDuration, tripMax, tripAvg;
     private String fwMeter = "", fwBldc = "", fwBms = "", fwScreen = "", fwUwb = "";
+    // On-board drive history (0x76): raw per-trip records + report version (mileage ÷10 when version==1).
+    private JSONArray driveHistory;
+    private Integer driveHistoryVersion;
 
     // reassembly buffer
     private final byte[] rx = new byte[1024];
@@ -97,7 +101,7 @@ final class FrameParser {
         int dataStart = 6, dataLen = Math.max(0, len - 1);
         if (dataStart + dataLen > f.length - 3) dataLen = Math.max(0, f.length - 3 - dataStart);
         byte[] p = Arrays.copyOfRange(f, dataStart, dataStart + dataLen);
-        if (err != 0 && (cmd == 0x70 || cmd == 0x72 || cmd == 0x73 || cmd == 0x74 || cmd == 0x79)) {
+        if (err != 0 && (cmd == 0x70 || cmd == 0x72 || cmd == 0x73 || cmd == 0x74 || cmd == 0x76 || cmd == 0x79)) {
             Log.w(TAG, "cmd 0x" + Integer.toHexString(cmd) + " err " + err);
             return;
         }
@@ -107,6 +111,7 @@ final class FrameParser {
             case 0x79: decode79(p); break;
             case 0x73: decodeFirmware(p); break;
             case 0x74: decodeSN(p); break;
+            case 0x76: decodeDriveHistory(p); break;
             case 0x90: case 0x91: case 0x92: decodeRealtime(cmd, p); break;
             default: break;
         }
@@ -204,6 +209,32 @@ final class FrameParser {
         configRaw = cr.toString();
     }
 
+    // 0x76 on-board drive history (BleHandler case 118 -> o()): payload = 8-byte records, each four
+    // little-endian u16 at off 0/2/4/6 = duration, mileage, avgSpeed, maxSpeed. Records with mileage==0
+    // are dropped (1:1 with o()'s `if (iP2 > 0)`). version = 0 when len%8==0, else the trailing marker byte.
+    private void decodeDriveHistory(byte[] p) {
+        int len = p.length;
+        int n = (len % 8 == 0) ? len / 8 : len / 8 + 1;
+        JSONArray arr = new JSONArray();
+        try {
+            for (int i = 0; i < n; i++) {
+                int off = i * 8;
+                Integer dur = rd(p, off, 2, false), mil = rd(p, off + 2, 2, false);
+                Integer avg = rd(p, off + 4, 2, false), max = rd(p, off + 6, 2, false);
+                if (mil != null && mil > 0) {
+                    JSONObject r = new JSONObject();
+                    r.put("duration", (int) dur);
+                    r.put("mileage", (int) mil);
+                    r.put("avgSpeed", avg == null ? 0 : (int) avg);
+                    r.put("maxSpeed", max == null ? 0 : (int) max);
+                    arr.put(r);
+                }
+            }
+        } catch (Throwable ignored) {}
+        driveHistory = arr;
+        driveHistoryVersion = (len % 8 == 0) ? 0 : (p[len - 1] & 0xFF);
+    }
+
     // Realtime push frames (0x90/0x91/0x92), all fields little-endian.
     private void decodeRealtime(int cmd, byte[] p) {
         if (cmd == 0x90) {                                   // homepage report
@@ -275,6 +306,9 @@ final class FrameParser {
             put(o, "tripDuration", tripDuration); put(o, "tripMax", tripMax); put(o, "tripAvg", tripAvg);
             o.put("fwMeter", fwMeter); o.put("fwBldc", fwBldc); o.put("fwBms", fwBms);
             o.put("fwScreen", fwScreen); o.put("fwUwb", fwUwb);
+            // On-board drive history (0x76): raw records; mileage is km (version 0) / deci-km ÷10 (version 1).
+            if (driveHistory != null) o.put("driveHistory", driveHistory);
+            put(o, "driveHistoryVersion", driveHistoryVersion);
             o.put("rssi", rssi); o.put("btName", btName == null ? "" : btName);
             // Freshness stamp used by the dashboard's isFresh(ts).
             o.put("ts", System.currentTimeMillis());
