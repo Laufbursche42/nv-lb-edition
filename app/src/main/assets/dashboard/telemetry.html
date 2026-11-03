@@ -3408,16 +3408,18 @@ function applyModelPanels(modelName) {
       steps.forEach(k => xs.appendChild(new Option(k + ' km/h', String(k))));
       xs.value = Array.prototype.some.call(xs.options, o => o.value === cur) ? cur : String(steps[steps.length - 1]);
     }
-    // Locked (legal) speed: configurable on XT5 (the 0x6E path commands any value); default 22. Some EU
-    // regions allow 25. Other families keep the fixed 22 lock.
-    const isXT = naveeIsXT(modelName);
+    // Locked (legal) drop-to speed, selectable per family (0x6E commands the value). ST3/GT3 meter floors
+    // the cell below 25 to 22 (offers 22/25); GT5/ST5 forward it unclamped (20/22/25, controller
+    // HW-unconfirmed); XT5 offers 15-25. Default 22. Shown when the family has more than one lock value.
+    const caps = modelName ? naveeDrosselCaps(modelName) : null;
+    const lockOpts = (steps && caps && caps.lock && caps.lock.length > 1) ? caps.lock : null;
     const lr = document.getElementById('xt5lock-row'); const xl = document.getElementById('ss-xt5lock');
-    if (lr) lr.style.display = (steps && isXT) ? '' : 'none';
-    if (steps && isXT && xl) {
+    if (lr) lr.style.display = lockOpts ? '' : 'none';
+    if (lockOpts && xl) {
       let lk = ''; try { lk = storage.get('lb_xt5lock') || ''; } catch (e) {}
       xl.innerHTML = '';
-      ['15', '18', '20', '22', '25'].forEach(k => xl.appendChild(new Option(k + ' km/h' + (k === '22' ? ' (Standard)' : ''), k)));
-      xl.value = ['15', '18', '20', '22', '25'].indexOf(lk) >= 0 ? lk : '22';
+      lockOpts.forEach(k => xl.appendChild(new Option(k + ' km/h' + (k === 22 ? ' (Standard)' : ''), String(k))));
+      xl.value = lockOpts.map(String).indexOf(lk) >= 0 ? lk : '22';
     }
     // Permanent-controller models (ST3/GT3/GT5): the live toggle needs a STOCK controller - the permanent
     // controller patch overrides it. Make that clear instead of a dead-feeling switch.
@@ -3425,15 +3427,20 @@ function applyModelPanels(modelName) {
     if (ph) ph.style.display = (steps && PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) ? '' : 'none';
   }
 }
-// Live-speed steps per patched-meter family (byte10 / 0x6E sub1 selector). Null = no live selector.
-function naveeLiveSpeedSteps(name) {
+// Unified switchable-drossel capability per patched-meter family (byte10 / 0x6E sub1 selector). All BLE,
+// no flash. open = triple-tap target steps; lock = selectable legal drop-to values. Null = no live selector.
+// Verified at the meter code: ST3/GT3 hard-floor the cell <25 -> 22 (lock 22/25 only); GT5/ST5 forward the
+// cell unclamped (lock 20/22/25, controller honoring HW-unconfirmed); XT5 lock 15-25. Finer open steps
+// (25/27/35) are UI-only on ST3/GT3/GT5/ST5 and not yet HW-tested. 50 is patcher-only on XT5.
+function naveeDrosselCaps(name) {
   if (!name) return null;
-  if (naveeIsXT(name)) return [22, 25, 27, 30, 35, 40, 45]; // XT5 Pro/Max/Ultra: live (no-flash) ceiling ~45 (0x1c7 = 45.5; no field weakening in motoring above 45), 50 is patcher-only
-  if (/^(ST3|GT3)/.test(name)) return [22, 30, 40]; // ST3/GT3 family (follow-cell [22..40])
-  if (/^GT5/.test(name)) return [22, 30, 40];       // GT5 Pro/Max
-  if (/^ST5/.test(name)) return [22, 30, 40];       // ST5 Pro/Max (T2314 meter, follow-cell [22..40]; controller unconfirmed)
+  if (naveeIsXT(name)) return { open: [22, 25, 27, 30, 35, 40, 45], lock: [15, 18, 20, 22, 25] };
+  if (/^(ST3|GT3)/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [22, 25] };
+  if (/^GT5/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
+  if (/^ST5/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
   return null;
 }
+function naveeLiveSpeedSteps(name) { const c = naveeDrosselCaps(name); return c ? c.open : null; }
 
 
 function pick(d, keys) {
@@ -4261,10 +4268,12 @@ function isXT5ProMaxAntiTune() {
     return fw.charCodeAt(0) === 51 && fw.charCodeAt(1) === 13;
   } catch (e) { return false; }
 }
-// XT5 locked (legal) speed, configurable via lb_xt5lock (15-25, default 22); other families use fixed 22.
+// Locked (legal) drop-to speed, configurable via lb_xt5lock and clamped to the connected model's lock set
+// (XT5 15-25, GT5/ST5 20/22/25, ST3/GT3 22/25); default 22. Models with no drossel caps use fixed 22.
 function naveeXtLock() {
-  if (!naveeIsXT(naveeRealModel())) return 22;
-  try { const v = parseInt(storage.get('lb_xt5lock') || '', 10); return (v >= 10 && v <= 30) ? v : 22; } catch (e) { return 22; }
+  const c = naveeDrosselCaps(naveeRealModel());
+  if (!c || !c.lock) return 22;
+  try { const v = parseInt(storage.get('lb_xt5lock') || '', 10); return c.lock.indexOf(v) >= 0 ? v : 22; } catch (e) { return 22; }
 }
 function speedReleaseGear(on) {
   // XT5 family (incl. the T2443 XT5 Ultra) unlocks on gear 4 and restricts on gear 3; the others use 5/2.

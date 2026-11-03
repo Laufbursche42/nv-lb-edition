@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Live speed menu unified across models.</b> The Bluetooth live-speed selector now offers finer open steps on ST3/GT3/GT5/ST5 (22, 25, 27, 30, 35, 40) and a per-model locked-speed choice: XT5 15-25, GT5/ST5 20/22/25, ST3/GT3 22/25 (their meter floors anything below 25 to 22, so no lower value is offered). Experimental.",
       "<b>Beep silences for GT5 and ST5 too.</b> GT5 Pro/Max and ST5 Pro/Max patched meters can now silence individual tones (over-speed warning, connect, startup/status melody, fault; ST5 also the find-me alarm), each on its own - the confirmation beep stays. Experimental, flashes the meter.",
       "<b>More scooter settings shown.</b> The all-values list now also shows energy recovery (regen), night mode, tyre-pressure monitor, volume, slope assist, long range, proximity key, turn-signal sound and scheduled charging, read live from your Navee (read-only).",
       "<b>Scooter ride log + trip stats.</b> The app can now read the rides your Navee stores on board (distance, time, top and average speed) and shows them on the Routes page, and your last ride\u0027s time / top / average speed are available as dashboard tiles.",
@@ -1016,6 +1017,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Live-Geschwindigkeitsmen\u00fc vereinheitlicht.</b> Der Bluetooth-Live-Umschalter bietet jetzt feinere offene Stufen auf ST3/GT3/GT5/ST5 (22, 25, 27, 30, 35, 40) und eine modellabh\u00e4ngige Wahl der gesperrten Geschwindigkeit: XT5 15-25, GT5/ST5 20/22/25, ST3/GT3 22/25 (deren Tacho floort alles unter 25 auf 22, daher kein niedrigerer Wert). Experimentell.",
       "<b>Ton-Abschaltung jetzt auch f\u00fcr GT5 und ST5.</b> Gepatchte GT5 Pro/Max und ST5 Pro/Max Tachos k\u00f6nnen jetzt einzelne T\u00f6ne stummschalten (Warnton Tempo, Verbindungston, Start-/Status-Melodie, Fehlerton; ST5 zus\u00e4tzlich den Find-me-Alarm), jeweils einzeln - der Best\u00e4tigungston bleibt. Experimentell, flasht den Tacho.",
       "<b>Mehr Roller-Einstellungen sichtbar.</b> Die Alle-Werte-Liste zeigt jetzt auch Rekuperation, Nachtmodus, Reifendruck-\u00dcberwachung, Lautst\u00e4rke, Steighilfe, Long-Range, Proximity-Key, Blinkerton und geplantes Laden - live vom Navee gelesen (nur Anzeige).",
       "<b>Roller-Fahrtenbuch + Fahrt-Statistik.</b> Die App liest jetzt die im Roller gespeicherten Fahrten (Strecke, Zeit, Max- und \u00d8-Tempo) und zeigt sie auf der Routen-Seite, und Zeit / Max / \u00d8-Tempo deiner letzten Fahrt gibt es als Dashboard-Kacheln.",
