@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Beep silences for GT5 and ST5 too.</b> GT5 Pro/Max and ST5 Pro/Max patched meters can now silence individual tones (over-speed warning, connect, startup/status melody, fault; ST5 also the find-me alarm), each on its own - the confirmation beep stays. Experimental, flashes the meter.",
       "<b>More scooter settings shown.</b> The all-values list now also shows energy recovery (regen), night mode, tyre-pressure monitor, volume, slope assist, long range, proximity key, turn-signal sound and scheduled charging, read live from your Navee (read-only).",
       "<b>Scooter ride log + trip stats.</b> The app can now read the rides your Navee stores on board (distance, time, top and average speed) and shows them on the Routes page, and your last ride\u0027s time / top / average speed are available as dashboard tiles.",
       "<b>ST3/GT3: silence individual beeps.</b> On a patched ST3/GT3 family meter (ST3, ST3 Pro, GT3, GT3 Pro, GT3 Max) you can now turn off single tones in the firmware patcher - the over-speed warning (the continuous beep from about 30 km/h), the connect beep, the startup melody, the alarm / find-me tone and the fault tone, each on its own. The button / confirmation beep always stays. Experimental: it flashes the meter, so the red untested warning applies.",
@@ -1015,6 +1016,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Ton-Abschaltung jetzt auch f\u00fcr GT5 und ST5.</b> Gepatchte GT5 Pro/Max und ST5 Pro/Max Tachos k\u00f6nnen jetzt einzelne T\u00f6ne stummschalten (Warnton Tempo, Verbindungston, Start-/Status-Melodie, Fehlerton; ST5 zus\u00e4tzlich den Find-me-Alarm), jeweils einzeln - der Best\u00e4tigungston bleibt. Experimentell, flasht den Tacho.",
       "<b>Mehr Roller-Einstellungen sichtbar.</b> Die Alle-Werte-Liste zeigt jetzt auch Rekuperation, Nachtmodus, Reifendruck-\u00dcberwachung, Lautst\u00e4rke, Steighilfe, Long-Range, Proximity-Key, Blinkerton und geplantes Laden - live vom Navee gelesen (nur Anzeige).",
       "<b>Roller-Fahrtenbuch + Fahrt-Statistik.</b> Die App liest jetzt die im Roller gespeicherten Fahrten (Strecke, Zeit, Max- und \u00d8-Tempo) und zeigt sie auf der Routen-Seite, und Zeit / Max / \u00d8-Tempo deiner letzten Fahrt gibt es als Dashboard-Kacheln.",
       "<b>ST3/GT3: einzelne Pieptöne abschalten.</b> Auf einem gepatchten Tacho der ST3/GT3-Familie (ST3, ST3 Pro, GT3, GT3 Pro, GT3 Max) kannst du jetzt im Firmware-Patcher einzelne Töne abschalten - den Warnton (den Dauerpiepton ab etwa 30 km/h), den Verbindungston, die Startmelodie, den Alarm-/Find-me-Ton und den Fehlerton, jeweils einzeln. Der Bestätigungston bleibt immer an. Experimentell: es flasht den Tacho, daher die rote Ungetestet-Warnung.",

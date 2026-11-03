@@ -265,6 +265,19 @@ const IMAGES = {
     patches: [
       { off: 0x12c22, from: [0xe7, 0x76], to: [0x00, 0xbf], id: 'speedsel' },        // NOP DE zero-store of config+0x1b
       { off: 0x14126, from: [0x31], to: [0x35], id: 'version-marker' },              // fwMeter "1004" -> "5004"
+      // Per-tone beep silences (bl -> nop; this meter's buzzer is a GPIO with no dur<2 guard, so the
+      // ST3/GT3 duration trick does not apply - NOP the call). Control flow + state stores stay intact.
+      // The BLE-ACK and physical-button confirm beeps are left on.
+      { off: 0x14d32, from: [0xff, 0xf7, 0x5c, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed-nag' }, // continuous >~30 km/h nag (sport-exempt)
+      { off: 0x14f14, from: [0xff, 0xf7, 0x5a, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-connect-a' },     // BLE connect/disconnect edge
+      { off: 0x150ec, from: [0xff, 0xf7, 0x6e, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-connect-b' },
+      { off: 0x14fba, from: [0xff, 0xf7, 0x07, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-a' },      // status / fault-code announce melody
+      { off: 0x15032, from: [0xff, 0xf7, 0xcb, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-b' },
+      { off: 0x15074, from: [0xff, 0xf7, 0xaa, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-c' },
+      { off: 0x15762, from: [0xff, 0xf7, 0x42, 0xfa], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-a' },       // low-speed periodic warning + status long-beep
+      { off: 0x157e2, from: [0xff, 0xf7, 0x02, 0xfa], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-b' },
+      { off: 0x158a0, from: [0xff, 0xf7, 0xa3, 0xf9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-c' },
+      { off: 0x150ce, from: [0xff, 0xf7, 0x7d, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-d' },
     ],
   },
 
@@ -1974,6 +1987,22 @@ patches: [
       { off: 0x12e4e, from: [0xee, 0x72], to: [0x00, 0xbf], id: 'speedsel' },        // NOP frame-builder DE zero-store of byte10
       { off: 0x13e1e, from: [0x47, 0xd0], to: [0x00, 0xbf], id: 'speedsel-setter' }, // NOP setter region-skip (allow 0x6E write in DE)
       { off: 0x1938c, from: [0x30], to: [0x35], id: 'version-marker' },              // fwMeter "0024" -> "5024"
+      // Per-tone beep silences (bl -> nop; T2314 buzzer setter has no dur<2 guard). BLE-cmd + state-change
+      // confirm beeps (0x13d3c/0x13d4e/0x151dc/0x1c3a6) are left on. Fault-B site 0x158f6 is deliberately
+      // EXCLUDED: its bl is followed by a bl with no register setup, so a bare NOP would leave stale regs.
+      { off: 0x15212, from: [0xff, 0xf7, 0x58, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' },       // >~30 km/h, region-gated
+      { off: 0x15200, from: [0xff, 0xf7, 0x86, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' },          // status / fault-code announce
+      { off: 0x1519a, from: [0xff, 0xf7, 0x85, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-findmy-on' }, // find-my / anti-theft cluster
+      { off: 0x151ac, from: [0xff, 0xf7, 0x7c, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-findmy-off' },
+      { off: 0x16078, from: [0xfe, 0xf7, 0xd4, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-engage' },
+      { off: 0x16228, from: [0xfe, 0xf7, 0xfc, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-lock1' },
+      { off: 0x162e0, from: [0xfe, 0xf7, 0xa0, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-lock2' },
+      { off: 0x16386, from: [0xfe, 0xf7, 0x4d, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-speedlock' },
+      { off: 0x163d8, from: [0xfe, 0xf7, 0x24, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-state' },
+      { off: 0x15230, from: [0xff, 0xf7, 0xf8, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-connect' },         // connect / ready chime
+      { off: 0x1528a, from: [0xff, 0xf7, 0xcb, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault' },           // fault / warning
+      { off: 0x1587a, from: [0xff, 0xf7, 0xd3, 0xfb], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-b' },
+      { off: 0x159b2, from: [0xff, 0xf7, 0x37, 0xfb], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-c' },
     ],
   },
 
@@ -2581,6 +2610,8 @@ function featureOf(id) {
   if (id.indexOf('beep-overspeed') === 0) return 'beep-overspeed'; // multi-site tones fold to one feature
   if (id.indexOf('beep-alarm') === 0) return 'beep-alarm';
   if (id.indexOf('beep-melody') === 0) return 'beep-melody';
+  if (id.indexOf('beep-connect') === 0) return 'beep-connect';
+  if (id.indexOf('beep-fault') === 0) return 'beep-fault';
   if (id.indexOf('beep-') === 0) return id; // beep-silence legacy or any other single beep patch
   if (id.indexOf('speedsel') === 0) return 'drossel'; // meter region-gate -> switchable BT drossel (separate from controller 'speed')
   if (id.indexOf('version-marker') === 0) return 'marker';
