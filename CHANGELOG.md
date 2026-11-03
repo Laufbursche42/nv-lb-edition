@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.99
+
+- Carbon and Lambo updated to theme version 5.2, and the Theme Manager now reliably shows each theme's real version - imported and re-seeded themes no longer lose it (it could appear as "1.0").
+
 ## 1.0.98
 - Fixed: in 1.0.97 the firmware patcher could not download the firmware ("download of meter failed") - a security tightening restricted downloads to GitHub hosts, which also blocked the firmware files (they come from the NAVEE firmware server). Fixed; the app-update source stays GitHub-only.
 - The quick-control buttons now use a smaller default font and their size is adjustable (Settings -> Display -> Font sizes, and per theme in the Theme Manager), so long German labels no longer overflow.

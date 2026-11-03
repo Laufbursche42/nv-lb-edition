@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Correct theme version.</b> Carbon and Lambo are now version 5.2, and the Theme Manager shows each theme's real version (imported or re-seeded themes could show 1.0 before).",
       "<b>Eight quick buttons on Carbon &amp; Lambo.</b> The gauge themes now show the full eight quick buttons; one was being hidden, so only seven appeared.",
       "<b>Pick your speedometer scale.</b> The gauge themes now have evenly-spaced, easy-to-read marks and the needle sits exactly on the number. Choose Klar, Fine or Round in the Theme Manager - the eKFV speeds 20, 22 and 25 are now clearly apart.",
       "<b>Brighter dark-mode text by default.</b> The dark theme's text brightness now starts at full (100) instead of 90; you can still dial it down under the theme's Dark colours.",
@@ -1033,6 +1034,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Korrekte Theme-Version.</b> Carbon und Lambo sind jetzt Version 5.2, und der Theme-Manager zeigt die echte Version jedes Themes (importierte oder neu eingespielte Themes konnten vorher 1.0 anzeigen).",
       "<b>Acht Schnell-Buttons bei Carbon &amp; Lambo.</b> Die Gauge-Themes zeigen jetzt alle acht Schnell-Buttons; einer wurde ausgeblendet, sodass nur sieben erschienen.",
       "<b>Wähle deine Tacho-Skala.</b> Die Gauge-Themes haben jetzt gleichmäßig verteilte, gut lesbare Marken, und der Zeiger steht exakt auf der Zahl. Im Theme-Manager wählst du Klar, Fein oder Rund - die eKFV-Tempi 20, 22 und 25 sind jetzt klar getrennt.",
       "<b>Hellere Schrift im Dunkelmodus (Standard).</b> Die Text-Helligkeit des dunklen Themes startet jetzt bei voll (100) statt 90; herunterregeln kannst du sie weiterhin unter den Dunkel-Farben des Themes.",
