@@ -23,6 +23,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 - Carbon & Lambo now show all eight quick buttons on the gauge (one was being hidden, so only seven appeared).
 - Speed gauge: the unlocked scale now ends at 100 km/h (it briefly read 110); the locked scale stays at 40, so the gauge reads identically in every Laufbursche app.
 - Dark-mode text brightness now defaults to full (100) instead of 90.
+- The app is now named "NV Laufbursche Edition" on the home screen, so the Laufbursche apps for the different scooter makes are easy to tell apart.
 
 ## 1.0.97
 - NT5 Max controller: the target-speed picker in the firmware patcher now goes up to 60 km/h (it was capped at 40). This build has no sub-50 governor, so the higher settings take; 22 stays the locked step. The change is in place with no firmware size change. Experimental and not yet confirmed by us on hardware.
