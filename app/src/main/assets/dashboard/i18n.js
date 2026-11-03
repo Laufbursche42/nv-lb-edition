@@ -6,7 +6,7 @@ window.I18N = {
   en: {
     'whatsnew.points': [
       "<b>Eight quick buttons on Carbon &amp; Lambo.</b> The gauge themes now show the full eight quick buttons; one was being hidden, so only seven appeared.",
-      "<b>Speed gauge ends at 100.</b> On the unlocked scale the gauge now tops out at 100 km/h (it had briefly read 110); the locked scale still reads to 40, so the dial behaves the same in every Laufbursche app.",
+      "<b>Pick your speedometer scale.</b> The gauge themes now have evenly-spaced, easy-to-read marks and the needle sits exactly on the number. Choose Klar, Fine or Round in the Theme Manager - the eKFV speeds 20, 22 and 25 are now clearly apart.",
       "<b>Brighter dark-mode text by default.</b> The dark theme's text brightness now starts at full (100) instead of 90; you can still dial it down under the theme's Dark colours.",
       "<b>Fixed: firmware patcher download.</b> 1.0.97 accidentally blocked the patcher from downloading the firmware; it works again.",
       "<b>Quick buttons fit long labels.</b> The quick-control buttons use a smaller default font and their size is now adjustable, so long German labels no longer overflow - set it under Settings → Display → Font sizes (and per theme in the Theme Manager).",
@@ -837,6 +837,11 @@ window.I18N = {
     "theme.guide.totop.aria": "Back to top",
     "theme.import.action": "&#8681; Import theme (.zip)",
     "theme.import.hint": "Pick a single .zip file - one zip = one theme.",
+    "theme.gauge.scale.label": "Speedometer scale",
+    "theme.gauge.scale.hint": "Marks on the gauge themes (Carbon, Lambo)",
+    "theme.gauge.scale.klar": "Klar",
+    "theme.gauge.scale.fein": "Fine",
+    "theme.gauge.scale.rund": "Round",
     "theme.list.label": "Themes",
     "theme.page.hint": "Import a .zip bundle to customise the dashboard layout. The zip must contain theme.html and theme.css.",
     "theme.page.title": "Theme manager",
@@ -1025,7 +1030,7 @@ window.I18N = {
   de: {
     'whatsnew.points': [
       "<b>Acht Schnell-Buttons bei Carbon &amp; Lambo.</b> Die Gauge-Themes zeigen jetzt alle acht Schnell-Buttons; einer wurde ausgeblendet, sodass nur sieben erschienen.",
-      "<b>Tacho endet bei 100.</b> Auf der entsperrten Skala reicht der Tacho jetzt bis 100 km/h (er zeigte kurzzeitig 110); die gesperrte Skala geht weiterhin bis 40, sodass sich der Tacho in jeder Laufbursche-App gleich verh\u00e4lt.",
+      "<b>Wähle deine Tacho-Skala.</b> Die Gauge-Themes haben jetzt gleichmäßig verteilte, gut lesbare Marken, und der Zeiger steht exakt auf der Zahl. Im Theme-Manager wählst du Klar, Fein oder Rund - die eKFV-Tempi 20, 22 und 25 sind jetzt klar getrennt.",
       "<b>Hellere Schrift im Dunkelmodus (Standard).</b> Die Text-Helligkeit des dunklen Themes startet jetzt bei voll (100) statt 90; herunterregeln kannst du sie weiterhin unter den Dunkel-Farben des Themes.",
       "<b>Behoben: Firmware-Patcher-Download.</b> 1.0.97 hat den Patcher versehentlich am Herunterladen der Firmware gehindert; das l\u00e4uft wieder.",
       "<b>Schnell-Buttons fassen lange Beschriftungen.</b> Die Schnell-Buttons nutzen jetzt eine kleinere Standard-Schrift und ihre Gr\u00f6\u00dfe ist einstellbar, damit lange deutsche Beschriftungen nicht mehr \u00fcberlaufen - einstellbar unter Einstellungen \u2192 Anzeige \u2192 Schriftgr\u00f6\u00dfen (und pro Theme im Theme-Manager).",
@@ -1856,6 +1861,11 @@ window.I18N = {
     "theme.guide.totop.aria": "Zum Seitenanfang",
     "theme.import.action": "&#8681; Theme importieren (.zip)",
     "theme.import.hint": "Eine einzige .zip-Datei wählen - eine ZIP = ein Theme.",
+    "theme.gauge.scale.label": "Tacho-Skala",
+    "theme.gauge.scale.hint": "Skaleneinteilung der Gauge-Themes (Carbon, Lambo)",
+    "theme.gauge.scale.klar": "Klar",
+    "theme.gauge.scale.fein": "Fein",
+    "theme.gauge.scale.rund": "Rund",
     "theme.list.label": "Themes",
     "theme.page.hint": "Ein .zip-Bundle importieren, um das Dashboard-Layout anzupassen. Die ZIP muss theme.html und theme.css enthalten.",
     "theme.page.title": "Theme-Manager",
