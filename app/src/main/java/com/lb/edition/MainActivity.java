@@ -569,6 +569,20 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Firmware (.bin) downloads come from the NAVEE firmware S3 bucket the bundled manifest
+     *  (fw_manifest.js) points to. httpGetBytes serves both the GitHub release check and these
+     *  firmware URLs, so allow that host too - the APK-update source stays GitHub-only. */
+    private static boolean isTrustedFirmwareHost(String url) {
+        try {
+            java.net.URL u = new java.net.URL(url);
+            if (!"https".equalsIgnoreCase(u.getProtocol())) return false;
+            String h = u.getHost() == null ? "" : u.getHost().toLowerCase(java.util.Locale.ROOT);
+            return h.equals("myusnavee.s3.amazonaws.com");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     private String installedVersionName() {
         try {
             return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
@@ -600,9 +614,9 @@ public class MainActivity extends Activity {
         return new String(httpGetBytes(url), StandardCharsets.UTF_8);
     }
 
-    /** Simple HTTP(S) GET into memory, used for the small GitHub release JSON. */
+    /** Simple HTTP(S) GET into memory, used for the GitHub release JSON and the NAVEE firmware .bin downloads. */
     private byte[] httpGetBytes(String urlStr) throws Exception {
-        if (!isTrustedGithubHttps(urlStr)) throw new java.io.IOException("untrusted URL host: not a GitHub HTTPS URL");
+        if (!isTrustedGithubHttps(urlStr) && !isTrustedFirmwareHost(urlStr)) throw new java.io.IOException("untrusted URL host: not a GitHub or NAVEE firmware HTTPS URL");
         java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(urlStr).openConnection();
         try {
             c.setRequestProperty("User-Agent", "lb-edition");
