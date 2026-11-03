@@ -101,6 +101,7 @@ Everything below is implemented and shipping in the app.
 - **Quick toggles** right below the tiles - zero-start, cruise control, traction control and the immobilizer. They are written to the scooter immediately, are greyed out while disconnected and colour in when the scooter reports the function as active, so you can see an accepted command at a glance.
 - **Vehicle and battery grid** - remaining range, the max-speed parameter, pack voltage, battery temperature, battery SOH, charge cycles, total and trip distance, Bluetooth signal strength and the scooter's fault code.
 - **Current ride (GPS)** - distance, time, average speed, altitude, climb and descent, GPS fix quality and the number of recorded points.
+- **Gauge themes (Carbon, Lambo).** Two speedometer-dial themes ship built in; their scale is selectable - **Klar**, **Fine** or **Round** - in the Theme manager, with evenly-spaced marks and the needle pointing exactly at the number.
 
 ### "All values" telemetry (scroll down on the main screen)
 
