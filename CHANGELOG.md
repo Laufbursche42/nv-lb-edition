@@ -24,6 +24,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 - Speedometer scale presets. The gauge themes (Carbon, Lambo) now use evenly-spaced, readable marks with the needle pointing exactly at the number; pick the scale - Klar, Fine or Round - in the Theme Manager. Klar marks 0, 10, 15, 20, 22, 25, 30, 40 locked and up to 100 open; the locked scale still tops out at 40.
 - Dark-mode text brightness now defaults to full (100) instead of 90.
 - The app is now named "NV Laufbursche Edition" on the home screen, so the Laufbursche apps for the different scooter makes are easy to tell apart.
+- Language selector: unified with the other Laufbursche apps - the active language (EN/DE) is highlighted (filled) with a checkmark, so it is clear which one is on.
 
 ## 1.0.97
 - NT5 Max controller: the target-speed picker in the firmware patcher now goes up to 60 km/h (it was capped at 40). This build has no sub-50 governor, so the higher settings take; 22 stays the locked step. The change is in place with no firmware size change. Experimental and not yet confirmed by us on hardware.
