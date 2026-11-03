@@ -3423,8 +3423,10 @@ function applyModelPanels(modelName) {
     }
     // Permanent-controller models (ST3/GT3/GT5): the live toggle needs a STOCK controller - the permanent
     // controller patch overrides it. Make that clear instead of a dead-feeling switch.
+    // Show the override warning only when the controller ACTUALLY carries the permanent speed patch
+    // (fwBldc leading '5'); with a stock controller the meter drossel toggle works, so no warning.
     const ph = document.getElementById('xt5speed-permctrl-hint');
-    if (ph) ph.style.display = (steps && PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0) ? '' : 'none';
+    if (ph) ph.style.display = (steps && PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0 && naveeCtrlPatched()) ? '' : 'none';
   }
 }
 // Unified switchable-drossel capability per patched-meter family (byte10 / 0x6E sub1 selector). All BLE,
@@ -3981,6 +3983,9 @@ function naveeSkuOf(region) {
 // region. Stock NAVEE meters never report these marker versions.
 const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '5046', '5004', '5024'];
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
+// A permanently speed-patched NAVEE controller reports fwBldc with a leading '5' (the patch flips the
+// marker's first digit 0/3 -> 5). On a permanent-cap model that overrides the meter drossel toggle.
+function naveeCtrlPatched() { return (liveRaw().fwBldc || '').trim().charAt(0) === '5'; }
 // Stock meters re-clamp the launch level to a minimum of 3 outside the USA SKU (meter-side, the periodic
 // drive-state builder forces any sub-3 value back to 3). No model is exempt by pid: levels 0-2 become
 // available only on the USA SKU or on a meter carrying the kickstart marker (see NAVEE_METER_PATCHED_FW).
