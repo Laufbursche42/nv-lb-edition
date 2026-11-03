@@ -16,6 +16,14 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.98
+- Fixed: in 1.0.97 the firmware patcher could not download the firmware ("download of meter failed") - a security tightening restricted downloads to GitHub hosts, which also blocked the firmware files (they come from the NAVEE firmware server). Fixed; the app-update source stays GitHub-only.
+- The quick-control buttons now use a smaller default font and their size is adjustable (Settings -> Display -> Font sizes, and per theme in the Theme Manager), so long German labels no longer overflow.
+- Shorter, clearer button labels: the immobilizer toggle is now simply "Lock" / "Schloss".
+- Carbon & Lambo now show all eight quick buttons on the gauge (one was being hidden, so only seven appeared).
+- Speed gauge: the unlocked scale now ends at 100 km/h (it briefly read 110); the locked scale stays at 40, so the gauge reads identically in every Laufbursche app.
+- Dark-mode text brightness now defaults to full (100) instead of 90.
+
 ## 1.0.97
 - NT5 Max controller: the target-speed picker in the firmware patcher now goes up to 60 km/h (it was capped at 40). This build has no sub-50 governor, so the higher settings take; 22 stays the locked step. The change is in place with no firmware size change. Experimental and not yet confirmed by us on hardware.
 - ST3/GT3 meters (ST3, ST3 Pro, GT3, GT3 Pro, GT3 Max): the firmware patcher can now silence individual tones - over-speed warning (the continuous beep from about 30 km/h), connect beep, startup melody, alarm / find-me and fault tone, each selectable on its own; the button / confirmation beep always stays. GT3 Max is included - its 2.0.4.6 display firmware is the shared ST3/GT3 image. In-place, no size change, single checksum reseal. Experimental: it flashes the meter, so the red untested warning applies. Also in the web patcher.

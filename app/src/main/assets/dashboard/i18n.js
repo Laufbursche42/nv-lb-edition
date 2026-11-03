@@ -5,6 +5,12 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Eight quick buttons on Carbon &amp; Lambo.</b> The gauge themes now show the full eight quick buttons; one was being hidden, so only seven appeared.",
+      "<b>Speed gauge ends at 100.</b> On the unlocked scale the gauge now tops out at 100 km/h (it had briefly read 110); the locked scale still reads to 40, so the dial behaves the same in every Laufbursche app.",
+      "<b>Brighter dark-mode text by default.</b> The dark theme's text brightness now starts at full (100) instead of 90; you can still dial it down under the theme's Dark colours.",
+      "<b>Fixed: firmware patcher download.</b> 1.0.97 accidentally blocked the patcher from downloading the firmware; it works again.",
+      "<b>Quick buttons fit long labels.</b> The quick-control buttons use a smaller default font and their size is now adjustable, so long German labels no longer overflow - set it under Settings → Display → Font sizes (and per theme in the Theme Manager).",
+      "<b>Clearer button labels.</b> The immobilizer toggle is now simply labelled 'Lock' / 'Schloss'.",
       "<b>Live speed menu unified across models.</b> The Bluetooth live-speed selector now offers finer open steps on ST3/GT3/GT5/ST5 (22, 25, 27, 30, 35, 40) and a per-model locked-speed choice: XT5 15-25, GT5/ST5 20/22/25, ST3/GT3 22/25 (their meter floors anything below 25 to 22, so no lower value is offered). Experimental.",
       "<b>Beep silences for GT5 and ST5 too.</b> GT5 Pro/Max and ST5 Pro/Max patched meters can now silence individual tones (over-speed warning, connect, startup/status melody, fault; ST5 also the find-me alarm), each on its own - the confirmation beep stays. Experimental, flashes the meter.",
       "<b>More scooter settings shown.</b> The all-values list now also shows energy recovery (regen), night mode, tyre-pressure monitor, volume, slope assist, long range, proximity key, turn-signal sound and scheduled charging, read live from your Navee (read-only).",
@@ -654,7 +660,7 @@ window.I18N = {
     "scooter.drivemode.sub": "Normal or turbo",
     "scooter.func.note": "The current state is read live from the scooter. Which functions your model supports depends on its firmware; a switch the firmware does not support stays without effect.",
     "dash.drive.quick.lock": "Lock",
-    "dash.drive.quick.lock.aria": "Toggle immobilizer",
+    "dash.drive.quick.lock.aria": "Toggle lock",
     "dash.grid.battery.temp": "Battery temp",
     "dash.grid.battery.cycles": "Cycles",
     "dash.grid.range": "Range",
@@ -872,6 +878,7 @@ window.I18N = {
     "style.var.sz-m3-bot": "Tile 3 unit",
     "style.var.sz-m3-mid": "Tile 3 value",
     "style.var.sz-m3-top": "Tile 3 title",
+    "style.var.sz-qbtn": "Quick buttons",
     "style.var.sz-speed-lbl": "Speed label",
     "style.var.sz-speed-val": "Speed value",
     "style.var.tile-alpha": "Tile transparency",
@@ -1017,6 +1024,12 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Acht Schnell-Buttons bei Carbon &amp; Lambo.</b> Die Gauge-Themes zeigen jetzt alle acht Schnell-Buttons; einer wurde ausgeblendet, sodass nur sieben erschienen.",
+      "<b>Tacho endet bei 100.</b> Auf der entsperrten Skala reicht der Tacho jetzt bis 100 km/h (er zeigte kurzzeitig 110); die gesperrte Skala geht weiterhin bis 40, sodass sich der Tacho in jeder Laufbursche-App gleich verh\u00e4lt.",
+      "<b>Hellere Schrift im Dunkelmodus (Standard).</b> Die Text-Helligkeit des dunklen Themes startet jetzt bei voll (100) statt 90; herunterregeln kannst du sie weiterhin unter den Dunkel-Farben des Themes.",
+      "<b>Behoben: Firmware-Patcher-Download.</b> 1.0.97 hat den Patcher versehentlich am Herunterladen der Firmware gehindert; das l\u00e4uft wieder.",
+      "<b>Schnell-Buttons fassen lange Beschriftungen.</b> Die Schnell-Buttons nutzen jetzt eine kleinere Standard-Schrift und ihre Gr\u00f6\u00dfe ist einstellbar, damit lange deutsche Beschriftungen nicht mehr \u00fcberlaufen - einstellbar unter Einstellungen \u2192 Anzeige \u2192 Schriftgr\u00f6\u00dfen (und pro Theme im Theme-Manager).",
+      "<b>Klarere Button-Beschriftungen.</b> Der Wegfahrsperre-Button hei\u00dft jetzt einfach 'Schloss'.",
       "<b>Live-Geschwindigkeitsmen\u00fc vereinheitlicht.</b> Der Bluetooth-Live-Umschalter bietet jetzt feinere offene Stufen auf ST3/GT3/GT5/ST5 (22, 25, 27, 30, 35, 40) und eine modellabh\u00e4ngige Wahl der gesperrten Geschwindigkeit: XT5 15-25, GT5/ST5 20/22/25, ST3/GT3 22/25 (deren Tacho floort alles unter 25 auf 22, daher kein niedrigerer Wert). Experimentell.",
       "<b>Ton-Abschaltung jetzt auch f\u00fcr GT5 und ST5.</b> Gepatchte GT5 Pro/Max und ST5 Pro/Max Tachos k\u00f6nnen jetzt einzelne T\u00f6ne stummschalten (Warnton Tempo, Verbindungston, Start-/Status-Melodie, Fehlerton; ST5 zus\u00e4tzlich den Find-me-Alarm), jeweils einzeln - der Best\u00e4tigungston bleibt. Experimentell, flasht den Tacho.",
       "<b>Mehr Roller-Einstellungen sichtbar.</b> Die Alle-Werte-Liste zeigt jetzt auch Rekuperation, Nachtmodus, Reifendruck-\u00dcberwachung, Lautst\u00e4rke, Steighilfe, Long-Range, Proximity-Key, Blinkerton und geplantes Laden - live vom Navee gelesen (nur Anzeige).",
@@ -1665,8 +1678,8 @@ window.I18N = {
     "scooter.drivemode.label": "Fahrmodus",
     "scooter.drivemode.sub": "Normal oder Turbo",
     "scooter.func.note": "Der aktuelle Zustand wird live vom Roller gelesen. Welche Funktionen dein Modell unterstützt, hängt von der Firmware ab; ein Schalter den die Firmware nicht kennt bleibt ohne Wirkung.",
-    "dash.drive.quick.lock": "Sperre",
-    "dash.drive.quick.lock.aria": "Wegfahrsperre umschalten",
+    "dash.drive.quick.lock": "Schloss",
+    "dash.drive.quick.lock.aria": "Schloss schalten",
     "dash.grid.battery.temp": "Batterietemperatur",
     "dash.grid.battery.cycles": "Zyklen",
     "dash.grid.range": "Reichweite",
@@ -1884,6 +1897,7 @@ window.I18N = {
     "style.var.sz-m3-bot": "Kachel3-Unit",
     "style.var.sz-m3-mid": "Kachel3-Wert",
     "style.var.sz-m3-top": "Kachel3-Titel",
+    "style.var.sz-qbtn": "Schnell-Buttons",
     "style.var.sz-speed-lbl": "Speed-Label",
     "style.var.sz-speed-val": "Speed-Wert",
     "style.var.tile-alpha": "Kachel-Transparenz",

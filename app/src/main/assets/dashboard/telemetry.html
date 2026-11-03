@@ -935,6 +935,10 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <div class="settings-row-left"><div class="settings-row-label" data-i18n="display.fonts.m3.bot">Tile row 3 - unit (bottom)</div></div>
         <input class="set-ctrl" id="dsp-font-m3-bot" type="number" min="10" max="40" step="1" inputmode="numeric">
       </div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="style.var.sz-qbtn">Quick buttons</div></div>
+        <input class="set-ctrl" id="dsp-font-qbtn" type="number" min="6" max="16" step="1" inputmode="numeric">
+      </div>
       <button type="button" id="btn-dsp-reset-fonts" class="settings-btn mt-10" data-i18n="display.fonts.reset">Reset font sizes</button>
     </div>
   </div>
@@ -1291,7 +1295,8 @@ const FONT_META = [
   { key: 'm2Bot', varName: '--sz-m2-bot', id: 'dsp-font-m2-bot', def: 12, min: 10, max: 40 },
   { key: 'm3Top', varName: '--sz-m3-top', id: 'dsp-font-m3-top', def: 12, min: 10, max: 40 },
   { key: 'm3Mid', varName: '--sz-m3-mid', id: 'dsp-font-m3-mid', def: 32, min: 10, max: 48 },
-  { key: 'm3Bot', varName: '--sz-m3-bot', id: 'dsp-font-m3-bot', def: 12, min: 10, max: 40 }
+  { key: 'm3Bot', varName: '--sz-m3-bot', id: 'dsp-font-m3-bot', def: 12, min: 10, max: 40 },
+  { key: 'qbtn', varName: '--sz-qbtn', id: 'dsp-font-qbtn', def: 10, min: 6, max: 16 }
 ];
 
 function loadDisplayCfg() {
@@ -3324,9 +3329,16 @@ function naveeApplyCaps() {
   const setRow = (id, show) => { const el = document.getElementById(id); const row = el && el.closest('.settings-row'); if (row) row.style.display = show ? '' : 'none'; };
   setRow('ss-cruise', caps[0] !== 0);
   setRow('ss-zerostart', caps[1] !== 0);
-  const cq = document.querySelector('#quick-grid .dq-btn[data-dq="cruise"]');
-  if (cq) cq.style.display = (caps[0] !== 0) ? '' : 'none';
+  // Quick-row visibility (incl. the cap-gated cruise + zero-start buttons) is owned by
+  // applyButtonRowConfig, which keeps _btnLimit() buttons visible by filling past a gated control.
+  // Re-apply it only when a gate actually flips, so the per-tick caps pass stays cheap.
+  var capKey = (_btnCapHidden('btn-dq-cruise') ? '1' : '0') + (_btnCapHidden('btn-dq-zero') ? '1' : '0');
+  if (capKey !== _lastQuickCapKey) {
+    _lastQuickCapKey = capKey;
+    try { applyButtonRowConfig(); } catch (e) {}
+  }
 }
+var _lastQuickCapKey = null;
 
 let _lastModelKey = null;
 let _modelPidOverride = null;   // pid string ('2543', …) or null for auto-detect
@@ -4409,11 +4421,9 @@ function reflectDriveQuick() {
     const c = NV_QUICK_BY_DQ[btn.dataset.dq];
     btn.classList.toggle('active', connected && !!(c && c.on && c.on(d)));
   });
-  // Zero-start (levels 0-2) is USA-SKU only; hide its quick button where the meter would clamp it away,
-  // and entirely where the firmware has no zero-start at all (kick cap 0).
-  const zq = wrap.querySelector('.dq-btn[data-dq="zerostart"]');
-  if (zq) zq.style.display = (naveeCaps()[1] !== 0 && naveeZeroStartFull()) ? '' : 'none';
-  // Drop cruise/zero-start controls the connected model's firmware does not support.
+  // Drop cruise/zero-start controls the connected model's firmware does not support. naveeApplyCaps
+  // detects cap-gate flips and re-runs applyButtonRowConfig, which owns the row visibility + fill so
+  // the gauge still shows _btnLimit() buttons (zero-start reclaims its place once supported).
   naveeApplyCaps();
 }
 
@@ -4548,6 +4558,19 @@ var NV_QUICK_CONTROLS = [
   { dq: 'ambient',   btnId: 'btn-dq-ambient', bb: 'dq-ambient', i18n: 'dash.drive.quick.ambient',   aria: 'dash.drive.quick.ambient.aria',   on: function(d){ return typeof d.ambientLight === 'number' && d.ambientLight > 0; } }
 ];
 var NV_QUICK_BY_DQ = {}; NV_QUICK_CONTROLS.forEach(function(c){ NV_QUICK_BY_DQ[c.dq] = c; });
+var NV_QUICK_DQ_BY_BTN = {}; NV_QUICK_CONTROLS.forEach(function(c){ NV_QUICK_DQ_BY_BTN[c.btnId] = c.dq; });
+
+// True when the driver's capability pass currently gates a quick control off the row (cruise on
+// firmware without CCS, zero-start where it is not a USA-SKU / unpatched). The button-row display
+// pass (applyButtonRowConfig) uses this to fill the default gauge set up to _btnLimit() VISIBLE.
+function _btnCapHidden(btnId) {
+  var dq = NV_QUICK_DQ_BY_BTN[btnId] || btnId;
+  try {
+    if (dq === 'cruise')    return naveeCaps()[0] === 0;
+    if (dq === 'zerostart') return !(naveeCaps()[1] !== 0 && naveeZeroStartFull());
+  } catch (e) {}
+  return false;
+}
 
 // Build quick-control buttons from NV_QUICK_CONTROLS into a #quick-grid (standard or theme); wires
 // clicks, localises, capability-gates. Clears any markup already there (incl. theme placeholders).
@@ -4931,16 +4954,37 @@ function _saveBtnRowConfig(theme, cfg) {
   var key = 'lb_btn_row_' + (theme || 'Default');
   if (typeof storage !== 'undefined') storage.set(key, JSON.stringify(cfg));
 }
+// True only when the rider has an explicit saved button set for this theme (vs. the driver default).
+function _hasSavedBtnRow(theme) {
+  var key = 'lb_btn_row_' + (theme || 'Default');
+  try { var s = (typeof storage !== 'undefined' ? storage.get(key) : null); return Array.isArray(JSON.parse(s || 'null')); } catch (e) {}
+  return false;
+}
 function applyButtonRowConfig(theme) {
   var grid = document.getElementById('quick-grid');
   if (!grid) return;
-  var cfg = _getBtnRowConfig(theme || _themeActive || 'Default');
+  theme = theme || _themeActive || 'Default';
+  var limit = _btnLimit();
+  var cfg = _getBtnRowConfig(theme);
+  // Resolve the VISIBLE set. Default (unsaved): fill past cap-gated controls so a gauge theme still
+  // shows `limit` buttons; the gated one reclaims its place once supported. Saved: honour the
+  // rider's list, only dropping cap-gated entries.
+  var visibleIds;
+  if (_hasSavedBtnRow(theme)) {
+    visibleIds = cfg.filter(function(id) { return !_btnCapHidden(id); });
+  } else {
+    visibleIds = [];
+    for (var i = 0; i < NV_QUICK_CONTROLS.length && visibleIds.length < limit; i++) {
+      var bid = NV_QUICK_CONTROLS[i].btnId;
+      if (!_btnCapHidden(bid)) visibleIds.push(bid);
+    }
+  }
   var btns = {};
   grid.querySelectorAll('[data-btn-id]').forEach(function(b) { btns[b.dataset.btnId] = b; });
-  cfg.forEach(function(id) { if (btns[id]) grid.appendChild(btns[id]); });
+  visibleIds.forEach(function(id) { if (btns[id]) grid.appendChild(btns[id]); });
   var anyVisible = false, visCount = 0;
   grid.querySelectorAll('[data-btn-id]').forEach(function(b) {
-    var visible = cfg.indexOf(b.dataset.btnId) >= 0;
+    var visible = visibleIds.indexOf(b.dataset.btnId) >= 0;
     b.style.display = visible ? '' : 'none';
     if (visible) { anyVisible = true; visCount++; }
   });
@@ -5944,7 +5988,7 @@ const DEFAULT_CSS_VARS = {
   '--dark-border': { label: 'style.var.dark-border', type: 'color', default: '#1C2035', group: 'dark'  },
   '--dark-text':   { label: 'style.var.dark-text',   type: 'color', default: '#E4EDF6', group: 'dark'  },
   '--dark-label':  { label: 'style.var.dark-label',  type: 'color', default: '#C6D2E2', group: 'dark'  },
-  '--dark-lum':    { label: 'style.var.dark-lum',    type: 'range', default: 90, min: 0, max: 100, group: 'dark' },
+  '--dark-lum':    { label: 'style.var.dark-lum',    type: 'range', default: 100, min: 0, max: 100, group: 'dark' },
   '--light-card':   { label: 'style.var.light-card',   type: 'color', default: '#ffffff', group: 'light' },
   '--light-bg':     { label: 'style.var.light-bg',     type: 'color', default: '#e8edf5', group: 'light' },
   '--light-border': { label: 'style.var.light-border', type: 'color', default: '#CDD5E4', group: 'light' },
@@ -5972,6 +6016,7 @@ const DEFAULT_CSS_VARS = {
   '--sz-m3-top':    { label: 'style.var.sz-m3-top',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
   '--sz-m3-mid':    { label: 'style.var.sz-m3-mid',    type: 'number', default: 32, min: 10, max: 48, unit: 'px', group: 'fonts' },
   '--sz-m3-bot':    { label: 'style.var.sz-m3-bot',    type: 'number', default: 12, min: 10, max: 40, unit: 'px', group: 'fonts' },
+  '--sz-qbtn':      { label: 'style.var.sz-qbtn',      type: 'number', default: 10, min: 6, max: 16, unit: 'px', group: 'fonts' },
   '--tile-h-speed':  { label: 'style.var.tile-h-speed',  type: 'number', default: 0, min: 0, max: 400, unit: 'px', group: 'tiles' },
   '--tile-h-hero':   { label: 'style.var.tile-h-hero',   type: 'number', default: 0, min: 0, max: 400, unit: 'px', group: 'tiles' },
   '--tile-h-motors': { label: 'style.var.tile-h-motors', type: 'number', default: 0, min: 0, max: 400, unit: 'px', group: 'tiles' },
