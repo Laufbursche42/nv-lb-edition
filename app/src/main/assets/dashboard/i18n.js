@@ -7,6 +7,7 @@ window.I18N = {
     'whatsnew.points': [
       "<b>New: in-app Beginner's Guide.</b> New here and not sure where to start? A model-by-model guide in Settings shows which route fits your scooter - Bluetooth-only or flash, switchable or permanent, and what each one needs - reach it from the Beginner's Guide entry just above the version info.",
       "<b>Fixed: live-speed menu could go missing on a patched meter.</b> On a patched meter the Bluetooth live-speed selector in the scooter settings could stay hidden after connecting (most often on XT5), because the meter version arrives a moment after the model is known; it now appears reliably once the meter reports in.",
+      "<b>Safer theme handling.</b> Access to imported-theme files is now strictly kept inside the app's own themes folder, as a safeguard against unusual theme names.",
       "<b>Correct theme version.</b> Carbon and Lambo are now version 5.2, and the Theme Manager shows each theme's real version (imported or re-seeded themes could show 1.0 before).",
       "<b>Eight quick buttons on Carbon &amp; Lambo.</b> The gauge themes now show the full eight quick buttons; one was being hidden, so only seven appeared.",
       "<b>Pick your speedometer scale.</b> The gauge themes now have evenly-spaced, easy-to-read marks and the needle sits exactly on the number. Choose Klar, Fine or Round in the Theme Manager - the eKFV speeds 20, 22 and 25 are now clearly apart.",
@@ -1079,6 +1080,7 @@ window.I18N = {
     'whatsnew.points': [
       "<b>Neu: Einsteiger-Anleitung in der App.</b> Neu hier und unsicher, wo du anfangen sollst? Eine Anleitung nach Modell in den Einstellungen zeigt, welcher Weg zu deinem Roller passt - nur Bluetooth oder Flash, umschaltbar oder permanent und was jeder braucht - zu finden über den Eintrag Einsteiger-Anleitung direkt über der Versionsinfo.",
       "<b>Behoben: Live-Geschwindigkeitsmenü konnte auf einem gepatchten Tacho fehlen.</b> Auf einem gepatchten Tacho konnte der Bluetooth-Live-Umschalter in den Roller-Einstellungen nach dem Verbinden verborgen bleiben (am häufigsten bei XT5), weil die Tacho-Version kurz nach dem Modell eintrifft; er erscheint jetzt zuverlässig, sobald sich der Tacho meldet.",
+      "<b>Sicherere Theme-Verarbeitung.</b> Der Zugriff auf importierte Theme-Dateien bleibt jetzt strikt im app-eigenen Themes-Ordner, als Schutz gegen ungewöhnliche Theme-Namen.",
       "<b>Korrekte Theme-Version.</b> Carbon und Lambo sind jetzt Version 5.2, und der Theme-Manager zeigt die echte Version jedes Themes (importierte oder neu eingespielte Themes konnten vorher 1.0 anzeigen).",
       "<b>Acht Schnell-Buttons bei Carbon &amp; Lambo.</b> Die Gauge-Themes zeigen jetzt alle acht Schnell-Buttons; einer wurde ausgeblendet, sodass nur sieben erschienen.",
       "<b>Wähle deine Tacho-Skala.</b> Die Gauge-Themes haben jetzt gleichmäßig verteilte, gut lesbare Marken, und der Zeiger steht exakt auf der Zahl. Im Theme-Manager wählst du Klar, Fein oder Rund - die eKFV-Tempi 20, 22 und 25 sind jetzt klar getrennt.",

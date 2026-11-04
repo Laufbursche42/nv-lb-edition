@@ -145,9 +145,21 @@ class ThemeManager {
         prefs.edit().remove("theme_tiles_" + name).remove("theme_vars_" + name).apply();
     }
 
-    /** File handle for a theme asset (does not imply existence). */
+    /**
+     * File handle for a theme asset (does not imply existence). The name is sanitized and the
+     * resolved path is confirmed to stay inside the themes directory, so a traversal name
+     * (e.g. "../../x") cannot escape it.
+     */
     File getThemeFile(String name, String ext) {
-        return new File(themesDir(), name + "." + ext);
+        String leaf = sanitizeName(name == null ? "" : name) + "." + ext;
+        File base = themesDir();
+        try {
+            return PathGuard.childOf(base, leaf);
+        } catch (IOException e) {
+            // sanitizeName maps path separators to '_', so the resolved path cannot escape; this is
+            // a defensive fallback that still keeps the asset inside the themes directory.
+            return new File(base, "imported." + ext);
+        }
     }
 
     // ── ZIP bundle import/export ───────────────────────────────────────────
@@ -225,7 +237,7 @@ class ThemeManager {
             if (!htmlFile.exists() || !cssFile.exists()) return null;
             File outDir = new File(ctx.getCacheDir(), "theme_export");
             if (!outDir.exists()) outDir.mkdirs();
-            File out = new File(outDir, name + ".zip");
+            File out = PathGuard.childOf(outDir, sanitizeName(name) + ".zip");
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(out))) {
                 putZipEntry(zos, "theme.html", readFile(htmlFile));
                 putZipEntry(zos, "theme.css",  readFile(cssFile));

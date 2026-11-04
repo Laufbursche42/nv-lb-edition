@@ -19,6 +19,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 ## 1.0.101
 
 - New in-app **Beginner's Guide** for new users: a model-by-model decision tree - which patch fits your scooter, Bluetooth-only versus flash, switchable versus permanent, and what each one needs - reached from Settings (the "Beginner's Guide" entry just above the version info). Fully bilingual (EN/DE).
+- Security hardening: theme-file access is now confined to the app's own themes directory (user-supplied names are sanitized and the resolved path is checked for containment), and the asset-logger neutralizes CR/LF in logged names. Clears the CodeQL path-injection and log-injection alerts. No user-facing behavior change.
 
 ## 1.0.100
 
