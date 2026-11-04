@@ -1086,70 +1086,70 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="tb-right"><span class="tb-spacer"></span></div>
   </div>
   <div id="start-scroller">
-    <p class="settings-row-sublabel" data-i18n="start.intro">New here and not sure where to start? You have Android, so this app alone can do it: connect to your scooter, open it up and flash the firmware right here - nothing leaves your phone. What is possible depends on your model, and this guide walks you through it.</p>
+    <p class="settings-row-sublabel" data-i18n="start.intro">New here? You have Android, so this app does it all - connect, open your scooter and flash it, nothing leaves your phone. What is possible depends on your model.</p>
 
-    <div class="settings-group-title" data-i18n="start.s1.title">1. Connect your scooter</div>
-    <p class="settings-row-sublabel" data-i18n="start.s1.text">Switch the scooter on, keep it close and turn Bluetooth on. In Settings, tap Connect scooter and pick yours from the list. Once connected, the app knows your model and shows the patch that fits.</p>
+    <div class="settings-group-title" data-i18n="start.s1.title">1. Connect</div>
+    <p class="settings-row-sublabel" data-i18n="start.s1.text">Scooter on, Bluetooth on, keep it close. Settings, then Connect scooter, then pick yours. The app now knows your model.</p>
 
-    <div class="settings-group-title" data-i18n="start.s2.title">2. Which route fits your scooter</div>
-    <p class="settings-row-sublabel" data-i18n="start.s2.text">Find your model below. It tells you whether you can open it over Bluetooth alone or need to flash, and whether the result is switchable or permanent.</p>
+    <div class="settings-group-title" data-i18n="start.s2.title">2. Find your route</div>
+    <p class="settings-row-sublabel" data-i18n="start.s2.text">Find your model. It tells you Bluetooth-only or flash, and switchable or permanent.</p>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s2.b1.cond">XT5 Ultra</div>
-      <div class="start-branch-text" data-i18n="start.s2.b1.text">Opens over Bluetooth, no flashing. Triple-tap the speed tile to switch between the legal 22 km/h and full speed (about 50). This one is hardware-confirmed.</div>
+      <div class="start-branch-text" data-i18n="start.s2.b1.text">Bluetooth only, no flash. Triple-tap the speed tile: 22 to full (~50). Hardware-confirmed.</div>
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s2.b2.cond">XT5 Pro or XT5 Max</div>
-      <div class="start-branch-text" data-i18n="start.s2.b2.text">Opens over Bluetooth like the Ultra if your controller is the older 0.0.1.0. If it stays at 22, your controller is 0.0.1.3 - flash the matching patch in the app first, then it is switchable. Still experimental.</div>
+      <div class="start-branch-text" data-i18n="start.s2.b2.text">Bluetooth on controller 0.0.1.0. On 0.0.1.3, flash the patch first.</div>
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s2.b3.cond">NT5 Max, Max+, Ultra or Turbo</div>
-      <div class="start-branch-text" data-i18n="start.s2.b3.text">No Bluetooth-only route. Flash the controller in the app, then open and close it from the app (triple-tap). It re-locks to 22 on every restart. Only flash a controller you can recover over SWD if something goes wrong.</div>
+      <div class="start-branch-text" data-i18n="start.s2.b3.text">Flash the controller, then switch from the app. Re-locks to 22 on restart.</div>
     </div>
     <div class="start-branch">
-      <div class="start-branch-cond" data-i18n="start.s2.b4.cond">ST3, GT3 (incl. Pro and Max), ST5, GT5 Pro/Max, UT5 Max or NT5 Ultra X</div>
-      <div class="start-branch-text" data-i18n="start.s2.b4.text">Flash the meter in the app - then the triple-tap toggle switches between 22 and your open speed. ST3, GT3 and GT5 can instead take a controller patch that is permanent and a little faster. These models are experimental and not yet hardware-confirmed.</div>
+      <div class="start-branch-cond" data-i18n="start.s2.b4.cond">ST3, GT3, ST5, GT5 Pro/Max, UT5 Max or NT5 Ultra X</div>
+      <div class="start-branch-text" data-i18n="start.s2.b4.text">Flash the meter, then switch from the app. ST3, GT3 and GT5 can instead flash the controller (permanent).</div>
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s2.b5.cond">UT5 Ultra X</div>
-      <div class="start-branch-text" data-i18n="start.s2.b5.text">Opens over Bluetooth via the gear (experimental). If it stays limited, flash the controller patch first. Switchable from the app.</div>
+      <div class="start-branch-text" data-i18n="start.s2.b5.text">Bluetooth via the gear. Still limited? Flash the controller first.</div>
     </div>
     <div class="start-branch">
-      <div class="start-branch-cond" data-i18n="start.s2.b6.cond">Any other NAVEE (G5 family, V-series, N65i, E-series, S40/S60, K100, V3 Pro, UT3, NT3 ...)</div>
-      <div class="start-branch-text" data-i18n="start.s2.b6.text">Flash the controller in the app, where a patch is offered. The higher speed is permanent until you flash the stock firmware back - there is no app toggle. Most of these are experimental and not yet hardware-confirmed.</div>
+      <div class="start-branch-cond" data-i18n="start.s2.b6.cond">Any other (G5, V, N65i, E, S, K100, UT3, NT3 ...)</div>
+      <div class="start-branch-text" data-i18n="start.s2.b6.text">Flash the controller. Permanent, no app toggle.</div>
     </div>
-    <p class="start-note" data-i18n="start.s2.note">Good to know: zero-start (pulling away from standstill) needs the patched meter, so it comes with the meter route, not the controller route. Some scooters are account-bound and drop the Bluetooth link after a few seconds unless the app signs in - enter your NAVEE User ID in Settings to flash those. Only flash a controller on a scooter you can recover over SWD.</p>
+    <p class="start-note" data-i18n="start.s2.note">Most models are experimental, not yet hardware-confirmed. Kick-start needs the meter patch. Account-bound scooters need your NAVEE User ID in Settings - not the NAVEE ID shown in the NAVEE app. Only flash a controller you can recover over SWD.</p>
 
-    <div class="settings-group-title" data-i18n="start.s3.title">3. In the patcher: what you choose</div>
-    <p class="settings-row-sublabel" data-i18n="start.s3.text">Open the firmware patcher in Settings. It detects your model and shows the installed meter and controller firmware, then offers only the options your scooter can take under "What to patch". Tick what you want - they are independent, so any that are offered can be combined.</p>
+    <div class="settings-group-title" data-i18n="start.s3.title">3. In the patcher</div>
+    <p class="settings-row-sublabel" data-i18n="start.s3.text">The patcher detects your model and offers, under "What to patch", only what it can take. Tick any combination.</p>
     <div class="start-branch">
-      <div class="start-branch-cond" data-i18n="start.s3.b1.cond">Unlock speed (+ Target speed)</div>
-      <div class="start-branch-text" data-i18n="start.s3.b1.text">Raises the controller top speed - pick the target km/h from the Target speed dropdown. This one sits in the controller. Some models have a single fixed higher speed and show no dropdown.</div>
+      <div class="start-branch-cond" data-i18n="start.s3.b1.cond">Unlock speed</div>
+      <div class="start-branch-text" data-i18n="start.s3.b1.text">Raises the controller top speed - pick the km/h. Controller.</div>
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s3.b2.cond">Switchable speed limit (Bluetooth)</div>
-      <div class="start-branch-text" data-i18n="start.s3.b2.text">Makes the top speed switchable live over Bluetooth after flashing - no re-flash to change it later. Sits in the meter.</div>
+      <div class="start-branch-text" data-i18n="start.s3.b2.text">Makes the top speed switchable live, no re-flash. Meter.</div>
     </div>
     <div class="start-branch">
-      <div class="start-branch-cond" data-i18n="start.s3.b3.cond">Kick-start (zero start)</div>
-      <div class="start-branch-text" data-i18n="start.s3.b3.text">Lets the scooter pull away from a standstill without a kick. Sits in the meter.</div>
+      <div class="start-branch-cond" data-i18n="start.s3.b3.cond">Kick-start</div>
+      <div class="start-branch-text" data-i18n="start.s3.b3.text">Pull away from standstill. Meter.</div>
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s3.b4.cond">Cruise control</div>
-      <div class="start-branch-text" data-i18n="start.s3.b4.text">Holds your speed, on the models that support it. Sits in the meter.</div>
+      <div class="start-branch-text" data-i18n="start.s3.b4.text">Holds your speed, where supported. Meter.</div>
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s3.b5.cond">Silence beeps</div>
-      <div class="start-branch-text" data-i18n="start.s3.b5.text">Turns off individual tones - over-speed warning, connect, startup melody, alarm, fault - each on its own. The confirmation beep always stays. Sits in the meter.</div>
+      <div class="start-branch-text" data-i18n="start.s3.b5.text">Mute single tones; the confirmation beep stays. Meter.</div>
     </div>
-    <p class="start-note" data-i18n="start.s3.note">The options are independent - tick any combination your model offers. Speed lives in the controller; everything else (switchable limit, kick-start, cruise, beeps) lives in the meter, so the app patches and flashes only the chips your choices touch: controller first, meter last. If an option is missing, your model simply does not have it. If you pick a controller or display firmware other than the one installed, the app warns you - that combination is untested.</p>
+    <p class="start-note" data-i18n="start.s3.note">Speed sits in the controller, the rest in the meter - the app flashes only the chips you touch, controller first, meter last. A missing option means your model does not have it. A firmware version other than the installed one is flagged as untested.</p>
 
     <div class="settings-group-title" data-i18n="start.s4.title">4. Download, patch, flash</div>
-    <p class="settings-row-sublabel" data-i18n="start.s4.text">Tap Download and patch. The app downloads the stock firmware from the NAVEE server, patches it on your phone with your choices, then hands over to the flasher. Tick the consent box and start - it flashes the controller first and the meter last (the meter carries the Bluetooth link). Nothing is uploaded anywhere.</p>
+    <p class="settings-row-sublabel" data-i18n="start.s4.text">Tap Download and patch: the app fetches the stock firmware, patches it on your phone and hands it to the flasher. Tick consent and start. Nothing is uploaded.</p>
 
     <div class="settings-group-title" data-i18n="start.s5.title">5. Switchable or permanent</div>
-    <p class="settings-row-sublabel" data-i18n="start.s5.text">Switchable means the app flips the scooter between the legal 22 km/h and your open speed - triple-tap the speed tile, and on many models it re-locks to 22 on restart. Permanent means the higher speed stays until you flash the stock firmware back. Each route above says which one you get.</p>
+    <p class="settings-row-sublabel" data-i18n="start.s5.text">Switchable: triple-tap the speed tile to flip between a locked speed and your open speed. On XT5, ST3/GT3, GT5 and ST5 you set both - your locked limit (e.g. 20, 22 or 25 for your country) and your open speed. UT5 Max is a plain on/off. Permanent: the higher speed stays until you flash stock back.</p>
 
-    <p class="settings-row-sublabel start-risk" data-i18n="start.risk">At your own risk: on many models patching is experimental and not yet hardware-confirmed. A higher speed voids the road approval. Use only on your own scooter on private ground.</p>
+    <p class="settings-row-sublabel start-risk" data-i18n="start.risk">At your own risk: on many models patching is experimental and not hardware-confirmed. A higher speed voids the road approval. Private ground, your own scooter only.</p>
   </div>
 </div>
 
