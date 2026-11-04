@@ -18,7 +18,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 
 ## 1.0.101
 
-- New in-app **Beginner Guide** for new users: a short walkthrough - connect, unlock and flash - reached from Settings (the "Beginner Guide" entry just above the version info). Fully bilingual (EN/DE).
+- New in-app **Beginner's Guide** for new users: a model-by-model decision tree - which patch fits your scooter, Bluetooth-only versus flash, switchable versus permanent, and what each one needs - reached from Settings (the "Beginner's Guide" entry just above the version info). Fully bilingual (EN/DE).
 
 ## 1.0.100
 

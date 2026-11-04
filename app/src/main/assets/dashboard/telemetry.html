@@ -1086,14 +1086,46 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     <div class="tb-right"><span class="tb-spacer"></span></div>
   </div>
   <div id="start-scroller">
-    <p class="settings-row-sublabel" data-i18n="start.intro">New here and not sure how it works? You have Android, so this app is all you need: connect to your scooter, unlock it and flash the firmware right here - nothing leaves your phone.</p>
+    <p class="settings-row-sublabel" data-i18n="start.intro">New here and not sure where to start? You have Android, so this app alone can do it: connect to your scooter, open it up and flash the firmware right here - nothing leaves your phone. What is possible depends on your model, and this guide walks you through it.</p>
+
     <div class="settings-group-title" data-i18n="start.s1.title">1. Connect your scooter</div>
-    <p class="settings-row-sublabel" data-i18n="start.s1.text">Switch the scooter on and keep it close, with Bluetooth on. In Settings, tap "Connect scooter" and pick your scooter from the list.</p>
-    <div class="settings-group-title" data-i18n="start.s2.title">2. Unlock and flash</div>
-    <p class="settings-row-sublabel" data-i18n="start.s2.text">Open the firmware patcher in Settings. It recognises your model and offers the matching patch: download the stock firmware, load it so the app patches it, then flash it back to the scooter.</p>
-    <div class="settings-group-title" data-i18n="start.s3.title">3. Switchable or permanent</div>
-    <p class="settings-row-sublabel" data-i18n="start.s3.text">Some unlocks are switchable - triple-tap the speed tile to flip between the legal 22 km/h and your open speed. Others are permanent until you flash the stock firmware back. The patcher shows which one fits your scooter.</p>
-    <p class="settings-row-sublabel start-risk" data-i18n="start.risk">At your own risk: on some models patching is experimental and not yet hardware-confirmed, and raising the speed voids the road approval. Use only on your own scooter on private ground.</p>
+    <p class="settings-row-sublabel" data-i18n="start.s1.text">Switch the scooter on, keep it close and turn Bluetooth on. In Settings, tap Connect scooter and pick yours from the list. Once connected, the app knows your model and shows the patch that fits.</p>
+
+    <div class="settings-group-title" data-i18n="start.s2.title">2. Which route fits your scooter</div>
+    <p class="settings-row-sublabel" data-i18n="start.s2.text">Find your model below. It tells you whether you can open it over Bluetooth alone or need to flash, and whether the result is switchable or permanent.</p>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s2.b1.cond">XT5 Ultra</div>
+      <div class="start-branch-text" data-i18n="start.s2.b1.text">Opens over Bluetooth, no flashing. Triple-tap the speed tile to switch between the legal 22 km/h and full speed (about 50). This one is hardware-confirmed.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s2.b2.cond">XT5 Pro or XT5 Max</div>
+      <div class="start-branch-text" data-i18n="start.s2.b2.text">Opens over Bluetooth like the Ultra if your controller is the older 0.0.1.0. If it stays at 22, your controller is 0.0.1.3 - flash the matching patch in the app first, then it is switchable. Still experimental.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s2.b3.cond">NT5 Max, Max+, Ultra or Turbo</div>
+      <div class="start-branch-text" data-i18n="start.s2.b3.text">No Bluetooth-only route. Flash the controller in the app, then open and close it from the app (triple-tap). It re-locks to 22 on every restart. Only flash a controller you can recover over SWD if something goes wrong.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s2.b4.cond">ST3, GT3 (incl. Pro and Max), ST5, GT5 Pro/Max, UT5 Max or NT5 Ultra X</div>
+      <div class="start-branch-text" data-i18n="start.s2.b4.text">Flash the meter in the app - then the triple-tap toggle switches between 22 and your open speed. ST3, GT3 and GT5 can instead take a controller patch that is permanent and a little faster. These models are experimental and not yet hardware-confirmed.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s2.b5.cond">UT5 Ultra X</div>
+      <div class="start-branch-text" data-i18n="start.s2.b5.text">Opens over Bluetooth via the gear (experimental). If it stays limited, flash the controller patch first. Switchable from the app.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s2.b6.cond">Any other NAVEE (G5 family, V-series, N65i, E-series, S40/S60, K100, V3 Pro, UT3, NT3 ...)</div>
+      <div class="start-branch-text" data-i18n="start.s2.b6.text">Flash the controller in the app, where a patch is offered. The higher speed is permanent until you flash the stock firmware back - there is no app toggle. Most of these are experimental and not yet hardware-confirmed.</div>
+    </div>
+    <p class="start-note" data-i18n="start.s2.note">Good to know: zero-start (pulling away from standstill) needs the patched meter, so it comes with the meter route, not the controller route. Some scooters are account-bound and drop the Bluetooth link after a few seconds unless the app signs in - enter your NAVEE account ID in Settings to flash those. Only flash a controller on a scooter you can recover over SWD.</p>
+
+    <div class="settings-group-title" data-i18n="start.s3.title">3. Download, patch, flash</div>
+    <p class="settings-row-sublabel" data-i18n="start.s3.text">Open the firmware patcher in Settings. Download the stock firmware (the app pulls it from the NAVEE server), load it so the app patches it on your phone, then flash it back to the scooter over Bluetooth. Nothing is uploaded anywhere.</p>
+
+    <div class="settings-group-title" data-i18n="start.s4.title">4. Switchable or permanent</div>
+    <p class="settings-row-sublabel" data-i18n="start.s4.text">Switchable means the app flips the scooter between the legal 22 km/h and your open speed - triple-tap the speed tile, and on many models it re-locks to 22 on restart. Permanent means the higher speed stays until you flash the stock firmware back. Each route above says which one you get.</p>
+
+    <p class="settings-row-sublabel start-risk" data-i18n="start.risk">At your own risk: on many models patching is experimental and not yet hardware-confirmed. A higher speed voids the road approval. Use only on your own scooter on private ground.</p>
   </div>
 </div>
 
