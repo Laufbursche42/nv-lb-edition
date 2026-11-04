@@ -3401,7 +3401,10 @@ function applyModelUi(btName) {
   const d = liveRaw();
   const effectivePid = (_modelPidOverride || (d.pid || '')).trim();
   const model = naveeModelFromPid(effectivePid);
-  const key = effectivePid + '|' + (_modelPidOverride ? 'm' : 'a');
+  // Key on fwMeter too: the meter version (0x73) often arrives a few frames after the pid (0x74),
+  // and model-specific panels (live-speed selector) gate on meterKickstartPatched(). Without fwMeter
+  // in the key, a snapshot seen before 0x73 caches the panel hidden and it never re-evaluates.
+  const key = effectivePid + '|' + ((d.fwMeter || '').trim()) + '|' + (_modelPidOverride ? 'm' : 'a');
   if (key === _lastModelKey) return;
   _lastModelKey = key;
   const nameEl = document.getElementById('model-name');

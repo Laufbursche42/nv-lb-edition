@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.100
+
+- Fixed a regression where the live-speed selector in the scooter settings could stay hidden after connecting to a patched meter (most often XT5). The model-UI cache now keys on the meter version too, so the panel re-evaluates when the meter version (0x73) arrives after the model id (0x74) instead of caching the pre-meter state. Surfaced in forum thread 2800 (XT5 Max, 1.0.98 vs 1.0.96).
+
 ## 1.0.99
 
 - Carbon and Lambo updated to theme version 5.2, and the Theme Manager now reliably shows each theme's real version - imported and re-seeded themes no longer lose it (it could appear as "1.0").
