@@ -1999,6 +1999,23 @@ function updateBLEUI(data) {
     if (st.indexOf(open) < 0) open = st[st.length - 1];
     try { if (typeof LB !== 'undefined' && LB.sendRaw) LB.sendRaw(naveeNormalHex(0x6E, [0x01, _speedReleased ? open : naveeXtLock()])); } catch (e) {}
   }
+  // Kickstart-patched meter: enabling launch levels 0-2 does not itself set zero-start to 0 - the rider
+  // still had to pick it, and a user who missed that reported zero-start "not working" (push to ~3-4 km/h).
+  // Push level 0 once per connection on a patched meter, but only when it is still the stock default (3) -
+  // never override a level the rider deliberately chose.
+  if (connected && !wasConnected) _zeroStartSynced = false;
+  if (meterKickstartPatched() && !_zeroStartSynced) {
+    const _zs = liveRaw().startSpeed;
+    if (typeof _zs === 'number' && _zs >= 0) {          // wait until the level has actually arrived
+      _zeroStartSynced = true;                           // latch once it is known either way
+      if (_zs === NAVEE_STARTSPEED_DEFAULT) {            // 3 = untouched stock; a rider pick is left alone
+        _pendingWrite['zerostart'] = Date.now();         // keep the prefill from snapping the select back
+        try { pushSetting(NAVEE_CMD.zerostart, 0); } catch (e) {}
+        const _zsel = document.getElementById('ss-zerostart');
+        if (_zsel) _zsel.value = '0';
+      }
+    }
+  }
   // Auto re-arm the XT5 speed release after a manual drive-mode change (opt-in, experimental).
   // The XT5 release is a live gear-4 command that a mode switch wipes; when the rider turned on
   // "hold release across mode changes", re-send it once (debounced) whenever the reported drive
@@ -3552,9 +3569,10 @@ function naveeDrosselCaps(name) {
   if (/^GT5/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
   if (/^ST5/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
   // UT5 Max: the "0060" meter forwards the live 0x6E value byte as drive-frame byte10 (controller scales
-  // it linearly), so both the locked and the open speed are selectable. Never offer 50 - that is the
-  // meter's sentinel and the frame builder zeroes the cell on it; 45 is the top step here.
-  if (/^UT5 Max/.test(name)) return { open: [22, 25, 27, 30, 35, 40, 45], lock: [20, 22, 25] };
+  // it linearly), so both the locked and the open speed are selectable. Top step is 40: the controller's
+  // over-rev governor (cmp 0x186=39 / 0x1a4=42) caps real speed around 40 - higher values would be
+  // clamped there, so offering them would be a false promise. 50 is also the meter's zero sentinel.
+  if (/^UT5 Max/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
   return null;
 }
 function naveeLiveSpeedSteps(name) { const c = naveeDrosselCaps(name); return c ? c.open : null; }
@@ -4351,6 +4369,7 @@ function wireSpeedRelease() {
 let _speedReleased = (function () { try { return storage.get('lb_speedreleased') === '1'; } catch (e) { return false; } })();
 let _ut5DrosselSynced = false;  // one-shot guard: push the UT5 Max drossel state once per connection
 let _xt5SpeedSynced = false;    // one-shot guard: push the XT5 live speed byte once per connection
+let _zeroStartSynced = false;   // one-shot guard: auto-set zero-start to 0 once per connection on a patched meter
 function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb_speedreleased', on ? '1' : '0'); } catch (e) {} }
 // Opt-in (XT5): re-send the gear-4 release automatically after a rider drive-mode change, which
 // otherwise wipes the live release. App-side state only; "off" is always clean stock.
