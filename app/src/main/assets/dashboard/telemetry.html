@@ -1119,11 +1119,35 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     </div>
     <p class="start-note" data-i18n="start.s2.note">Good to know: zero-start (pulling away from standstill) needs the patched meter, so it comes with the meter route, not the controller route. Some scooters are account-bound and drop the Bluetooth link after a few seconds unless the app signs in - enter your NAVEE account ID in Settings to flash those. Only flash a controller on a scooter you can recover over SWD.</p>
 
-    <div class="settings-group-title" data-i18n="start.s3.title">3. Download, patch, flash</div>
-    <p class="settings-row-sublabel" data-i18n="start.s3.text">Open the firmware patcher in Settings. Download the stock firmware (the app pulls it from the NAVEE server), load it so the app patches it on your phone, then flash it back to the scooter over Bluetooth. Nothing is uploaded anywhere.</p>
+    <div class="settings-group-title" data-i18n="start.s3.title">3. In the patcher: what you choose</div>
+    <p class="settings-row-sublabel" data-i18n="start.s3.text">Open the firmware patcher in Settings. It detects your model and shows the installed meter and controller firmware, then offers only the options your scooter can take under "What to patch". Tick what you want - they are independent, so any that are offered can be combined.</p>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s3.b1.cond">Unlock speed (+ Target speed)</div>
+      <div class="start-branch-text" data-i18n="start.s3.b1.text">Raises the controller top speed - pick the target km/h from the Target speed dropdown. This one sits in the controller. Some models have a single fixed higher speed and show no dropdown.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s3.b2.cond">Switchable speed limit (Bluetooth)</div>
+      <div class="start-branch-text" data-i18n="start.s3.b2.text">Makes the top speed switchable live over Bluetooth after flashing - no re-flash to change it later. Sits in the meter.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s3.b3.cond">Kick-start (zero start)</div>
+      <div class="start-branch-text" data-i18n="start.s3.b3.text">Lets the scooter pull away from a standstill without a kick. Sits in the meter.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s3.b4.cond">Cruise control</div>
+      <div class="start-branch-text" data-i18n="start.s3.b4.text">Holds your speed, on the models that support it. Sits in the meter.</div>
+    </div>
+    <div class="start-branch">
+      <div class="start-branch-cond" data-i18n="start.s3.b5.cond">Silence beeps</div>
+      <div class="start-branch-text" data-i18n="start.s3.b5.text">Turns off individual tones - over-speed warning, connect, startup melody, alarm, fault - each on its own. The confirmation beep always stays. Sits in the meter.</div>
+    </div>
+    <p class="start-note" data-i18n="start.s3.note">The options are independent - tick any combination your model offers. Speed lives in the controller; everything else (switchable limit, kick-start, cruise, beeps) lives in the meter, so the app patches and flashes only the chips your choices touch: controller first, meter last. If an option is missing, your model simply does not have it. If you pick a controller or display firmware other than the one installed, the app warns you - that combination is untested.</p>
 
-    <div class="settings-group-title" data-i18n="start.s4.title">4. Switchable or permanent</div>
-    <p class="settings-row-sublabel" data-i18n="start.s4.text">Switchable means the app flips the scooter between the legal 22 km/h and your open speed - triple-tap the speed tile, and on many models it re-locks to 22 on restart. Permanent means the higher speed stays until you flash the stock firmware back. Each route above says which one you get.</p>
+    <div class="settings-group-title" data-i18n="start.s4.title">4. Download, patch, flash</div>
+    <p class="settings-row-sublabel" data-i18n="start.s4.text">Tap Download and patch. The app downloads the stock firmware from the NAVEE server, patches it on your phone with your choices, then hands over to the flasher. Tick the consent box and start - it flashes the controller first and the meter last (the meter carries the Bluetooth link). Nothing is uploaded anywhere.</p>
+
+    <div class="settings-group-title" data-i18n="start.s5.title">5. Switchable or permanent</div>
+    <p class="settings-row-sublabel" data-i18n="start.s5.text">Switchable means the app flips the scooter between the legal 22 km/h and your open speed - triple-tap the speed tile, and on many models it re-locks to 22 on restart. Permanent means the higher speed stays until you flash the stock firmware back. Each route above says which one you get.</p>
 
     <p class="settings-row-sublabel start-risk" data-i18n="start.risk">At your own risk: on many models patching is experimental and not yet hardware-confirmed. A higher speed voids the road approval. Use only on your own scooter on private ground.</p>
   </div>
