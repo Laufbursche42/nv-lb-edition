@@ -6,6 +6,7 @@ window.I18N = {
   en: {
     'whatsnew.points': [
       "<b>New: in-app Beginner's Guide.</b> New here and not sure where to start? A model-by-model guide in Settings shows which route fits your scooter - Bluetooth-only or flash, switchable or permanent, and what each one needs - reach it from the Beginner's Guide entry just above the version info.",
+      "<b>UT5 Max: pick your speed, not just on/off.</b> On the newest patched UT5 Max meter you now choose both the locked and the open km/h in the scooter settings - like XT5, ST3/GT3, GT5 and ST5 - instead of a single on/off. Older UT5 Max patches keep the on/off toggle. Experimental, untested on hardware - flash at your own risk.",
       "<b>Fixed: live-speed menu could go missing on a patched meter.</b> On a patched meter the Bluetooth live-speed selector in the scooter settings could stay hidden after connecting (most often on XT5), because the meter version arrives a moment after the model is known; it now appears reliably once the meter reports in.",
       "<b>Safer theme handling.</b> Access to imported-theme files is now strictly kept inside the app's own themes folder, as a safeguard against unusual theme names.",
       "<b>Correct theme version.</b> Carbon and Lambo are now version 5.2, and the Theme Manager shows each theme's real version (imported or re-seeded themes could show 1.0 before).",
@@ -543,7 +544,7 @@ window.I18N = {
     "start.s4.title": "4. Download, patch, flash",
     "start.s4.text": "Tap Download and patch: the app fetches the original firmware and patches a copy on your phone - both land in your Downloads folder. Then it hands off to the flasher: tick consent and start. Nothing is uploaded.",
     "start.s5.title": "5. Switchable or permanent",
-    "start.s5.text": "Switchable: triple-tap the speed tile to flip between a locked speed and your open speed. On XT5, ST3/GT3, GT5 and ST5 you set both - your locked limit (e.g. 20, 22 or 25 for your country) and your open speed. UT5 Max is a plain on/off. Permanent: the higher speed stays until you flash stock back.",
+    "start.s5.text": "Switchable: triple-tap the speed tile to flip between a locked speed and your open speed. On XT5, ST3/GT3, GT5, ST5 and UT5 Max you set both - your locked limit (e.g. 20, 22 or 25 for your country) and your open speed. Permanent: the higher speed stays until you flash stock back.",
     "start.s6.title": "6. Back to stock",
     "start.s6.text": "To undo everything, flash the manufacturer firmware back. The original .bin was saved to your Downloads folder when you patched (or just re-download it). Load it with no option ticked and flash - the result is byte-identical to factory, so the speed limit and the road approval (ABE) are back. Meter and controller can be restored on their own.",
     "start.risk": "At your own risk: on many models patching is experimental and not hardware-confirmed. A higher speed voids the road approval. Private ground, your own scooter only.",
@@ -1079,6 +1080,7 @@ window.I18N = {
   de: {
     'whatsnew.points': [
       "<b>Neu: Einsteiger-Anleitung in der App.</b> Neu hier und unsicher, wo du anfangen sollst? Eine Anleitung nach Modell in den Einstellungen zeigt, welcher Weg zu deinem Roller passt - nur Bluetooth oder Flash, umschaltbar oder permanent und was jeder braucht - zu finden über den Eintrag Einsteiger-Anleitung direkt über der Versionsinfo.",
+      "<b>UT5 Max: Tempo wählbar statt nur An/Aus.</b> Auf dem neuesten gepatchten UT5-Max-Tacho wählst du jetzt in den Roller-Einstellungen Sperr- und Offen-km/h selbst - wie bei XT5, ST3/GT3, GT5 und ST5 - statt nur An/Aus. Ältere UT5-Max-Patches behalten den An/Aus-Schalter. Experimentell, nicht an Hardware getestet - Flashen auf eigene Gefahr.",
       "<b>Behoben: Live-Geschwindigkeitsmenü konnte auf einem gepatchten Tacho fehlen.</b> Auf einem gepatchten Tacho konnte der Bluetooth-Live-Umschalter in den Roller-Einstellungen nach dem Verbinden verborgen bleiben (am häufigsten bei XT5), weil die Tacho-Version kurz nach dem Modell eintrifft; er erscheint jetzt zuverlässig, sobald sich der Tacho meldet.",
       "<b>Sicherere Theme-Verarbeitung.</b> Der Zugriff auf importierte Theme-Dateien bleibt jetzt strikt im app-eigenen Themes-Ordner, als Schutz gegen ungewöhnliche Theme-Namen.",
       "<b>Korrekte Theme-Version.</b> Carbon und Lambo sind jetzt Version 5.2, und der Theme-Manager zeigt die echte Version jedes Themes (importierte oder neu eingespielte Themes konnten vorher 1.0 anzeigen).",
@@ -1616,7 +1618,7 @@ window.I18N = {
     "start.s4.title": "4. Herunterladen, patchen, flashen",
     "start.s4.text": "Tippe auf Herunterladen und patchen: die App holt die Original-Firmware und patcht eine Kopie auf dem Handy - beide landen in deinem Downloads-Ordner. Dann geht es zum Flasher: Zustimmung anhaken und starten. Nichts wird hochgeladen.",
     "start.s5.title": "5. Umschaltbar oder permanent",
-    "start.s5.text": "Umschaltbar: Dreifach-Tipp auf die Tempo-Kachel wechselt zwischen einem Sperrwert und deinem offenen Tempo. Bei XT5, ST3/GT3, GT5 und ST5 stellst du beides selbst ein - deinen Sperrwert (z.B. 20, 22 oder 25 je nach Land) und dein offenes Tempo. UT5 Max ist ein reines An/Aus. Permanent: das höhere Tempo bleibt, bis du Stock zurückflashst.",
+    "start.s5.text": "Umschaltbar: Dreifach-Tipp auf die Tempo-Kachel wechselt zwischen einem Sperrwert und deinem offenen Tempo. Bei XT5, ST3/GT3, GT5, ST5 und UT5 Max stellst du beides selbst ein - deinen Sperrwert (z.B. 20, 22 oder 25 je nach Land) und dein offenes Tempo. Permanent: das höhere Tempo bleibt, bis du Stock zurückflashst.",
     "start.s6.title": "6. Zurück auf original",
     "start.s6.text": "Zum Rückgängigmachen die Hersteller-Firmware zurückflashen. Die Original-.bin wurde beim Patchen in deinem Downloads-Ordner gespeichert (oder lade sie einfach neu). Lade sie mit keiner angehakten Option und flashe - das Ergebnis ist byte-identisch zum Werkszustand, also sind Tempolimit und Straßenzulassung (ABE) zurück. Meter und Controller lassen sich einzeln zurücksetzen.",
     "start.risk": "Auf eigenes Risiko: Bei vielen Modellen ist das Patchen experimentell und noch nicht auf Hardware bestätigt. Ein höheres Tempo hebt die Straßenzulassung auf. Nur am eigenen Roller auf privatem Grund.",

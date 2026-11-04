@@ -2031,12 +2031,14 @@ patches: [
     patches: [],
   },
 
-  // UT5 Max meter 0.0.3.0 (8901). T2314. App drossel toggle + kickstart + cruise, all in-place
-  // (len@0x10 untouched, image passes its own len+CRC gate; stock CRC 0x010a -> 0x4980). drossel-gate
-  // and drossel-boot redirect the DE region gate (bl FUN_080178e2) at the frame builder and its
-  // boot-init companion to read the no-auth BLE flag 0x0020ab0e (class 0x81 sub1): flag 0 = stock DE
-  // throttle, nonzero = full in every region; both sites are required (either alone re-zeroes the
-  // speed byte). Experimental, not confirmed on recoverable hardware.
+  // UT5 Max meter 0.0.3.0 (8901). T2314. Switchable speed selector + kickstart + cruise, all in-place
+  // (len@0x10 untouched, image passes its own len+CRC gate; stock CRC 0x010a -> 0x4980). speedsel NOPs
+  // the DE region skip (beq) inside the class 0x6E sub1 handler (FUN_080142ae @ 0x142ce), so 0x6E sub1
+  // writes the live speed cell 0x20aae6 in every region; the frame builder then forwards that cell as
+  // drive-frame byte10 (the normal-mode path copies the cell directly for any value != 50, no gate).
+  // The controller honours byte10 as a linear cap, so the app selects both the locked and the open
+  // km/h (class 0x6E sub1). Marker "0060" (not "0050") so the app tells this value-selector meter apart
+  // from the earlier "0050" on/off (0x81-flag) meter. Experimental, not confirmed on recoverable hardware.
   meterUT5Max: {
     label: 'UT5 Max meter 0.0.3.0 (8901)',
     kind: 'meter',
@@ -2050,13 +2052,12 @@ patches: [
     // certified by the marker, so they stay individually selectable (core forced, beeps honour selection).
     coreFeatures: ['speed', 'kickstart', 'cruise'],
     patches: [
-      { off: 0x133ae, from: [0x04, 0xf0, 0x98, 0xfa], to: [0x95, 0xf8, 0x2e, 0x00], id: 'drossel-gate' }, // frame-builder region gate (bl FUN_080178e2) -> ldrb.w r0,[r5,#0x2e] = BLE flag 0x0020ab0e
-      { off: 0x169c6, from: [0x00, 0xf0, 0x8c, 0xff], to: [0x94, 0xf8, 0x34, 0x00], id: 'drossel-boot' }, // boot-init companion gate -> ldrb.w r0,[r4,#0x34] = same flag 0x0020ab0e
+      { off: 0x142ce, from: [0x04, 0xd0], to: [0x00, 0xbf], id: 'speedsel' }, // class 0x6E sub1 handler (FUN_080142ae): NOP the DE region skip (beq) so the speed cell 0x20aae6 is written in every region; drive-frame byte10 then follows it (locked/open km/h both set live by 0x6E sub1)
       { off: 0x1438f, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bhs) -> unconditional, launch levels 0-2 accepted in every region
       { off: 0x14068, from: [0x0b, 0xd0], to: [0x00, 0xbf], id: 'cruise' }, // cruise/tempomat DE sub-gate (beq) -> nop, enable bit forwarded in every region
       { off: 0x159fc, from: [0xff, 0xf7, 0x1f, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/anti-theft alarm bl (FUN_0801543e) -> nop
       { off: 0x15ae4, from: [0xff, 0xf7, 0xd0, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // fault/error-code announce bl (FUN_08015488) -> nop; silences every fault tone on this meter
-      { off: 0x1a7da, from: [0x33], to: [0x35], id: 'version-marker' }, // reported meter version '0030' -> '0050' (fwMeter "0050"), app patched-FW detection
+      { off: 0x1a7da, from: [0x33], to: [0x36], id: 'version-marker' }, // reported meter version '0030' -> '0060' (fwMeter "0060"): switchable 0x6E-value drossel, distinct from the earlier "0050" 0x81-binary meter
     ],
   },
 

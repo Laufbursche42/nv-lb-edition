@@ -20,6 +20,7 @@ If no matching section exists the notes fall back to the commit messages, so kee
 
 - New in-app **Beginner's Guide** for new users: a model-by-model decision tree - which patch fits your scooter, Bluetooth-only versus flash, switchable versus permanent, and what each one needs - reached from Settings (the "Beginner's Guide" entry just above the version info). Fully bilingual (EN/DE).
 - Security hardening: theme-file access is now confined to the app's own themes directory (user-supplied names are sanitized and the resolved path is checked for containment), and the asset-logger neutralizes CR/LF in logged names. Clears the CodeQL path-injection and log-injection alerts. No user-facing behavior change.
+- UT5 Max switchable speed is now a selectable value instead of a plain on/off. The newest patched meter (marker "0060") forwards a live class-0x6E value as drive-frame byte10, so you choose both the locked and the open km/h in the scooter settings, exactly like XT5, ST3/GT3, GT5 and ST5. The earlier "0050" meter keeps its on/off toggle. Experimental and not yet confirmed on hardware - it carries the untested warning.
 
 ## 1.0.100
 
