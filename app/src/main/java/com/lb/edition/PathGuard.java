@@ -17,13 +17,17 @@ final class PathGuard {
         return ensureInside(baseDir, new File(baseDir, name));
     }
 
-    /** Returns {@code target} only if its canonical path stays inside {@code baseDir}. */
+    /**
+     * Returns the canonical file only if its canonical path stays inside {@code baseDir}.
+     * The validated canonical path is what is returned (not the raw target), so downstream file
+     * operations consume the guarded value rather than the attacker-influenced input.
+     */
     static File ensureInside(File baseDir, File target) throws IOException {
         String base = baseDir.getCanonicalPath();
         String path = target.getCanonicalPath();
         if (!path.equals(base) && !path.startsWith(base + File.separator)) {
             throw new IOException("path escapes base directory: " + target);
         }
-        return target;
+        return new File(path);
     }
 }

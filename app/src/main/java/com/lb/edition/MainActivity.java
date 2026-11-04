@@ -1589,8 +1589,10 @@ public class MainActivity extends Activity {
                 is.close();
                 return out.toString("UTF-8");
             } catch (Throwable t) {
-                // Neutralize CR/LF in the user-supplied name before logging (log injection).
-                Log.w(TAG, "LB.getAsset failed for " + name.replaceAll("[\\r\\n]", "_"), t);
+                // Allowlist the user-supplied name before logging: keep only safe filename
+                // characters, map everything else (control chars included) to '_' (log injection).
+                String safe = name.replaceAll("[^A-Za-z0-9._-]", "_");
+                Log.w(TAG, "LB.getAsset failed for " + safe, t);
                 return "";
             }
         }
