@@ -5,7 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
-      "<b>New: in-app Beginner Guide.</b> New here and not sure where to start? A short guide in Settings walks you through connecting to your scooter, unlocking it and flashing the firmware - reach it from the Beginner Guide entry just above the version info.",
+      "<b>New: in-app Beginner's Guide.</b> New here and not sure where to start? A short guide in Settings walks you through connecting to your scooter, unlocking it and flashing the firmware - reach it from the Beginner's Guide entry just above the version info.",
       "<b>Fixed: live-speed menu could go missing on a patched meter.</b> On a patched meter the Bluetooth live-speed selector in the scooter settings could stay hidden after connecting (most often on XT5), because the meter version arrives a moment after the model is known; it now appears reliably once the meter reports in.",
       "<b>Correct theme version.</b> Carbon and Lambo are now version 5.2, and the Theme Manager shows each theme's real version (imported or re-seeded themes could show 1.0 before).",
       "<b>Eight quick buttons on Carbon &amp; Lambo.</b> The gauge themes now show the full eight quick buttons; one was being hidden, so only seven appeared.",
@@ -505,9 +505,9 @@ window.I18N = {
     "settings.scooter.errors.action": "&#9888; Read error reports",
     "settings.scooter.errors.hint": "The scooter's active fault code (scooter must be connected)",
     "settings.scooter.group.title": "Scooter",
-    "start.menu.action": "👋 Beginner Guide",
+    "start.menu.action": "👋 Beginner's Guide",
     "start.menu.hint": "A short guide: connect, unlock and flash your scooter.",
-    "start.title": "Beginner Guide",
+    "start.title": "Beginner's Guide",
     "start.intro": "New here and not sure how it works? You have Android, so this app is all you need: connect to your scooter, unlock it and flash the firmware right here - nothing leaves your phone.",
     "start.s1.title": "1. Connect your scooter",
     "start.s1.text": "Switch the scooter on and keep it close, with Bluetooth on. In Settings, tap \"Connect scooter\" and pick your scooter from the list.",
@@ -516,7 +516,6 @@ window.I18N = {
     "start.s3.title": "3. Switchable or permanent",
     "start.s3.text": "Some unlocks are switchable - triple-tap the speed tile to flip between the legal 22 km/h and your open speed. Others are permanent until you flash the stock firmware back. The patcher shows which one fits your scooter.",
     "start.risk": "At your own risk: on some models patching is experimental and not yet hardware-confirmed, and raising the speed voids the road approval. Use only on your own scooter on private ground.",
-    "start.forum": "Stuck? Ask in the forum",
     "settings.account.group.title": "NAVEE Account ID",
     "settings.account.intro": "Some scooters (for example the NAVEE ST3 Pro) are bound to a NAVEE account and close the Bluetooth link after about ten seconds unless the app authenticates. Enter the account ID to keep the link open, which is needed for flashing.",
     "settings.account.notid": "This is NOT the NAVEE ID you can see in the NAVEE app. It is the internal account binding ID.",
@@ -1559,7 +1558,6 @@ window.I18N = {
     "start.s3.title": "3. Umschaltbar oder permanent",
     "start.s3.text": "Manche Entsperrungen sind umschaltbar - dreimal auf die Tempo-Kachel tippen, um zwischen den legalen 22 km/h und deinem offenen Tempo zu wechseln. Andere bleiben permanent, bis du die Stock-Firmware zurückflashst. Der Patcher zeigt, was zu deinem Roller passt.",
     "start.risk": "Auf eigenes Risiko: Bei manchen Modellen ist das Patchen experimentell und noch nicht auf Hardware bestätigt, und ein höheres Tempo hebt die Straßenzulassung auf. Nur am eigenen Roller auf privatem Grund.",
-    "start.forum": "Hängst du fest? Frag im Forum",
     "settings.account.group.title": "NAVEE Account-ID",
     "settings.account.intro": "Manche Roller wie der NAVEE ST3 Pro sind an ein NAVEE-Konto gebunden und schließen die Bluetooth-Verbindung nach etwa zehn Sekunden, solange die App sich nicht authentifiziert. Trage die Konto-ID ein, damit die Verbindung offen bleibt. Das ist zum Flashen nötig.",
     "settings.account.notid": "Das ist NICHT die NAVEE-ID, die du in der NAVEE-App sehen kannst. Es ist die interne Konto-Bindungs-ID.",
