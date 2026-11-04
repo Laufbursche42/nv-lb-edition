@@ -1051,18 +1051,22 @@ body.bottom-nav-active #btn-settings { display: none !important; }
 #std-tile-extras { padding: 0; }
 
 /* ── Theme + guide sub-page shells (slide-in from the right) + their scrollers ── */
-#theme-page, #guide-page {
+#theme-page, #guide-page, #start-page {
   position: fixed; inset: 0; z-index: 120; background: var(--bg);
   display: flex; flex-direction: column;
   transform: translateX(100%); transition: transform .28s cubic-bezier(.4,0,.2,1);
 }
-#theme-page.open, #guide-page.open { transform: translateX(0); }
-#settings-scroller, #theme-scroller, #guide-scroller {
+#theme-page.open, #guide-page.open, #start-page.open { transform: translateX(0); }
+#settings-scroller, #theme-scroller, #guide-scroller, #start-scroller {
   flex: 1; min-height: 0; overflow-y: auto; padding: var(--gap);
   display: flex; flex-direction: column; gap: 4px;
   padding-bottom: calc(var(--gap) + env(safe-area-inset-bottom, 0px) + 12px);
 }
-#settings-scroller > *, #theme-scroller > *, #guide-scroller > * { flex-shrink: 0; }
+#settings-scroller > *, #theme-scroller > *, #guide-scroller > *, #start-scroller > * { flex-shrink: 0; }
+#start-scroller { padding-left: calc(var(--gap) + 5px); padding-right: calc(var(--gap) + 5px); }
+#start-scroller .settings-group-title { margin-top: 18px; }
+#start-scroller .start-risk { color: var(--warn); margin-top: 14px; }
+#btn-start-forum { margin-top: 18px; }
 #theme-scroller { padding-left: calc(var(--gap) + 5px); padding-right: calc(var(--gap) + 5px); }
 
 /* ── Theme manager page ── */
