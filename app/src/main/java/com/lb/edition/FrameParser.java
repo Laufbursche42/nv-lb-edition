@@ -27,6 +27,12 @@ final class FrameParser {
 
     // live / status model
     private Integer speed, mode, soc, range, totalMile, fault;
+    // The authoritative battery charge is the 0x72 "read battery" cell (payload off 1), which the app
+    // polls every ~5 s. The realtime pushes 0x90/0x92 also carry a charge byte, but its offset is
+    // meter-platform dependent (correct on the XT5 T2202 meter, a different field on the UT5 Max T2314
+    // meter, where off 2 is a charge-state enum and the real charge sits one byte over). To stay correct
+    // across meters, once a 0x72 read has delivered a charge we stop letting the pushes overwrite it.
+    private boolean socFromRead = false;
     private String region = "", serial = "", pid = "", configRaw = "";
     private Integer maxSpeed, limitSpeed, limitOn, startSpeed, lock, unit, breakSpeed, driveMode, cruise, tcs, eco;
     private Integer tailLight, autoLight, drl, logoLight, ambientLight;   // light switches from the 0x70 report (offsets 4/8/24/23/10)
@@ -173,6 +179,7 @@ final class FrameParser {
 
     private void decodeBattery(byte[] p) {
         soc = rd(p, 1, 1, false);
+        if (soc != null) socFromRead = true;   // 0x72 is the authoritative charge cell; prefer it over the pushes
         packMv = rd(p, 2, 4, false);
         Integer c = rd(p, 6, 4, false);
         if (c != null) packMa = ((c & 0x80000000) != 0) ? -(c & 0x7fffffff) : c;
@@ -264,7 +271,7 @@ final class FrameParser {
         if (cmd == 0x90) {                                   // homepage report
             fault = rd(p, 0, 1, false);                      // warning code, raw BCD byte (decoded to the shared table in the UI)
             mode = rd(p, 1, 1, false);                       // drive mode (display)
-            Integer s = rd(p, 2, 1, false); if (s != null) soc = s;          // battery charge
+            Integer s = rd(p, 2, 1, false); if (s != null && !socFromRead) soc = s;   // battery charge (offset valid on XT5; UT5 Max uses 0x72 instead)
             batteryStatus = rd(p, 3, 1, false);
             chargingState = rd(p, 4, 1, false);
             Integer r = rd(p, 6, 1, false); if (r != null) range = r;        // remaining range
@@ -282,7 +289,7 @@ final class FrameParser {
             tripMile = rd(p, 4, 1, false);
             Integer tot = rd(p, 8, 1, false); if (tot != null) totalMile = tot;
         } else if (cmd == 0x92) {                            // ride report v1 (deci-units, /10)
-            Integer s = rd(p, 0, 1, false); if (s != null) soc = s;
+            Integer s = rd(p, 0, 1, false); if (s != null && !socFromRead) soc = s;
             drivingStatus = rd(p, 1, 1, false);
             Integer sp = rd(p, 2, 2, false); if (sp != null) speed = sp / 10;
             Integer r = rd(p, 4, 1, false); if (r != null) range = r;
