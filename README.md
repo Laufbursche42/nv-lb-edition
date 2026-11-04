@@ -158,6 +158,7 @@ The stock firmware is fetched from NAVEE's own public storage as a plain downloa
 
 - **Error reports** view - the scooter reports **one numeric fault code**. The app decodes it against the official NAVEE fault table (one shared table across the models) and shows the plain-text cause, for example *E9 - controller and battery communication*. A code that is not in that table is shown **raw**, never guessed, and the whole lookup runs on the phone with no server.
 - **Scooter info page**, read-only and read live over Bluetooth: the **Bluetooth name**, the **serial number** and the five firmware versions the scooter reports - display/meter, controller (BLDC), BMS, screen and UWB. (The app version lives in the "Version Info & Disclaimer" entry, not here.)
+- **Beginner Guide** - a short in-app walkthrough for new users: connect, unlock and flash, reached from Settings (the "Beginner Guide" entry just above the version info). Bilingual (EN/DE).
 
 ### Battery info
 

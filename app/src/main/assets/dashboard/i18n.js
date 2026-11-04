@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>New: in-app Beginner Guide.</b> New here and not sure where to start? A short guide in Settings walks you through connecting to your scooter, unlocking it and flashing the firmware - reach it from the Beginner Guide entry just above the version info.",
       "<b>Fixed: live-speed menu could go missing on a patched meter.</b> On a patched meter the Bluetooth live-speed selector in the scooter settings could stay hidden after connecting (most often on XT5), because the meter version arrives a moment after the model is known; it now appears reliably once the meter reports in.",
       "<b>Correct theme version.</b> Carbon and Lambo are now version 5.2, and the Theme Manager shows each theme's real version (imported or re-seeded themes could show 1.0 before).",
       "<b>Eight quick buttons on Carbon &amp; Lambo.</b> The gauge themes now show the full eight quick buttons; one was being hidden, so only seven appeared.",
@@ -1047,6 +1048,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Neu: Einsteiger-Anleitung in der App.</b> Neu hier und unsicher, wo du anfangen sollst? Eine kurze Anleitung in den Einstellungen führt dich durch Verbinden, Entsperren und Flashen - du erreichst sie über den Eintrag Einsteiger-Anleitung direkt über der Versionsinfo.",
       "<b>Behoben: Live-Geschwindigkeitsmenü konnte auf einem gepatchten Tacho fehlen.</b> Auf einem gepatchten Tacho konnte der Bluetooth-Live-Umschalter in den Roller-Einstellungen nach dem Verbinden verborgen bleiben (am häufigsten bei XT5), weil die Tacho-Version kurz nach dem Modell eintrifft; er erscheint jetzt zuverlässig, sobald sich der Tacho meldet.",
       "<b>Korrekte Theme-Version.</b> Carbon und Lambo sind jetzt Version 5.2, und der Theme-Manager zeigt die echte Version jedes Themes (importierte oder neu eingespielte Themes konnten vorher 1.0 anzeigen).",
       "<b>Acht Schnell-Buttons bei Carbon &amp; Lambo.</b> Die Gauge-Themes zeigen jetzt alle acht Schnell-Buttons; einer wurde ausgeblendet, sodass nur sieben erschienen.",
