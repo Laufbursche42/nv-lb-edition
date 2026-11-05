@@ -8,9 +8,11 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -85,6 +87,19 @@ public class MainActivity extends Activity {
     // null. The flasher writes meter first, then bldc.
     private volatile byte[] stagedMeter;
     private volatile byte[] stagedBldc;
+
+    /**
+     * Pin the app's font scale to 1.0 regardless of the device "font size" accessibility setting.
+     * The dashboard sizes everything itself (theme style editor + CSS vars), and some OEM WebViews
+     * (ColorOS, Samsung) ignore WebSettings.setTextZoom and scale text from the host
+     * Configuration.fontScale instead, which overflows the fixed tile layout.
+     */
+    @Override
+    protected void attachBaseContext(Context base) {
+        Configuration cfg = new Configuration(base.getResources().getConfiguration());
+        cfg.fontScale = 1.0f;
+        super.attachBaseContext(base.createConfigurationContext(cfg));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
