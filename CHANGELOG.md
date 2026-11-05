@@ -16,6 +16,14 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.104
+
+- Theme Manager font controls reworked to match the other Laufbursche Edition apps (shared dashboard layer). Every text on the dashboard now has its own adjustable size - the GPS speed readout, the ride-data grid below the fold, the All-values list and the section headers, in addition to the speedo, upper tiles and tile rows that were already adjustable. The style editor groups them under clear sub-headers (speedo and upper tiles / tile rows / buttons and more text).
+- The size fields in the style editor are now minus/plus steppers. They work without a soft keyboard (some emulators and OEM WebViews suppress soft input, so the sizes could not be changed at all before); the number stays editable where a keyboard is present and a live preview applies while typing.
+- The per-row tile-text knobs (rows 2 and 3) now really bind on the packed Default dashboard. The Default fold has no #motor-row wrappers, so rows 2 and 3 previously fell back to row 1's size; the visible motor cells are now tagged by visual row (data-mrow) and the row 2/3 knobs reach them.
+- Quick-button font size is adjustable across its full range (the value was only the ceiling of a clamp, so raising it did nothing before) and the range is widened to 5-30.
+- Carbon and Lambo re-seed on this release with the same per-text bindings, so a font-size change really takes effect in every theme - the Default dashboard, Carbon and Lambo.
+
 ## 1.0.103
 
 - UT5 Max firmware patcher reworked into a clear top-to-bottom choice. Instead of a confusing mix of checkboxes the patcher now asks one question first: keep the throttle **Bluetooth-switchable** (patches only the meter and leaves the controller untouched - cruise and kickstart run through the meter anyway) or open it **permanently** (patches the controller). The controller-version selection no longer gates entry; it only appears on the permanent path, where the speed actually comes from. Both supported controller versions (0.0.1.0 and 0.0.1.3) are selectable there.
