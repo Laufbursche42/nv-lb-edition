@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Clearer UT5 Max patcher.</b> The firmware patcher now asks one simple question first - keep the throttle Bluetooth-switchable (patches only the meter and leaves the controller alone) or open it permanently (patches the controller). Throttle limit, cruise control and kickstart are now each their own checkbox, so you can pick only cruise or only kickstart - they no longer switch each other off. The controller-version choice only appears on the permanent path.",
+      "<b>Your original firmware is saved.</b> Before patching, the app saves your scooter's untouched firmware to your Downloads folder with a readable name (for example UT5_Max_meter_0.0.3.0_original.bin) and tells you it did - so you always have a clean backup to flash back.",
       "<b>Theme settings now take effect in every theme.</b> Font size, colour and spacing from the Theme Manager's style editor now really apply across all themes - the Default dashboard, Carbon and Lambo - including the packed Default grid, which now follows your font sliders.",
       "<b>No more overflow from large fonts.</b> Oversized values wrap inside their tile instead of being cut off. The app also ignores the phone's system font-size setting, so a large accessibility font can no longer push text past the tile layout.",
       "<b>New: in-app Beginner's Guide.</b> New here and not sure where to start? A model-by-model guide in Settings shows which route fits your scooter - Bluetooth-only or flash, switchable or permanent, and what each one needs - reach it from the Beginner's Guide entry just above the version info.",
@@ -606,6 +608,10 @@ window.I18N = {
     "patch.ut5max.conflict.both": "Heads up: this scooter already has BOTH patches flashed - controller 0.0.8.0 (permanent de-restriction) plus meter 0.0.5.0 (switchable toggle). The controller patch overrides the meter, so the speed toggle does nothing. Pick one: flash the stock controller back to use the switchable toggle, or flash the stock meter to keep the permanent de-restriction.",
     "patch.ut5max.conflict.ctrl": "This scooter's controller is already permanently de-restricted (0.0.8.0). A switchable meter patch has no effect while this controller is flashed - it overrides the toggle. To use the switchable toggle instead, flash the stock controller back first.",
     "patch.ut5max.conflict.meter": "This scooter's meter is on the switchable path (0.0.5.0). If you flash the controller patch now, the toggle stops working - the controller's permanent de-restriction overrides it.",
+    "patch.ut5max.path.meter": "Switchable in the app (throttle limit on/off over Bluetooth) - recommended",
+    "patch.ut5max.path.ctrl": "Permanently open (fixed 40 km/h, set in the controller)",
+    "patch.ut5max.included": "Always included:",
+    "patch.saved.original": "Original saved to Downloads: {name}",
     "patch.run.experimental": "No patching for this model here. Flash a firmware file you were provided on the Firmware page instead.",
     "patch.status.download": "Downloading {kind}...",
     "patch.status.patch": "Patching {kind}...",
@@ -624,7 +630,7 @@ window.I18N = {
     "feat.cruise": "Cruise control",
     "feat.launchramp": "Launch ramp (stronger pull-away)",
     "feat.launchramp.expl": "XT5 Pro/Max only. The controller raises its drive command in steps when you pull away - 3 counts per pass in \"Sport legal\", only 2 in the unlocked mode. That is why unlocked feels softer off the line and the power readout stays lower, even though the current limit is the same in both modes. This patch gives the unlocked mode the same 3 counts. It does not raise the limit itself. Eco and Comfort are untouched; walk assist ramps up slightly quicker. Two bytes inside the image, no bootloader, no length change - but confirmed on no hardware: a steeper launch means more peak load on the drivetrain and less traction in the wet.",
-    "feat.drossel": "Switchable speed limit (Bluetooth)",
+    "feat.drossel": "Throttle limit (Bluetooth-switchable)",
     "feat.drossel.expl": "Opens the meter's region gate so the top speed becomes switchable live over Bluetooth after flashing (no re-flash to change it). Pick the speed in the live control; 22 = locked, higher = open, up to the model's ceiling. Experimental: this is a flashed meter (hosts Bluetooth), so it carries the untested warning.",
     "feat.kickstart": "Kick-start (zero start)",
     "feat.beep-overspeed": "Silence over-speed warning",
@@ -1083,6 +1089,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Übersichtlicherer UT5-Max-Patcher.</b> Der Firmware-Patcher stellt jetzt zuerst eine einfache Frage - Drossel per Bluetooth schaltbar halten (patcht nur den Tacho und lässt den Controller in Ruhe) oder dauerhaft offen (patcht den Controller). Drossel, Tempomat und Kickstart sind jetzt jeweils ein eigener Haken, du kannst also nur Tempomat oder nur Kickstart wählen - sie schalten sich nicht mehr gegenseitig aus. Die Controller-Version wird nur noch im permanenten Weg abgefragt.",
+      "<b>Deine Original-Firmware wird gespeichert.</b> Vor dem Patchen sichert die App die unveränderte Firmware deines Rollers in deinen Download-Ordner mit einem klingenden Namen (zum Beispiel UT5_Max_meter_0.0.3.0_original.bin) und zeigt dir das an - so hast du immer ein sauberes Backup zum Zurückflashen.",
       "<b>Theme-Einstellungen greifen jetzt in jedem Theme.</b> Schriftgröße, Farbe und Abstände aus dem Stil-Editor des Theme-Managers wirken jetzt wirklich in allen Themes - Standard-Dashboard, Carbon und Lambo - auch im gepackten Standard-Raster, das jetzt deinen Schriftreglern folgt.",
       "<b>Kein Überlauf mehr durch große Schrift.</b> Zu große Werte brechen in der Kachel um, statt abgeschnitten zu werden. Außerdem ignoriert die App jetzt die System-Schriftgröße des Handys, damit eine große Bedienungshilfen-Schrift den Kachel-Aufbau nicht mehr sprengt.",
       "<b>Neu: Einsteiger-Anleitung in der App.</b> Neu hier und unsicher, wo du anfangen sollst? Eine Anleitung nach Modell in den Einstellungen zeigt, welcher Weg zu deinem Roller passt - nur Bluetooth oder Flash, umschaltbar oder permanent und was jeder braucht - zu finden über den Eintrag Einsteiger-Anleitung direkt über der Versionsinfo.",
@@ -1684,6 +1692,10 @@ window.I18N = {
     "patch.ut5max.conflict.both": "Achtung: auf diesem Scooter sind bereits BEIDE Patches geflasht - Controller 0.0.8.0 (dauerhaft entdrosselt) plus Meter 0.0.5.0 (schaltbarer Toggle). Der Controller-Patch überschreibt den Tacho, der Geschwindigkeits-Schalter bewirkt also nichts. Entscheide dich für einen Weg: flashe den Serien-Controller zurück, um den schaltbaren Toggle zu nutzen, oder flashe den Serien-Meter zurück, um bei der dauerhaften Entdrosselung zu bleiben.",
     "patch.ut5max.conflict.ctrl": "Der Controller dieses Scooters ist bereits dauerhaft entdrosselt (0.0.8.0). Ein schaltbarer Tacho-Patch bleibt wirkungslos, solange dieser Controller geflasht ist - er überschreibt den Schalter. Für den schaltbaren Toggle erst den Serien-Controller zurückflashen.",
     "patch.ut5max.conflict.meter": "Der Meter dieses Scooters ist auf dem schaltbaren Weg (0.0.5.0). Flashst du jetzt den Controller-Patch, hört der Schalter auf zu wirken - die dauerhafte Entdrosselung des Controllers überschreibt ihn.",
+    "patch.ut5max.path.meter": "Schaltbar über die App (Drossel an/aus per Bluetooth) - empfohlen",
+    "patch.ut5max.path.ctrl": "Dauerhaft offen (40 km/h fest, im Controller gesetzt)",
+    "patch.ut5max.included": "Immer enthalten:",
+    "patch.saved.original": "Original in Downloads gespeichert: {name}",
     "patch.run.experimental": "Für dieses Modell hier kein Patchen. Flashe stattdessen auf der Firmware-Seite eine fertige Firmware-Datei, die du bekommen hast.",
     "patch.status.download": "{kind} wird heruntergeladen...",
     "patch.status.patch": "{kind} wird gepatcht...",
@@ -1702,7 +1714,7 @@ window.I18N = {
     "feat.cruise": "Tempomat",
     "feat.launchramp": "Anfahr-Rampe (kräftigeres Losfahren)",
     "feat.launchramp.expl": "Nur XT5 Pro/Max. Der Controller zieht seinen Fahrbefehl beim Losfahren in Stufen hoch - im Modus \"Sport legal\" 3 Zähler pro Durchlauf, im entsperrten Modus nur 2. Darum fühlt sich entsperrt beim Anfahren schwächer an und die Leistungsanzeige bleibt niedriger, obwohl die Stromgrenze in beiden Modi dieselbe ist. Dieser Patch gibt dem entsperrten Modus dieselben 3 Zähler. Die Grenze selbst wird nicht angehoben. Eco und Komfort bleiben unverändert, die Schiebehilfe läuft etwas zügiger an. Zwei Bytes innerhalb des Images, kein Bootloader, kein Längen-Eingriff - aber an keiner Hardware bestätigt: steileres Anfahren heißt mehr Lastspitze auf den Antrieb und weniger Traktion bei Nässe.",
-    "feat.drossel": "Schaltbare Drossel (Bluetooth)",
+    "feat.drossel": "Drossel (Bluetooth schaltbar)",
     "feat.drossel.expl": "Öffnet das Regions-Gate im Tacho, damit die Höchstgeschwindigkeit nach dem Flashen live per Bluetooth umschaltbar ist (ohne neu zu flashen). Die Geschwindigkeit wählst du im Live-Regler; 22 = gedrosselt, höher = offen, bis zur Decke des Modells. Experimentell: das ist ein geflashter Tacho (hält Bluetooth), daher die Ungetestet-Warnung.",
     "feat.kickstart": "Kickstart (Zero-Start)",
     "feat.beep-overspeed": "Warnton (Tempo) stumm",

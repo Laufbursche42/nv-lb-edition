@@ -4383,7 +4383,7 @@ const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '551
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Untested models: still patchable, but shown with the untested warning (not yet confirmed on recoverable hardware).
-const EXPERIMENTAL_PIDS = ['2585', '2538']; // UT5 Ultra X, UT5 Max - carry the untested warning
+const EXPERIMENTAL_PIDS = ['2585']; // UT5 Ultra X - carries the untested warning (UT5 Max 2538 now HW-confirmed, freed by Bob despite brick-prone; general flash-risk notes still apply)
 // Hard block: models that must NOT be patched in-app at all. Mechanism kept available, but currently EMPTY -
 // every NAVEE scooter is patchable; unconfirmed ones carry the untested warning (EXPERIMENTAL_PIDS + image flag).
 const PATCH_BLOCKED_PIDS = [];
@@ -6605,9 +6605,11 @@ function fwBldcVariants(id) {
 }
 
 /* ── Patcher page: pick the matching stock bins, download, patch, hand off ──────── */
+let _ut5Path = 'meter';   // UT5 Max path memory across re-renders: 'meter' (switchable) or 'ctrl' (permanent)
 function openPatcherPage() {
   document.getElementById('patcher-page').classList.add('open');
   const st = document.getElementById('patch-status'); if (st) { st.classList.add('is-hidden'); st.textContent = ''; }
+  _ut5Path = 'meter';   // default to the switchable meter path each time the page opens
   renderPatcherModel();
 }
 function closePatcherPage() {
@@ -6622,7 +6624,13 @@ function renderPatcherModel(forcedId) {
   fwState.model = null;
   hidePatchFeatures();
   if (!state.bleConnected) { modelEl.textContent = t('patch.model.connect'); btn.disabled = true; hint.textContent = ''; return; }
-  const det = forcedId ? fwModelEntry(forcedId) : fwDetectModel();
+  let det = forcedId ? fwModelEntry(forcedId) : fwDetectModel();
+  // UT5 Max: the two board variants (8901/8902) share the SAME meter image, so patching the meter needs
+  // no controller-version choice. Skip the variant gate and go straight to the flow; the controller
+  // version is picked only inside the "Permanently open" (controller) path.
+  if (det.state === 'variants' && det.pid === '2538' && det.ids && det.ids.length) {
+    det = fwModelEntry(det.ids[0]);
+  }
   if (det.state === 'ok') {
     fwState.model = det;
     // Remember what the scooter actually runs (only on a fresh detect, not when the user forced a
@@ -6640,7 +6648,16 @@ function renderPatcherModel(forcedId) {
     const parts = [];
     if (det.meter) parts.push('Meter ' + det.meter.vn);
     if (det.bldc) parts.push('Controller ' + det.bldc.vn);
-    modelEl.textContent = det.name + (parts.length ? ' (' + parts.join(', ') + ')' : '');
+    modelEl.innerHTML = '';
+    const nmLine = document.createElement('div'); nmLine.textContent = det.name;
+    nmLine.style.cssText = 'font-size:16px;font-weight:600;line-height:1.3';
+    modelEl.appendChild(nmLine);
+    if (parts.length) {
+      const vLine = document.createElement('div'); vLine.textContent = parts.join(' · ');
+      vLine.style.cssText = 'opacity:.7;font-size:13px;margin-top:2px';
+      modelEl.appendChild(vLine);
+    }
+    modelEl.style.margin = '2px 0 16px';
     if (isPatchBlocked()) {   // hard block: not patchable in-app, flash a provided file instead
       hidePatchFeatures();
       btn.disabled = true;
@@ -6708,7 +6725,7 @@ function patchFeatureList(det) {
     // XT5 meter: kickstart + the switchable drossel (byte10 gate) + beeps; this meter has no cruise patch.
     else if (['5301', '5901', '5801', '5302', '5902'].indexOf(mid) >= 0) feats.push('kickstart', 'drossel', 'beep-overspeed', 'beep-alarm', 'beep-melody');
     // UT5 Max meter: no over-speed tone (speed is controller-side); cruise+kickstart are the core set.
-    else if (['8901', '8902'].indexOf(mid) >= 0) feats.push('cruise', 'kickstart', 'beep-alarm', 'beep-melody');
+    else if (['8901', '8902'].indexOf(mid) >= 0) feats.push('drossel', 'cruise', 'kickstart', 'beep-alarm', 'beep-melody');
     else feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   }
   return feats;
@@ -6786,6 +6803,7 @@ function renderPatchFeatures(det) {
       box.classList.remove('is-hidden');
       const head = document.createElement('div');
       head.className = 'settings-group-title'; head.textContent = t('patch.features.title');
+      head.style.cssText = 'margin:6px 0 12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)';
       box.appendChild(head);
       // Firmware-version pickers (controller + display), defaulting to what the scooter runs. Both axes
       // treated the same. Picking a version other than the installed one flashes a combination nobody has
@@ -6843,49 +6861,88 @@ function renderPatchFeatures(det) {
         n.textContent = t('patch.meter.never');
         box.appendChild(n);
       }
-      for (const f of feats) {
-        const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '4px 0';
-        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f;
-        // performance features on by default; tone silences and the untested ramp off
-        cb.checked = f.indexOf('beep') !== 0 && f !== 'launchramp';
-        lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + patchFeatureLabel(f)));
-        box.appendChild(lab);
-        const expl = t('feat.' + f + '.expl');
-        if (expl !== 'feat.' + f + '.expl') {
-          const h = document.createElement('div'); h.className = 'hint'; h.style.margin = '0 0 6px 20px';
-          h.textContent = expl; box.appendChild(h);
+      const _isUt5 = ['8901', '8902'].indexOf(String(det.id)) >= 0;
+      if (!_isUt5) {
+        for (const f of feats) {
+          const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '4px 0';
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f;
+          // performance features on by default; tone silences and the untested ramp off
+          cb.checked = f.indexOf('beep') !== 0 && f !== 'launchramp';
+          lab.appendChild(cb); lab.appendChild(document.createTextNode(' ' + patchFeatureLabel(f)));
+          box.appendChild(lab);
+          const expl = t('feat.' + f + '.expl');
+          if (expl !== 'feat.' + f + '.expl') {
+            const h = document.createElement('div'); h.className = 'hint'; h.style.margin = '0 0 6px 20px';
+            h.textContent = expl; box.appendChild(h);
+          }
         }
-      }
-      // UT5 Max: the switchable meter patch (BLE speed toggle between 22 and open, plus kickstart and
-      // cruise) needs a stock controller; the controller patch is a permanent 40 that overrides the meter
-      // and kills the toggle. Mutually exclusive - checking one auto-unchecks the other. Default: meter path.
-      if (['8901', '8902'].indexOf(String(det.id)) >= 0) {
-        // Live conflict check: the controller patch (fwBldc "0080") and the meter patch (fwMeter "0050")
-        // cannot be prevented across separate flash sessions, so warn when the connected device already
-        // carries one or both. Both on at once = the controller overrides the meter, toggle is dead.
+      } else {
+        // UT5 Max: one clear either/or instead of a checkbox mix. The switchable meter patch (drossel +
+        // cruise + kickstart, applied as a forced unit) vs the permanent controller 40. The meter core is
+        // stated ("always included"), never a defeatable checkbox; only the two silenceable tones stay optional.
         const liveB = (liveRaw().fwBldc || '').trim();
         const liveM = (liveRaw().fwMeter || '').trim();
         const ctrlPatched = liveB === '0080' || liveB === '0083';   // 0.0.1.0 -> "0080", 0.0.1.3 -> "0083"
-        const meterPatched = liveM === '0050';
+        const meterPatched = liveM === '0050' || liveM === '0060';
         const conflict = (ctrlPatched && meterPatched) ? 'both' : ctrlPatched ? 'ctrl' : meterPatched ? 'meter' : '';
         if (conflict) {
-          const cw = document.createElement('div');
-          cw.className = 'patch-disclaimer'; cw.style.margin = '0 0 8px'; cw.style.fontWeight = '600';
-          cw.textContent = t('patch.ut5max.conflict.' + conflict);
-          box.insertBefore(cw, box.firstChild);
+          const cw = document.createElement('div'); cw.className = 'patch-disclaimer'; cw.style.margin = '0 0 8px'; cw.style.fontWeight = '600';
+          cw.textContent = t('patch.ut5max.conflict.' + conflict); box.appendChild(cw);
         }
-        const nx = document.createElement('div');
-        nx.className = 'patch-disclaimer'; nx.style.margin = '6px 0 2px';
-        nx.textContent = t('patch.ut5max.exclusive');
-        box.appendChild(nx);
-        const cbsX = Array.from(box.querySelectorAll('input[type=checkbox]'));
-        const ctrlX = cbsX.filter(c => c.value === 'speed');
-        const meterX = cbsX.filter(c => c.value !== 'speed');
-        ctrlX.forEach(c => { c.checked = false; });   // recommended default: switchable meter path
-        cbsX.forEach(c => c.addEventListener('change', function () {
-          if (!c.checked) return;
-          (c.value === 'speed' ? meterX : ctrlX).forEach(o => { o.checked = false; });
-        }));
+        // Hidden checkbox drives the permanent-path staging: 'speed' = controller patch.
+        const hSpeed = document.createElement('input'); hSpeed.type = 'checkbox'; hSpeed.value = 'speed'; hSpeed.style.display = 'none';
+        box.appendChild(hSpeed);
+        const mkRadio = (val, label) => {
+          const l = document.createElement('label'); l.className = 'patch-feature-row'; l.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin:11px 0;line-height:1.35';
+          const r = document.createElement('input'); r.type = 'radio'; r.name = 'ut5path'; r.value = val; r.style.marginTop = '3px';
+          const sp = document.createElement('span'); sp.textContent = label;
+          l.appendChild(r); l.appendChild(sp); box.appendChild(l); return r;
+        };
+        const rMeter = mkRadio('meter', t('patch.ut5max.path.meter'));
+        const rCtrl = mkRadio('ctrl', t('patch.ut5max.path.ctrl'));
+        // Switchable (meter) path: each feature is picked on its own - a user may want only the drossel, or
+        // only cruise, or only kickstart. Drossel/cruise/kickstart on by default, the two tone silences off.
+        const ex = document.createElement('div'); ex.id = 'ut5-extras'; ex.style.margin = '2px 0 0 20px';
+        ['drossel', 'cruise', 'kickstart', 'beep-alarm', 'beep-melody'].forEach(f => {
+          if (feats.indexOf(f) < 0) return;
+          const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin:9px 0;line-height:1.35';
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f; cb.style.marginTop = '3px';
+          cb.dataset.def = (f.indexOf('beep') !== 0) ? '1' : '0';
+          cb.checked = cb.dataset.def === '1';
+          const sp = document.createElement('span'); sp.textContent = patchFeatureLabel(f);
+          lab.appendChild(cb); lab.appendChild(sp);
+          ex.appendChild(lab);
+        });
+        box.appendChild(ex);
+        // Permanent path only: the two board variants share the meter, so the controller version matters
+        // only here. A small picker; changing it re-renders with that controller image, staying on this path.
+        const exCtrl = document.createElement('div'); exCtrl.id = 'ut5-ctrl'; exCtrl.style.margin = '2px 0 0 20px';
+        const ctrlIds = (window.FW_MANIFEST && window.FW_MANIFEST.pidIndex && window.FW_MANIFEST.pidIndex['2538']) || [];
+        if (ctrlIds.length > 1) {
+          const ch = document.createElement('div'); ch.className = 'settings-group-title'; ch.style.marginTop = '4px'; ch.textContent = t('patch.ctrlver.title');
+          exCtrl.appendChild(ch);
+          const cs = document.createElement('select'); cs.className = 'set-ctrl';
+          ctrlIds.forEach(function (sid) {
+            const b = window.FW_MANIFEST.models[sid] && window.FW_MANIFEST.models[sid].comps.bldc;
+            const o = new Option(b ? b.vn : sid, sid); if (sid === String(det.id)) o.selected = true; cs.appendChild(o);
+          });
+          cs.addEventListener('change', function () { _ut5Path = 'ctrl'; renderPatcherModel(cs.value); });
+          exCtrl.appendChild(cs);
+        }
+        box.appendChild(exCtrl);
+        const applyUt5 = () => {
+          const meter = rMeter.checked;
+          hSpeed.checked = !meter;
+          ex.style.display = meter ? '' : 'none';
+          exCtrl.style.display = meter ? 'none' : '';
+          _ut5Path = meter ? 'meter' : 'ctrl';
+          // Hidden meter checkboxes would still count as selected; restore defaults on the meter path and
+          // clear them on the permanent path so only the chosen path's features are staged.
+          Array.from(ex.querySelectorAll('input[type=checkbox]')).forEach(c => { c.checked = meter && c.dataset.def === '1'; });
+        };
+        rMeter.addEventListener('change', applyUt5); rCtrl.addEventListener('change', applyUt5);
+        if (_ut5Path === 'ctrl') rCtrl.checked = true; else rMeter.checked = true;   // default: switchable meter path
+        applyUt5();
       }
       const spd = naveeSpeedOpts(det);
       if (spd) {
@@ -7044,17 +7101,20 @@ function fwBufToB64(u8) {
   for (let i = 0; i < u8.length; i += chunk) s += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
   return btoa(s);
 }
-// Readable Downloads name: <Model>_<meter|bldc>_<version>.bin (native falls back to the URL hex if empty).
+// Readable Downloads name for the untouched stock image: <Model>_<meter|bldc>_<version>_original.bin
+// (the kind/version make it unmistakable; native falls back to the URL hex only if this is empty).
 function fwReadableName(det, kind, vn) {
   const model = (((det && det.name) || 'navee').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^_+|_+$/g, '')) || 'navee';
   const ver = (vn || '').replace(/[^0-9A-Za-z.]+/g, '');
-  return model + '_' + kind + (ver ? '_' + ver : '') + '.bin';
+  return model + '_' + kind + (ver ? '_' + ver : '') + '_original.bin';
 }
+// The patched copy sits next to the original: same stem, "_original" swapped for "_patched".
 function fwPatchedName(name) {
+  if (/_original\.bin$/i.test(name)) return name.replace(/_original\.bin$/i, '_patched.bin');
   const dot = name.lastIndexOf('.');
   const stem = dot > 0 ? name.slice(0, dot) : name;
   const ext = dot > 0 ? name.slice(dot) : '.bin';
-  return stem + '-patched' + ext;
+  return stem + '_patched' + ext;
 }
 
 window.__onFwDownloaded = function(arg) {
@@ -7066,6 +7126,8 @@ window.__onFwDownloaded = function(arg) {
     document.getElementById('btn-patcher-run').disabled = false;
     return;
   }
+  // Tell the user the untouched original was saved to Downloads (one toast per downloaded component).
+  if (m.name) showToast(tf('patch.saved.original', { name: m.name }), 4500);
   // Skip a component this patcher has no entry for instead of aborting the run.
   try {
     const k = window.NVFW && window.NVFW.identify ? window.NVFW.identify(new Uint8Array(fwB64ToBuf(m.b64))) : null;

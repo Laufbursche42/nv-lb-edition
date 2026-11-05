@@ -174,6 +174,17 @@ final class BleManager {
     private static final int AUTH_MAX_ROUNDS = 4;   // guard against a challenge loop
     private static final String SEC_ACCOUNT = "account_id";
 
+    // ── Offline simulation (debug build with no BT hardware = the emulator) ──
+    // With no Bluetooth adapter there is no scooter to reach. Sim mode exercises the full connect +
+    // patcher flow on a virtual scooter: scan() lists virtual NAVEE models, connect() to a SIM- address
+    // seeds a synthetic scooter of the chosen pid (so liveRaw().pid and every patcher gate behave exactly
+    // as on hardware), and a flash is replayed as a successful DFU. Gated on a debuggable build AND a
+    // null adapter, so it can never engage in a release build or on a device that has real BT hardware.
+    private final boolean sim;
+    private volatile boolean simFlashing = false;
+    private volatile boolean simFlashCancel = false;
+    private static final String SIM_ADDR_PREFIX = "SIM-";
+
     BleManager(Context ctx, Listener listener) {
         this.appCtx = ctx.getApplicationContext();
         this.listener = listener;
@@ -190,6 +201,13 @@ final class BleManager {
         } catch (Throwable t) {
             Log.e(TAG, "adapter init failed", t);
         }
+        boolean dbg = false;
+        try { dbg = (appCtx.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0; }
+        catch (Throwable ignored) {}
+        // Engage only in a debuggable build, and only on the emulator (deterministic Build check) or when
+        // there is genuinely no adapter. Never on a real phone, never in a release build.
+        sim = dbg && (isEmulator() || adapter == null);
+        if (sim) Log.i(TAG, "SIM mode active (debug build on emulator) - virtual scooter for patcher testing");
     }
 
     private static final class ScanEntry {
@@ -206,6 +224,7 @@ final class BleManager {
     // ── Scan ──
 
     void scan() {
+        if (sim) { pushSimScan(); return; }
         try {
             if (adapter == null || !adapter.isEnabled()) {
                 Log.w(TAG, "scan: adapter unavailable/disabled");
@@ -306,6 +325,7 @@ final class BleManager {
     }
 
     void connect(String address) {
+        if (sim) { simConnect(address); return; }
         try {
             if (address == null || address.trim().isEmpty() || adapter == null) return;
             desiredAddress = address.trim();
@@ -329,6 +349,15 @@ final class BleManager {
 
     void disconnect() {
         desiredAddress = null;   // user-initiated: no auto-reconnect
+        if (sim) {
+            stopSimPush();
+            simFlashing = false;
+            simFlashCancel = true;
+            connected = false;
+            notifyReady = false;
+            pushState("disconnected");
+            return;
+        }
         stopPush();
         try {
             if (gatt != null) gatt.disconnect();
@@ -842,6 +871,7 @@ final class BleManager {
     // ── Firmware flash (XMODEM-128 DFU) ──
 
     boolean isDfuActive() {
+        if (simFlashing) return true;
         NaveeDfuEngine d = dfu;
         return d != null && d.isRunning();
     }
@@ -854,6 +884,7 @@ final class BleManager {
                 if (listener != null) listener.onFwState("{\"state\":\"failed\",\"message\":\"Connect the scooter first\"}");
                 return;
             }
+            if (sim) { simStartFlash(image, target); return; }
             // Hard flash block for the UT5 Max (no recovery path); other unconfirmed models are gated
             // at the patcher so a stock recovery flash stays possible.
             String pidNow = null;
@@ -884,6 +915,7 @@ final class BleManager {
 
     void cancelDfu() {
         try {
+            if (sim) { simFlashCancel = true; return; }
             NaveeDfuEngine d = dfu;
             if (d != null) d.cancel();
         } catch (Throwable t) {
@@ -970,6 +1002,197 @@ final class BleManager {
         } catch (Throwable t) {
             Log.e(TAG, "pushState failed", t);
         }
+    }
+
+    // ── Offline simulation (emulator) ─────────────────────────────────────────
+
+    // pid -> model name, mirrors NAVEE_MODELS in telemetry.html so the virtual device list matches the
+    // patcher's own model table. Reference data; the pid is what every patcher gate keys on.
+    private static final String[][] SIM_MODELS = {
+        {"2213","N65i"},{"2314","V25/V25i"},{"2322","S40"},{"2326","V3 Pro"},{"2327","V25 Pro/V25i Pro"},
+        {"2328","V40i/V40i Pro"},{"2329","V50i Pro"},{"2334","S60"},{"2345","ST3 Pro"},{"2353","P50"},
+        {"2401","ST3"},{"2402","GT3"},{"2403","GT3 Pro"},{"2416","XT5 Pro"},{"2417","E20"},{"2418","GT3 Max"},
+        {"2422","E25"},{"2435","Birdie 3"},{"2436","V25i Pro II"},{"2437","V40i Pro II"},{"2438","V50i Pro II"},
+        {"2441","ST5 Pro"},{"2442","G5"},{"2443","XT5 Ultra"},{"2449","NT5 Ultra X"},{"2504","K100"},{"2505","K100 Pro"},
+        {"2506","K100 Max"},{"2509","N65i II"},{"2515","Birdie 3x"},{"2517","ST5 Max"},{"2518","G5 pro"},{"2519","G5 Max"},
+        {"2529","XT5 Max"},{"2536","S2"},{"2538","UT5 Max"},{"2543","NT5 Max"},{"2545","GT5 Pro"},{"2546","GT5 Max"},
+        {"2547","UT5 Ultra"},{"2573","E25 Go"},{"2585","UT5 Ultra X"},{"2611","E45 Pro"},{"2612","E60 Pro"},{"2614","S2"},
+        {"2619","UT3 Pro"},{"2620","UT3 Max"},{"2623","V45i"},{"2634","E20 Lite"},{"2643","E60 Pro"},{"2646","UT3"},
+        {"2657","NT5 Max+"},{"2658","NT5 Ultra"},{"2701","NT3 Pro"},{"2704","GT3 Pro"},{"2707","NT5 Turbo"},{"2714","ST3 Pro"},
+        {"2736","KG05"},{"2739","WOLF X"},{"2745","NT3 Max"},{"2753","E45 Pro"},{"2754","E60 Pro"},{"2768","EXO S Pro"},
+    };
+
+    // Deterministic emulator detection (Build properties), independent of whether the image fakes a BT adapter.
+    private static boolean isEmulator() {
+        try {
+            String fp = android.os.Build.FINGERPRINT, model = android.os.Build.MODEL, hw = android.os.Build.HARDWARE,
+                   prod = android.os.Build.PRODUCT, brand = android.os.Build.BRAND, dev = android.os.Build.DEVICE;
+            if (fp != null && (fp.startsWith("generic") || fp.startsWith("unknown") || fp.contains("emulator")
+                    || fp.contains("vbox") || fp.contains("sdk_gphone"))) return true;
+            if (hw != null && (hw.contains("goldfish") || hw.contains("ranchu") || hw.contains("vbox"))) return true;
+            if (model != null && (model.contains("Emulator") || model.contains("Android SDK built for"))) return true;
+            if (prod != null && (prod.contains("sdk") || prod.contains("emulator") || prod.contains("sdk_gphone"))) return true;
+            return brand != null && brand.startsWith("generic") && dev != null && dev.startsWith("generic");
+        } catch (Throwable t) { return false; }
+    }
+
+    private static String simModelName(String pid) {
+        if (pid != null) for (String[] m : SIM_MODELS) if (m[0].equals(pid)) return m[1];
+        return "NAVEE";
+    }
+
+    // Emit the virtual model list into the normal scan-result path; names start with "NAVEE " so the UI
+    // sorts and highlights them like a real scooter, addresses encode the pid as "SIM-<pid>".
+    private void pushSimScan() {
+        try {
+            String[][] sorted = SIM_MODELS.clone();
+            java.util.Arrays.sort(sorted, (a, b) -> a[1].compareToIgnoreCase(b[1]));
+            JSONArray arr = new JSONArray();
+            for (String[] m : sorted) {
+                JSONObject o = new JSONObject();
+                o.put("name", "NAVEE " + m[1] + " (SIM)");
+                o.put("address", SIM_ADDR_PREFIX + m[0]);
+                o.put("rssi", -50);
+                arr.put(o);
+            }
+            Log.i(TAG, "SIM scan -> " + arr.length() + " virtual models");
+            if (listener != null) listener.onScanResults(arr.toString());
+        } catch (Throwable t) {
+            Log.e(TAG, "pushSimScan failed", t);
+        }
+    }
+
+    // Fake a connected scooter of the chosen pid. Seeds the parser with synthetic 0x74/0x73/0x70/0x72
+    // replies so the whole dashboard + patcher light up exactly as with real hardware.
+    private void simConnect(String address) {
+        String addr = (address == null || address.trim().isEmpty()) ? SIM_ADDR_PREFIX + "2538" : address.trim();
+        String pid = addr.startsWith(SIM_ADDR_PREFIX) ? addr.substring(SIM_ADDR_PREFIX.length()) : "2538";
+        if (pid.length() != 4) pid = "2538";
+        desiredAddress = addr;
+        deviceName = "NAVEE " + simModelName(pid) + " (SIM)";
+        Log.i(TAG, "SIM connect -> pid " + pid + " (" + simModelName(pid) + ")");
+        pushState("connecting");
+        simSeed(pid);
+        connected = true;
+        notifyReady = true;
+        simFlashing = false;
+        simFlashCancel = false;
+        try { parser.btName = deviceName; } catch (Throwable ignored) {}
+        try {
+            appCtx.getSharedPreferences("lb", Context.MODE_PRIVATE).edit()
+                    .putString("last_device_addr", desiredAddress)
+                    .putString("last_device_name", deviceName).apply();
+        } catch (Throwable ignored) {}
+        pushState("connected");
+        startSimPush();
+    }
+
+    private void simSeed(String pid) {
+        try {
+            // 0x74 serial: the pid is the first 4-digit run; region = chars [8..10] ("DE").
+            simFeed(0x74, asciiBytes("S" + pid + "SIMDE01"));
+            // 0x73 firmware: meter/bldc/bms/screen/uwb, 4 ASCII each.
+            simFeed(0x73, asciiBytes("00300010" + "0012" + "    " + "    "));
+            // 0x70 params (41 bytes): unlocked, startSpeed 3, no region limit, maxSpeed 25, drive mode 2.
+            byte[] p70 = new byte[41];
+            p70[2] = 0; p70[7] = 1; p70[19] = 3; p70[20] = 0; p70[25] = 25; p70[26] = 2;
+            simFeed(0x70, p70);
+            // 0x72 battery (15 bytes = no EU block): soc 80 %, 48.0 V, soh 100, 25 C, 50 cycles.
+            byte[] p72 = new byte[15];
+            p72[1] = (byte) 80;
+            int mv = 48000;
+            p72[2] = (byte) mv; p72[3] = (byte) (mv >> 8); p72[4] = (byte) (mv >> 16); p72[5] = (byte) (mv >> 24);
+            p72[10] = (byte) 100; p72[11] = (byte) 25; p72[13] = (byte) 50; p72[14] = 0;
+            simFeed(0x72, p72);
+        } catch (Throwable t) {
+            Log.e(TAG, "simSeed failed", t);
+        }
+    }
+
+    // Wrap data in a NAVEE reply frame (err byte 0 + payload) and feed it through the real parser.
+    private void simFeed(int cmd, byte[] data) {
+        byte[] payload = new byte[data.length + 1];
+        payload[0] = 0x00;
+        System.arraycopy(data, 0, payload, 1, data.length);
+        parser.onNotify(CommandBuilder.write(cmd, payload));
+    }
+
+    private static byte[] asciiBytes(String s) {
+        byte[] o = new byte[s.length()];
+        for (int i = 0; i < s.length(); i++) o[i] = (byte) (s.charAt(i) & 0xFF);
+        return o;
+    }
+
+    private final Runnable simPush = new Runnable() {
+        @Override
+        public void run() {
+            if (!connected || !sim) return;
+            if (isDfuActive()) { main.postDelayed(this, PUSH_INTERVAL_MS); return; }
+            try { if (listener != null) listener.onLiveData(parser.toJson()); } catch (Throwable ignored) {}
+            parser.rssi = -55 - (int) (pushTicks % 8);
+            pushTicks++;
+            main.postDelayed(this, PUSH_INTERVAL_MS);
+        }
+    };
+
+    private void startSimPush() { main.removeCallbacks(simPush); main.postDelayed(simPush, 200); }
+    private void stopSimPush() { main.removeCallbacks(simPush); }
+
+    // Replay a successful DFU: the same phase/log/progress/state callbacks the real engine emits, so the
+    // patcher UI runs end to end. finished() is NOT used here (it would start the real GATT push loop);
+    // the flash is marked done via state("success") + clearing simFlashing, which isFwActive() polls.
+    private void simStartFlash(final byte[] image, final int target) {
+        stopSimPush();
+        simFlashCancel = false;
+        simFlashing = true;
+        final int count = Math.max(1, ((image == null ? 128 : image.length) + 127) / 128);
+        dfuHost.setHighPriority(true);
+        dfuHost.state("running", null);
+        dfuHost.progress(0, 0, count, "prepare");
+        dfuHost.log("SIM flash - no scooter connected, replaying a successful DFU");
+        dfuHost.log("image " + (image == null ? 0 : image.length) + " bytes, " + count + " blocks, target " + target);
+        // Short handshake replay, then a block sweep, then EOT -> success.
+        main.postDelayed(() -> { if (checkSimCancel()) return; dfuHost.log("auth init (key 1)"); dfuHost.log("-> down dfu_start " + target); }, 300);
+        main.postDelayed(() -> { if (checkSimCancel()) return; dfuHost.log("-> down ble_rand"); }, 650);
+        main.postDelayed(() -> { if (checkSimCancel()) return; dfuHost.log("-> down ble_key (mode 0)"); }, 1000);
+        main.postDelayed(() -> {
+            if (checkSimCancel()) return;
+            dfuHost.log("C received");
+            dfuHost.progress(0, 0, count, "flash");
+            simFlashBlocks(count, 0, Math.max(1, count / 60));
+        }, 1350);
+    }
+
+    private boolean checkSimCancel() {
+        if (!simFlashCancel) return false;
+        dfuHost.log("cancel");
+        simFlashing = false;
+        dfuHost.setHighPriority(false);
+        dfuHost.state("failed", "cancelled");
+        if (connected) startSimPush();
+        return true;
+    }
+
+    private void simFlashBlocks(final int count, final int done, final int inc) {
+        if (checkSimCancel()) return;
+        int b = Math.min(count, done + inc);
+        int pct = (int) Math.round(b * 100.0 / count);
+        dfuHost.progress(pct, b, count, "flash");
+        if (b >= count) {
+            dfuHost.progress(100, count, count, "finish");
+            dfuHost.log("-> EOT");
+            main.postDelayed(() -> {
+                if (checkSimCancel()) return;
+                dfuHost.log("dfu_ok");
+                simFlashing = false;
+                dfuHost.setHighPriority(false);
+                dfuHost.state("success", "done");
+                if (connected) startSimPush();
+            }, 450);
+            return;
+        }
+        final int nb = b;
+        main.postDelayed(() -> simFlashBlocks(count, nb, inc), 50);
     }
 
     void shutdown() {

@@ -16,6 +16,14 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.103
+
+- UT5 Max firmware patcher reworked into a clear top-to-bottom choice. Instead of a confusing mix of checkboxes the patcher now asks one question first: keep the throttle **Bluetooth-switchable** (patches only the meter and leaves the controller untouched - cruise and kickstart run through the meter anyway) or open it **permanently** (patches the controller). The controller-version selection no longer gates entry; it only appears on the permanent path, where the speed actually comes from. Both supported controller versions (0.0.1.0 and 0.0.1.3) are selectable there.
+- Throttle limit, cruise control and kickstart are now independently selectable. Previously picking "speed" silently toggled the others off, and a bug meant the throttle patch was skipped while its detection marker was still written - leaving a dead throttle toggle and no working meter patch (the most likely cause of users reporting "the meter patch does nothing"). Each feature is now its own checkbox and the detection marker is tied to the throttle patch, so choosing only cruise or only kickstart produces a clean meter with no stale marker.
+- The stock (original) firmware is now saved to Downloads with a readable name before patching. The untouched image is written as e.g. `UT5_Max_meter_0.0.3.0_original.bin` (not a hash filename) and a toast confirms it, so a clean backup to flash back is always available. The patched image uses the matching `_patched.bin` name.
+- The detected-model / what-to-patch section was given more breathing room (clearer model and version lines, a separator and spaced option rows).
+- Developer-only: an offline simulation mode for the emulator (debug builds only, never active in a release build) so the patcher flow can be exercised without a physical scooter.
+
 ## 1.0.102
 
 - Theme settings now take effect in every theme. Font size, colour and spacing from the Theme Manager's style editor now really apply across all themes - the Default dashboard, Carbon and Lambo - and the packed Default grid follows the font sliders. Several elements (the speed drum in the gauge themes, the packed Default tiles) previously ignored the sliders because their size was hardcoded; they now read the style-editor variables with the old size as a fallback.

@@ -2050,7 +2050,7 @@ patches: [
     // unit: the app keys kickstart (launch 0-2) and the BLE drossel toggle off that marker, so a partial
     // core (marker present, a part missing) would show a dead feature. The beep silences are NOT
     // certified by the marker, so they stay individually selectable (core forced, beeps honour selection).
-    coreFeatures: ['speed', 'kickstart', 'cruise'],
+    markerFeature: 'drossel',
     patches: [
       { off: 0x142ce, from: [0x04, 0xd0], to: [0x00, 0xbf], id: 'speedsel' }, // class 0x6E sub1 handler (FUN_080142ae): NOP the DE region skip (beq) so the speed cell 0x20aae6 is written in every region; drive-frame byte10 then follows it (locked/open km/h both set live by 0x6E sub1)
       { off: 0x1438f, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bhs) -> unconditional, launch levels 0-2 accepted in every region
@@ -2622,13 +2622,18 @@ function featureOf(id) {
 }
 
 // Apply a patch set with per-row expected-byte verification.
-function applyPatches(u8, patches, selected) {
+function applyPatches(u8, patches, selected, markerFeature) {
   const want = selected ? new Set(selected) : null;
   const anyNonMarker = patches.some(p => featureOf(p.id) !== 'marker' && (!want || want.has(featureOf(p.id))));
   const applied = [];
   for (const p of patches) {
     const feat = featureOf(p.id);
-    const apply = feat === 'marker' ? (!want || anyNonMarker) : (!want || want.has(feat));
+    // A marker is normally written whenever any real feature is applied. markerFeature pins it to ONE
+    // feature instead (e.g. the UT5 Max version marker means "drossel present": writing it without the
+    // drossel would make the app show a dead BLE toggle), so unrelated single features stay marker-free.
+    const apply = feat === 'marker'
+      ? (!want || (markerFeature ? want.has(markerFeature) : anyNonMarker))
+      : (!want || want.has(feat));
     if (!apply) continue;
     for (let i = 0; i < p.from.length; i++) {
       const cur = u8[p.off + i] & 0xFF;
@@ -2716,7 +2721,7 @@ function patchFirmware(arrayBuffer, selected, variantKey, currentKey) {
   const sel = spec.atomic ? null
     : spec.coreFeatures ? Array.from(new Set((selected || []).concat(spec.coreFeatures)))
     : selected;
-  const applied = applyPatches(u8, patchList, sel);
+  const applied = applyPatches(u8, patchList, sel, spec.markerFeature);
   // Current (power) axis: independent of the speed variant, applied on top (own offsets, no overlap).
   const curSpec = (currentKey && currentKey !== 'std' && spec.currentVariants) ? spec.currentVariants[currentKey] : null;
   if (curSpec) applyPatches(u8, curSpec.patches, null).forEach((id) => applied.push(id));
