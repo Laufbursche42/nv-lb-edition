@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Theme settings now take effect in every theme.</b> Font size, colour and spacing from the Theme Manager's style editor now really apply across all themes - the Default dashboard, Carbon and Lambo - including the packed Default grid, which now follows your font sliders.",
+      "<b>No more overflow from large fonts.</b> Oversized values wrap inside their tile instead of being cut off. The app also ignores the phone's system font-size setting, so a large accessibility font can no longer push text past the tile layout.",
       "<b>New: in-app Beginner's Guide.</b> New here and not sure where to start? A model-by-model guide in Settings shows which route fits your scooter - Bluetooth-only or flash, switchable or permanent, and what each one needs - reach it from the Beginner's Guide entry just above the version info.",
       "<b>UT5 Max: pick your speed, not just on/off.</b> On the newest patched UT5 Max meter you now choose both the locked and the open km/h in the scooter settings - like XT5, ST3/GT3, GT5 and ST5 - instead of a single on/off. Older UT5 Max patches keep the on/off toggle. Experimental, untested on hardware - flash at your own risk.",
       "<b>Zero-start just works on a patched meter.</b> On a kickstart-patched meter the app now sets zero-start to 0 for you when you connect, so the scooter pulls away from standstill without a kick - no need to find the setting yourself. If you deliberately set a launch level, the app leaves it alone.",
@@ -1081,6 +1083,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Theme-Einstellungen greifen jetzt in jedem Theme.</b> Schriftgröße, Farbe und Abstände aus dem Stil-Editor des Theme-Managers wirken jetzt wirklich in allen Themes - Standard-Dashboard, Carbon und Lambo - auch im gepackten Standard-Raster, das jetzt deinen Schriftreglern folgt.",
+      "<b>Kein Überlauf mehr durch große Schrift.</b> Zu große Werte brechen in der Kachel um, statt abgeschnitten zu werden. Außerdem ignoriert die App jetzt die System-Schriftgröße des Handys, damit eine große Bedienungshilfen-Schrift den Kachel-Aufbau nicht mehr sprengt.",
       "<b>Neu: Einsteiger-Anleitung in der App.</b> Neu hier und unsicher, wo du anfangen sollst? Eine Anleitung nach Modell in den Einstellungen zeigt, welcher Weg zu deinem Roller passt - nur Bluetooth oder Flash, umschaltbar oder permanent und was jeder braucht - zu finden über den Eintrag Einsteiger-Anleitung direkt über der Versionsinfo.",
       "<b>UT5 Max: Tempo wählbar statt nur An/Aus.</b> Auf dem neuesten gepatchten UT5-Max-Tacho wählst du jetzt in den Roller-Einstellungen Sperr- und Offen-km/h selbst - wie bei XT5, ST3/GT3, GT5 und ST5 - statt nur An/Aus. Ältere UT5-Max-Patches behalten den An/Aus-Schalter. Experimentell, nicht an Hardware getestet - Flashen auf eigene Gefahr.",
       "<b>Zero-Start funktioniert direkt auf einem gepatchten Tacho.</b> Auf einem kickstart-gepatchten Tacho setzt die App den Zero-Start beim Verbinden automatisch auf 0, damit der Roller aus dem Stand anfährt - ohne die Einstellung selbst suchen zu müssen. Hast du bewusst eine Anfahrstufe gewählt, bleibt sie unangetastet.",

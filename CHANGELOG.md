@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.102
+
+- Theme settings now take effect in every theme. Font size, colour and spacing from the Theme Manager's style editor now really apply across all themes - the Default dashboard, Carbon and Lambo - and the packed Default grid follows the font sliders. Several elements (the speed drum in the gauge themes, the packed Default tiles) previously ignored the sliders because their size was hardcoded; they now read the style-editor variables with the old size as a fallback.
+- Large fonts no longer overflow. Oversized tile titles wrap instead of being cut off. The app also pins its font scale so the phone's system font-size (accessibility) setting can no longer enlarge text past the fixed tile layout. The built-in Carbon and Lambo themes re-seed on this release.
+- Security hardening (CodeQL): the theme-path containment guard now returns the validated canonical path, so the check is recognized across the helper, and the asset-log name uses a strict filename allowlist. No user-facing behavior change.
+
 ## 1.0.101
 
 - New in-app **Beginner's Guide** for new users: a model-by-model decision tree - which patch fits your scooter, Bluetooth-only versus flash, switchable versus permanent, and what each one needs - reached from Settings (the "Beginner's Guide" entry just above the version info). Fully bilingual (EN/DE).
