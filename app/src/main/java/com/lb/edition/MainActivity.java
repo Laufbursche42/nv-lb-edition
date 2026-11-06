@@ -520,6 +520,10 @@ public class MainActivity extends Activity {
             req.setNotificationVisibility(
                     android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             // App-private dir: no other app can swap the APK before we install it.
+            // Delete any leftover APK from a previous update first: DownloadManager will NOT overwrite an
+            // existing file - it saves the new download under a deduped name (…-1.apk) while the fixed path
+            // still points at the stale copy, so the installer would reinstall the OLD version every time.
+            try { File old = new File(getExternalFilesDir(null), "updates/" + APK_UPDATE_NAME); if (old.isFile()) old.delete(); } catch (Throwable ignored) {}
             req.setDestinationInExternalFilesDir(this, null, "updates/" + APK_UPDATE_NAME);
             final long id = dm.enqueue(req);
             toast("Downloading update...");
@@ -551,7 +555,23 @@ public class MainActivity extends Activity {
     /** Launch the package installer on the APK we downloaded into app-private storage. */
     private void installDownloadedApk(android.app.DownloadManager dm, long id) {
         try {
-            File f = new File(getExternalFilesDir(null), "updates/" + APK_UPDATE_NAME);
+            // Install the file DownloadManager actually wrote (COLUMN_LOCAL_URI), not a guessed fixed path:
+            // if the name was deduped, the fixed path would be a stale old APK and we would reinstall it.
+            File f = null;
+            try (android.database.Cursor c =
+                         dm.query(new android.app.DownloadManager.Query().setFilterById(id))) {
+                if (c != null && c.moveToFirst()) {
+                    int col = c.getColumnIndex(android.app.DownloadManager.COLUMN_LOCAL_URI);
+                    if (col >= 0) {
+                        String loc = c.getString(col);
+                        if (loc != null && loc.length() > 0) {
+                            Uri lu = Uri.parse(loc);
+                            if (lu.getPath() != null) f = new File(lu.getPath());
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+            if (f == null || !f.isFile()) f = new File(getExternalFilesDir(null), "updates/" + APK_UPDATE_NAME);
             if (!f.isFile() || f.length() == 0) { toast("Update download not found"); return; }
             Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", f);
             Intent i = new Intent(Intent.ACTION_VIEW);

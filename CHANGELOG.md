@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.109
+- Fixed the in-app update installing the old version. The update APK was downloaded under a fixed filename, but Android's download manager does not overwrite an existing file - so from the second update on it saved the new APK under a different name while the installer still opened the stale copy from the previous update, reinstalling the old version. The leftover file is now cleared before each download and the file that was actually downloaded is installed. No more manual reinstall.
+
 ## 1.0.108
 - UT5 Max patcher now flashes BOTH the display and the controller as one set, and lets you pick the controller version (0.0.1.0 / 0.0.1.3, defaulting to the one your scooter runs). Before, only one file was handed to the flasher, so the switchable throttle never fully took - both are now always built and flashed together.
 - Firmware patcher: if a flash is interrupted, a "Restart the aborted patch" button re-runs the unfinished file from the start (download, patch, flash) and skips any file that already flashed.
