@@ -1880,22 +1880,22 @@ patches: [
     ],
     stdSpeedKmh: 40,
     variants: {
-      speed22: { experimental: true, speedKmh: 22, patches: [
+      speed22: { experimental: false, speedKmh: 22, patches: [
         { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x16, 0x00], id: 'speed-source' }, // movw r0,#22
         { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
       ] },
-      speed25: { experimental: true, speedKmh: 25, patches: [
+      speed25: { experimental: false, speedKmh: 25, patches: [
         { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x19, 0x00], id: 'speed-source' }, // movw r0,#25
         { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
       ] },
-      speed30: { experimental: true, speedKmh: 30, patches: [
+      speed30: { experimental: false, speedKmh: 30, patches: [
         { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x1e, 0x00], id: 'speed-source' }, // movw r0,#30
         { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
       ] },
-      speed35: { experimental: true, speedKmh: 35, patches: [
+      speed35: { experimental: false, speedKmh: 35, patches: [
         { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x23, 0x00], id: 'speed-source' }, // movw r0,#35
         { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
@@ -1920,22 +1920,22 @@ patches: [
     ],
     stdSpeedKmh: 40,
     variants: {
-      speed22: { experimental: true, speedKmh: 22, patches: [
+      speed22: { experimental: false, speedKmh: 22, patches: [
         { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x16, 0x00], id: 'speed-source' }, // movw r0,#22
         { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
       ] },
-      speed25: { experimental: true, speedKmh: 25, patches: [
+      speed25: { experimental: false, speedKmh: 25, patches: [
         { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x19, 0x00], id: 'speed-source' }, // movw r0,#25
         { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
       ] },
-      speed30: { experimental: true, speedKmh: 30, patches: [
+      speed30: { experimental: false, speedKmh: 30, patches: [
         { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x1e, 0x00], id: 'speed-source' }, // movw r0,#30
         { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
       ] },
-      speed35: { experimental: true, speedKmh: 35, patches: [
+      speed35: { experimental: false, speedKmh: 35, patches: [
         { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x23, 0x00], id: 'speed-source' }, // movw r0,#35
         { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
         { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
@@ -1986,7 +1986,7 @@ patches: [
     patches: [
       { off: 0x12e4e, from: [0xee, 0x72], to: [0x00, 0xbf], id: 'speedsel' },        // NOP frame-builder DE zero-store of byte10
       { off: 0x13e1e, from: [0x47, 0xd0], to: [0x00, 0xbf], id: 'speedsel-setter' }, // NOP setter region-skip (allow 0x6E write in DE)
-      { off: 0x1938c, from: [0x30], to: [0x35], id: 'version-marker' },              // fwMeter "0024" -> "5024"
+      { off: 0x1427c, from: [0x30], to: [0x35], id: 'version-marker' }, // reported meter version is code-built in the 0x73 handler (movs r1,#'0' @0x1427c -> #'5'), NOT a data string. fwMeter '0024' -> '5024', so app/tool detect the patch. (Old 0x1938c patched a dead debug literal - the meter kept reporting 0024 and the patch was invisible; same class as the UT5 Max 0x1a7da bug.)
       // Per-tone beep silences (bl -> nop; T2314 buzzer setter has no dur<2 guard). BLE-cmd + state-change
       // confirm beeps (0x13d3c/0x13d4e/0x151dc/0x1c3a6) are left on. Fault-B site 0x158f6 is deliberately
       // EXCLUDED: its bl is followed by a bl with no register setup, so a bare NOP would leave stale regs.
@@ -2062,7 +2062,7 @@ patches: [
       { off: 0x14068, from: [0x0b, 0xd0], to: [0x00, 0xbf], id: 'cruise' }, // cruise/tempomat DE sub-gate (beq) -> nop, enable bit forwarded in every region
       { off: 0x159fc, from: [0xff, 0xf7, 0x1f, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/anti-theft alarm bl (FUN_0801543e) -> nop
       { off: 0x15ae4, from: [0xff, 0xf7, 0xd0, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // fault/error-code announce bl (FUN_08015488) -> nop; silences every fault tone on this meter
-      { off: 0x1a7da, from: [0x33], to: [0x36], id: 'version-marker' }, // reported meter version '0030' -> '0060' (fwMeter "0060"): switchable 0x6E-value drossel, distinct from the earlier "0050" 0x81-binary meter
+      { off: 0x14ab4, from: [0x33], to: [0x36], id: 'version-marker' }, // reported meter version is CODE-BUILT in the 0x73 response handler (movs r2,#'3' @0x14ab4 -> #'6'), NOT a data string. fwMeter '0030' -> '0060', so the app/tool detect the patched meter. (The old 0x1a7da patched a dead debug literal that nothing reads - the meter kept reporting 0030 and the patch was invisible, which is why no UT5 Max ever switched.)
     ],
   },
 
@@ -2114,7 +2114,16 @@ patches: [
     patches: [],
   },
 
-  // N65i II meter 2.0.5.8 (6001). Meter feature patches (region-gated flips + per-tone beep silences).
+  // N65i II meter 2.0.5.8 (6001). Switchable BT drossel (feature 'drossel'): the meter forwards a 0x51
+  // drive frame whose payload[7] (= whole-frame offset 0xa, exactly what the N65i II controller reads with
+  // ldrb r1,[r0,#0xa] and uses as cap = min(modeCap, byte*scale)) is the controller speed cap. The outbound
+  // byte comes from BLE cell 0x0020ab9e, which 0x6E sub1 (caseD_6e: cVar1==1 -> *(r4+0x1a)=cVar2) writes
+  // UNCLAMPED - but the frame builder FUN_08012ad8 region-gates it: payload[7] is passed only when
+  // regionVariant(0x20abb2) in 1..7 OR country(0x20abb1) in {8,9,10}, else 0 (DE forces 0 -> controller
+  // fallback ~22). NOPing the bhi makes the gate fall through for every region, so payload[7] always follows
+  // the cell and live 0x6E sub1 picks locked/open km/h. Controller mode-4 cap (~40) bounds the open side.
+  // The marker is pinned to 'drossel' (writing it without the drossel would show a dead BLE toggle).
+  // Byte-verified against the raw DE image (gate 0x12c48, marker 0x1400e, mapping delta 0). HW-untested.
   n65ii6001_meter: {
     label: 'N65i II meter 2.0.5.8 (6001)',
     kind: 'meter',
@@ -2122,10 +2131,19 @@ patches: [
     verify: { size: 0x23000, crcOff: 0x13, crcStock: 0xfaf, lenOff: 0x10, lenStock: 0x022c00 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    patches: [],
+    markerFeature: 'drossel',
+    patches: [
+      { off: 0x12c48, from: [0x03, 0xd8], to: [0x00, 0xbf], id: 'speedsel' }, // region gate in frame builder FUN_08012ad8 @0x08012c42 (bhi 0x08012c52) -> nop: payload[7] then follows BLE speed cell 0x20ab9e in every region, live 0x6E sub1 = lock/open. Experimental, HW-unconfirmed
+      { off: 0x1400e, from: [0x32], to: [0x35], id: 'version-marker' }, // reported meter version is CODE-BUILT in the 0x73 response builder FUN_0801400e (movs r1,#'2' @0x1400e -> #'5'), NOT a data string. fwMeter '2058' -> '5058', so the app/tool detect the patched meter (the dead debug literal '2058handle key value read' @0x19664 is NOT read - never patch there)
+    ],
   },
 
-  // N65i II meter 2.0.5.9 (10701). Meter feature patches (region-gated flips + per-tone beep silences).
+  // N65i II meter 2.0.5.9 (10701, US). No drossel patch needed: the US image already ships OPEN - its init
+  // writes the cell to 40 for country {8,9,10} (byte-verified in the US decompile FUN_08017b26), so a US
+  // N65i II is not region-throttled the way the DE 2.0.5.8 is. The drossel patch exists to lift the DE
+  // region gate; there is nothing to lift on US. Left intentionally patchless (not a TODO). The US build is
+  // also structurally different (its frame builder near 0x12c8a has no DE "cmp #6 / bhi" region gate), so the
+  // DE NOP has no US equivalent anyway - do NOT guess a US offset here (brick risk).
   n65ii10701_meter: {
     label: 'N65i II meter 2.0.5.9 (10701)',
     kind: 'meter',
@@ -2575,6 +2593,7 @@ const FLASH_ENABLED = new Set([
   'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + switchable drossel + version marker, experimental)
   'meterGT5',                                                     // GT5 meter (switchable drossel + version marker, experimental; previously blocked)
   'st5_meter',                                                    // ST5 Pro/Max meter (switchable drossel + version marker, experimental; no ST5 controller image, HW-unconfirmed; previously blocked)
+  'n65ii6001_meter',                                             // N65i II meter 2.0.5.8 DE (switchable drossel: region-gate NOP + version marker, controller stays stock, experimental)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
   'bldcUT5Max', 'bldcUT5Max_0013',                                // UT5 Max controller (permanent top gear 22-40; 0.0.1.0 plus newer 0.0.1.3; meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
@@ -2588,7 +2607,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterUT5Max', 'meterST3GT3', 'meterGT5', 'st5_meter', 'meterXT5_3023', 'bldcUT5Max', 'bldcUT5Max_0013', 'bldcUT5UltraX', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterST3GT3', 'meterGT5', 'st5_meter', 'n65ii6001_meter', 'meterXT5_3023', 'bldcUT5UltraX', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {

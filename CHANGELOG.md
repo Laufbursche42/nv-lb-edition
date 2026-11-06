@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.106
+- NAVEE UT5 Max is no longer experimental: the meter throttle patch and the controller patch are hardware-confirmed working, so the connected scooter and the firmware patcher no longer show the untested warning for UT5 Max. It stays brick-prone (3553G, no SWD recovery), so flashing the controller is still at your own risk.
+- New: NAVEE N65i II Bluetooth-switchable throttle. On a patched DE N65i II meter you choose the locked and the open km/h in the scooter settings (locked 15-25, open up to ~40) and toggle between them over Bluetooth, like XT5 / UT5 Max. Meter-only patch, the controller stays stock. Experimental, flashes the meter - untested warning applies. A US N65i II ships open already and needs no patch.
+
 ## 1.0.105
 
 - UT5 Max Bluetooth throttle switch fixed. On a meter patched for the switchable throttle (marker "0060"), flipping the speed open or locked over Bluetooth now takes effect in every region. The patch previously neutralised only the 0x6E write gate, so the selected speed was written but the drive-frame builder still forced byte10 to the restricted default on EU scooters; the frame-builder region branch is now forced onto the cell-forward path (patcher.js, mirrors the webpatcher engine).

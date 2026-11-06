@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max is no longer experimental.</b> The meter throttle patch and the controller patch are now hardware-confirmed working, so the UT5 Max no longer shows the untested warning when connected or in the firmware patcher. It stays brick-prone (3553G, no SWD recovery), so flashing the controller is still at your own risk.",
+      "<b>New: N65i II Bluetooth-switchable throttle.</b> On a patched DE N65i II meter you now pick the locked and the open km/h in the scooter settings (locked 15-25, open up to about 40) and toggle between them over Bluetooth, just like XT5 and UT5 Max. Only the meter is patched, the controller stays stock. Experimental, flashes the meter - the untested warning applies. A US N65i II is open from the factory and needs no patch.",
       "<b>UT5 Max: the Bluetooth throttle switch works now.</b> On a meter patched for the switchable throttle, flipping the speed open or locked over Bluetooth now really changes the speed in every region - before, it stayed locked on EU scooters because the meter never passed the chosen speed on to the controller.",
       "<b>Smaller, roomier button text.</b> The quick-button labels start smaller by default and you can now size them up to 35 px in the Theme Manager. Long German labels (Tempomat, Autolicht, Rücklicht ...) now wrap neatly onto two lines inside the button instead of spilling over at large sizes.",
       "<b>Theme font controls work everywhere now - and without a keyboard.</b> In the Theme Manager the size fields are now minus/plus steppers (no keyboard needed), and every text on the dashboard has its own size - the GPS speed, the ride-data grid, the All-values list and the section headers too, above and below the fold. The per-row tile-size knobs now really reach rows 2 and 3 on the packed Default dashboard instead of falling back to row 1. Carbon and Lambo pick up the same, so font size really takes effect in every theme.",
@@ -530,7 +532,7 @@ window.I18N = {
     "start.s2.b2.text": "Bluetooth on controller 0.0.1.0. On 0.0.1.3, flash the patch first.",
     "start.s2.b3.cond": "NT5 Max, Max+, Ultra or Turbo",
     "start.s2.b3.text": "Flash the controller, then switch from the app. Re-locks to 22 on restart.",
-    "start.s2.b4.cond": "ST3, GT3, ST5, GT5 Pro/Max, UT5 Max or NT5 Ultra X",
+    "start.s2.b4.cond": "ST3, GT3, ST5, GT5 Pro/Max, UT5 Max, N65i II (DE) or NT5 Ultra X",
     "start.s2.b4.text": "Flash the meter, then switch from the app. ST3, GT3 and GT5 can instead flash the controller (permanent).",
     "start.s2.b5.cond": "UT5 Ultra X",
     "start.s2.b5.text": "Bluetooth via the gear. Still limited? Flash the controller first.",
@@ -1101,6 +1103,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max ist nicht mehr experimentell.</b> Der Meter-Drossel-Patch und der Controller-Patch sind jetzt an Hardware bestätigt, daher zeigt der UT5 Max weder beim Verbinden noch im Firmware-Patcher die Ungetestet-Warnung. Er bleibt brick-gefährdet (3553G, keine SWD-Rettung), daher ist das Flashen des Controllers weiterhin auf eigene Gefahr.",
+      "<b>Neu: N65i-II-Drossel per Bluetooth schaltbar.</b> Auf einem gepatchten DE-N65i-II-Tacho wählst du jetzt die gesperrte und die offene km/h in den Roller-Einstellungen (gesperrt 15-25, offen bis etwa 40) und schaltest per Bluetooth dazwischen um, genau wie beim XT5 und UT5 Max. Es wird nur der Tacho gepatcht, der Controller bleibt Werkszustand. Experimentell, flasht den Tacho - die Ungetestet-Warnung gilt. Ein US-N65i-II ist ab Werk offen und braucht keinen Patch.",
       "<b>UT5 Max: der Bluetooth-Drossel-Schalter funktioniert jetzt.</b> Auf einem für die schaltbare Drossel gepatchten Tacho ändert das Öffnen oder Sperren per Bluetooth jetzt wirklich das Tempo - in jeder Region. Vorher blieb es auf EU-Rollern gesperrt, weil der Tacho das gewählte Tempo nie an den Controller weitergab.",
       "<b>Kleinere, luftigere Button-Schrift.</b> Die Quick-Button-Beschriftung startet kleiner und lässt sich im Theme-Manager jetzt bis 35 px vergrößern. Lange deutsche Labels (Tempomat, Autolicht, Rücklicht ...) brechen jetzt sauber zweizeilig im Button um, statt bei großer Schrift überzulaufen.",
       "<b>Theme-Schriftregler wirken jetzt überall - und ohne Tastatur.</b> Im Theme-Manager sind die Größenfelder jetzt Minus-/Plus-Stepper (keine Tastatur nötig), und jeder Text auf dem Dashboard hat seine eigene Größe - auch das GPS-Tempo, die Fahrdaten-Kacheln, die Alle-Werte-Liste und die Abschnitts-Titel, über und unter dem Fold. Die Regler je Kachelreihe erreichen jetzt wirklich Reihe 2 und 3 im gepackten Standard-Dashboard statt auf Reihe 1 zurückzufallen. Carbon und Lambo ziehen gleich, sodass die Schriftgröße wirklich in jedem Theme greift.",
@@ -1626,7 +1630,7 @@ window.I18N = {
     "start.s2.b2.text": "Bluetooth auf Controller 0.0.1.0. Auf 0.0.1.3 erst den Patch flashen.",
     "start.s2.b3.cond": "NT5 Max, Max+, Ultra oder Turbo",
     "start.s2.b3.text": "Controller flashen, dann per App schalten. Sperrt bei Neustart auf 22 zurück.",
-    "start.s2.b4.cond": "ST3, GT3, ST5, GT5 Pro/Max, UT5 Max oder NT5 Ultra X",
+    "start.s2.b4.cond": "ST3, GT3, ST5, GT5 Pro/Max, UT5 Max, N65i II (DE) oder NT5 Ultra X",
     "start.s2.b4.text": "Meter flashen, dann per App schalten. ST3, GT3 und GT5 können stattdessen den Controller flashen (permanent).",
     "start.s2.b5.cond": "UT5 Ultra X",
     "start.s2.b5.text": "Bluetooth über den Gang. Noch begrenzt? Erst den Controller flashen.",

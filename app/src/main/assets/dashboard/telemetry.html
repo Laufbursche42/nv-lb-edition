@@ -3579,7 +3579,12 @@ function naveeDrosselCaps(name) {
   // it linearly), so both the locked and the open speed are selectable. Top step is 40: the controller's
   // over-rev governor (cmp 0x186=39 / 0x1a4=42) caps real speed around 40 - higher values would be
   // clamped there, so offering them would be a false promise. 50 is also the meter's zero sentinel.
-  if (/^UT5 Max/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
+  if (/^UT5 Max/.test(name)) return { open: [27, 30, 35, 40, 45, 50], lock: [15, 20, 22, 25] };
+  // N65i II: the patched "5058" meter NOPs the region gate so the live 0x6E sub1 value is forwarded as
+  // drive-frame byte10; the stock controller already caps = min(modeCap, byte*scale), so both locked and
+  // open are selectable. Top step is 40: the controller's mode-4 cap bounds real speed there, so higher
+  // values would be clamped (false promise). Meter-only patch, controller stays stock. HW-unconfirmed.
+  if (/^N65i II/.test(name)) return { open: [27, 30, 35, 40], lock: [15, 20, 22, 25] };
   return null;
 }
 function naveeLiveSpeedSteps(name) { const c = naveeDrosselCaps(name); return c ? c.open : null; }
@@ -4125,7 +4130,7 @@ function naveeSkuOf(region) {
 // A kickstart-patched meter carries a marker version (NT5 3.0.2.2 -> "5022", XT5 3.0.2.0 -> "5020",
 // UT5 Max 0.0.3.0 -> "0050", ST3/GT3 2.0.4.6 -> "5046") and then accepts launch levels 0-2 on any
 // region. Stock NAVEE meters never report these marker versions.
-const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '0060', '5046', '5004', '5024'];
+const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '0060', '5046', '5004', '5024', '5058'];
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
 // A permanently speed-patched NAVEE controller reports fwBldc with a leading '5' (the patch flips the
 // marker's first digit 0/3 -> 5). On a permanent-cap model that overrides the meter drossel toggle.

@@ -46,7 +46,7 @@ The app was built and checked against the **NAVEE XT5 family**. It connects to a
 
 Other NAVEE models that use the same protocol are **expected** to work, but they are **not verified** - nobody has confirmed them on hardware. Treat anything outside the XT5 family as untested: the connection and the read-only pages are the likely case, while a setting your model does not implement is simply ignored by the scooter. Which functions a given unit supports depends on its firmware, so a switch that has no effect on your scooter means the firmware did not accept it, not that the app failed to send it.
 
-Firmware patching is confirmed on real hardware for the **NT5 family**, the **XT5** and the **N65i II**. Every other NAVEE model is patchable too, but **experimental and not confirmed on hardware**: the patch carries a red untested-firmware warning and an extra confirmation, and a failed controller flash is recoverable only over SWD or with a spare, so only flash where you can recover the unit. Coverage now reaches about 50 of the 58 models NAVEE ships firmware for - the ST3/GT3 family and GT5 Pro/Max gained a meter patch (zero-start plus a switchable speed limiter over Bluetooth), the UT5 Max has both a controller patch (permanent top speed) and a meter patch (switchable over Bluetooth, with a selectable locked and open speed), and a large set of controller-only models (the G5 family, the E-series, K100, the V-series and more) get one permanently raised top gear.
+Firmware patching is confirmed on real hardware for the **NT5 family**, the **XT5**, the **N65i II** and the **UT5 Max** - the UT5 Max with both its controller patch (permanent top speed) and its meter patch (switchable over Bluetooth, with a selectable locked and open speed). Every other NAVEE model is patchable too, but **experimental and not confirmed on hardware**: the patch carries a red untested-firmware warning and an extra confirmation, and a failed controller flash is recoverable only over SWD or with a spare, so only flash where you can recover the unit. Coverage now reaches about 50 of the 58 models NAVEE ships firmware for - the ST3/GT3 family and GT5 Pro/Max gained a meter patch (zero-start plus a switchable speed limiter over Bluetooth), the N65i II gained a DE meter patch (Bluetooth-switchable throttle, experimental) alongside its controller patch, and a large set of controller-only models (the G5 family, the E-series, K100, the V-series and more) get one permanently raised top gear.
 
 How the de-restriction behaves once applied depends on the patch, not just the model - some are **switchable** (toggle between the legal 22 and your open speed, live over Bluetooth), some are **permanent** (one raised top gear until you flash stock back). The Speed column says which.
 
@@ -55,11 +55,11 @@ How the de-restriction behaves once applied depends on the patch, not just the m
 | NT5 Max, Max+, Turbo, Ultra | latch | patcher | patcher | patcher |
 | NT5 Ultra X | latch | stock | stock | patcher |
 | XT5 Pro, Ultra, Max | flash-free (+ meter) | patcher | stock | patcher |
-| N65i II | permanent | - | - | - |
+| N65i II | permanent (+ meter, DE) | - | - | - |
 | ST3 Pro, ST3, GT3, GT3 Pro (experimental) | permanent (+ meter) | patcher | - | - |
 | GT5 Pro, GT5 Max (experimental) | permanent (+ meter) | - | - | - |
 | ST5 Pro, ST5 Max (experimental) | meter | - | - | - |
-| UT5 Max (experimental) | permanent or meter | patcher | patcher | - |
+| UT5 Max | permanent or meter | patcher | patcher | - |
 | Further controller-only models (experimental) | permanent | - | - | - |
 
 Legend for the **Speed** column:
@@ -78,7 +78,7 @@ Other columns: `patcher` the feature is flashed by the patcher; `stock` it alrea
 - **NT5 Max: higher top speed plus launch power.** The controller target-speed picker now reaches 60 km/h (this build has no sub-50 governor), and a new launch-current option (22 / 25 / 30 A) sets the pull-away power. Both are in-place changes, experimental and not yet confirmed by us on hardware.
 - **XT5 Pro/Max: pick your firmware version.** When a controller patch is involved the patcher offers the version matching your scooter - 0.0.1.0 or 0.0.1.3, the installed one preselected; both are the same hardware, so you can also move up to the newer one.
 
-The XT5 speed release is flash-free: it writes nothing to the meter or the controller and reverts on the next power cycle. The NT5 and N65i II firmware patches are confirmed on hardware and are reversible by flashing the stock firmware back (N65i II: controller patch only; the meter patch is not yet built). The **ST3/GT3 family is experimental**: built and statically verified but **not yet confirmed on hardware**, and a failed flash there is not recoverable over the air (SWD or a controller swap) - only flash it if you can recover the unit. Read the Disclaimer before use.
+The XT5 speed release is flash-free: it writes nothing to the meter or the controller and reverts on the next power cycle. The NT5, N65i II and UT5 Max firmware patches are confirmed on hardware and are reversible by flashing the stock firmware back. The N65i II now also has a **DE meter patch** that adds a Bluetooth-switchable throttle (a US N65i II ships open and needs no patch); it is built but **experimental, not yet hardware-confirmed**. The **ST3/GT3 family is experimental**: built and statically verified but **not yet confirmed on hardware**, and a failed flash there is not recoverable over the air (SWD or a controller swap) - only flash it if you can recover the unit. Read the Disclaimer before use.
 
 ## Restore the original firmware
 
