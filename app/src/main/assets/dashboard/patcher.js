@@ -138,6 +138,7 @@ const IMAGES = {
     reseal: meterReseal,
     patches: [
       { off: 0x1314e, from: [0x92, 0x7d], to: [0x06, 0x22], id: 'speed-region-unlock' }, // region read -> movs r2,#6 (force unrestricted, keep CONFIG_SPEED)
+      { off: 0x14b88, from: [0x33], to: [0x35], id: 'version-marker' }, // meter version builder leading '3' -> '5' (movs r0,#0x33 @raw 0x14b88), fwMeter '3016' -> '5016' so the app/tool detect the patched meter (was missing -> patch was invisible)
       { off: 0x182f6, from: [0xfd, 0xf7, 0x93, 0xfb], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed' }, // over-speed warning bl -> nop
       { off: 0x15ba8, from: [0xff, 0xf7, 0xfd, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/alarm bl -> nop
       { off: 0x15c14, from: [0xff, 0xf7, 0xea, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // startup/error melody bl -> nop
@@ -1479,6 +1480,7 @@ patches: [
     match: (u8) => u8.length === 0xe100 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x00]) && beRead(u8, 0xb0, 2) === 0x1611,
     verify: { size: 0xe100, lenOff: 0x84, lenStock: 0x0000e000, crcOff: 0xb0, crcStock: 0x1611 },
     reseal: bldcResealErpm,
+    blocked: 'XT5 Pro/Max on controller 0.0.1.0 opens flash-free over Bluetooth (gear 4) - no controller flash needed. (Only the newer 0.0.1.3, where NAVEE removed the gear-4 path, carries a controller patch.)',
     stdSpeedKmh: 40,
     patches: [  // std: top gear-4 bucket at 40 (movw r1,#726); speed variants below cover 22-50
       { off: 0x43e0, from: [0x40, 0xf2, 0xd6, 0x21], to: [0x40, 0xf2, 0xd6, 0x21], id: 'speed' },
@@ -1502,7 +1504,7 @@ patches: [
     stdSpeedKmh: 45,
     patches: [
       { off: 0x48d8, from: [0x05, 0x2a], to: [0x04, 0x2a], id: 'speed' },        // cmp r2,#5->4: mode-4 -> cap cell (raw 0x47d8)
-      { off: 0x0908e, from: [0x33, 0x20], to: [0x35, 0x20], id: 'marker' },      // fwBldc[0]: '3' -> '5'
+      { off: 0x0908e, from: [0x33, 0x20], to: [0x35, 0x20], id: 'version-marker' },      // fwBldc[0]: '3' -> '5'
     ],
   },
 
@@ -1867,40 +1869,17 @@ patches: [
     match: (u8) => u8.length === 0xf900 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x00]) && beRead(u8, 0xb0, 2) === 0xb58f,
     verify: { size: 0xf900, lenOff: 0x84, lenStock: 0x0000f800, crcOff: 0xb0, crcStock: 0xb58f },
     reseal: bldcResealErpm,
-    // Full-read of FUN_00004820 (the governor): the forced byte-10 value becomes the setpoint
-    // [0x20001b40] = commanded * 2089/115, then the master clamp at 0x4a5a (strh.gt r0,[r1,#0x18] <- the
-    // flash per-gear ceiling [0x20000378]) pulls it back to ~22 km/h every cycle - that is why forcing the
-    // source alone was a hardware no-op. Working lever forces byte 10 to the target AND nops that clamp.
-    // Over-rev governor (cmp #0x186 = 39.0, 0x384e/0x3ade/0x517c/0x5198) shaves the top to ~39, so 40 is the
-    // practical ceiling; full phase current is available from 28 km/h (gesamtanalyse 8.19.6). Target selectable.
+    // Switchable controller patch - harmonises with the 0060 meter. The meter forwards the live 0x6E speed
+    // value as drive-frame byte10; the stock controller reads it (ldrb @0xa73e) but its master clamp @0x4a5a
+    // pulls it back to the per-gear ceiling (~22) every cycle. We NOP ONLY that clamp and LEAVE the byte10
+    // read intact, so the controller obeys exactly what the meter sends - the app selector sets the speed
+    // live (locked <-> open), no fixed value baked in. Over-rev governor caps the real top near 45.
     patches: [
-      { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x28, 0x00], id: 'speed-source' }, // ldrb.w r0,[lr,#0xa] -> movw r0,#40 (meter byte10 forced to 40 km/h)
-      { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp strh.gt r0,[r1,#0x18]
-      { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' }, // fwBldc "0010" -> "0080"
+      { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp strh.gt r0,[r1,#0x18] -> controller obeys the meter-sent byte10
+      { off: 0x3d7c, from: [0x1d, 0xd1], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 pre-arm bne in the hold FUN_000037b0 (@0x00003c7c): cruise latches on enable+moving+throttle-release, bypassing the c1/c2 +-0.33km/h stability window that real riding never holds (why cruise never engaged). Enable-gated -> stock riding unaffected. HW-unconfirmed.
+      { off: 0xaf26, from: [0x30, 0x21], to: [0x35, 0x21], id: 'version-marker' }, // fwBldc "0010" -> "5515" (leading '5' so the app detects the patched controller)
     ],
-    stdSpeedKmh: 40,
-    variants: {
-      speed22: { experimental: false, speedKmh: 22, patches: [
-        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x16, 0x00], id: 'speed-source' }, // movw r0,#22
-        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
-      ] },
-      speed25: { experimental: false, speedKmh: 25, patches: [
-        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x19, 0x00], id: 'speed-source' }, // movw r0,#25
-        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
-      ] },
-      speed30: { experimental: false, speedKmh: 30, patches: [
-        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x1e, 0x00], id: 'speed-source' }, // movw r0,#30
-        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
-      ] },
-      speed35: { experimental: false, speedKmh: 35, patches: [
-        { off: 0xa73e, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x23, 0x00], id: 'speed-source' }, // movw r0,#35
-        { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xaf2c, from: [0x31, 0x22], to: [0x38, 0x22], id: 'version-marker' },
-      ] },
-    },
+    atomic: true,
   },
 
   // Newer UT5 Max controller 0.0.1.3 (8901). Same in-place speed lever as 0.0.1.0 (force meter byte10 to the
@@ -1913,34 +1892,15 @@ patches: [
     match: (u8) => u8.length === 0xfd00 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-3553G')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x03]) && beRead(u8, 0xb0, 2) === 0x8c7c,
     verify: { size: 0xfd00, lenOff: 0x84, lenStock: 0x0000fc00, crcOff: 0xb0, crcStock: 0x8c7c },
     reseal: bldcResealErpm,
+    // Switchable controller patch - harmonises with the 0060 meter (same design as 0.0.1.0, offsets relocated).
+    // NOP ONLY the master clamp @0x4e12, leave the byte10 read (@0xac12) intact, so the meter-sent live value
+    // is the cap - the app selector sets the speed live. Over-rev governor caps the real top near 45.
     patches: [
-      { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x28, 0x00], id: 'speed-source' }, // ldrb.w r0,[lr,#0xa] -> movw r0,#40 (meter byte10 forced to 40 km/h)
-      { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp strh.gt r0,[r1,#0x18]
-      { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' }, // movs r1,#0x31('1')->#0x38('8'): fwBldc '0013' -> '0083'
+      { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp -> controller obeys the meter-sent byte10
+      { off: 0x4114, from: [0x1d, 0xd1], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 pre-arm bne in the hold FUN_000037b0 (@0x00004014): cruise latches on enable+moving+throttle-release, bypassing the c1/c2 +-0.33km/h stability window. Enable-gated -> stock riding unaffected. HW-unconfirmed.
+      { off: 0xb3d4, from: [0x30, 0x21], to: [0x35, 0x21], id: 'version-marker' }, // fwBldc "0013" -> "5513" (leading '5' = detected)
     ],
-    stdSpeedKmh: 40,
-    variants: {
-      speed22: { experimental: false, speedKmh: 22, patches: [
-        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x16, 0x00], id: 'speed-source' }, // movw r0,#22
-        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
-      ] },
-      speed25: { experimental: false, speedKmh: 25, patches: [
-        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x19, 0x00], id: 'speed-source' }, // movw r0,#25
-        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
-      ] },
-      speed30: { experimental: false, speedKmh: 30, patches: [
-        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x1e, 0x00], id: 'speed-source' }, // movw r0,#30
-        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
-      ] },
-      speed35: { experimental: false, speedKmh: 35, patches: [
-        { off: 0xac12, from: [0x9e, 0xf8, 0x0a, 0x00], to: [0x40, 0xf2, 0x23, 0x00], id: 'speed-source' }, // movw r0,#35
-        { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' },
-        { off: 0xb3da, from: [0x31, 0x21], to: [0x38, 0x21], id: 'version-marker' },
-      ] },
-    },
+    atomic: true,
   },
   // S2 meter 2.0.0.1 (9901). Drive-mode clamped -> one-shot trampoline routes app nibble 5/6 into the control frame for bldcS2. Kickstart gate flip.
   meterS2: {
@@ -2597,7 +2557,6 @@ const FLASH_ENABLED = new Set([
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
   'bldcUT5Max', 'bldcUT5Max_0013',                                // UT5 Max controller (permanent top gear 22-40; 0.0.1.0 plus newer 0.0.1.3; meter never flashed, experimental)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
-  'bldcXT5ProMax',                                                // XT5 Pro/Max controller 0.0.1.0 (target-speed selector, hardware-confirmed)
   'bldcXT5ProMax0013',                                            // XT5 Pro/Max controller 0.0.1.3 (45 km/h via meter cap, experimental)
   'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', // ST3/GT3 controllers
   'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', // 02831 in-place target-speed selector (experimental) (raised top gear, meter never flashed, experimental)

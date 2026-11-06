@@ -16,6 +16,13 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.107
+- NAVEE UT5 Max is now truly switchable and cruise control works. The controller patch no longer forces a fixed speed - it obeys the meter, so the Bluetooth speed selector sets the speed live (22 to open), and cruise now actually engages (a controller gate that blocked the cruise hold was removed). The patched controller is now detected. Still brick-prone, flash at your own risk.
+- UT5 Max speed selector now tops out at 45: 50 was removed because the meter treats it as a zero value and the scooter would fall back to ~20.
+- New: battery charge limit. In Battery info you can set how full the scooter charges (e.g. 80%) to spare the pack, if your scooter supports it.
+- Flash help: if the firmware patcher aborts with "no reply to dfu_start", your scooter is still bound to a NAVEE account - unbind it in the NAVEE app or enter your real NAVEE User ID in Settings, then reconnect and try again.
+- Patched firmware is now reliably detected across all models (version markers were added where missing), so the app shows the right options.
+
 ## 1.0.106
 - NAVEE UT5 Max is no longer experimental: the meter throttle patch and the controller patch are hardware-confirmed working, so the connected scooter and the firmware patcher no longer show the untested warning for UT5 Max. It stays brick-prone (3553G, no SWD recovery), so flashing the controller is still at your own risk.
 - New: NAVEE N65i II Bluetooth-switchable throttle. On a patched DE N65i II meter you choose the locked and the open km/h in the scooter settings (locked 15-25, open up to ~40) and toggle between them over Bluetooth, like XT5 / UT5 Max. Meter-only patch, the controller stays stock. Experimental, flashes the meter - untested warning applies. A US N65i II ships open already and needs no patch.

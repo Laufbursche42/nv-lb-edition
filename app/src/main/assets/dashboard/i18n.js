@@ -5,6 +5,9 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: real switchable speed and working cruise control.</b> The controller patch now follows the meter instead of forcing a fixed speed, so the Bluetooth speed selector changes the speed live (22 to open), and cruise control finally engages - ride at a steady speed, then release the throttle. Re-flash the controller to get it. Still brick-prone, flash at your own risk.",
+      "<b>New: battery charge limit.</b> In Battery info you can cap how full the scooter charges - e.g. 80% to keep the pack in a healthy range - if your scooter reports the setting.",
+      "<b>Flash help: \"no reply to dfu_start\".</b> If flashing stops right at the start, your scooter is still bound to a NAVEE account. Unbind it in the NAVEE app, or enter your real NAVEE User ID (not the NAVEE ID) in Settings, then try again.",
       "<b>UT5 Max is no longer experimental.</b> The meter throttle patch and the controller patch are now hardware-confirmed working, so the UT5 Max no longer shows the untested warning when connected or in the firmware patcher. It stays brick-prone (3553G, no SWD recovery), so flashing the controller is still at your own risk.",
       "<b>New: N65i II Bluetooth-switchable throttle.</b> On a patched DE N65i II meter you now pick the locked and the open km/h in the scooter settings (locked 15-25, open up to about 40) and toggle between them over Bluetooth, just like XT5 and UT5 Max. Only the meter is patched, the controller stays stock. Experimental, flashes the meter - the untested warning applies. A US N65i II is open from the factory and needs no patch.",
       "<b>UT5 Max: the Bluetooth throttle switch works now.</b> On a meter patched for the switchable throttle, flipping the speed open or locked over Bluetooth now really changes the speed in every region - before, it stayed locked on EU scooters because the meter never passed the chosen speed on to the controller.",
@@ -225,6 +228,10 @@ window.I18N = {
     "info.battery.health.title": "Battery health",
     "info.battery.hint": "Pack health and summary read live from the scooter (BLE). No command is sent.",
     "info.battery.pack.title": "Pack summary",
+    "info.battery.chargelimit.title": "Charge limit",
+    "info.battery.chargelimit.label": "Charge up to",
+    "info.battery.chargelimit.sub": "Stop charging at this level to spare the battery - e.g. 80% keeps the pack in a healthy range. 100% charges full. Only shown when your scooter reports this setting.",
+    "info.battery.chargelimit.toast": "Charge limit set to {v}%",
     "info.battery.title": "Battery info",
     "info.copy": "Copy",
     "info.errors.empty": "No active errors",
@@ -665,7 +672,8 @@ window.I18N = {
     "fw.file.download_fail": "Download failed. Check the link and your connection.",
     "fw.patch.error": "Patch failed:",
     "fw.patch.none": "none (resealed only)",
-    "fw.fail.bound": "This scooter is bound to a NAVEE account, so it cannot be flashed over this app.",
+    "fw.fail.bound": "The scooter did not start the update - it is still bound to a NAVEE account. Unbind (decouple) it in the NAVEE app, or enter your real NAVEE User ID (not the NAVEE ID shown in the NAVEE app) in Settings, then reconnect and try again.",
+    "patch.run.boundnote": "Flash error \"no reply to dfu_start\"? Your scooter is still bound to a NAVEE account. Unbind (decouple) it in the NAVEE app, or enter your real NAVEE User ID (not the NAVEE ID) in Settings - then reconnect and flash again.",
     "fw.consent.text": "I have read the note and flash at my own risk.",
     "fw.start.button": "Start flashing",
     "fw.start.hint": "Load firmware and connect the scooter to enable flashing.",
@@ -1103,6 +1111,9 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: echt schaltbares Tempo und funktionierender Tempomat.</b> Der Controller-Patch folgt jetzt dem Tacho statt ein festes Tempo zu erzwingen - der Bluetooth-Tempo-Selektor stellt die Geschwindigkeit live ein (22 bis offen), und der Tempomat rastet endlich ein: konstant fahren, dann Gas loslassen. Dafür den Controller neu flashen. Weiterhin brick-gefährdet, Flashen auf eigene Gefahr.",
+      "<b>Neu: Akku-Ladelimit.</b> Unter Akku-Info kannst du begrenzen, wie voll der Roller lädt - z.B. 80%, um den Akku zu schonen - sofern dein Roller die Einstellung meldet.",
+      "<b>Flash-Hilfe: \"no reply to dfu_start\".</b> Bricht der Flash gleich am Anfang ab, ist dein Roller noch an ein NAVEE-Konto gebunden. Entkopple ihn in der NAVEE-App, oder trage deine echte NAVEE-User-ID (nicht die NAVEE-ID) in den Einstellungen ein, dann erneut versuchen.",
       "<b>UT5 Max ist nicht mehr experimentell.</b> Der Meter-Drossel-Patch und der Controller-Patch sind jetzt an Hardware bestätigt, daher zeigt der UT5 Max weder beim Verbinden noch im Firmware-Patcher die Ungetestet-Warnung. Er bleibt brick-gefährdet (3553G, keine SWD-Rettung), daher ist das Flashen des Controllers weiterhin auf eigene Gefahr.",
       "<b>Neu: N65i-II-Drossel per Bluetooth schaltbar.</b> Auf einem gepatchten DE-N65i-II-Tacho wählst du jetzt die gesperrte und die offene km/h in den Roller-Einstellungen (gesperrt 15-25, offen bis etwa 40) und schaltest per Bluetooth dazwischen um, genau wie beim XT5 und UT5 Max. Es wird nur der Tacho gepatcht, der Controller bleibt Werkszustand. Experimentell, flasht den Tacho - die Ungetestet-Warnung gilt. Ein US-N65i-II ist ab Werk offen und braucht keinen Patch.",
       "<b>UT5 Max: der Bluetooth-Drossel-Schalter funktioniert jetzt.</b> Auf einem für die schaltbare Drossel gepatchten Tacho ändert das Öffnen oder Sperren per Bluetooth jetzt wirklich das Tempo - in jeder Region. Vorher blieb es auf EU-Rollern gesperrt, weil der Tacho das gewählte Tempo nie an den Controller weitergab.",
@@ -1763,7 +1774,8 @@ window.I18N = {
     "fw.file.download_fail": "Download fehlgeschlagen. Link und Verbindung prüfen.",
     "fw.patch.error": "Patch fehlgeschlagen:",
     "fw.patch.none": "keine (nur neu versiegelt)",
-    "fw.fail.bound": "Dieser Roller ist an ein NAVEE-Konto gebunden - über diese App lässt er sich nicht flashen.",
+    "fw.fail.bound": "Der Roller hat das Update nicht gestartet - er ist noch an ein NAVEE-Konto gebunden. Entkopple ihn in der NAVEE-App, oder trage deine echte NAVEE-User-ID (nicht die NAVEE-ID aus der NAVEE-App) in den Einstellungen ein, dann neu verbinden und erneut versuchen.",
+    "patch.run.boundnote": "Flash-Fehler \"no reply to dfu_start\"? Dein Roller ist noch an ein NAVEE-Konto gebunden. Entkopple ihn in der NAVEE-App, oder trage deine echte NAVEE-User-ID (nicht die NAVEE-ID) in den Einstellungen ein - dann neu verbinden und erneut flashen.",
     "fw.consent.text": "Ich habe den Hinweis gelesen und flashe auf eigenes Risiko.",
     "fw.start.button": "Flashen starten",
     "fw.start.hint": "Firmware laden und den Roller verbinden, um das Flashen freizuschalten.",

@@ -816,6 +816,15 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div class="settings-group-title" data-i18n="info.battery.pack.title">Pack summary</div>
       <div id="bat-pack"></div>
     </div>
+    <div class="settings-group has-top-rule is-hidden" id="bat-chargelimit-group">
+      <div class="settings-group-title" data-i18n="info.battery.chargelimit.title">Charge limit</div>
+      <div class="settings-row">
+        <div class="settings-row-left"><div class="settings-row-label" data-i18n="info.battery.chargelimit.label">Charge up to</div><div class="settings-row-sublabel" data-i18n="info.battery.chargelimit.sub">Stop charging at this level to spare the battery - e.g. 80% keeps the pack in a healthy range. 100% charges full. Only shown when your scooter reports this setting.</div></div>
+        <select class="set-ctrl" id="bat-chargelimit">
+          <option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="100">100%</option>
+        </select>
+      </div>
+    </div>
     <div class="settings-group has-top-rule">
       <div class="settings-group-title" data-i18n="info.battery.cells.title">Cells</div>
       <div id="bat-cells" class="cell-grid"></div>
@@ -973,6 +982,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div id="patch-disclaimer" class="fw-warn is-hidden"></div>
       <button id="btn-patcher-run" disabled data-i18n="patch.run.button">&#128229; Herunterladen und patchen</button>
       <div class="settings-row-sublabel m-6-0-0" id="patch-run-hint" data-i18n="patch.run.hint">Roller verbinden, damit das Modell erkannt wird.</div>
+      <div class="settings-row-sublabel m-6-0-0" data-i18n="patch.run.boundnote">Flash-Fehler &quot;no reply to dfu_start&quot;? Dein Roller ist noch an ein NAVEE-Konto gebunden. Entkopple ihn in der NAVEE-App, oder trage deine echte NAVEE-User-ID (nicht die NAVEE-ID) in den Einstellungen ein - dann neu verbinden und erneut flashen.</div>
       <div id="patch-status" class="settings-row-sublabel m-6-0-0 is-hidden"></div>
     </div>
   </div>
@@ -3576,10 +3586,10 @@ function naveeDrosselCaps(name) {
   if (/^GT5/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
   if (/^ST5/.test(name)) return { open: [22, 25, 27, 30, 35, 40], lock: [20, 22, 25] };
   // UT5 Max: the "0060" meter forwards the live 0x6E value byte as drive-frame byte10 (controller scales
-  // it linearly), so both the locked and the open speed are selectable. Top step is 40: the controller's
-  // over-rev governor (cmp 0x186=39 / 0x1a4=42) caps real speed around 40 - higher values would be
-  // clamped there, so offering them would be a false promise. 50 is also the meter's zero sentinel.
-  if (/^UT5 Max/.test(name)) return { open: [27, 30, 35, 40, 45, 50], lock: [15, 20, 22, 25] };
+  // it linearly), so both the locked and the open speed are selectable. Top step is 45 (the controller
+  // ceiling). 50 is the meter's zero sentinel - sending 50 makes the controller fall back to its default
+  // (~20) instead of going faster (field-confirmed: 50 dropped to 20), so only 50 was removed.
+  if (/^UT5 Max/.test(name)) return { open: [27, 30, 35, 40, 45], lock: [15, 20, 22, 25] };
   // N65i II: the patched "5058" meter NOPs the region gate so the live 0x6E sub1 value is forwarded as
   // drive-frame byte10; the stock controller already caps = min(modeCap, byte*scale), so both locked and
   // open are selectable. Top step is 40: the controller's mode-4 cap bounds real speed there, so higher
@@ -3957,6 +3967,27 @@ function renderBatteryPage() {
     ).join('');
   }
 
+  // Charge limit (0x6F sub4): shown only when the scooter reports it (0x70 field). Settable here; the
+  // BMS stops charging at this level. Pending-guarded so a live report does not snap the user's pick back.
+  {
+    const clGroup = document.getElementById('bat-chargelimit-group');
+    const clSel = document.getElementById('bat-chargelimit');
+    const cl = (typeof d.chargeLimit === 'number') ? d.chargeLimit : -1;
+    if (clGroup && clSel) {
+      if (cl >= 0) {
+        clGroup.classList.remove('is-hidden');
+        if (!_isPending('chargelimit')) {
+          if (cl > 0 && !Array.prototype.some.call(clSel.options, o => parseInt(o.value, 10) === cl)) {
+            const o = document.createElement('option'); o.value = String(cl); o.textContent = cl + '%'; clSel.appendChild(o);
+          }
+          clSel.value = String(cl > 0 ? cl : 100);
+        }
+      } else {
+        clGroup.classList.add('is-hidden');
+      }
+    }
+  }
+
   // NAVEE streams no per-cell voltages over BLE, so state that plainly instead of leaving a
   // placeholder that would wait forever.
   const grid = document.getElementById('bat-cells');
@@ -4130,7 +4161,7 @@ function naveeSkuOf(region) {
 // A kickstart-patched meter carries a marker version (NT5 3.0.2.2 -> "5022", XT5 3.0.2.0 -> "5020",
 // UT5 Max 0.0.3.0 -> "0050", ST3/GT3 2.0.4.6 -> "5046") and then accepts launch levels 0-2 on any
 // region. Stock NAVEE meters never report these marker versions.
-const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '0060', '5046', '5004', '5024', '5058'];
+const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '0060', '5046', '5004', '5024', '5058', '5016'];
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
 // A permanently speed-patched NAVEE controller reports fwBldc with a leading '5' (the patch flips the
 // marker's first digit 0/3 -> 5). On a permanent-cap model that overrides the meter drossel toggle.
@@ -4264,6 +4295,19 @@ function wireScooterSettings() {
     if (!naveeGuard()) return;
     _pendingWrite['zerostart'] = Date.now();
     pushSetting(NAVEE_CMD.zerostart, parseInt(e.target.value, 10) || 0);
+  });
+  // Battery charge limit (0x6F sub4): the BMS stops charging at the chosen percent. 0x6F is a sub-command
+  // opcode, so it goes out via LB.sendSub like eco / the lights, not pushSetting.
+  const batCl = document.getElementById('bat-chargelimit');
+  if (batCl) batCl.addEventListener('change', e => {
+    if (!naveeGuard()) return;
+    const v = parseInt(e.target.value, 10);
+    if (isNaN(v) || v < 0 || v > 100) return;
+    _pendingWrite['chargelimit'] = Date.now();
+    if (typeof LB !== 'undefined' && LB.sendSub) {
+      try { LB.sendSub(0x6F, 4, v); showToast(tf('info.battery.chargelimit.toast', { v: v })); }
+      catch (err) { showToast(tf('msg2.toast.error', { e: err })); }
+    }
   });
   const tcs = document.getElementById('ss-tcs');
   if (tcs) tcs.addEventListener('change', e => {
@@ -7374,7 +7418,7 @@ window.__onFwState = function(arg) {
   if (st === 'failed') {
     // Report WHICH component failed, and that any earlier component already succeeded, so a failed
     // meter flash never reads as the whole run (incl. a working controller unlock) having failed.
-    const raw = s.message === 'auth-rejected' ? t('fw.fail.bound') : (s.message || t('fw.toast.failed'));
+    const raw = (s.message === 'auth-rejected' || /dfu_start|did not enter DFU/i.test(s.message || '')) ? t('fw.fail.bound') : (s.message || t('fw.toast.failed'));
     const compName = (k) => k === 'meter' ? t('fw.comp.meter') : (k === 'bldc' ? t('fw.comp.bldc') : k);
     let msg = raw;
     if (failedKind && doneKinds.length) msg = tf('fw.fail.after', { done: compName(doneKinds[0]), failed: compName(failedKind), msg: raw });
