@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: the Bluetooth throttle switch works now.</b> On a meter patched for the switchable throttle, flipping the speed open or locked over Bluetooth now really changes the speed in every region - before, it stayed locked on EU scooters because the meter never passed the chosen speed on to the controller.",
+      "<b>Smaller, roomier button text.</b> The quick-button labels start smaller by default and you can now size them up to 35 px in the Theme Manager. Long German labels (Tempomat, Autolicht, Rücklicht ...) now wrap neatly onto two lines inside the button instead of spilling over at large sizes.",
       "<b>Theme font controls work everywhere now - and without a keyboard.</b> In the Theme Manager the size fields are now minus/plus steppers (no keyboard needed), and every text on the dashboard has its own size - the GPS speed, the ride-data grid, the All-values list and the section headers too, above and below the fold. The per-row tile-size knobs now really reach rows 2 and 3 on the packed Default dashboard instead of falling back to row 1. Carbon and Lambo pick up the same, so font size really takes effect in every theme.",
       "<b>Clearer UT5 Max patcher.</b> The firmware patcher now asks one simple question first - keep the throttle Bluetooth-switchable (patches only the meter and leaves the controller alone) or open it permanently (patches the controller). Throttle limit, cruise control and kickstart are now each their own checkbox, so you can pick only cruise or only kickstart - they no longer switch each other off. The controller-version choice only appears on the permanent path.",
       "<b>Your original firmware is saved.</b> Before patching, the app saves your scooter's untouched firmware to your Downloads folder with a readable name (for example UT5_Max_meter_0.0.3.0_original.bin) and tells you it did - so you always have a clean backup to flash back.",
@@ -1099,6 +1101,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: der Bluetooth-Drossel-Schalter funktioniert jetzt.</b> Auf einem für die schaltbare Drossel gepatchten Tacho ändert das Öffnen oder Sperren per Bluetooth jetzt wirklich das Tempo - in jeder Region. Vorher blieb es auf EU-Rollern gesperrt, weil der Tacho das gewählte Tempo nie an den Controller weitergab.",
+      "<b>Kleinere, luftigere Button-Schrift.</b> Die Quick-Button-Beschriftung startet kleiner und lässt sich im Theme-Manager jetzt bis 35 px vergrößern. Lange deutsche Labels (Tempomat, Autolicht, Rücklicht ...) brechen jetzt sauber zweizeilig im Button um, statt bei großer Schrift überzulaufen.",
       "<b>Theme-Schriftregler wirken jetzt überall - und ohne Tastatur.</b> Im Theme-Manager sind die Größenfelder jetzt Minus-/Plus-Stepper (keine Tastatur nötig), und jeder Text auf dem Dashboard hat seine eigene Größe - auch das GPS-Tempo, die Fahrdaten-Kacheln, die Alle-Werte-Liste und die Abschnitts-Titel, über und unter dem Fold. Die Regler je Kachelreihe erreichen jetzt wirklich Reihe 2 und 3 im gepackten Standard-Dashboard statt auf Reihe 1 zurückzufallen. Carbon und Lambo ziehen gleich, sodass die Schriftgröße wirklich in jedem Theme greift.",
       "<b>Übersichtlicherer UT5-Max-Patcher.</b> Der Firmware-Patcher stellt jetzt zuerst eine einfache Frage - Drossel per Bluetooth schaltbar halten (patcht nur den Tacho und lässt den Controller in Ruhe) oder dauerhaft offen (patcht den Controller). Drossel, Tempomat und Kickstart sind jetzt jeweils ein eigener Haken, du kannst also nur Tempomat oder nur Kickstart wählen - sie schalten sich nicht mehr gegenseitig aus. Die Controller-Version wird nur noch im permanenten Weg abgefragt.",
       "<b>Deine Original-Firmware wird gespeichert.</b> Vor dem Patchen sichert die App die unveränderte Firmware deines Rollers in deinen Download-Ordner mit einem klingenden Namen (zum Beispiel UT5_Max_meter_0.0.3.0_original.bin) und zeigt dir das an - so hast du immer ein sauberes Backup zum Zurückflashen.",
@@ -1234,7 +1238,7 @@ window.I18N = {
     "dash.allvalues.empty": "Verbinde den Scooter, um alle Werte zu sehen",
     "dash.allvalues.section": "Alle Werte",
     "dash.debug.banner": "&#9888; DEBUG-MODUS AN: Logs werden aufgezeichnet",
-    "dash.drive.quick.cruise": "Tempomat",
+    "dash.drive.quick.cruise": "Tempo­mat",
     "dash.drive.quick.cruise.aria": "Tempomat umschalten",
     "dash.drive.quick.group": "Schnellumschalter Fahrmodus",
     "dash.drive.quick.kickstart": "Zero-Start",
@@ -2113,9 +2117,9 @@ window.I18N = {
     // dashboard drive/motor/tele/hero labels
     "dash.drive.quick.abs": "ABS",
     "dash.drive.quick.abs.aria": "ABS umschalten",
-    "dash.drive.quick.alight": "Autolicht",
+    "dash.drive.quick.alight": "Auto­licht",
     "dash.drive.quick.alight.aria": "Autolicht umschalten",
-    "dash.drive.quick.ambient": "Ambient",
+    "dash.drive.quick.ambient": "Ambi­ent",
     "dash.drive.quick.ambient.aria": "Ambientlicht umschalten",
     "dash.drive.quick.battery": "Akku",
     "dash.drive.quick.battery.aria": "Akku entsperren",
@@ -2129,13 +2133,13 @@ window.I18N = {
     "dash.drive.quick.drl.aria": "Tagfahrlicht umschalten",
     "dash.drive.quick.logo": "Logo",
     "dash.drive.quick.logo.aria": "Logo-Licht umschalten",
-    "dash.drive.quick.tail": "Rücklicht",
+    "dash.drive.quick.tail": "Rück­licht",
     "dash.drive.quick.tail.aria": "Rücklicht umschalten",
     "dash.drive.quick.indicator": "Anzeigelicht",
     "dash.drive.quick.indicator.aria": "BLE-Anzeigelicht schalten",
     "dash.drive.quick.mode": "Fahrmodus",
     "dash.drive.quick.mode.aria": "Fahrmodus wechseln",
-    "dash.drive.quick.unit": "Einheit",
+    "dash.drive.quick.unit": "Ein­heit",
     "dash.drive.quick.unit.aria": "Anzeige-Einheit schalten",
     "dash.drive.quick.zerostart": "Zero-Start",
     "dash.drive.quick.zerostart.aria": "Zero-Start schalten",

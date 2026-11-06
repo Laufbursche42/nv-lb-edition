@@ -2032,10 +2032,14 @@ patches: [
   },
 
   // UT5 Max meter 0.0.3.0 (8901). T2314. Switchable speed selector + kickstart + cruise, all in-place
-  // (len@0x10 untouched, image passes its own len+CRC gate; stock CRC 0x010a -> 0x4980). speedsel NOPs
-  // the DE region skip (beq) inside the class 0x6E sub1 handler (FUN_080142ae @ 0x142ce), so 0x6E sub1
-  // writes the live speed cell 0x20aae6 in every region; the frame builder then forwards that cell as
-  // drive-frame byte10 (the normal-mode path copies the cell directly for any value != 50, no gate).
+  // (len@0x10 untouched, image passes its own len+CRC gate; stock CRC 0x010a, re-sealed per selection).
+  // Two NOPs make the BLE drossel work in every region: speedsel clears the DE region skip (beq) inside
+  // the class 0x6E sub1 handler (FUN_080142ae @ 0x142ce) so 0x6E sub1 writes the live speed cell 0x20aae6
+  // in every region, and speedsel-frame forces the frame builder's region path selector (FUN_8017658 @
+  // 0x13396, beq -> b) onto the cell-forward branch so drive-frame byte10 FOLLOWS that cell in every
+  // region. Without speedsel-frame the selector takes the restricted path on DE and byte10 is pinned to
+  // the 0x32 stock sentinel, so BT speed switching does nothing - that was the bug. byte10 != 0x32 then
+  // copies the cell directly with no further gate.
   // The controller honours byte10 as a linear cap, so the app selects both the locked and the open
   // km/h (class 0x6E sub1). Marker "0060" (not "0050") so the app tells this value-selector meter apart
   // from the earlier "0050" on/off (0x81-flag) meter. Experimental, not confirmed on recoverable hardware.
@@ -2052,6 +2056,7 @@ patches: [
     // certified by the marker, so they stay individually selectable (core forced, beeps honour selection).
     markerFeature: 'drossel',
     patches: [
+      { off: 0x13396, from: [0x07, 0xd0], to: [0x07, 0xe0], id: 'speedsel-frame' }, // frame-builder region path selector (FUN_8017658 @ 0x13390): beq -> b forces the cell-forward branch so drive byte10 follows the 0x6E speed cell in EVERY region; the stock selector takes the restricted path on DE and byte10 is pinned to the 0x32 sentinel (BT speed switch did nothing without this)
       { off: 0x142ce, from: [0x04, 0xd0], to: [0x00, 0xbf], id: 'speedsel' }, // class 0x6E sub1 handler (FUN_080142ae): NOP the DE region skip (beq) so the speed cell 0x20aae6 is written in every region; drive-frame byte10 then follows it (locked/open km/h both set live by 0x6E sub1)
       { off: 0x1438f, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bhs) -> unconditional, launch levels 0-2 accepted in every region
       { off: 0x14068, from: [0x0b, 0xd0], to: [0x00, 0xbf], id: 'cruise' }, // cruise/tempomat DE sub-gate (beq) -> nop, enable bit forwarded in every region

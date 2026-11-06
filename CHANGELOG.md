@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.105
+
+- UT5 Max Bluetooth throttle switch fixed. On a meter patched for the switchable throttle (marker "0060"), flipping the speed open or locked over Bluetooth now takes effect in every region. The patch previously neutralised only the 0x6E write gate, so the selected speed was written but the drive-frame builder still forced byte10 to the restricted default on EU scooters; the frame-builder region branch is now forced onto the cell-forward path (patcher.js, mirrors the webpatcher engine).
+- Quick-button (button/label) font: default lowered to 9 px and the adjustable range raised to 5-35 px.
+- Long German button labels (Tempomat, Autolicht, Rücklicht, Einheit, Ambient) carry soft hyphens and the buttons wrap, so a label breaks neatly onto two lines at a large font size instead of overflowing the button.
+
 ## 1.0.104
 
 - Theme Manager font controls reworked to match the other Laufbursche Edition apps (shared dashboard layer). Every text on the dashboard now has its own adjustable size - the GPS speed readout, the ride-data grid below the fold, the All-values list and the section headers, in addition to the speedo, upper tiles and tile rows that were already adjustable. The style editor groups them under clear sub-headers (speedo and upper tiles / tile rows / buttons and more text).
