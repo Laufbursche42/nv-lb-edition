@@ -16,6 +16,11 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.108
+- UT5 Max patcher now flashes BOTH the display and the controller as one set, and lets you pick the controller version (0.0.1.0 / 0.0.1.3, defaulting to the one your scooter runs). Before, only one file was handed to the flasher, so the switchable throttle never fully took - both are now always built and flashed together.
+- Firmware patcher: if a flash is interrupted, a "Restart the aborted patch" button re-runs the unfinished file from the start (download, patch, flash) and skips any file that already flashed.
+- UT5 Max cruise fix: the controller cruise patch now targets the real cruise-hold routine instead of a config-table loader, so the dwell window that kept cruise from engaging is actually removed. Hardware-unconfirmed.
+
 ## 1.0.107
 - NAVEE UT5 Max is now truly switchable and cruise control works. The controller patch no longer forces a fixed speed - it obeys the meter, so the Bluetooth speed selector sets the speed live (22 to open), and cruise now actually engages (a controller gate that blocked the cruise hold was removed). The patched controller is now detected. Still brick-prone, flash at your own risk.
 - UT5 Max speed selector now tops out at 45: 50 was removed because the meter treats it as a zero value and the scooter would fall back to ~20.

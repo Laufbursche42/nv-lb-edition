@@ -1020,6 +1020,10 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
       <div class="settings-row-sublabel m-6-0-0" id="fw-start-hint" data-i18n="fw.start.hint">
         Firmware laden und den Roller verbinden, um das Flashen freizuschalten.
       </div>
+      <button id="btn-fw-resume" class="is-hidden mt-12" data-i18n="fw.resume.button">Abgebrochenen Patch neu starten</button>
+      <div class="settings-row-sublabel m-6-0-0 is-hidden" id="fw-resume-hint" data-i18n="fw.resume.hint">
+        Der unterbrochene Patch wird für die betroffene Datei komplett neu durchlaufen (Herunterladen, Patchen, Flashen).
+      </div>
 
       <div class="is-hidden mt-12" id="fw-progress-wrap">
         <div class="fw-bar"><div id="fw-bar-fill"></div></div>
@@ -6448,6 +6452,7 @@ function wireEvents() {
   document.getElementById('btn-firmware-back').addEventListener('click', closeFirmwarePage);
   document.getElementById('btn-fw-file').addEventListener('click', fwPickFile);
   document.getElementById('btn-fw-start').addEventListener('click', fwStart);
+  { const rb = document.getElementById('btn-fw-resume'); if (rb) rb.addEventListener('click', fwResumeFlash); }
   document.getElementById('btn-fw-cancel').addEventListener('click', fwCancel);
   document.getElementById('fw-consent').addEventListener('change', fwSyncStartEnabled);
   document.getElementById('fw-consent-link').addEventListener('click', () => openDisclaimer('read'));
@@ -6676,6 +6681,8 @@ const fwState = {
   flashQueue: [], flashing: null, flashDone: [],   // sequential meter -> bldc flash; flashDone = components that succeeded this run
   experimental: false,                      // staged image is untested (not hardware-confirmed)
   raw: false,                               // staged image was picked by the user (unverified, flash as-is)
+  lastComps: [],                            // the built component list of the last patch run (url+kind+name), for resume
+  resumePending: [],                        // kinds left to (re)do after an aborted flash: restart each from download
 };
 
 /* ── Model detection from the live serial pid plus the running controller version ── */
@@ -6741,11 +6748,16 @@ function renderPatcherModel(forcedId) {
   hidePatchFeatures();
   if (!state.bleConnected) { modelEl.textContent = t('patch.model.connect'); btn.disabled = true; hint.textContent = ''; return; }
   let det = forcedId ? fwModelEntry(forcedId) : fwDetectModel();
-  // UT5 Max: the two board variants (8901/8902) share the SAME meter image, so patching the meter needs
-  // no controller-version choice. Skip the variant gate and go straight to the flow; the controller
-  // version is picked only inside the "Permanently open" (controller) path.
+  // UT5 Max: the two board variants (8901/8902) share the SAME meter image but carry different controller
+  // firmware (8901 = 0.0.1.0, 8902 = 0.0.1.3). Default to the version the scooter actually runs so the right
+  // controller image is pre-selected (the in-flow picker still lets the user switch). Only the 0.0.1.3
+  // controller reports a version ending in 3 (live fwBldc "0013"/"5513"); everything else is 0.0.1.0.
   if (det.state === 'variants' && det.pid === '2538' && det.ids && det.ids.length) {
-    det = fwModelEntry(det.ids[0]);
+    const fb = (liveRaw().fwBldc || '').trim();
+    const wantVn = fb.charAt(3) === '3' ? '0.0.1.3' : '0.0.1.0';
+    let pick = det.ids[0];
+    for (const id of det.ids) { const m = fwModelEntry(id); if (m && m.bldc && m.bldc.vn === wantVn) { pick = id; break; } }
+    det = fwModelEntry(pick);
   }
   if (det.state === 'ok') {
     fwState.model = det;
@@ -6993,32 +7005,18 @@ function renderPatchFeatures(det) {
           }
         }
       } else {
-        // UT5 Max: one clear either/or instead of a checkbox mix. The switchable meter patch (drossel +
-        // cruise + kickstart, applied as a forced unit) vs the permanent controller 40. The meter core is
-        // stated ("always included"), never a defeatable checkbox; only the two silenceable tones stay optional.
-        const liveB = (liveRaw().fwBldc || '').trim();
-        const liveM = (liveRaw().fwMeter || '').trim();
-        const ctrlPatched = liveB === '0080' || liveB === '0083';   // 0.0.1.0 -> "0080", 0.0.1.3 -> "0083"
-        const meterPatched = liveM === '0050' || liveM === '0060';
-        const conflict = (ctrlPatched && meterPatched) ? 'both' : ctrlPatched ? 'ctrl' : meterPatched ? 'meter' : '';
-        if (conflict) {
-          const cw = document.createElement('div'); cw.className = 'patch-disclaimer'; cw.style.margin = '0 0 8px'; cw.style.fontWeight = '600';
-          cw.textContent = t('patch.ut5max.conflict.' + conflict); box.appendChild(cw);
-        }
-        // Hidden checkbox drives the permanent-path staging: 'speed' = controller patch.
-        const hSpeed = document.createElement('input'); hSpeed.type = 'checkbox'; hSpeed.value = 'speed'; hSpeed.style.display = 'none';
+        // UT5 Max: the switchable throttle is the display (meter) AND the controller as ONE inseparable set -
+        // the meter forwards the live Bluetooth speed as drive-frame byte10, the clamp-NOP controller obeys it.
+        // Both are always flashed together; flashing only one does nothing (meter-only -> the stock controller
+        // clamps back to ~22). There is no separate "permanent" path any more. The controller is always part of
+        // the set (hidden 'speed'); drossel/cruise/kickstart and the two tone silences are the pickable extras.
+        const note = document.createElement('div'); note.className = 'patch-disclaimer'; note.style.cssText = 'margin:0 0 10px;font-weight:600';
+        note.textContent = t('patch.ut5max.bothnote'); box.appendChild(note);
+        // Controller is always included in the set.
+        const hSpeed = document.createElement('input'); hSpeed.type = 'checkbox'; hSpeed.value = 'speed'; hSpeed.checked = true; hSpeed.style.display = 'none';
         box.appendChild(hSpeed);
-        const mkRadio = (val, label) => {
-          const l = document.createElement('label'); l.className = 'patch-feature-row'; l.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin:11px 0;line-height:1.35';
-          const r = document.createElement('input'); r.type = 'radio'; r.name = 'ut5path'; r.value = val; r.style.marginTop = '3px';
-          const sp = document.createElement('span'); sp.textContent = label;
-          l.appendChild(r); l.appendChild(sp); box.appendChild(l); return r;
-        };
-        const rMeter = mkRadio('meter', t('patch.ut5max.path.meter'));
-        const rCtrl = mkRadio('ctrl', t('patch.ut5max.path.ctrl'));
-        // Switchable (meter) path: each feature is picked on its own - a user may want only the drossel, or
-        // only cruise, or only kickstart. Drossel/cruise/kickstart on by default, the two tone silences off.
-        const ex = document.createElement('div'); ex.id = 'ut5-extras'; ex.style.margin = '2px 0 0 20px';
+        // Meter extras - each pickable on its own; drossel/cruise/kickstart on by default, tone silences off.
+        const ex = document.createElement('div'); ex.id = 'ut5-extras';
         ['drossel', 'cruise', 'kickstart', 'beep-alarm', 'beep-melody'].forEach(f => {
           if (feats.indexOf(f) < 0) return;
           const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin:9px 0;line-height:1.35';
@@ -7030,9 +7028,9 @@ function renderPatchFeatures(det) {
           ex.appendChild(lab);
         });
         box.appendChild(ex);
-        // Permanent path only: the two board variants share the meter, so the controller version matters
-        // only here. A small picker; changing it re-renders with that controller image, staying on this path.
-        const exCtrl = document.createElement('div'); exCtrl.id = 'ut5-ctrl'; exCtrl.style.margin = '2px 0 0 20px';
+        // The two UT5 Max boards share the meter; the controller comes as 0.0.1.0 / 0.0.1.3 - pick the one that
+        // matches the device so the right controller image is flashed (it is part of the set either way).
+        const exCtrl = document.createElement('div'); exCtrl.id = 'ut5-ctrl'; exCtrl.style.margin = '8px 0 0';
         const ctrlIds = (window.FW_MANIFEST && window.FW_MANIFEST.pidIndex && window.FW_MANIFEST.pidIndex['2538']) || [];
         if (ctrlIds.length > 1) {
           const ch = document.createElement('div'); ch.className = 'settings-group-title'; ch.style.marginTop = '4px'; ch.textContent = t('patch.ctrlver.title');
@@ -7042,23 +7040,10 @@ function renderPatchFeatures(det) {
             const b = window.FW_MANIFEST.models[sid] && window.FW_MANIFEST.models[sid].comps.bldc;
             const o = new Option(b ? b.vn : sid, sid); if (sid === String(det.id)) o.selected = true; cs.appendChild(o);
           });
-          cs.addEventListener('change', function () { _ut5Path = 'ctrl'; renderPatcherModel(cs.value); });
+          cs.addEventListener('change', function () { renderPatcherModel(cs.value); });
           exCtrl.appendChild(cs);
         }
         box.appendChild(exCtrl);
-        const applyUt5 = () => {
-          const meter = rMeter.checked;
-          hSpeed.checked = !meter;
-          ex.style.display = meter ? '' : 'none';
-          exCtrl.style.display = meter ? 'none' : '';
-          _ut5Path = meter ? 'meter' : 'ctrl';
-          // Hidden meter checkboxes would still count as selected; restore defaults on the meter path and
-          // clear them on the permanent path so only the chosen path's features are staged.
-          Array.from(ex.querySelectorAll('input[type=checkbox]')).forEach(c => { c.checked = meter && c.dataset.def === '1'; });
-        };
-        rMeter.addEventListener('change', applyUt5); rCtrl.addEventListener('change', applyUt5);
-        if (_ut5Path === 'ctrl') rCtrl.checked = true; else rMeter.checked = true;   // default: switchable meter path
-        applyUt5();
       }
       const spd = naveeSpeedOpts(det);
       if (spd) {
@@ -7104,6 +7089,14 @@ function fwRunPatcher() {
   const sel = fwState.selected;
   const wantsSpeed = sel.indexOf('speed') >= 0;      // the only bldc-side feature
   const wantsMeter = sel.some(f => f !== 'speed');   // any meter-side feature (cruise/kickstart/beep-*)
+  // UT5 Max switchable throttle is meter + controller as ONE inseparable set: the meter forwards the live
+  // 0x6E speed as drive-frame byte10, the controller (clamp-NOP) obeys it. Flashing only one is useless -
+  // meter-only leaves the stock controller clamping to ~22, controller-only has no live value to follow.
+  // So on a UT5 Max, if the user picks the switchable throttle OR the controller, flash BOTH.
+  const isUt5Max = ['8901', '8902'].indexOf(String(det.id)) >= 0;
+  const ut5Both = isUt5Max && (wantsSpeed || sel.indexOf('drossel') >= 0);
+  const addMeter = wantsMeter || ut5Both;
+  const addBldc = wantsSpeed || ut5Both;
   const comps = [];
   // XT5 shares its meter across Pro/Max/Ultra; serve the version matching the device: 3.0.2.3 (fwMeter 3023
   // stock / 5023 patched) gets the meter3023 bin, else the stock 3.0.2.0 meter. identify() keys the patch off
@@ -7118,9 +7111,13 @@ function fwRunPatcher() {
     else { const fm = (liveRaw().fwMeter || '').trim(); want3023 = (fm === '3023' || fm === '5023'); }
     if (m3023 && want3023) { meterUrl = m3023.url; meterVn = m3023.vn; }
   } catch (e) {}
-  if (det.meter && wantsMeter && !naveeMeterPatchBlocked(det)) comps.push({ kind: 'meter', url: meterUrl, name: fwReadableName(det, 'meter', meterVn) });
-  if (det.bldc && wantsSpeed) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
+  if (det.meter && addMeter && !naveeMeterPatchBlocked(det)) comps.push({ kind: 'meter', url: meterUrl, name: fwReadableName(det, 'meter', meterVn) });
+  if (det.bldc && addBldc) comps.push({ kind: 'bldc', url: det.bldc.url, name: fwReadableName(det, 'bldc', det.bldc.vn) });
+  if (ut5Both) { try { showToast(t('patch.ut5max.bothflash'), 5000); } catch (e) {} }
   if (!comps.length) { showToast(t('patch.run.noselection'), 3000, 'err'); return; }
+  fwState.lastComps = comps.slice();   // remember the full set so an aborted component can be restarted from scratch
+  fwState.resumePending = [];
+  fwShowResume(false);
   fwState.staged = { meter: null, bldc: null };
   fwState.producedBldc = null;
   fwState.raw = false;
@@ -7129,6 +7126,27 @@ function fwRunPatcher() {
   fwState.downloading = true;
   document.getElementById('btn-patcher-run').disabled = true;
   fwDownloadNext();
+}
+// Restart the aborted patch(es) from the very beginning: re-download, re-patch and re-flash only the
+// components that did not finish, reusing the component list of the last run (URLs are stable S3 links).
+function fwResumeFlash() {
+  const pend = (fwState.resumePending || []).slice();
+  const comps = (fwState.lastComps || []).filter(c => pend.indexOf(c.kind) >= 0);
+  if (!comps.length) { fwShowResume(false); return; }
+  fwState.resumePending = [];
+  fwShowResume(false);
+  fwState.staged = { meter: null, bldc: null };
+  fwState.producedBldc = null;
+  fwState.raw = false;
+  fwState.experimental = false;
+  fwState.pendingDownloads = comps.slice();
+  fwState.downloading = true;
+  fwDownloadNext();
+}
+function fwShowResume(on) {
+  const b = document.getElementById('btn-fw-resume'); const h = document.getElementById('fw-resume-hint');
+  if (b) b.classList.toggle('is-hidden', !on);
+  if (h) h.classList.toggle('is-hidden', !on);
 }
 function fwDownloadNext() {
   const next = fwState.pendingDownloads.shift();
@@ -7406,15 +7424,19 @@ window.__onFwState = function(arg) {
     fwRenderStaged();
     if (fwState.flashQueue.length) { fwResetProgress(); setTimeout(fwFlashNext, 1200); return; }
     fwState.running = false;
+    fwState.resumePending = []; fwShowResume(false);
     showToast(t('fw.toast.success'));
     try { if (LB.fwClear) LB.fwClear(); } catch (e) {}
     fwSyncStartEnabled();
     return;
   }
   fwState.running = false;
-  const failedKind = fwState.flashing;              // component that was flashing when it failed
+  const failedKind = fwState.flashing;              // component that was flashing when it failed/cancelled
   const doneKinds = (fwState.flashDone || []).slice();
+  const remaining = (fwState.flashQueue || []).slice();   // components not yet attempted this run
   fwState.flashQueue = []; fwState.flashing = null;
+  // Components that did NOT finish (the aborted one plus any still queued) can be restarted from scratch.
+  const pending = [failedKind].concat(remaining).filter(Boolean);
   if (st === 'failed') {
     // Report WHICH component failed, and that any earlier component already succeeded, so a failed
     // meter flash never reads as the whole run (incl. a working controller unlock) having failed.
@@ -7428,6 +7450,10 @@ window.__onFwState = function(arg) {
   else if (st === 'cancelled') showToast(s.message || t('fw.toast.cancelled'), 4000, 'err');
   if (st === 'failed') { try { if (LB.fwClear) LB.fwClear(); } catch (e) {} fwState.staged = { meter: null, bldc: null }; }
   fwState.flashDone = [];
+  // Offer a one-tap restart of the unfinished component(s) - full re-run from download for each.
+  if ((st === 'failed' || st === 'cancelled') && pending.length && (fwState.lastComps || []).length) {
+    fwState.resumePending = pending; fwShowResume(true);
+  }
   fwRenderStaged();
   fwSyncStartEnabled();
 };

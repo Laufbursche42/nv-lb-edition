@@ -1876,7 +1876,7 @@ patches: [
     // live (locked <-> open), no fixed value baked in. Over-rev governor caps the real top near 45.
     patches: [
       { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp strh.gt r0,[r1,#0x18] -> controller obeys the meter-sent byte10
-      { off: 0x3d7c, from: [0x1d, 0xd1], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 pre-arm bne in the hold FUN_000037b0 (@0x00003c7c): cruise latches on enable+moving+throttle-release, bypassing the c1/c2 +-0.33km/h stability window that real riding never holds (why cruise never engaged). Enable-gated -> stock riding unaffected. HW-unconfirmed.
+      { off: 0x3820, from: [0x1c, 0xd2], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 dwell-window branch (bhs) in the cruise-hold FUN_000037b0 @0x3820: the latch arms only after a timing window (0x640) that normal riding never satisfies, so cruise beeps (enabled) but never engages. NOP -> it latches on enable+speed<31+throttle-release. Enable-gated -> stock riding unaffected. (The old 0x3d7c patch hit the config-table loader FUN_00003d60, not cruise.) HW-unconfirmed.
       { off: 0xaf26, from: [0x30, 0x21], to: [0x35, 0x21], id: 'version-marker' }, // fwBldc "0010" -> "5515" (leading '5' so the app detects the patched controller)
     ],
     atomic: true,
@@ -1897,7 +1897,7 @@ patches: [
     // is the cap - the app selector sets the speed live. Over-rev governor caps the real top near 45.
     patches: [
       { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp -> controller obeys the meter-sent byte10
-      { off: 0x4114, from: [0x1d, 0xd1], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 pre-arm bne in the hold FUN_000037b0 (@0x00004014): cruise latches on enable+moving+throttle-release, bypassing the c1/c2 +-0.33km/h stability window. Enable-gated -> stock riding unaffected. HW-unconfirmed.
+      { off: 0x3bb8, from: [0x1c, 0xd2], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 dwell-window branch (bhs) in the cruise-hold FUN_000037b0 @0x3bb8 (same lever as 0.0.1.0, relocated): the latch arms only after a timing window (0x640) real riding never holds, so cruise beeps but never engages; NOP -> it latches on enable+speed<31+throttle-release. (The old 0x4114 patch hit the config-table loader, not cruise.) HW-unconfirmed.
       { off: 0xb3d4, from: [0x30, 0x21], to: [0x35, 0x21], id: 'version-marker' }, // fwBldc "0013" -> "5513" (leading '5' = detected)
     ],
     atomic: true,
