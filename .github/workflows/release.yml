@@ -32,6 +32,7 @@ on:
       - '.gitignore'
       - '.github/**'
       - '.githooks/**'
+      - 'scripts/**'
       - '_portspec/**'
       - 'version.properties'
   workflow_dispatch:
