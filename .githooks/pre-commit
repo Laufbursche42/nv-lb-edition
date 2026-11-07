@@ -385,6 +385,28 @@ if [ -n "$EXP_EMAIL" ]; then
 fi
 
 # =================================================================
+# PHASE G - firmware patch brick guard. A patch placed in the erased 0xFF tail of a
+# firmware image (cave/trampoline in unprogrammed flash) bricks the device - this is
+# how the UT5 Max meter cruise-hold killed a unit (2026-11-07). Hard-fail if the engine
+# is staged and any enabled build writes at/into the tail. HW-confirmed cave builds are
+# whitelisted inside the script. Needs node + the stock firmware dir (FW_DIR / default);
+# if the firmware dir is absent the script still does the length-bounds check.
+# =================================================================
+ENGINE_REL="app/src/main/assets/dashboard/patcher.js"
+if grep -aqzF -- "$ENGINE_REL" "$STAGED_LIST" 2>/dev/null; then
+  if command -v node >/dev/null 2>&1 && [ -f scripts/check-payload-bounds.js ]; then
+    if node scripts/check-payload-bounds.js "$ENGINE_REL"; then
+      echo "OK    [brick-guard] no patch in the erased 0xFF tail / past length"
+    else
+      echo "BLOCK [brick-guard] a patch writes into the erased 0xFF tail or past length (brick class) - see above."
+      RC=1
+    fi
+  else
+    echo "WARN  [brick-guard] node or scripts/check-payload-bounds.js missing - brick guard SKIPPED"
+  fi
+fi
+
+# =================================================================
 # Result
 # =================================================================
 echo "-----------------------------------------------------------------"
