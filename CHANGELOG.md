@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.110
+- NAVEE G5 / G5 Pro / G5 Max: new experimental switchable throttle. Flash both the controller and the meter in the patcher, then set the speed live in the app (about 22 to 40 km/h); the meter forwards your chosen value and the controller follows it. Experimental and not yet hardware-confirmed - the 02831 controller has no recovery short of SWD, so flash at your own risk.
+- NAVEE UT5 Max: removed the non-functional cruise control. Its controller has no working speed-hold (byte-verified), so the cruise option never engaged; it is gone now. Switchable speed and kickstart are unchanged.
+
 ## 1.0.109
 - Fixed the in-app update installing the old version. The update APK was downloaded under a fixed filename, but Android's download manager does not overwrite an existing file - so from the second update on it saved the new APK under a different name while the installer still opened the stale copy from the previous update, reinstalling the old version. The leftover file is now cleared before each download and the file that was actually downloaded is installed. No more manual reinstall.
 

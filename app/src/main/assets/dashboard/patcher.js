@@ -1876,7 +1876,6 @@ patches: [
     // live (locked <-> open), no fixed value baked in. Over-rev governor caps the real top near 45.
     patches: [
       { off: 0x4a5a, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp strh.gt r0,[r1,#0x18] -> controller obeys the meter-sent byte10
-      { off: 0x3820, from: [0x1c, 0xd2], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 dwell-window branch (bhs) in the cruise-hold FUN_000037b0 @0x3820: the latch arms only after a timing window (0x640) that normal riding never satisfies, so cruise beeps (enabled) but never engages. NOP -> it latches on enable+speed<31+throttle-release. Enable-gated -> stock riding unaffected. (The old 0x3d7c patch hit the config-table loader FUN_00003d60, not cruise.) HW-unconfirmed.
       { off: 0xaf26, from: [0x30, 0x21], to: [0x35, 0x21], id: 'version-marker' }, // fwBldc "0010" -> "5515" (leading '5' so the app detects the patched controller)
     ],
     atomic: true,
@@ -1897,7 +1896,6 @@ patches: [
     // is the cap - the app selector sets the speed live. Over-rev governor caps the real top near 45.
     patches: [
       { off: 0x4e12, from: [0x08, 0x83], to: [0x00, 0xbf], id: 'speed-clamp-nop' }, // NOP master clamp -> controller obeys the meter-sent byte10
-      { off: 0x3bb8, from: [0x1c, 0xd2], to: [0x00, 0xbf], id: 'cruise-engage' }, // NOP the state0 dwell-window branch (bhs) in the cruise-hold FUN_000037b0 @0x3bb8 (same lever as 0.0.1.0, relocated): the latch arms only after a timing window (0x640) real riding never holds, so cruise beeps but never engages; NOP -> it latches on enable+speed<31+throttle-release. (The old 0x4114 patch hit the config-table loader, not cruise.) HW-unconfirmed.
       { off: 0xb3d4, from: [0x30, 0x21], to: [0x35, 0x21], id: 'version-marker' }, // fwBldc "0013" -> "5513" (leading '5' = detected)
     ],
     atomic: true,
@@ -2019,7 +2017,6 @@ patches: [
       { off: 0x13396, from: [0x07, 0xd0], to: [0x07, 0xe0], id: 'speedsel-frame' }, // frame-builder region path selector (FUN_8017658 @ 0x13390): beq -> b forces the cell-forward branch so drive byte10 follows the 0x6E speed cell in EVERY region; the stock selector takes the restricted path on DE and byte10 is pinned to the 0x32 sentinel (BT speed switch did nothing without this)
       { off: 0x142ce, from: [0x04, 0xd0], to: [0x00, 0xbf], id: 'speedsel' }, // class 0x6E sub1 handler (FUN_080142ae): NOP the DE region skip (beq) so the speed cell 0x20aae6 is written in every region; drive-frame byte10 then follows it (locked/open km/h both set live by 0x6E sub1)
       { off: 0x1438f, from: [0xd2], to: [0xe0], id: 'kickstart' }, // zero-start region floor (bhs) -> unconditional, launch levels 0-2 accepted in every region
-      { off: 0x14068, from: [0x0b, 0xd0], to: [0x00, 0xbf], id: 'cruise' }, // cruise/tempomat DE sub-gate (beq) -> nop, enable bit forwarded in every region
       { off: 0x159fc, from: [0xff, 0xf7, 0x1f, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm' }, // find-me/anti-theft alarm bl (FUN_0801543e) -> nop
       { off: 0x15ae4, from: [0xff, 0xf7, 0xd0, 0xfc], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody' }, // fault/error-code announce bl (FUN_08015488) -> nop; silences every fault tone on this meter
       { off: 0x14ab4, from: [0x33], to: [0x36], id: 'version-marker' }, // reported meter version is CODE-BUILT in the 0x73 response handler (movs r2,#'3' @0x14ab4 -> #'6'), NOT a data string. fwMeter '0030' -> '0060', so the app/tool detect the patched meter. (The old 0x1a7da patched a dead debug literal that nothing reads - the meter kept reporting 0030 and the patch was invisible, which is why no UT5 Max ever switched.)
@@ -2258,8 +2255,15 @@ patches: [
     verify: { size: 0x23000, crcOff: 0x13, crcStock: 0x9e34, lenOff: 0x10, lenStock: 0x022c00 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    blocked: 'This meter is not patched: it hosts BLE and is the only route back from a failed controller update, so a bad meter commit cannot be undone. Its patches were never confirmed on hardware.',
-    patches: [],
+    markerFeature: 'drossel',
+    // Switchable BT drossel: the G5 controller honours drive-frame byte10 as min(modeCap, byte10*20.89), so
+    // NOP the meter's region clamp (FUN_080173c2 @0x173f4: bls -> unconditional b to 0x17402); the BLE-set
+    // speed (class 0x6E sub1) is then forwarded as byte10 in every region (22 locked, up to 40 open).
+    // Controller stays stock. In-place, no cave. Experimental - BLE-host meter, red untested warning.
+    patches: [
+      { off: 0x173f4, from: [0x05, 0xd9], to: [0x05, 0xe0], id: 'speedsel' },        // region clamp bls -> unconditional b (0x17402)
+      { off: 0x19b5c, from: [0x32], to: [0x35], id: 'version-marker' },              // fwMeter "2057" -> "5057"
+    ],
   },
 
   meterS40: {
@@ -2552,6 +2556,7 @@ const FLASH_ENABLED = new Set([
   'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + cruise, experimental)
   'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + switchable drossel + version marker, experimental)
   'meterGT5',                                                     // GT5 meter (switchable drossel + version marker, experimental; previously blocked)
+  'meterG5',                                                      // G5/Pro/Max meter (switchable drossel + version marker, experimental)
   'st5_meter',                                                    // ST5 Pro/Max meter (switchable drossel + version marker, experimental; no ST5 controller image, HW-unconfirmed; previously blocked)
   'n65ii6001_meter',                                             // N65i II meter 2.0.5.8 DE (switchable drossel: region-gate NOP + version marker, controller stays stock, experimental)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
@@ -2566,7 +2571,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterST3GT3', 'meterGT5', 'st5_meter', 'n65ii6001_meter', 'meterXT5_3023', 'bldcUT5UltraX', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterST3GT3', 'meterGT5', 'meterG5', 'st5_meter', 'n65ii6001_meter', 'meterXT5_3023', 'bldcUT5UltraX', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {
