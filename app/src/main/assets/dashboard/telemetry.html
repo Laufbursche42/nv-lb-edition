@@ -7023,7 +7023,7 @@ function renderPatchFeatures(det) {
         box.appendChild(hSpeed);
         // Meter extras - each pickable on its own; drossel/cruise/kickstart on by default, tone silences off.
         const ex = document.createElement('div'); ex.id = 'ut5-extras';
-        ['drossel', 'kickstart', 'beep-alarm', 'beep-melody'].forEach(f => {
+        ['drossel', 'cruise', 'kickstart', 'beep-alarm', 'beep-melody'].forEach(f => {
           if (feats.indexOf(f) < 0) return;
           const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin:9px 0;line-height:1.35';
           const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f; cb.style.marginTop = '3px';

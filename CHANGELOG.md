@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.114
+- NAVEE UT5 Max: the Tempomat checkbox now actually renders in the patcher. 1.0.113 added cruise to the feature list, but the UT5 Max patch screen builds its own checkbox set from a hardcoded array that did not include cruise, so the box never appeared and cruise was never flashed. Added cruise to that array (on by default). The web patcher was never affected (it derives features from the image). No other change.
+
 ## 1.0.113
 - NAVEE UT5 Max: cruise is now selectable in the meter patch. The cruise checkbox was still missing from the UT5 Max patcher feature list, so the restored cruise patch could not be picked in the app - fixed (the web patcher already offered it). Feature descriptions now list cruise as HW-confirmed. No other change.
 

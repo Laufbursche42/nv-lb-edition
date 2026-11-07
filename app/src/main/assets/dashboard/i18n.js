@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: the Tempomat checkbox now really shows in the patcher.</b> The last build listed cruise but the UT5 Max patch screen still did not draw its checkbox, so it could not be ticked and never got flashed. Fixed - Tempomat is now a selectable option (on by default) when you build the meter patch, so the cruise patch actually ends up in the firmware.",
       "<b>UT5 Max: cruise is now a checkbox in the patcher.</b> The cruise option was missing from the UT5 Max firmware patcher, so you could not include it when building the meter patch - now you can. The meter patch and the in-app Tempomat toggle are confirmed, no untested warning. Nothing else changes.",
       "<b>UT5 Max: cruise control is back.</b> The Tempomat toggle is shown again, and the meter patch re-enables cruise in every region (flash the patched meter to use it). The earlier removal was a mistake - the controller does hold speed. Nothing changes for other models.",
       "<b>Security hardening.</b> The simulator connect path now rejects a malformed model id before it is used or logged, closing a log-injection warning. Nothing changes for normal use.",
@@ -1121,6 +1122,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: die Tempomat-Checkbox erscheint jetzt wirklich im Patcher.</b> Der letzte Build führte Tempomat zwar in der Liste, aber der UT5-Max-Patch-Screen zeichnete die Checkbox nicht - sie war nicht anhakbar und wurde nie geflasht. Behoben: Tempomat ist jetzt eine wählbare Option (standardmäßig an) beim Bauen der Meter-Patch, der Cruise-Patch landet also wirklich in der Firmware.",
       "<b>UT5 Max: Tempomat jetzt als Checkbox im Patcher.</b> Die Tempomat-Option fehlte beim UT5-Max-Firmware-Patcher, du konntest sie beim Bauen der Meter-Patch nicht mitnehmen - jetzt geht das. Die Meter-Patch und der In-App-Tempomat-Schalter sind bestätigt, keine Ungetestet-Warnung. Sonst ändert sich nichts.",
       "<b>UT5 Max: Tempomat ist zurück.</b> Der Tempomat-Schalter wird wieder angezeigt, und die Meter-Patch schaltet den Tempomat in jeder Region frei (dafür den gepatchten Tacho flashen). Das frühere Entfernen war ein Fehler - der Controller hält das Tempo. Für andere Modelle ändert sich nichts.",
       "<b>Sicherheits-Härtung.</b> Der Simulator-Connect weist eine fehlerhafte Modell-ID jetzt ab, bevor sie benutzt oder geloggt wird (schließt eine Log-Injection-Warnung). Im normalen Betrieb ändert sich nichts.",
