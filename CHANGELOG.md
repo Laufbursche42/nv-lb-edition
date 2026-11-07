@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.111
+- Security: the simulator-connect model id is validated (4 digits) before it is used or logged, and the log line is sanitised - closes a CodeQL log-injection alert. No change to normal use.
+- Internal: tidied the UT5 Max comments in the patcher to match the shipped behaviour (cruise removed, hardware-confirmed, switchable). No functional change.
+
 ## 1.0.110
 - NAVEE G5 / G5 Pro / G5 Max: new experimental switchable throttle. Flash both the controller and the meter in the patcher, then set the speed live in the app (about 22 to 40 km/h); the meter forwards your chosen value and the controller follows it. Experimental and not yet hardware-confirmed - the 02831 controller has no recovery short of SWD, so flash at your own risk.
 - NAVEE UT5 Max: removed the non-functional cruise control. Its controller has no working speed-hold (byte-verified), so the cruise option never engaged; it is gone now. Switchable speed and kickstart are unchanged.
