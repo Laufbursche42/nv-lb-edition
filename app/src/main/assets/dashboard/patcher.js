@@ -2554,7 +2554,7 @@ IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
 const FLASH_ENABLED = new Set([
   'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
   'meterXT5', 'meterXT5_3023',                                    // XT5 meter (3.0.2.0 plus newer 3.0.2.3)
-  'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + beep silences, HW-confirmed)
+  'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + cruise + beep silences, HW-confirmed)
   'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + switchable drossel + version marker, experimental)
   'meterGT5',                                                     // GT5 meter (switchable drossel + version marker, experimental; previously blocked)
   'meterG5',                                                      // G5/Pro/Max meter (switchable drossel + version marker, experimental)

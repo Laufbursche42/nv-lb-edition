@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.113
+- NAVEE UT5 Max: cruise is now selectable in the meter patch. The cruise checkbox was still missing from the UT5 Max patcher feature list, so the restored cruise patch could not be picked in the app - fixed (the web patcher already offered it). Feature descriptions now list cruise as HW-confirmed. No other change.
+
 ## 1.0.112
 - NAVEE UT5 Max: cruise control (Tempomat) restored. The cruise toggle is shown again in the app, and the UT5 Max meter patch re-enables cruise forwarding in every region (flash the patched meter to use it). The earlier removal was based on a wrong analysis - the controller does hold speed. No change for other models.
 

@@ -6832,7 +6832,7 @@ function fwPatchStatus(msg) {
 // Models whose meter must never be patched, whatever the manifest offers: the meter hosts BLE and is the
 // only route back from a failed controller update, and these have no confirmed in-place meter patch, so
 // the raised top gear sits in the controller alone. The UT5 Max (8901) and the ST3/GT3 family are NOT
-// here - their meters have an in-place patch (UT5 Max: drossel + kickstart + beep silences, HW-confirmed;
+// here - their meters have an in-place patch (UT5 Max: drossel + kickstart + cruise + beep silences, HW-confirmed;
 // ST3/GT3: zero-start level 0-2 unlock, offered with the red untested warning plus an extra confirmation).
 const METER_BLOCKED_IDS = ['9601', '12401',
   '5401', '10501', '12701', '5701', '5601', '10201', '10701', '6001',
@@ -6858,8 +6858,8 @@ function patchFeatureList(det) {
     else if (['4901', '7801'].indexOf(mid) >= 0) feats.push('drossel', 'beep-overspeed', 'beep-connect', 'beep-melody', 'beep-alarm', 'beep-fault');
     // XT5 meter: kickstart + the switchable drossel (byte10 gate) + beeps; this meter has no cruise patch.
     else if (['5301', '5901', '5801', '5302', '5902'].indexOf(mid) >= 0) feats.push('kickstart', 'drossel', 'beep-overspeed', 'beep-alarm', 'beep-melody');
-    // UT5 Max meter: no over-speed tone (speed is controller-side); drossel + kickstart + the two beep silences.
-    else if (['8901', '8902'].indexOf(mid) >= 0) feats.push('drossel', 'kickstart', 'beep-alarm', 'beep-melody'); // cruise removed: the UT5 Max controller cruise is unwired (byte-verified), hold never engages
+    // UT5 Max meter: no over-speed tone (speed is controller-side); drossel + kickstart + cruise + the two beep silences.
+    else if (['8901', '8902'].indexOf(mid) >= 0) feats.push('drossel', 'kickstart', 'cruise', 'beep-alarm', 'beep-melody'); // cruise re-enabled: meter 0x14068 forwards the enable in every region, controller holds it stock (dwell handshake, foldback-safe)
     else feats.push('cruise', 'kickstart', 'beep-overspeed', 'beep-alarm', 'beep-melody');
   }
   return feats;
