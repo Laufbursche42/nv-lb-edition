@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.112
+- NAVEE UT5 Max: cruise control (Tempomat) restored. The cruise toggle is shown again in the app, and the UT5 Max meter patch re-enables cruise forwarding in every region (flash the patched meter to use it). The earlier removal was based on a wrong analysis - the controller does hold speed. No change for other models.
+
 ## 1.0.111
 - Security: the simulator-connect model id is validated (4 digits) before it is used or logged, and the log line is sanitised - closes a CodeQL log-injection alert. No change to normal use.
 - Internal: tidied the UT5 Max comments in the patcher to match the shipped behaviour (cruise removed, hardware-confirmed, switchable). No functional change.

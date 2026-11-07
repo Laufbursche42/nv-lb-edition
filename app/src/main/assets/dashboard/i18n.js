@@ -5,9 +5,9 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: cruise control is back.</b> The Tempomat toggle is shown again, and the meter patch re-enables cruise in every region (flash the patched meter to use it). The earlier removal was a mistake - the controller does hold speed. Nothing changes for other models.",
       "<b>Security hardening.</b> The simulator connect path now rejects a malformed model id before it is used or logged, closing a log-injection warning. Nothing changes for normal use.",
       "<b>New: G5 / G5 Pro / G5 Max switchable throttle (experimental).</b> Flash both the controller and the meter in the patcher, then set the speed live in the app (about 22-40 km/h). Experimental, not yet hardware-confirmed - flash at your own risk.",
-      "<b>UT5 Max: cruise control removed.</b> Its controller has no working speed-hold, so the cruise option never did anything - it is gone. Switchable speed and kickstart are unchanged.",
       "<b>In-app update now really updates.</b> The built-in updater could reinstall the previous version instead of the new one, so you had to reinstall the app by hand. Fixed - the update now installs the version it just downloaded.",
       "<b>UT5 Max: real switchable speed and working cruise control.</b> The controller patch now follows the meter instead of forcing a fixed speed, so the Bluetooth speed selector changes the speed live (22 to open), and cruise control finally engages - ride at a steady speed, then release the throttle. Re-flash the controller to get it. Still brick-prone, flash at your own risk.",
       "<b>New: battery charge limit.</b> In Battery info you can cap how full the scooter charges - e.g. 80% to keep the pack in a healthy range - if your scooter reports the setting.",
@@ -1120,9 +1120,9 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: Tempomat ist zurück.</b> Der Tempomat-Schalter wird wieder angezeigt, und die Meter-Patch schaltet den Tempomat in jeder Region frei (dafür den gepatchten Tacho flashen). Das frühere Entfernen war ein Fehler - der Controller hält das Tempo. Für andere Modelle ändert sich nichts.",
       "<b>Sicherheits-Härtung.</b> Der Simulator-Connect weist eine fehlerhafte Modell-ID jetzt ab, bevor sie benutzt oder geloggt wird (schließt eine Log-Injection-Warnung). Im normalen Betrieb ändert sich nichts.",
       "<b>Neu: G5 / G5 Pro / G5 Max schaltbare Drossel (experimentell).</b> Im Patcher Controller UND Tacho flashen, dann das Tempo live in der App setzen (ca. 22-40 km/h). Experimentell, noch nicht an Hardware bestätigt - Flashen auf eigene Gefahr.",
-      "<b>UT5 Max: Tempomat entfernt.</b> Sein Controller kann das Tempo nicht halten, der Tempomat tat also nie etwas - er ist raus. Schaltbares Tempo und Kickstart unverändert.",
       "<b>In-App-Update aktualisiert jetzt wirklich.</b> Das eingebaute Update konnte die vorherige Version statt der neuen installieren, sodass du die App von Hand neu installieren musstest. Behoben - das Update installiert jetzt die gerade heruntergeladene Version.",
       "<b>UT5 Max: echt schaltbares Tempo und funktionierender Tempomat.</b> Der Controller-Patch folgt jetzt dem Tacho statt ein festes Tempo zu erzwingen - der Bluetooth-Tempo-Selektor stellt die Geschwindigkeit live ein (22 bis offen), und der Tempomat rastet endlich ein: konstant fahren, dann Gas loslassen. Dafür den Controller neu flashen. Weiterhin brick-gefährdet, Flashen auf eigene Gefahr.",
       "<b>Neu: Akku-Ladelimit.</b> Unter Akku-Info kannst du begrenzen, wie voll der Roller lädt - z.B. 80%, um den Akku zu schonen - sofern dein Roller die Einstellung meldet.",
