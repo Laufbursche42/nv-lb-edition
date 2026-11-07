@@ -1989,7 +1989,7 @@ patches: [
     patches: [],
   },
 
-  // UT5 Max meter 0.0.3.0 (8901). T2314. Switchable speed selector + kickstart + cruise, all in-place
+  // UT5 Max meter 0.0.3.0 (8901). T2314. Switchable speed selector + kickstart + beep silences, all in-place
   // (len@0x10 untouched, image passes its own len+CRC gate; stock CRC 0x010a, re-sealed per selection).
   // Two NOPs make the BLE drossel work in every region: speedsel clears the DE region skip (beq) inside
   // the class 0x6E sub1 handler (FUN_080142ae @ 0x142ce) so 0x6E sub1 writes the live speed cell 0x20aae6
@@ -2000,7 +2000,7 @@ patches: [
   // copies the cell directly with no further gate.
   // The controller honours byte10 as a linear cap, so the app selects both the locked and the open
   // km/h (class 0x6E sub1). Marker "0060" (not "0050") so the app tells this value-selector meter apart
-  // from the earlier "0050" on/off (0x81-flag) meter. Experimental, not confirmed on recoverable hardware.
+  // from the earlier "0050" on/off (0x81-flag) meter. Confirmed on hardware.
   meterUT5Max: {
     label: 'UT5 Max meter 0.0.3.0 (8901)',
     kind: 'meter',
@@ -2008,10 +2008,10 @@ patches: [
     verify: { size: 0x25c00, crcOff: 0x13, crcStock: 0x010a, lenOff: 0x10, lenStock: 0x025800 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    // Core set (drossel gate + boot companion + kickstart + cruise + '0050' marker) always applies as a
-    // unit: the app keys kickstart (launch 0-2) and the BLE drossel toggle off that marker, so a partial
-    // core (marker present, a part missing) would show a dead feature. The beep silences are NOT
-    // certified by the marker, so they stay individually selectable (core forced, beeps honour selection).
+    // Drossel, kickstart and the beep silences are each chosen on their own (a user may want only kickstart
+    // or only the quiet beeps). The version marker means "drossel present" (the app enables the BLE toggle
+    // off it), so it is pinned to the drossel via markerFeature - picking kickstart or a beep silence alone
+    // writes no marker and therefore no dead toggle.
     markerFeature: 'drossel',
     patches: [
       { off: 0x13396, from: [0x07, 0xd0], to: [0x07, 0xe0], id: 'speedsel-frame' }, // frame-builder region path selector (FUN_8017658 @ 0x13390): beq -> b forces the cell-forward branch so drive byte10 follows the 0x6E speed cell in EVERY region; the stock selector takes the restricted path on DE and byte10 is pinned to the 0x32 sentinel (BT speed switch did nothing without this)
@@ -2553,18 +2553,18 @@ IMAGES.bldcXT5ProMax.variants = xtBucketVariants(
 const FLASH_ENABLED = new Set([
   'meterMax', 'meterTurboUltra', 'meterMaxPlus', 'meterUltraX',   // NT5 family meters
   'meterXT5', 'meterXT5_3023',                                    // XT5 meter (3.0.2.0 plus newer 3.0.2.3)
-  'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + cruise, experimental)
+  'meterUT5Max',                                                  // UT5 Max meter (drossel toggle + kickstart + beep silences, HW-confirmed)
   'meterST3GT3',                                                  // ST3/GT3 meter (zero-start level 0-2 unlock + switchable drossel + version marker, experimental)
   'meterGT5',                                                     // GT5 meter (switchable drossel + version marker, experimental; previously blocked)
   'meterG5',                                                      // G5/Pro/Max meter (switchable drossel + version marker, experimental)
   'st5_meter',                                                    // ST5 Pro/Max meter (switchable drossel + version marker, experimental; no ST5 controller image, HW-unconfirmed; previously blocked)
   'n65ii6001_meter',                                             // N65i II meter 2.0.5.8 DE (switchable drossel: region-gate NOP + version marker, controller stays stock, experimental)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
-  'bldcUT5Max', 'bldcUT5Max_0013',                                // UT5 Max controller (permanent top gear 22-40; 0.0.1.0 plus newer 0.0.1.3; meter never flashed, experimental)
+  'bldcUT5Max', 'bldcUT5Max_0013',                                // UT5 Max controller (switchable 22-40, obeys the meter-sent byte10; 0.0.1.0 plus newer 0.0.1.3; flashed with the meter, HW-confirmed)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
   'bldcXT5ProMax0013',                                            // XT5 Pro/Max controller 0.0.1.3 (45 km/h via meter cap, experimental)
   'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', // ST3/GT3 controllers
-  'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', // 02831 in-place target-speed selector (experimental) (raised top gear, meter never flashed, experimental)
+  'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', // 02831 in-place target-speed selector, raised top gear (experimental)
   'bldcNT3Pro',                                                  // NT3 Pro controller (experimental; meter not yet enabled)
   'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcN65iII10701', 'bldcN65iII6001', 'bldcS2', 'bldcV40iProII', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcN65i', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max', // 02831 shared-store builds: clamp nop plus cap repoint (experimental)
 ]);
