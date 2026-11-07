@@ -1067,10 +1067,11 @@ final class BleManager {
     private void simConnect(String address) {
         String addr = (address == null || address.trim().isEmpty()) ? SIM_ADDR_PREFIX + "2538" : address.trim();
         String pid = addr.startsWith(SIM_ADDR_PREFIX) ? addr.substring(SIM_ADDR_PREFIX.length()) : "2538";
-        if (pid.length() != 4) pid = "2538";
+        // pid must be exactly 4 digits; any other input (including CR/LF log-injection chars) falls back to the default
+        if (!pid.matches("\\d{4}")) pid = "2538";
         desiredAddress = addr;
         deviceName = "NAVEE " + simModelName(pid) + " (SIM)";
-        Log.i(TAG, "SIM connect -> pid " + pid + " (" + simModelName(pid) + ")");
+        Log.i(TAG, "SIM connect -> pid " + logSafe(pid) + " (" + logSafe(simModelName(pid)) + ")");
         pushState("connecting");
         simSeed(pid);
         connected = true;
