@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Feedback form: cleaner ticket.</b> The auto-filled issue report no longer wraps its labels in raw ** - they showed up as literal asterisks instead of bold. Plain text now.",
       "<b>New: a hint when live values stay empty.</b> If you connect but the scooter sends no live data and no account ID is stored, the Connect screen now tells you why - account-bound scooters only stream live values once you enter your real NAVEE User ID - with a button that jumps straight to the field.",
       "<b>More reliable connecting.</b> Two fixes, no firmware touched. A quick reconnect could shoot down its own fresh link - the app connected and dropped again right away, leaving you with no connection; that is fixed. And when a scooter never finished the connection handshake, the app could stay connected but stuck and never run its status reads; it now stops waiting after a few seconds and carries on instead of hanging.",
       "<b>UT5 Max: the Tempomat checkbox now really shows in the patcher.</b> The last build listed cruise but the UT5 Max patch screen still did not draw its checkbox, so it could not be ticked and never got flashed. Fixed - Tempomat is now a selectable option (on by default) when you build the meter patch, so the cruise patch actually ends up in the firmware.",
@@ -1126,6 +1127,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Feedback-Formular: sauberes Ticket.</b> Die auto-gefüllte Fehlermeldung setzt keine rohen ** mehr um ihre Labels - die erschienen als wörtliche Sternchen statt fett. Jetzt Klartext.",
       "<b>Neu: Hinweis, wenn Live-Werte leer bleiben.</b> Wenn du verbindest, der Scooter aber keine Live-Daten sendet und keine Konto-ID gespeichert ist, sagt dir der Verbinden-Screen jetzt warum - konto-gebundene Scooter senden Live-Werte erst, wenn du deine echte NAVEE-User-ID einträgst - mit einem Knopf direkt zum Feld.",
       "<b>Zuverlässigeres Verbinden.</b> Zwei Fixes, keine Firmware angefasst. Ein schneller Reconnect konnte seine eigene frische Verbindung abschießen - die App verband sich und flog sofort wieder raus, du bliebst ohne Verbindung; das ist behoben. Und wenn ein Scooter den Verbindungs-Handshake nie abschloss, konnte die App zwar verbunden, aber hängen bleiben und ihre Status-Abfragen nie starten; sie wartet jetzt nur noch ein paar Sekunden und macht dann weiter, statt zu hängen.",
       "<b>UT5 Max: die Tempomat-Checkbox erscheint jetzt wirklich im Patcher.</b> Der letzte Build führte Tempomat zwar in der Liste, aber der UT5-Max-Patch-Screen zeichnete die Checkbox nicht - sie war nicht anhakbar und wurde nie geflasht. Behoben: Tempomat ist jetzt eine wählbare Option (standardmäßig an) beim Bauen der Meter-Patch, der Cruise-Patch landet also wirklich in der Firmware.",

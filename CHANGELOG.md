@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.117
+- Feedback form: dropped the Markdown bold (**) from the auto-filled issue report. The ** labels did not render on GitHub (some had a trailing space before the closing marker, others were unbalanced) and showed up as raw asterisks in the ticket. Labels are plain text now. Only the in-app reporter block was changed; the exponentiation operators elsewhere in the file were left alone.
+
 ## 1.0.116
 - Dashboard hint when live values stay empty. If a scooter connects but never arms its report stream (no 0x90>=16 / 0x91 / 0x92 push within an 8 s grace) and no account ID is stored, the Connect screen now shows a hint: account-bound scooters only stream live data (speed, range, trip) once the real NAVEE User ID is entered, with a button that opens Settings at the account-id field. Native BleManager tracks reportArmed + a connection-scoped grace watchdog and puts armed/hasAccount/hint into the state JSON; the hint clears as soon as an armed push arrives or an ID is stored. UI-only, no firmware touched. This completes the connection work started in 1.0.115.
 
