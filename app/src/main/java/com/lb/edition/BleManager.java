@@ -172,6 +172,7 @@ final class BleManager {
     // One-shot flag so a test log carries a single clear line when the report push actually starts.
     private boolean reportLiveLogged = false;
     private static final int AUTH_MAX_ROUNDS = 4;   // guard against a challenge loop
+    private static final long AUTH_WATCHDOG_MS = 4000;   // if the handshake never completes, unblock the connect tail (no second 0x30)
     private static final String SEC_ACCOUNT = "account_id";
 
     // ── Offline simulation (debug build with no BT hardware = the emulator) ──
@@ -574,6 +575,10 @@ final class BleManager {
     // Try to bind the NAVEE service + characteristics; retry a few times for the Android discovery race.
     private void setupCharacteristics(BluetoothGatt g, int attempt) {
         if (g == null) return;
+        // Stale chain from a previous connect cycle: a queued retry (or a late onServicesDiscovered)
+        // whose gatt is no longer the active one must NOT run its no-service teardown - that would
+        // close the fresh, healthy link and clear desiredAddress, killing the reconnect.
+        if (g != gatt) return;
         synchronized (this) {
             if (charsSetupDone) return;
         }
@@ -581,7 +586,7 @@ final class BleManager {
         if (svc == null) {
             if (attempt < 3) {
                 Log.w(TAG, "NAVEE service not found yet, retry " + (attempt + 1));
-                main.postDelayed(() -> setupCharacteristics(gatt, attempt + 1), 400);
+                main.postDelayed(() -> setupCharacteristics(g, attempt + 1), 400);
                 return;
             }
             Log.w(TAG, "no NAVEE service");
@@ -710,6 +715,18 @@ final class BleManager {
             armOnly = (accountId <= 0);
             enqueueWrite(CommandBuilder.write(0x30, NaveeAuth.authInitPayload(accountId)));
             Log.i(TAG, "session auth: 0x30 sent (round 1" + (armOnly ? ", arm-only" : "") + ")");
+            // Watchdog: some meters never answer the handshake in a shape we parse. Without this the
+            // connect tail (clock + 0x7B + status reads) would hang on authPending forever. Scoped to
+            // this connection (wg == gatt) and does NOT resend 0x30 (a second 0x30 would pair the
+            // scooter to the dummy id). It only unblocks the tail; it cannot arm a gate the meter refuses.
+            final BluetoothGatt wg = gatt;
+            main.postDelayed(() -> {
+                if (wg == gatt && authPending) {
+                    authPending = false;
+                    Log.w(TAG, "session auth: no handshake within " + AUTH_WATCHDOG_MS + " ms -> proceeding unarmed");
+                    afterAuthComplete();
+                }
+            }, AUTH_WATCHDOG_MS);
         } catch (Throwable t) {
             Log.e(TAG, "session auth send failed", t);
             authPending = false;

@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.115
+- Connection reliability, two fixes in BleManager, no firmware touched. (1) Reconnect race: a queued service-discovery retry (or a late onServicesDiscovered) from a previous connect cycle ran its no-service teardown against the current link - closing a fresh, healthy GATT and clearing desiredAddress, so the app connected and dropped again with no reconnect. setupCharacteristics now bails when its gatt is no longer the active one (g != gatt), and the retry carries that same gatt instead of the field. (2) Arming hang: authPending had no timeout, so a meter that never completed the 0x30/0x31 handshake in a parseable shape left the connect tail (clock + 0x7B + status reads) blocked forever while the push loop only pulled 1-byte 0x90 acks. Added a 4 s watchdog, scoped to the connection, that unblocks the tail without resending 0x30 (a second 0x30 would pair the scooter to the dummy id). The watchdog cannot arm a gate a bound scooter refuses - that still needs the real account User ID.
+
 ## 1.0.114
 - NAVEE UT5 Max: the Tempomat checkbox now actually renders in the patcher. 1.0.113 added cruise to the feature list, but the UT5 Max patch screen builds its own checkbox set from a hardcoded array that did not include cruise, so the box never appeared and cruise was never flashed. Added cruise to that array (on by default). The web patcher was never affected (it derives features from the image). No other change.
 
