@@ -490,6 +490,10 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
   </div>
   <div id="connect-scroller">
     <div class="conn-state" id="conn-state" data-i18n="settings.connect.state.disconnected">Not connected</div>
+    <div class="conn-hint is-hidden" id="report-arm-hint">
+      <div class="conn-hint-txt" id="report-arm-hint-txt" data-i18n="msg.connect.hint.noaccount">Connected, but no live values? Account-bound scooters only stream live data once you enter your real NAVEE User ID.</div>
+      <button id="report-arm-hint-btn" data-i18n="msg.connect.hint.noaccount.btn">Enter account ID</button>
+    </div>
     <div class="row-8 mb-6">
       <button class="grow" id="btn-scan" data-i18n="settings.connect.scan.action">&#8635; Scan</button>
       <button class="grow" id="btn-disconnect" data-i18n="settings.connect.disconnect.action">Disconnect</button>
@@ -3403,7 +3407,15 @@ window.__onBleState = function(stArg) {
   if (dot) dot.classList.toggle('connected', connected);
   const connBtn = document.getElementById('btn-connect');
   if (connBtn) connBtn.classList.toggle('connected', connected);
+  // Native sets s.hint once the arming grace elapsed with no report push and no account id stored.
+  updateReportHint(connected && !!s.hint);
 };
+
+// Show/hide the "enter your account id" hint under the connection state.
+function updateReportHint(show) {
+  const el = document.getElementById('report-arm-hint');
+  if (el) el.classList.toggle('is-hidden', !show);
+}
 
 /* ── Scooter settings (writable settings via LB.sendSetting) ── */
 
@@ -6403,6 +6415,16 @@ function wireEvents() {
   // Settings open/close
   document.getElementById('btn-settings').addEventListener('click', openSettings);
   document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
+
+  // Report-arming hint: jump straight to the account id field in settings.
+  const rahBtn = document.getElementById('report-arm-hint-btn');
+  if (rahBtn) rahBtn.addEventListener('click', () => {
+    openSettings();
+    setTimeout(() => {
+      const inp = document.getElementById('account-id-input');
+      if (inp) { inp.scrollIntoView({ block: 'center' }); try { inp.focus(); } catch (e) {} }
+    }, 60);
+  });
 
   // Connect scooter (settings sheet): open the Connect page.
   document.getElementById('btn-connect-scooter').addEventListener('click', () => {

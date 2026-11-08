@@ -171,8 +171,11 @@ final class BleManager {
     private boolean armOnly = false;
     // One-shot flag so a test log carries a single clear line when the report push actually starts.
     private boolean reportLiveLogged = false;
+    private volatile boolean reportArmed = false;        // an armed report push (0x90>=16 / 0x91 / 0x92) has arrived this session
+    private volatile boolean reportHintEligible = false; // grace elapsed with no armed push -> ok to hint about the missing account id
     private static final int AUTH_MAX_ROUNDS = 4;   // guard against a challenge loop
     private static final long AUTH_WATCHDOG_MS = 4000;   // if the handshake never completes, unblock the connect tail (no second 0x30)
+    private static final long REPORT_HINT_MS = 8000;     // grace after connect before we hint that live data needs the account id
     private static final String SEC_ACCOUNT = "account_id";
 
     // ── Offline simulation (debug build with no BT hardware = the emulator) ──
@@ -557,7 +560,9 @@ final class BleManager {
                     int rcmd = v[3] & 0xFF, rlen = v[4] & 0xFF;
                     if ((rcmd == 0x90 && rlen >= 16) || rcmd == 0x91 || rcmd == 0x92) {
                         reportLiveLogged = true;
+                        reportArmed = true;   // report stream is live -> clear any pending account-id hint
                         Log.i(TAG, "report stream live: cmd=0x" + Integer.toHexString(rcmd) + " len=" + rlen);
+                        pushState("connected");
                     }
                 }
                 if (frameCount++ % 50 == 0) Log.i(TAG, "rx frames=" + frameCount + " last=" + v.length + "b");
@@ -704,6 +709,8 @@ final class BleManager {
         if (afterConnectDone) return;
         afterConnectDone = true;
         reportLiveLogged = false;
+        reportArmed = false;
+        reportHintEligible = false;
         // Every connect runs the OEM 0x30/0x31 session handshake: it sets the meter's report-enable
         // gate, which is the only thing that makes the scooter push the full 0x90/0x92 reports
         // (remaining range, trip and total mileage). A bound scooter also closes the link after ~10 s
@@ -727,6 +734,16 @@ final class BleManager {
                     afterAuthComplete();
                 }
             }, AUTH_WATCHDOG_MS);
+            // Report-arming hint: if after the grace no armed push arrived and no account id is stored,
+            // tell the UI so it can point the user at the account-id field (bound scooters need it).
+            final BluetoothGatt hg = gatt;
+            main.postDelayed(() -> {
+                if (hg == gatt && connected && !reportArmed && accountId <= 0) {
+                    reportHintEligible = true;
+                    Log.i(TAG, "report stream not armed within " + REPORT_HINT_MS + " ms, no account id -> hint");
+                    pushState("connected");
+                }
+            }, REPORT_HINT_MS);
         } catch (Throwable t) {
             Log.e(TAG, "session auth send failed", t);
             authPending = false;
@@ -1015,6 +1032,9 @@ final class BleManager {
             o.put("name", deviceName == null ? "" : deviceName);
             o.put("address", desiredAddress == null ? "" : desiredAddress);
             o.put("status", status == null ? "" : status);
+            o.put("armed", reportArmed);
+            o.put("hasAccount", accountId > 0);
+            o.put("hint", connected && reportHintEligible && !reportArmed && accountId <= 0);
             if (listener != null) listener.onState(o.toString());
         } catch (Throwable t) {
             Log.e(TAG, "pushState failed", t);

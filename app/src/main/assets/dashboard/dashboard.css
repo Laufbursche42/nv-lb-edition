@@ -789,6 +789,14 @@ details.guide-acc .guide-hint {
   background: var(--card); margin-bottom: 10px; font-size: var(--fs-md);
 }
 .conn-state b { color: var(--good); }
+/* Hint shown when connected but the report stream never armed and no account id is stored. */
+.conn-hint {
+  padding: 12px 14px; border-radius: 9px; border: 1px solid var(--warn);
+  border-left-width: 4px; background: var(--card); margin-bottom: 10px;
+  font-size: var(--fs-md); display: flex; flex-direction: column; gap: 10px;
+}
+.conn-hint-txt b { color: var(--warn); }
+.conn-hint button { align-self: flex-start; }
 /* #btn-scan (primary fill) + #btn-disconnect (danger outline) are styled by the shared action-button base. */
 .scan-item {
   display: flex; align-items: center; justify-content: space-between;
