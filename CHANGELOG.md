@@ -16,6 +16,11 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.118
+- UT5 Max: cruise control now engages. The controller patch clears both engage gates (a tight steady-speed window and a region/handshake flag) that each blocked it before; cruise latches on a steady ride plus throttle release. Re-flash the controller.
+- UT5 Max: a patched scooter always boots throttled and re-locks to the stock cap on every power-on, whichever app connects next; the speed release only opens the current session.
+- Settings: the number of taps on the km/h tile that toggles the speed release is now configurable (1-50, default 3).
+
 ## 1.0.117
 - Feedback form: dropped the Markdown bold (**) from the auto-filled issue report. The ** labels did not render on GitHub (some had a trailing space before the closing marker, others were unbalanced) and showed up as raw asterisks in the ticket. Labels are plain text now. Only the in-app reporter block was changed; the exponentiation operators elsewhere in the file were left alone.
 

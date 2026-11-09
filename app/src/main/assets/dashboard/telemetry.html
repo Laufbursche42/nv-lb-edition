@@ -436,6 +436,13 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <label class="toggle-label" for="toggle-dash-lock"></label>
       </div>
     </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-row-label" data-i18n="settings.tapcount.label">Taps to toggle throttle</div>
+        <div class="settings-row-sublabel" data-i18n="settings.tapcount.hint">How many taps on the km/h tile switch the throttle on/off (1-50)</div>
+      </div>
+      <input class="set-ctrl" id="tap-count" type="number" min="1" max="50" step="1" inputmode="numeric" style="max-width:5rem">
+    </div>
     <button id="btn-open-theme" class="settings-btn mt-10" data-i18n="theme.settings.action">&#127912; Theme manager</button>
   </div>
 
@@ -1971,6 +1978,13 @@ function updateBLEUI(data) {
 
   if (connected !== wasConnected) { onBLEConnectionChange(connected); resetSpeedStats(); }
 
+  // Safety: a fresh scooter connection always starts LOCKED. A scooter power cycle shows up here as a
+  // disconnect followed by this connect edge, so clearing the release here - BEFORE the per-connection
+  // sync blocks below - guarantees the scooter never comes back pre-tuned. The sync then actively
+  // commands the locked value (incl. the UT5 Max, whose meter keeps the switch in NVM key 0x5c). The
+  // rider must deliberately re-arm the release (triple-tap) after every restart.
+  if (connected && !wasConnected) _speedReleased = false;
+
   bleDot.classList.toggle('connected', connected);
   const connBtn = document.getElementById('btn-connect');
   if (connBtn) connBtn.classList.toggle('connected', connected);
@@ -2713,6 +2727,20 @@ function loadSettings() {
   state.gpsAutoStart = gpsAuto !== 'off';
   document.getElementById('toggle-gps-auto').checked = state.gpsAutoStart;
 
+  // Tap count to toggle the speed release (lb_tap_count, 1-50, default 3). tapCount() reads+clamps.
+  const tapEl = document.getElementById('tap-count');
+  if (tapEl) {
+    tapEl.value = String(tapCount());
+    tapEl.addEventListener('change', () => {
+      let v = parseInt(tapEl.value, 10);
+      if (!Number.isFinite(v)) v = 3;
+      v = Math.min(Math.max(Math.round(v), 1), 50);
+      try { storage.set('lb_tap_count', String(v)); } catch (e) {}
+      tapEl.value = String(v);
+      try { applyLang(); } catch (e) {}   // refresh the {n} tile-gesture help texts
+    });
+  }
+
   // GPS recording interval (seconds; default 5). Applied as a throttle in onGPSSuccess.
   const gpsIntSaved = parseInt(storage.get('lb_gps_interval'), 10);
   const gpsIntSec = (gpsIntSaved > 0) ? gpsIntSaved : 5;
@@ -3053,7 +3081,9 @@ function tf(key, vars) {
 function applyLang() {
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(n => {
-    const v = t(n.getAttribute('data-i18n'));
+    let v = t(n.getAttribute('data-i18n'));
+    // {n} = the configurable tile-tap count (settings.tapcount); only the tile-gesture help strings carry it.
+    if (v.indexOf('{n}') >= 0) v = v.split('{n}').join(String(tapCount()));
     // Only the few strings that carry emphasis or an entity go in as markup.
     if (/[<&]/.test(v)) n.innerHTML = v; else n.textContent = v;
   });
@@ -4441,12 +4471,14 @@ function wireSpeedRelease() {
   });
 }
 
-// Last release state; persisted so the triple-tap keeps its direction across restart/reload.
-let _speedReleased = (function () { try { return storage.get('lb_speedreleased') === '1'; } catch (e) { return false; } })();
+// Last release state. NEVER restored across an app start or a scooter reconnect: a speed release is a
+// deliberate, per-session action (triple-tap) and must not carry over a power cycle. The scooter always
+// comes up locked and never silently re-opens itself on power-on. Kept in RAM for the current session only.
+let _speedReleased = false;
 let _ut5DrosselSynced = false;  // one-shot guard: push the UT5 Max drossel state once per connection
 let _xt5SpeedSynced = false;    // one-shot guard: push the XT5 live speed byte once per connection
 let _zeroStartSynced = false;   // one-shot guard: auto-set zero-start to 0 once per connection on a patched meter
-function setSpeedReleasedFlag(on) { _speedReleased = !!on; try { storage.set('lb_speedreleased', on ? '1' : '0'); } catch (e) {} }
+function setSpeedReleasedFlag(on) { _speedReleased = !!on; }
 // Opt-in (XT5): re-send the gear-4 release automatically after a rider drive-mode change, which
 // otherwise wipes the live release. App-side state only; "off" is always clean stock.
 let _holdReleaseOnModeChange = (function () { try { return storage.get('lb_holdrelease') === '1'; } catch (e) { return false; } })();
@@ -4578,13 +4610,22 @@ function sendSpeedRelease(on) {
   return true;
 }
 
-/* Triple-tap the VCU tile (700 ms window) toggles the speed release. */
+/* Multi-tap the VCU tile (700 ms window) toggles the speed release. The required tap count is
+   user-configurable (settings.tapcount, storage key lb_tap_count, default 3). */
 let _vcuTapCount = 0, _vcuTapTimer = null;
+
+// Required taps to toggle the speed release: stored int clamped to [1,50], default 3 on NaN/missing.
+function tapCount() {
+  let v = NaN;
+  try { v = parseInt(storage.get('lb_tap_count'), 10); } catch (e) {}
+  if (!Number.isFinite(v)) return 3;
+  return Math.min(Math.max(Math.round(v), 1), 50);
+}
 
 function onVcuTileTap() {
   _vcuTapCount++;
   clearTimeout(_vcuTapTimer);
-  if (_vcuTapCount >= 3) { _vcuTapCount = 0; toggleSpeedRelease(); return; }
+  if (_vcuTapCount >= tapCount()) { _vcuTapCount = 0; toggleSpeedRelease(); return; }
   _vcuTapTimer = setTimeout(() => { _vcuTapCount = 0; }, 700);
 }
 

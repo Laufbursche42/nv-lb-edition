@@ -5,6 +5,9 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: cruise control now engages.</b> Turning cruise on with the Tempomat toggle always worked, but on the UT5 Max the controller never actually latched it - its engage logic had two gates that real riding could never satisfy at once, and earlier builds only ever lifted one of them. The controller patch now clears both, so cruise engages the normal way: ride at a steady speed, then release the throttle to hold it. I hope this finally fixes cruise control on the UT5 Max for good - feel free to send your feedback through the usual channels.",
+      "<b>UT5 Max: always boots throttled.</b> A patched UT5 Max now locks back to the stock cap on every power-on, no matter which app connects next - the speed release only opens the current session, and a restart re-locks. Unlock again from the app.",
+      "<b>Set how many taps toggle the throttle.</b> The number of taps on the km/h tile that switch the speed release on and off is now a setting (1-50, default 3), under Settings.",
       "<b>Feedback form: cleaner ticket.</b> The auto-filled issue report no longer wraps its labels in raw ** - they showed up as literal asterisks instead of bold. Plain text now.",
       "<b>New: a hint when live values stay empty.</b> If you connect but the scooter sends no live data and no account ID is stored, the Connect screen now tells you why - account-bound scooters only stream live values once you enter your real NAVEE User ID - with a button that jumps straight to the field.",
       "<b>More reliable connecting.</b> Two fixes, no firmware touched. A quick reconnect could shoot down its own fresh link - the app connected and dropped again right away, leaving you with no connection; that is fixed. And when a scooter never finished the connection handshake, the app could stay connected but stuck and never run its status reads; it now stops waiting after a few seconds and carries on instead of hanging.",
@@ -830,7 +833,7 @@ window.I18N = {
     "scooter.xt5speed.intro": "Patched meter with the switchable speed-limiter patch (XT5 Pro/Max/Ultra, ST3/GT3 family, GT5 Pro/Max). Choose your top speed here; the triple-tap on the km/h tile (or the speed-release switch) then toggles between the locked value (22 by default, configurable on XT5) and this value, live over Bluetooth with no re-flash. Steps and ceiling depend on the model (XT5 to ~45-50, ST3/GT3/GT5 to ~40). The value lives in RAM only - the app re-sends it on connect. Needs the speed-limiter feature in the meter patch.",
     "scooter.xt5speed.legal": "<b>Private property only.</b> Above 22 km/h the type approval and insurance lapse; not allowed on public roads.",
     "scooter.xt5speed.label": "Max speed (when open)",
-    "scooter.xt5speed.sub": "The triple-tap on the km/h tile toggles the locked value and this value",
+    "scooter.xt5speed.sub": "The {n}-tap on the km/h tile toggles the locked value and this value",
     "scooter.xt5lock.label": "Locked speed (legal)",
     "scooter.xt5lock.sub": "The value the triple-tap drops back to - some regions allow 25 instead of 22",
     "scooter.xt5speed.permctrl": "Your controller is running the permanent speed patch, which overrides this live toggle - the speed stays at the controller's fixed value and the triple-tap does nothing. For a live toggle between 22 and your open speed, flash the controller back to stock and keep only the meter (drossel) patch.",
@@ -876,7 +879,7 @@ window.I18N = {
     "msg2.navee.tune.confirm.ok": "Send",
     "msg2.navee.tune.sent": "Drive mode 4 sent. Gone after a mode-button press or a restart.",
     "msg2.navee.tune.restored": "Normal drive mode sent.",
-    "scooter.tune.gesture": "Quicker on the road: a triple tap on the km/h VCU tile on the main screen turns the release on and off again. The tile stays red while it is active.",
+    "scooter.tune.gesture": "Quicker on the road: a {n}-tap on the km/h VCU tile on the main screen turns the release on and off again. The tile stays red while it is active.",
     "scooter.tcs.label": "Traction control",
     "scooter.tcs.sub": "Damp wheel spin",
     "dash.drive.quick.tcs": "TCS",
@@ -1040,6 +1043,8 @@ window.I18N = {
     "settings.btnrow.align.title": "Alignment",
     "settings.dashlock.hint": "Long-press tile drag disabled when active",
     "settings.dashlock.label": "Lock dashboard",
+    "settings.tapcount.label": "Taps to toggle throttle",
+    "settings.tapcount.hint": "How many taps on the km/h tile switch the throttle on/off (1-50; default 3)",
     "settings.ridebanner.dock.hint": "Keeps banner at fixed position, not draggable",
     "settings.ridebanner.dock.label": "Pin recording banner",
     "settings.streaming.hint": "Show the 📡 streaming button in the top bar",
@@ -1127,6 +1132,9 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: der Tempomat rastet jetzt ein.</b> Den Tempomat per Schalter einschalten ging immer, aber am UT5 Max hat der Controller ihn nie wirklich eingerastet - seine Engage-Logik hatte zwei Tore, die beim echten Fahren nie gleichzeitig erfüllt wurden, und frühere Builds haben immer nur eines davon gelöst. Der Controller-Patch räumt jetzt beide weg, sodass der Tempomat normal einrastet: konstant fahren, dann Gas loslassen, und er hält. Ich hoffe, damit ist das Thema Tempomat beim UT5 Max nun ein für alle Mal gefixt. Lasst mir gern euer Feedback über die bekannten Kanäle zukommen.",
+      "<b>UT5 Max: startet immer gedrosselt.</b> Ein gepatchter UT5 Max sperrt jetzt bei jedem Einschalten zurück auf das Serien-Tempo, egal welche App sich als Nächstes verbindet - die Freischaltung gilt nur für die laufende Sitzung, ein Neustart sperrt wieder. Zum Öffnen erneut in der App freischalten.",
+      "<b>Tipp-Anzahl zum Umschalten einstellbar.</b> Wie oft du auf die km/h-Kachel tippen musst, um die Freischaltung ein- und auszuschalten, ist jetzt einstellbar (1-50, Standard 3), in den Einstellungen.",
       "<b>Feedback-Formular: sauberes Ticket.</b> Die auto-gefüllte Fehlermeldung setzt keine rohen ** mehr um ihre Labels - die erschienen als wörtliche Sternchen statt fett. Jetzt Klartext.",
       "<b>Neu: Hinweis, wenn Live-Werte leer bleiben.</b> Wenn du verbindest, der Scooter aber keine Live-Daten sendet und keine Konto-ID gespeichert ist, sagt dir der Verbinden-Screen jetzt warum - konto-gebundene Scooter senden Live-Werte erst, wenn du deine echte NAVEE-User-ID einträgst - mit einem Knopf direkt zum Feld.",
       "<b>Zuverlässigeres Verbinden.</b> Zwei Fixes, keine Firmware angefasst. Ein schneller Reconnect konnte seine eigene frische Verbindung abschießen - die App verband sich und flog sofort wieder raus, du bliebst ohne Verbindung; das ist behoben. Und wenn ein Scooter den Verbindungs-Handshake nie abschloss, konnte die App zwar verbunden, aber hängen bleiben und ihre Status-Abfragen nie starten; sie wartet jetzt nur noch ein paar Sekunden und macht dann weiter, statt zu hängen.",
@@ -1948,7 +1956,7 @@ window.I18N = {
     "scooter.xt5speed.intro": "Gepatchter Tacho mit dem Schaltbare-Drossel-Patch (XT5 Pro/Max/Ultra, ST3/GT3-Familie, GT5 Pro/Max). Stell hier deine Wunsch-Höchstgeschwindigkeit ein; der Trippel-Tipp auf die km/h-Kachel (oder der Freischaltungs-Schalter) schaltet dann zwischen dem gesperrten Wert (22 standardmäßig, beim XT5 wählbar) und diesem Wert um, live per Bluetooth ohne neu zu flashen. Stufen und Decke je Modell (XT5 bis ~45-50, ST3/GT3/GT5 bis ~40). Der Wert liegt nur im Arbeitsspeicher - die App sendet ihn beim Verbinden neu. Braucht das Drossel-Feature im Tacho-Patch.",
     "scooter.xt5speed.legal": "<b>Nur auf privatem Grund.</b> Über 22 km/h erlischt die Betriebserlaubnis und der Versicherungsschutz; auf öffentlichen Wegen nicht erlaubt.",
     "scooter.xt5speed.label": "Wunsch-Höchstgeschwindigkeit (offen)",
-    "scooter.xt5speed.sub": "Der Trippel-Tipp auf die km/h-Kachel schaltet zwischen dem gesperrten Wert und diesem",
+    "scooter.xt5speed.sub": "Der {n}-fach-Tipp auf die km/h-Kachel schaltet zwischen dem gesperrten Wert und diesem",
     "scooter.xt5lock.label": "Gesperrte Geschwindigkeit (legal)",
     "scooter.xt5lock.sub": "Der Wert, auf den der Trippel-Tipp zurückschaltet - manche Regionen erlauben 25 statt 22",
     "scooter.xt5speed.permctrl": "Dein Controller fährt den permanenten Speed-Patch, der diesen Live-Umschalter überschreibt - die Geschwindigkeit bleibt beim festen Controller-Wert und der Dreifach-Tipp bewirkt nichts. Für einen Live-Umschalter zwischen 22 und deiner offenen Geschwindigkeit: den Controller auf Serie zurückflashen und nur den Tacho-(Drossel-)Patch behalten.",
@@ -1994,7 +2002,7 @@ window.I18N = {
     "msg2.navee.tune.confirm.ok": "Senden",
     "msg2.navee.tune.sent": "Fahrmodus 4 gesendet. Nach Modus-Taste oder Neustart wieder weg.",
     "msg2.navee.tune.restored": "Normaler Fahrmodus gesendet.",
-    "scooter.tune.gesture": "Schneller geht es unterwegs mit der Geste: dreimal kurz auf die km/h-VCU-Kachel im Hauptbildschirm tippen schaltet die Freischaltung ein und wieder aus. Die Kachel bleibt rot, solange sie aktiv ist.",
+    "scooter.tune.gesture": "Schneller geht es unterwegs mit der Geste: {n}-mal kurz auf die km/h-VCU-Kachel im Hauptbildschirm tippen schaltet die Freischaltung ein und wieder aus. Die Kachel bleibt rot, solange sie aktiv ist.",
     "scooter.tcs.label": "Traktionskontrolle",
     "scooter.tcs.sub": "Durchdrehen des Rades bremsen",
     "dash.drive.quick.tcs": "TCS",
@@ -2158,6 +2166,8 @@ window.I18N = {
     "settings.btnrow.align.title": "Ausrichtung",
     "settings.dashlock.hint": "Kacheln durch langes Drücken nicht verschiebbar",
     "settings.dashlock.label": "Dashboard sperren",
+    "settings.tapcount.label": "Tipp-Anzahl zum Umschalten",
+    "settings.tapcount.hint": "Wie oft auf die km/h-Kachel getippt werden muss, um die Drossel ein-/auszuschalten (1-50; Standard 3)",
     "settings.ridebanner.dock.hint": "Banner bleibt oben fixiert, nicht verschiebbar",
     "settings.ridebanner.dock.label": "Aufnahme-Banner fixieren",
     "settings.streaming.hint": "📡-Button in der Topbar anzeigen",
