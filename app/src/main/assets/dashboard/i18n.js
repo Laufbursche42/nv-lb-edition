@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max guide fix: cruise needs the controller patch too.</b> The beginner guide now says plainly that on the UT5 Max cruise only engages if you also flash the controller patch, not the meter alone. Text only - nothing in the app or firmware changed.",
       "<b>UT5 Max: cruise control now engages.</b> Turning cruise on with the Tempomat toggle always worked, but on the UT5 Max the controller never actually latched it - its engage logic had two gates that real riding could never satisfy at once, and earlier builds only ever lifted one of them. The controller patch now clears both, so cruise engages the normal way: ride at a steady speed, then release the throttle to hold it. I hope this finally fixes cruise control on the UT5 Max for good - feel free to send your feedback through the usual channels.",
       "<b>UT5 Max: always boots throttled.</b> A patched UT5 Max now locks back to the stock cap on every power-on, no matter which app connects next - the speed release only opens the current session, and a restart re-locks. Unlock again from the app.",
       "<b>Set how many taps toggle the throttle.</b> The number of taps on the km/h tile that switch the speed release on and off is now a setting (1-50, default 3), under Settings.",
@@ -569,7 +570,7 @@ window.I18N = {
     "start.s3.b3.cond": "Kick-start",
     "start.s3.b3.text": "Pull away from standstill. Meter.",
     "start.s3.b4.cond": "Cruise control",
-    "start.s3.b4.text": "Holds your speed, where supported. Meter.",
+    "start.s3.b4.text": "Holds your speed, where supported. Meter (on the UT5 Max the controller too, so cruise actually engages).",
     "start.s3.b5.cond": "Silence beeps",
     "start.s3.b5.text": "Mute single tones; the confirmation beep stays. Meter.",
     "start.s3.note": "Speed sits in the controller, the rest in the meter - the app flashes only the chips you touch, controller first, meter last. A missing option means your model does not have it. A firmware version other than the installed one is flagged as untested.",
@@ -1132,6 +1133,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max Guide-Korrektur: der Tempomat braucht auch den Controller-Patch.</b> Der Einsteiger-Guide sagt jetzt klar, dass der Tempomat beim UT5 Max nur einrastet, wenn du auch den Controller-Patch flashst, nicht nur den Meter. Nur Text - an App und Firmware ändert sich nichts.",
       "<b>UT5 Max: der Tempomat rastet jetzt ein.</b> Den Tempomat per Schalter einschalten ging immer, aber am UT5 Max hat der Controller ihn nie wirklich eingerastet - seine Engage-Logik hatte zwei Tore, die beim echten Fahren nie gleichzeitig erfüllt wurden, und frühere Builds haben immer nur eines davon gelöst. Der Controller-Patch räumt jetzt beide weg, sodass der Tempomat normal einrastet: konstant fahren, dann Gas loslassen, und er hält. Ich hoffe, damit ist das Thema Tempomat beim UT5 Max nun ein für alle Mal gefixt. Lasst mir gern euer Feedback über die bekannten Kanäle zukommen.",
       "<b>UT5 Max: startet immer gedrosselt.</b> Ein gepatchter UT5 Max sperrt jetzt bei jedem Einschalten zurück auf das Serien-Tempo, egal welche App sich als Nächstes verbindet - die Freischaltung gilt nur für die laufende Sitzung, ein Neustart sperrt wieder. Zum Öffnen erneut in der App freischalten.",
       "<b>Tipp-Anzahl zum Umschalten einstellbar.</b> Wie oft du auf die km/h-Kachel tippen musst, um die Freischaltung ein- und auszuschalten, ist jetzt einstellbar (1-50, Standard 3), in den Einstellungen.",
@@ -1692,7 +1694,7 @@ window.I18N = {
     "start.s3.b3.cond": "Kickstart (Zero-Start)",
     "start.s3.b3.text": "Losfahren aus dem Stand. Meter.",
     "start.s3.b4.cond": "Tempomat",
-    "start.s3.b4.text": "Hält dein Tempo, wo unterstützt. Meter.",
+    "start.s3.b4.text": "Hält dein Tempo, wo unterstützt. Meter (beim UT5 Max auch der Controller, damit der Tempomat wirklich einrastet).",
     "start.s3.b5.cond": "Pieptöne stumm",
     "start.s3.b5.text": "Einzelne Töne aus; der Bestätigungston bleibt. Meter.",
     "start.s3.note": "Speed sitzt im Controller, der Rest im Meter - die App flasht nur die Chips, die du nutzt, Controller zuerst, Meter zuletzt. Fehlt eine Option, hat dein Modell sie nicht. Eine andere als die installierte Firmware-Version wird als ungetestet markiert.",

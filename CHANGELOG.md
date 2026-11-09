@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.119
+- Guide: clarified that on the UT5 Max cruise needs the controller patch too, not the meter patch alone, to actually engage. Documentation only; no app or firmware change.
+
 ## 1.0.118
 - UT5 Max: cruise control now engages. The controller patch clears both engage gates (a tight steady-speed window and a region/handshake flag) that each blocked it before; cruise latches on a steady ride plus throttle release. Re-flash the controller.
 - UT5 Max: a patched scooter always boots throttled and re-locks to the stock cap on every power-on, whichever app connects next; the speed release only opens the current session.
