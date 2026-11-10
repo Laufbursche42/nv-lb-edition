@@ -3651,7 +3651,7 @@ function naveeLiveSpeedSteps(name) { const c = naveeDrosselCaps(name); return c 
 // UT5 Max comes in two patched-meter generations: the earlier "0050" meter is an on/off (class 0x81)
 // drossel, the newer "0060" meter forwards a selectable value (class 0x6E sub1). Only "0060" uses the
 // live-speed selector; "0050" stays on the plain on/off path below.
-function ut5MaxSelectable() { return naveeRealModel() === 'UT5 Max' && (liveRaw().fwMeter || '').trim() === '0060'; }
+function ut5MaxSelectable() { const m = (liveRaw().fwMeter || '').trim(); return naveeRealModel() === 'UT5 Max' && (m === '0060' || m === '5565'); }  // '5565' = same 0x6E selector meter, re-versioned for build-distinguishability; kept beside '0060' so older flashes keep working
 
 
 function pick(d, keys) {
@@ -4211,7 +4211,7 @@ function naveeSkuOf(region) {
 // A kickstart-patched meter carries a marker version (NT5 3.0.2.2 -> "5022", XT5 3.0.2.0 -> "5020",
 // UT5 Max 0.0.3.0 -> "0050", ST3/GT3 2.0.4.6 -> "5046") and then accepts launch levels 0-2 on any
 // region. Stock NAVEE meters never report these marker versions.
-const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '0060', '5046', '5004', '5024', '5058', '5016', '5057'];
+const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '0060', '5565', '5046', '5004', '5024', '5058', '5016', '5057']; // '5565' = UT5 Max 0x6E selector meter re-versioned for build-distinguishability (same behaviour as '0060')
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
 // A permanently speed-patched NAVEE controller reports fwBldc with a leading '5' (the patch flips the
 // marker's first digit 0/3 -> 5). On a permanent-cap model that overrides the meter drossel toggle.
