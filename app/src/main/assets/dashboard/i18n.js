@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>UT5 Max: cruise control really engages now - and the display patch alone does it.</b> Earlier builds tried to make cruise latch from the controller and it still never held. The real reason was on the display side: the display never told the controller to arm cruise, so on EU scooters it could not engage however long you held the throttle. The display patch now sets that arm bit - exactly as a US scooter already does - so cruise engages the normal way: ride at a steady speed, then release the throttle to hold it. You do NOT need to flash the controller for cruise any more, and on/off still works from the Tempomat toggle. Braking still cuts cruise instantly, unchanged.",
       "<b>UT5 Max guide fix: cruise needs the controller patch too.</b> The beginner guide now says plainly that on the UT5 Max cruise only engages if you also flash the controller patch, not the meter alone. Text only - nothing in the app or firmware changed.",
       "<b>UT5 Max: cruise control now engages.</b> Turning cruise on with the Tempomat toggle always worked, but on the UT5 Max the controller never actually latched it - its engage logic had two gates that real riding could never satisfy at once, and earlier builds only ever lifted one of them. The controller patch now clears both, so cruise engages the normal way: ride at a steady speed, then release the throttle to hold it. I hope this finally fixes cruise control on the UT5 Max for good - feel free to send your feedback through the usual channels.",
       "<b>UT5 Max: always boots throttled.</b> A patched UT5 Max now locks back to the stock cap on every power-on, no matter which app connects next - the speed release only opens the current session, and a restart re-locks. Unlock again from the app.",
@@ -570,7 +571,7 @@ window.I18N = {
     "start.s3.b3.cond": "Kick-start",
     "start.s3.b3.text": "Pull away from standstill. Meter.",
     "start.s3.b4.cond": "Cruise control",
-    "start.s3.b4.text": "Holds your speed, where supported. Meter (on the UT5 Max the controller too, so cruise actually engages).",
+    "start.s3.b4.text": "Holds your speed, where supported. Meter.",
     "start.s3.b5.cond": "Silence beeps",
     "start.s3.b5.text": "Mute single tones; the confirmation beep stays. Meter.",
     "start.s3.note": "Speed sits in the controller, the rest in the meter - the app flashes only the chips you touch, controller first, meter last. A missing option means your model does not have it. A firmware version other than the installed one is flagged as untested.",
@@ -633,7 +634,7 @@ window.I18N = {
     "patch.meter.never": "Only the controller is patched on this model. The speedometer is never touched: it hosts the Bluetooth link and is the only way back from a failed controller update, so a bad update there could not be undone. That is why there is no cruise control and no kickstart option here.",
     "patch.ut5max.exclusive": "UT5 Max: pick one path. The switchable meter patch (speed toggle between 22 and open over Bluetooth, plus kickstart and cruise) needs a stock controller. The controller patch is a permanent 40 km/h and overrides the meter - the toggle would then do nothing. They cannot be combined - selecting one automatically deselects the other. The switchable meter path is preselected and recommended.",
     "patch.ut5max.bothnote": "UT5 Max: the switchable throttle flashes the display AND the controller together - both are required. The display sends your Bluetooth-chosen speed, the controller obeys it; if only one is flashed nothing changes. This is one set (there is no separate permanent option). Pick the controller version that matches your scooter below.",
-    "patch.ut5max.bothflash": "Flashing both the display and the controller - the UT5 Max needs both for the switchable speed and cruise control.",
+    "patch.ut5max.bothflash": "Flashing both the display and the controller - the UT5 Max needs both for the switchable speed. Cruise control rides on the display patch alone.",
     "patch.bothflash": "Flashing both the display and the controller - the switchable throttle needs both.",
     "patch.ut5max.conflict.both": "Heads up: this scooter already has BOTH patches flashed - controller 0.0.8.0 (permanent de-restriction) plus meter 0.0.5.0 (switchable toggle). The controller patch overrides the meter, so the speed toggle does nothing. Pick one: flash the stock controller back to use the switchable toggle, or flash the stock meter to keep the permanent de-restriction.",
     "patch.ut5max.conflict.ctrl": "This scooter's controller is already permanently de-restricted (0.0.8.0). A switchable meter patch has no effect while this controller is flashed - it overrides the toggle. To use the switchable toggle instead, flash the stock controller back first.",
@@ -1133,6 +1134,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>UT5 Max: der Tempomat rastet jetzt wirklich ein - und der Tacho-Patch allein genügt.</b> Frühere Builds versuchten, den Tempomat über den Controller einrasten zu lassen, und er hielt trotzdem nie. Der eigentliche Grund lag auf der Tacho-Seite: der Tacho hat dem Controller nie gesagt, dass er den Tempomat scharfschalten soll, also konnte er auf EU-Rollern nicht einrasten, egal wie lange du Gas gehalten hast. Der Tacho-Patch setzt dieses Scharf-Bit jetzt - genau wie ein US-Roller es ohnehin tut - also rastet der Tempomat normal ein: konstant fahren, dann Gas loslassen zum Halten. Du musst für den Tempomat NICHT mehr den Controller flashen, und ein und aus geht weiter über den Tempomat-Schalter. Bremsen bricht den Tempomat weiterhin sofort ab, unverändert.",
       "<b>UT5 Max Guide-Korrektur: der Tempomat braucht auch den Controller-Patch.</b> Der Einsteiger-Guide sagt jetzt klar, dass der Tempomat beim UT5 Max nur einrastet, wenn du auch den Controller-Patch flashst, nicht nur den Meter. Nur Text - an App und Firmware ändert sich nichts.",
       "<b>UT5 Max: der Tempomat rastet jetzt ein.</b> Den Tempomat per Schalter einschalten ging immer, aber am UT5 Max hat der Controller ihn nie wirklich eingerastet - seine Engage-Logik hatte zwei Tore, die beim echten Fahren nie gleichzeitig erfüllt wurden, und frühere Builds haben immer nur eines davon gelöst. Der Controller-Patch räumt jetzt beide weg, sodass der Tempomat normal einrastet: konstant fahren, dann Gas loslassen, und er hält. Ich hoffe, damit ist das Thema Tempomat beim UT5 Max nun ein für alle Mal gefixt. Lasst mir gern euer Feedback über die bekannten Kanäle zukommen.",
       "<b>UT5 Max: startet immer gedrosselt.</b> Ein gepatchter UT5 Max sperrt jetzt bei jedem Einschalten zurück auf das Serien-Tempo, egal welche App sich als Nächstes verbindet - die Freischaltung gilt nur für die laufende Sitzung, ein Neustart sperrt wieder. Zum Öffnen erneut in der App freischalten.",
@@ -1694,7 +1696,7 @@ window.I18N = {
     "start.s3.b3.cond": "Kickstart (Zero-Start)",
     "start.s3.b3.text": "Losfahren aus dem Stand. Meter.",
     "start.s3.b4.cond": "Tempomat",
-    "start.s3.b4.text": "Hält dein Tempo, wo unterstützt. Meter (beim UT5 Max auch der Controller, damit der Tempomat wirklich einrastet).",
+    "start.s3.b4.text": "Hält dein Tempo, wo unterstützt. Meter.",
     "start.s3.b5.cond": "Pieptöne stumm",
     "start.s3.b5.text": "Einzelne Töne aus; der Bestätigungston bleibt. Meter.",
     "start.s3.note": "Speed sitzt im Controller, der Rest im Meter - die App flasht nur die Chips, die du nutzt, Controller zuerst, Meter zuletzt. Fehlt eine Option, hat dein Modell sie nicht. Eine andere als die installierte Firmware-Version wird als ungetestet markiert.",
@@ -1757,7 +1759,7 @@ window.I18N = {
     "patch.meter.never": "Bei diesem Modell wird nur der Controller gepatcht. Der Tacho wird nie angefasst: er beherbergt die Bluetooth-Verbindung und ist der einzige Rückweg aus einem fehlgeschlagenen Controller-Update, ein Fehlschlag dort wäre also nicht rückholbar. Deshalb gibt es hier keinen Tempomat und keine Anfahrstufen.",
     "patch.ut5max.exclusive": "UT5 Max: wähle einen Weg. Der schaltbare Tacho-Patch (Geschwindigkeit per Bluetooth zwischen 22 und offen umschaltbar plus Kickstart und Tempomat) braucht einen Serien-Controller. Der Controller-Patch ist dauerhaft 40 km/h und überschreibt den Tacho - der Schalter wäre dann wirkungslos. Beides zusammen geht nicht - wählst du eine Seite, wird die andere automatisch abgewählt. Der schaltbare Tacho-Weg ist vorausgewählt und empfohlen.",
     "patch.ut5max.bothnote": "UT5 Max: die schaltbare Drossel flasht Tacho UND Controller zusammen - beide sind nötig. Der Tacho sendet dein per Bluetooth gewähltes Tempo, der Controller gehorcht ihm; wird nur eins geflasht, ändert sich nichts. Das ist ein Satz (es gibt keine separate Permanent-Option). Wähle unten die Controller-Version, die zu deinem Roller passt.",
-    "patch.ut5max.bothflash": "Es werden Tacho UND Controller geflasht - der UT5 Max braucht beide für das schaltbare Tempo und den Tempomat.",
+    "patch.ut5max.bothflash": "Es werden Tacho UND Controller geflasht - der UT5 Max braucht beide für das schaltbare Tempo. Der Tempomat läuft allein über den Tacho-Patch.",
     "patch.bothflash": "Tacho UND Controller werden geflasht - die schaltbare Drossel braucht beide.",
     "patch.ut5max.conflict.both": "Achtung: auf diesem Scooter sind bereits BEIDE Patches geflasht - Controller 0.0.8.0 (dauerhaft entdrosselt) plus Meter 0.0.5.0 (schaltbarer Toggle). Der Controller-Patch überschreibt den Tacho, der Geschwindigkeits-Schalter bewirkt also nichts. Entscheide dich für einen Weg: flashe den Serien-Controller zurück, um den schaltbaren Toggle zu nutzen, oder flashe den Serien-Meter zurück, um bei der dauerhaften Entdrosselung zu bleiben.",
     "patch.ut5max.conflict.ctrl": "Der Controller dieses Scooters ist bereits dauerhaft entdrosselt (0.0.8.0). Ein schaltbarer Tacho-Patch bleibt wirkungslos, solange dieser Controller geflasht ist - er überschreibt den Schalter. Für den schaltbaren Toggle erst den Serien-Controller zurückflashen.",
