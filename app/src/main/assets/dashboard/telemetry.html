@@ -297,7 +297,16 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
         <button type="button" class="set-help" data-set-help="account-log" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
       </div>
       <button id="btn-account-log" class="settings-btn" data-i18n="settings.account.log.pick">Import from Bluetooth log</button>
-      <input type="file" id="nv-log-web-input" accept=".log,.gz,.zip,.cfa,application/zip,application/gzip" hidden>
+      <label class="settings-btn" id="btn-account-log-web" style="display:inline-block;cursor:pointer;">
+        <input type="file" id="nv-log-web-input" accept=".log,.gz,.zip,.cfa,application/zip,application/gzip" hidden>
+        <span data-i18n="settings.account.log.web">Log-Datei direkt laden</span>
+      </label>
+      <div class="account-sub-head mt-14">
+        <div class="settings-group-title" data-i18n="settings.account.json.title">iPhone: Http Catcher</div>
+        <button type="button" class="set-help" data-set-help="account-json" aria-label="What is this?" data-i18n-aria="settings.help.hint" data-i18n="settings.help.marker">?</button>
+      </div>
+      <textarea id="nv-json-web-input" rows="3" style="width:100%;box-sizing:border-box;font-size:12px;font-family:monospace;background:var(--field,#1a1a1a);border:1px solid var(--line,#333);border-radius:8px;padding:7px 10px;color:var(--fg,#eee);margin-top:4px;resize:vertical;" spellcheck="false" data-i18n-ph="settings.account.json.placeholder"></textarea>
+      <button id="btn-account-json" class="settings-btn" data-i18n="settings.account.json.parse">ID ermitteln</button>
     </div>
   </div>
 
@@ -1790,7 +1799,7 @@ function ensureAvHelpModal() {
   overlay.innerHTML =
     '<div id="avhelp-box" role="dialog" aria-modal="true" aria-labelledby="avhelp-title">' +
       '<h3 id="avhelp-title"></h3>' +
-      '<p id="avhelp-body" style="white-space:pre-line"></p>' +
+      '<p id="avhelp-body"></p>' +
       '<button type="button" id="avhelp-close">' + t('msg.help.close') + '</button>' +
     '</div>';
   document.body.appendChild(overlay);
@@ -1835,7 +1844,8 @@ const SETTINGS_HELP = {
   "dg-gps": { title: 'msg.help.set.dg.gps.title', text: 'msg.help.set.dg.gps.text' },
   "dg-pts": { title: 'msg.help.set.dg.pts.title', text: 'msg.help.set.dg.pts.text' },
   "account-intro": { title: 'settings.account.group.title', text: 'settings.account.intro' },
-  "account-log": { title: 'settings.account.log.title', text: 'settings.account.log.steps' }
+  "account-log": { title: 'settings.account.log.title', text: 'settings.account.log.steps' },
+  "account-json": { title: 'settings.account.json.title', text: 'settings.account.json.steps' }
 };
 
 let settingsHelpDelegated = false;
@@ -2797,11 +2807,8 @@ function clearAccountId() {
 }
 
 function importAccountIdFromLog() {
-  // One button: prefer the native picker (LB bridge); fall back to the in-page file input so it also
-  // works without the native bridge. Both extract the User ID locally - nothing is uploaded.
-  if (typeof LB !== 'undefined' && LB.pickAuthLog) { try { LB.pickAuthLog(); return; } catch (e) {} }
-  const inp = document.getElementById('nv-log-web-input');
-  if (inp) inp.click(); else showToast(t('msg.app.only.in.app'));
+  if (typeof LB === 'undefined' || !LB.pickAuthLog) { showToast(t('msg.app.only.in.app')); return; }
+  try { LB.pickAuthLog(); } catch (e) {}
 }
 
 // Native calls this after the user picked a Bluetooth log; ok = account ID was recovered and stored.
@@ -2810,7 +2817,7 @@ window.__onAuthLogResult = function (ok) {
   refreshAccountIdUI();
 };
 
-/* ── Web-based btsnoop parser (runs fully client-side) ─── */
+/* ── Web-based btsnoop + Http-Catcher JSON parser (runs fully client-side) ─── */
 function _nvScanAuthFrame(b) {
   let found = null;
   for (let i = 0; i + 8 < b.length; i++) {
@@ -2891,6 +2898,10 @@ async function _nvParseUserIdFromLog(file) {
   }
   return null;
 }
+function _nvParseUserIdFromJson(text) {
+  const m = text.match(/"(?:userId|user_id|accountId|account_id|uid)"\s*:\s*"?(\d{4,12})"?/i);
+  return m ? m[1] : null;
+}
 async function importAccountIdFromLogWeb(file) {
   if (!file) return;
   showToast(t('settings.account.log.parsing'));
@@ -2902,6 +2913,17 @@ async function importAccountIdFromLogWeb(file) {
     showToast(t('settings.account.log.ok'));
     refreshAccountIdUI();
   } catch (e) { showToast(t('settings.account.log.none')); }
+}
+function importAccountIdFromJson() {
+  const ta = document.getElementById('nv-json-web-input');
+  const text = ta ? ta.value.trim() : '';
+  if (!text) { showToast(t('settings.account.json.empty')); return; }
+  const uid = _nvParseUserIdFromJson(text);
+  if (!uid) { showToast(t('settings.account.log.none')); return; }
+  if (typeof LB !== 'undefined' && LB.setAccountId) { LB.setAccountId(uid); }
+  document.getElementById('account-id-input').value = uid;
+  showToast(t('settings.account.log.ok'));
+  refreshAccountIdUI();
 }
 
 /* ── SRT streaming (native module via the LB bridge) ──────────── */
@@ -3593,8 +3615,7 @@ function applyModelPanels(modelName) {
     // Permanent-controller models (ST3/GT3/GT5): the live toggle needs a STOCK controller - the permanent
     // controller patch overrides it. Make that clear instead of a dead-feeling switch.
     // Show the override warning only when the controller ACTUALLY carries the permanent speed patch
-    // (naveeCtrlPatched: leading '8' or a legacy GT3/ST3/GT5 marker); with a stock controller the meter
-    // drossel toggle works, so no warning.
+    // (fwBldc leading '5'); with a stock controller the meter drossel toggle works, so no warning.
     const ph = document.getElementById('xt5speed-permctrl-hint');
     if (ph) ph.style.display = (steps && PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0 && naveeCtrlPatched()) ? '' : 'none';
   }
@@ -4192,12 +4213,9 @@ function naveeSkuOf(region) {
 // region. Stock NAVEE meters never report these marker versions.
 const NAVEE_METER_PATCHED_FW = ['5022', '5020', '5023', '0050', '0060', '5565', '5046', '5004', '5024', '5058', '5016', '5057']; // '5565' = UT5 Max 0x6E selector meter re-versioned for build-distinguishability (same behaviour as '0060')
 function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRaw().fwMeter || '').trim()) >= 0; }
-// A permanently speed-patched NAVEE controller reports a non-stock fwBldc. The version-marker patch flips
-// the builder's leading digit away from stock '0': the current scheme stamps a leading '8' (= permanent),
-// older GT3/ST3/GT5 builds stamp the raw markers listed below. Stock controllers never report these, so a
-// leading '8' or a listed marker means patched. On a permanent-cap model that overrides the meter drossel toggle.
-const NAVEE_CTRL_PATCHED_FW = ['4417', '4424', '4416', '1111', '2211', '3311', '3312']; // GT3 Pro/Max, ST3 Pro, GT5 Pro/Max, GT3, GT3 Max, ST3 (legacy permanent markers; kept so already-flashed users keep the warning)
-function naveeCtrlPatched() { const c = (liveRaw().fwBldc || '').trim(); return c.charAt(0) === '8' || NAVEE_CTRL_PATCHED_FW.indexOf(c) >= 0; }
+// A permanently speed-patched NAVEE controller reports fwBldc with a leading '5' (the patch flips the
+// marker's first digit 0/3 -> 5). On a permanent-cap model that overrides the meter drossel toggle.
+function naveeCtrlPatched() { return (liveRaw().fwBldc || '').trim().charAt(0) === '5'; }
 // Stock meters re-clamp the launch level to a minimum of 3 outside the USA SKU (meter-side, the periodic
 // drive-state builder forces any sub-3 value back to 3). No model is exempt by pid: levels 0-2 become
 // available only on the USA SKU or on a meter carrying the kickstart marker (see NAVEE_METER_PATCHED_FW).
@@ -6497,6 +6515,7 @@ function wireEvents() {
   document.getElementById('btn-account-clear').addEventListener('click', clearAccountId);
   document.getElementById('btn-account-log').addEventListener('click', importAccountIdFromLog);
   document.getElementById('nv-log-web-input').addEventListener('change', function (e) { importAccountIdFromLogWeb(e.target.files && e.target.files[0]); e.target.value = ''; });
+  document.getElementById('btn-account-json').addEventListener('click', importAccountIdFromJson);
   document.getElementById('btn-firmware-back').addEventListener('click', closeFirmwarePage);
   document.getElementById('btn-fw-file').addEventListener('click', fwPickFile);
   document.getElementById('btn-fw-start').addEventListener('click', fwStart);
@@ -6777,12 +6796,10 @@ function fwBldcVariants(id) {
 
 /* ── Patcher page: pick the matching stock bins, download, patch, hand off ──────── */
 let _ut5Path = 'meter';   // UT5 Max path memory across re-renders: 'meter' (switchable) or 'ctrl' (permanent)
-let _speedPath = 'meter'; // GT3/ST3/GT5 speed-path choice across re-renders: 'meter' (switchable drossel) or 'ctrl' (permanent controller)
 function openPatcherPage() {
   document.getElementById('patcher-page').classList.add('open');
   const st = document.getElementById('patch-status'); if (st) { st.classList.add('is-hidden'); st.textContent = ''; }
   _ut5Path = 'meter';   // default to the switchable meter path each time the page opens
-  _speedPath = 'meter';   // GT3/ST3/GT5: default to the switchable path too
   renderPatcherModel();
 }
 function closePatcherPage() {
@@ -7042,30 +7059,8 @@ function renderPatchFeatures(det) {
         box.appendChild(n);
       }
       const _isUt5 = ['8901', '8902'].indexOf(String(det.id)) >= 0;
-      // GT3/ST3/GT5 class: the speed can go two mutually exclusive ways - a switchable live limiter on the
-      // meter (drossel) OR a permanent fixed speed in the controller. Flashing both lets the permanent
-      // controller override the live toggle (dead switch), so offer ONE choice instead of two checkboxes.
-      const _dualSpeed = !_isUt5 && feats.indexOf('speed') >= 0 && feats.indexOf('drossel') >= 0;
       if (!_isUt5) {
-        if (_dualSpeed) {
-          const ph = document.createElement('div'); ph.className = 'settings-group-title'; ph.style.marginTop = '8px'; ph.textContent = t('patch.speedpath.title');
-          box.appendChild(ph);
-          const seg = document.createElement('div'); seg.style.cssText = 'display:flex;gap:8px;margin:6px 0 2px';
-          [['meter', 'patch.speedpath.switchable'], ['ctrl', 'patch.speedpath.permanent']].forEach(function (pair) {
-            const b = document.createElement('button'); b.type = 'button'; b.className = 'settings-btn'; b.textContent = t(pair[1]);
-            b.style.cssText = 'flex:1;' + (_speedPath === pair[0] ? 'outline:2px solid var(--accent,#4ea1ff);font-weight:600' : 'opacity:.7');
-            b.addEventListener('click', function () { if (_speedPath !== pair[0]) { _speedPath = pair[0]; renderPatchFeatures(det); } });
-            seg.appendChild(b);
-          });
-          box.appendChild(seg);
-          const note = document.createElement('div'); note.className = 'hint'; note.style.margin = '2px 0 8px';
-          note.textContent = t(_speedPath === 'meter' ? 'patch.speedpath.note.meter' : 'patch.speedpath.note.ctrl');
-          box.appendChild(note);
-          const hid = document.createElement('input'); hid.type = 'checkbox'; hid.value = (_speedPath === 'ctrl' ? 'speed' : 'drossel'); hid.checked = true; hid.style.display = 'none';
-          box.appendChild(hid);
-        }
         for (const f of feats) {
-          if (_dualSpeed && (f === 'speed' || f === 'drossel')) continue;   // governed by the path selector above
           const lab = document.createElement('label'); lab.className = 'patch-feature-row'; lab.style.display = 'block'; lab.style.margin = '4px 0';
           const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = f;
           // performance features on by default; tone silences and the untested ramp off
@@ -7120,7 +7115,7 @@ function renderPatchFeatures(det) {
         box.appendChild(exCtrl);
       }
       const spd = naveeSpeedOpts(det);
-      if (spd && (!_dualSpeed || _speedPath === 'ctrl')) {
+      if (spd) {
         const sh = document.createElement('div'); sh.className = 'settings-group-title'; sh.style.marginTop = '8px'; sh.textContent = t('patch.speed.title');
         box.appendChild(sh);
         const sel = document.createElement('select'); sel.id = 'patch-speed'; sel.className = 'set-ctrl';
@@ -7318,13 +7313,12 @@ function fwReadableName(det, kind, vn) {
   return model + '_' + kind + (ver ? '_' + ver : '') + '_original.bin';
 }
 // The patched copy sits next to the original: same stem, "_original" swapped for "_patched".
-function fwPatchedName(name, mark) {
-  let n = /_original\.bin$/i.test(name) ? name.replace(/_original\.bin$/i, '_patched.bin')
-    : (function () { const dot = name.lastIndexOf('.'); const stem = dot > 0 ? name.slice(0, dot) : name; const ext = dot > 0 ? name.slice(dot) : '.bin'; return stem + '_patched' + ext; })();
-  // Swap the stock version in the name for the stamped marker version, so the saved file carries the
-  // version the scooter reports after flashing (e.g. GT3_bldc_0.0.1.1 -> GT3_bldc_8.8.1.1).
-  if (mark) { const mk = String(mark).replace(/[^0-9.]/g, ''); if (mk) n = n.replace(/\d+\.\d+\.\d+\.\d+/, mk); }
-  return n;
+function fwPatchedName(name) {
+  if (/_original\.bin$/i.test(name)) return name.replace(/_original\.bin$/i, '_patched.bin');
+  const dot = name.lastIndexOf('.');
+  const stem = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot) : '.bin';
+  return stem + '_patched' + ext;
 }
 
 window.__onFwDownloaded = function(arg) {
@@ -7373,7 +7367,7 @@ window.__onFwDownloaded = function(arg) {
   }
   if (r.kind === 'bldc' && r.mark) fwState.producedBldc = r.mark;
   if (r.experimental) fwState.experimental = true;
-  const patchedName = fwPatchedName(m.name, r.mark);
+  const patchedName = fwPatchedName(m.name);
   try { LB.fwStagePatched(fwBufToB64(r.bytes), patchedName, r.kind); }
   catch (e) { showToast(tf('msg.error.generic', { e: e })); }
 };

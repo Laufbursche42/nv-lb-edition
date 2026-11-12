@@ -191,7 +191,6 @@ const IMAGES = {
   // Meter 2.0.4.6, byte-identical across ST3 Pro (12501/3801), ST3 (3701) and GT3 / GT3 Pro / GT3 Max (3601/3401/3501/12601).
   meterST3GT3: {
     label: 'ST3/GT3 meter 2.0.4.6',
-    mark: '5.0.4.6',
     kind: 'meter',
     match: (u8) => u8.length === 0x22800 && bytesAt(u8, 0, ascii('T2202')) && beRead(u8, 0x13, 2) === 0x9bce,
     verify: { size: 0x22800, crcOff: 0x13, crcStock: 0x9bce, lenOff: 0x10, lenStock: 0x022400 },
@@ -255,7 +254,6 @@ const IMAGES = {
   // Meter 1.0.0.4, GT5 Pro / GT5 Max (8401/8501, byte-identical).
   meterGT5: {
     label: 'GT5 meter 1.0.0.4',
-    mark: '5.0.0.4',
     kind: 'meter',
     match: (u8) => u8.length === 0x23400 && bytesAt(u8, 0, ascii('T2202')) && beRead(u8, 0x13, 2) === 0xc780,
     verify: { size: 0x23400, crcOff: 0x13, crcStock: 0xc780, lenOff: 0x10, lenStock: 0x023000 },
@@ -417,7 +415,6 @@ const IMAGES = {
   // BLDC 0.0.2.0, ST3 Pro (12501 / 3801, 02831 family).
   bldcST3Pro: {
     label: 'ST3 Pro BLDC 0.0.2.0 (12501/3801)',
-    mark: '8.8.2.8',
     kind: 'bldc',
     match: (u8) => u8.length === 0xd080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x02, 0x00]),
     verify: { size: 0xd080, lenOff: 0x84, lenStock: 0x0000cd34, crcOff: 0xb0, crcStock: 0x4805 },
@@ -431,34 +428,34 @@ const IMAGES = {
     patches: [
       { off: 0x7e5a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
       { off: 0x4164, from: [0x62, 0x03], to: [0x66, 0x03], id: 'speed-cap-ceiling' }, // flash ceiling 866 -> 870 (40.0 km/h)
-      { off: 0x8556, from: [0x30], to: [0x38], id: 'version-marker' }, // fwBldc "0020" -> "8828"
+      { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' }, // fwBldc "0020" -> "4424"
     ],
     stdSpeedKmh: 40,
     variants: {
       speed22: { experimental: true, speedKmh: 22, patches: [
         { off: 0x7e5a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
         { off: 0x4164, from: [0x62, 0x03], to: [0xde, 0x01], id: 'speed-cap-ceiling' }, // 478 (22.0 km/h)
-        { off: 0x8556, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed25: { experimental: true, speedKmh: 25, patches: [
         { off: 0x7e5a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
         { off: 0x4164, from: [0x62, 0x03], to: [0x20, 0x02], id: 'speed-cap-ceiling' }, // 544 (25.0 km/h)
-        { off: 0x8556, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed30: { experimental: true, speedKmh: 30, patches: [
         { off: 0x7e5a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
         { off: 0x4164, from: [0x62, 0x03], to: [0x8c, 0x02], id: 'speed-cap-ceiling' }, // 652 (30.0 km/h)
-        { off: 0x8556, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed35: { experimental: true, speedKmh: 35, patches: [
         { off: 0x7e5a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
         { off: 0x4164, from: [0x62, 0x03], to: [0xf9, 0x02], id: 'speed-cap-ceiling' }, // 761 (35.0 km/h)
-        { off: 0x8556, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed45: { experimental: true, speedKmh: 45, patches: [
         { off: 0x7e5a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
         { off: 0x4164, from: [0x62, 0x03], to: [0xd3, 0x03], id: 'speed-cap-ceiling' }, // 979 (45.0 km/h)
-        { off: 0x8556, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x8556, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
     },
   },
@@ -547,7 +544,6 @@ const IMAGES = {
   // GT3 Pro / GT3 Max BLDC 0.0.1.7 (3401/3601/12601), 02831 capZ latch.
   bldcGT3Pro: {
     label: 'GT3 Pro / GT3 Max BLDC 0.0.1.7 (3401/3601/12601)',
-    mark: '8.8.1.7',
     kind: 'bldc',
     match: (u8) => u8.length === 0xc080 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x07]) && beRead(u8, 0xb0, 2) === 0x599b,
     verify: { size: 0xc080, lenOff: 0x84, lenStock: 0x0000b9a8, crcOff: 0xb0, crcStock: 0x599b },
@@ -562,7 +558,7 @@ const IMAGES = {
       { off: 0x774a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
       { off: 0x3a50, from: [0xa7], to: [0xd1], id: 'speed-cap-mode4' }, // mode 4 fixed cap 0xd1<<2 = 836 (40.0 km/h)
       { off: 0x3a78, from: [0xa7], to: [0xd1], id: 'speed-cap-ceiling' }, // governor hard ceiling 836 (40.0 km/h)
-      { off: 0x7e4c, from: [0x30], to: [0x38], id: 'version-marker' }, // fwBldc "0017" -> "8817"
+      { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' }, // fwBldc "0017" -> "4417"
     ],
     stdSpeedKmh: 40,
     variants: {
@@ -570,31 +566,31 @@ const IMAGES = {
         { off: 0x774a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' }, // movs r1,#22
         { off: 0x3a50, from: [0xa7], to: [0x73], id: 'speed-cap-mode4' }, // 0x73<<2 = 460 (22.0 km/h)
         { off: 0x3a78, from: [0xa7], to: [0x73], id: 'speed-cap-ceiling' },
-        { off: 0x7e4c, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed25: { experimental: true, speedKmh: 25, patches: [
         { off: 0x774a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' }, // movs r1,#25
         { off: 0x3a50, from: [0xa7], to: [0x83], id: 'speed-cap-mode4' }, // 0x83<<2 = 524 (25.1 km/h)
         { off: 0x3a78, from: [0xa7], to: [0x83], id: 'speed-cap-ceiling' },
-        { off: 0x7e4c, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed30: { experimental: true, speedKmh: 30, patches: [
         { off: 0x774a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' }, // movs r1,#30
         { off: 0x3a50, from: [0xa7], to: [0x9d], id: 'speed-cap-mode4' }, // 0x9d<<2 = 628 (30.1 km/h)
         { off: 0x3a78, from: [0xa7], to: [0x9d], id: 'speed-cap-ceiling' },
-        { off: 0x7e4c, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed35: { experimental: true, speedKmh: 35, patches: [
         { off: 0x774a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' }, // movs r1,#35
         { off: 0x3a50, from: [0xa7], to: [0xb7], id: 'speed-cap-mode4' }, // 0xb7<<2 = 732 (35.0 km/h)
         { off: 0x3a78, from: [0xa7], to: [0xb7], id: 'speed-cap-ceiling' },
-        { off: 0x7e4c, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed45: { experimental: true, speedKmh: 45, patches: [
         { off: 0x774a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' }, // movs r1,#45
         { off: 0x3a50, from: [0xa7], to: [0xeb], id: 'speed-cap-mode4' }, // 0xeb<<2 = 940 (45.0 km/h)
         { off: 0x3a78, from: [0xa7], to: [0xeb], id: 'speed-cap-ceiling' },
-        { off: 0x7e4c, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7e4c, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
     },
   },
@@ -602,7 +598,6 @@ const IMAGES = {
   // GT3 BLDC 0.0.1.1 (3501), 02831 capZ latch.
   bldcGT3_0101: {
     label: 'GT3 BLDC 0.0.1.1 (3501)',
-    mark: '8.8.1.1',
     kind: 'bldc',
     match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x01]) && beRead(u8, 0xb0, 2) === 0xfdb3,
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b304, crcOff: 0xb0, crcStock: 0xfdb3 },
@@ -615,7 +610,7 @@ const IMAGES = {
       { off: 0x727a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
       { off: 0x3748, from: [0xa7], to: [0xd1], id: 'speed-cap-ceiling' }, // ceiling 0xd1<<2 = 836 (40.0 km/h)
       { off: 0x37a4, from: [0xa7], to: [0xd1], id: 'speed-cap-mode4' }, // mode 4 fixed cap 836 (40.0 km/h)
-      { off: 0x7988, from: [0x30], to: [0x38], id: 'version-marker' }, // fwBldc "0011" -> "8811"
+      { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' }, // fwBldc "0011" -> "1111"
     ],
     stdSpeedKmh: 40,
     variants: {
@@ -623,31 +618,31 @@ const IMAGES = {
         { off: 0x727a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
         { off: 0x3748, from: [0xa7], to: [0x73], id: 'speed-cap-ceiling' },
         { off: 0x37a4, from: [0xa7], to: [0x73], id: 'speed-cap-mode4' },
-        { off: 0x7988, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
       ] },
       speed25: { experimental: true, speedKmh: 25, patches: [
         { off: 0x727a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
         { off: 0x3748, from: [0xa7], to: [0x83], id: 'speed-cap-ceiling' },
         { off: 0x37a4, from: [0xa7], to: [0x83], id: 'speed-cap-mode4' },
-        { off: 0x7988, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
       ] },
       speed30: { experimental: true, speedKmh: 30, patches: [
         { off: 0x727a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
         { off: 0x3748, from: [0xa7], to: [0x9d], id: 'speed-cap-ceiling' },
         { off: 0x37a4, from: [0xa7], to: [0x9d], id: 'speed-cap-mode4' },
-        { off: 0x7988, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
       ] },
       speed35: { experimental: true, speedKmh: 35, patches: [
         { off: 0x727a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
         { off: 0x3748, from: [0xa7], to: [0xb7], id: 'speed-cap-ceiling' },
         { off: 0x37a4, from: [0xa7], to: [0xb7], id: 'speed-cap-mode4' },
-        { off: 0x7988, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
       ] },
       speed45: { experimental: true, speedKmh: 45, patches: [
         { off: 0x727a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
         { off: 0x3748, from: [0xa7], to: [0xeb], id: 'speed-cap-ceiling' },
         { off: 0x37a4, from: [0xa7], to: [0xeb], id: 'speed-cap-mode4' },
-        { off: 0x7988, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7988, from: [0x30], to: [0x31], id: 'version-marker' },
       ] },
     },
   },
@@ -655,7 +650,6 @@ const IMAGES = {
   // GT3 Max BLDC 0.0.1.1 (3601), 02831 capZ latch.
   bldcGT3Max_0101: {
     label: 'GT3 Max BLDC 0.0.1.1 (3601)',
-    mark: '8.8.1.1',
     kind: 'bldc',
     match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x01]) && beRead(u8, 0xb0, 2) === 0x5ce3,
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b348, crcOff: 0xb0, crcStock: 0x5ce3 },
@@ -667,7 +661,7 @@ const IMAGES = {
       { off: 0x729e, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
       { off: 0x3760, from: [0xa7, 0x20], to: [0xd1, 0x20], id: 'speed-cap-ceiling' }, // 836 (40.0 km/h)
       { off: 0x37bc, from: [0xa7, 0x22], to: [0xd1, 0x22], id: 'speed-cap-mode4' }, // 836 (40.0 km/h)
-      { off: 0x79be, from: [0x30], to: [0x38], id: 'version-marker' }, // fwBldc "0011" -> "8811"
+      { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' }, // fwBldc "0011" -> "2211"
     ],
     stdSpeedKmh: 40,
     variants: {
@@ -675,31 +669,31 @@ const IMAGES = {
         { off: 0x729e, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
         { off: 0x3760, from: [0xa7, 0x20], to: [0x73, 0x20], id: 'speed-cap-ceiling' },
         { off: 0x37bc, from: [0xa7, 0x22], to: [0x73, 0x22], id: 'speed-cap-mode4' },
-        { off: 0x79be, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
       ] },
       speed25: { experimental: true, speedKmh: 25, patches: [
         { off: 0x729e, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
         { off: 0x3760, from: [0xa7, 0x20], to: [0x83, 0x20], id: 'speed-cap-ceiling' },
         { off: 0x37bc, from: [0xa7, 0x22], to: [0x83, 0x22], id: 'speed-cap-mode4' },
-        { off: 0x79be, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
       ] },
       speed30: { experimental: true, speedKmh: 30, patches: [
         { off: 0x729e, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
         { off: 0x3760, from: [0xa7, 0x20], to: [0x9d, 0x20], id: 'speed-cap-ceiling' },
         { off: 0x37bc, from: [0xa7, 0x22], to: [0x9d, 0x22], id: 'speed-cap-mode4' },
-        { off: 0x79be, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
       ] },
       speed35: { experimental: true, speedKmh: 35, patches: [
         { off: 0x729e, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
         { off: 0x3760, from: [0xa7, 0x20], to: [0xb7, 0x20], id: 'speed-cap-ceiling' },
         { off: 0x37bc, from: [0xa7, 0x22], to: [0xb7, 0x22], id: 'speed-cap-mode4' },
-        { off: 0x79be, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
       ] },
       speed45: { experimental: true, speedKmh: 45, patches: [
         { off: 0x729e, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
         { off: 0x3760, from: [0xa7, 0x20], to: [0xeb, 0x20], id: 'speed-cap-ceiling' },
         { off: 0x37bc, from: [0xa7, 0x22], to: [0xeb, 0x22], id: 'speed-cap-mode4' },
-        { off: 0x79be, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x79be, from: [0x30], to: [0x32], id: 'version-marker' },
       ] },
     },
   },
@@ -707,7 +701,6 @@ const IMAGES = {
   // ST3 BLDC 0.0.1.1 (3701), 02831 capZ latch.
   bldcST3_0101: {
     label: 'ST3 BLDC 0.0.1.1 (3701)',
-    mark: '8.8.1.1',
     kind: 'bldc',
     match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x01]) && beRead(u8, 0xb0, 2) === 0x21e9,
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b3e4, crcOff: 0xb0, crcStock: 0x21e9 },
@@ -719,34 +712,34 @@ const IMAGES = {
     patches: [
       { off: 0x733a, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
       { off: 0x3950, from: [0x62, 0x03], to: [0x66, 0x03], id: 'speed-cap-ceiling' }, // ceiling+mode4 866 -> 870 (40.0 km/h)
-      { off: 0x7a5a, from: [0x30], to: [0x38], id: 'version-marker' }, // fwBldc "0011" -> "8811"
+      { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' }, // fwBldc "0011" -> "3311"
     ],
     stdSpeedKmh: 40,
     variants: {
       speed22: { experimental: true, speedKmh: 22, patches: [
         { off: 0x733a, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
         { off: 0x3950, from: [0x62, 0x03], to: [0xde, 0x01], id: 'speed-cap-ceiling' }, // 478 (22.0 km/h)
-        { off: 0x7a5a, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed25: { experimental: true, speedKmh: 25, patches: [
         { off: 0x733a, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
         { off: 0x3950, from: [0x62, 0x03], to: [0x20, 0x02], id: 'speed-cap-ceiling' }, // 544 (25.0 km/h)
-        { off: 0x7a5a, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed30: { experimental: true, speedKmh: 30, patches: [
         { off: 0x733a, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
         { off: 0x3950, from: [0x62, 0x03], to: [0x8c, 0x02], id: 'speed-cap-ceiling' }, // 652 (30.0 km/h)
-        { off: 0x7a5a, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed35: { experimental: true, speedKmh: 35, patches: [
         { off: 0x733a, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
         { off: 0x3950, from: [0x62, 0x03], to: [0xf9, 0x02], id: 'speed-cap-ceiling' }, // 761 (35.0 km/h)
-        { off: 0x7a5a, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed45: { experimental: true, speedKmh: 45, patches: [
         { off: 0x733a, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
         { off: 0x3950, from: [0x62, 0x03], to: [0xd3, 0x03], id: 'speed-cap-ceiling' }, // 979 (45.0 km/h)
-        { off: 0x7a5a, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7a5a, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
     },
   },
@@ -757,7 +750,6 @@ const IMAGES = {
   // Stock version string is '0012', so the marker flip yields fwBldc '3312'. Scale unchanged (stock ceiling 866).
   bldcST3_0102: {
     label: 'ST3 BLDC 0.0.1.2 (3701)',
-    mark: '8.8.1.2',
     kind: 'bldc',
     match: (u8) => u8.length === 0xb880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x02]) && beRead(u8, 0xb0, 2) === 0x0482,
     verify: { size: 0xb880, lenOff: 0x84, lenStock: 0x0000b65c, crcOff: 0xb0, crcStock: 0x0482 },
@@ -765,34 +757,34 @@ const IMAGES = {
     patches: [
       { off: 0x75ec, from: [0x81, 0x7a], to: [0x28, 0x21], id: 'speed-source' }, // ldrb r1,[r0,#0xa] -> movs r1,#40
       { off: 0x3bec, from: [0x62, 0x03], to: [0x66, 0x03], id: 'speed-cap-ceiling' }, // ceiling+mode4 866 -> 870 (40.0 km/h)
-      { off: 0x7cca, from: [0x30], to: [0x38], id: 'version-marker' }, // fwBldc '0012' -> '8812'
+      { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' }, // fwBldc '0012' -> '3312'
     ],
     stdSpeedKmh: 40,
     variants: {
       speed22: { experimental: true, speedKmh: 22, patches: [
         { off: 0x75ec, from: [0x81, 0x7a], to: [0x16, 0x21], id: 'speed-source' },
         { off: 0x3bec, from: [0x62, 0x03], to: [0xde, 0x01], id: 'speed-cap-ceiling' }, // 478 (22.0 km/h)
-        { off: 0x7cca, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed25: { experimental: true, speedKmh: 25, patches: [
         { off: 0x75ec, from: [0x81, 0x7a], to: [0x19, 0x21], id: 'speed-source' },
         { off: 0x3bec, from: [0x62, 0x03], to: [0x20, 0x02], id: 'speed-cap-ceiling' }, // 544 (25.0 km/h)
-        { off: 0x7cca, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed30: { experimental: true, speedKmh: 30, patches: [
         { off: 0x75ec, from: [0x81, 0x7a], to: [0x1e, 0x21], id: 'speed-source' },
         { off: 0x3bec, from: [0x62, 0x03], to: [0x8c, 0x02], id: 'speed-cap-ceiling' }, // 652 (30.0 km/h)
-        { off: 0x7cca, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed35: { experimental: true, speedKmh: 35, patches: [
         { off: 0x75ec, from: [0x81, 0x7a], to: [0x23, 0x21], id: 'speed-source' },
         { off: 0x3bec, from: [0x62, 0x03], to: [0xf9, 0x02], id: 'speed-cap-ceiling' }, // 761 (35.0 km/h)
-        { off: 0x7cca, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
       speed45: { experimental: true, speedKmh: 45, patches: [
         { off: 0x75ec, from: [0x81, 0x7a], to: [0x2d, 0x21], id: 'speed-source' },
         { off: 0x3bec, from: [0x62, 0x03], to: [0xd3, 0x03], id: 'speed-cap-ceiling' }, // 979 (45.0 km/h)
-        { off: 0x7cca, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x7cca, from: [0x30], to: [0x33], id: 'version-marker' },
       ] },
     },
   },
@@ -805,7 +797,6 @@ const IMAGES = {
   // 22 and 45 km/h have no even-aligned constant in this build -> intentionally not offered.
   bldcGT5_0016: {
     label: 'GT5 Pro/Max BLDC 0.0.1.6 (8401/8501)',
-    mark: '8.8.1.6',
     kind: 'bldc',
     match: (u8) => u8.length === 0xd880 && bytesAt(u8, 0x90, ascii('SZMC-ES-ZM-02831')) && bytesAt(u8, 0x80, [0x00, 0x00, 0x01, 0x06]) && beRead(u8, 0xb0, 2) === 0x0b1d,
     verify: { size: 0xd880, lenOff: 0x84, lenStock: 0x0000d160, crcOff: 0xb0, crcStock: 0x0b1d },
@@ -814,7 +805,7 @@ const IMAGES = {
       { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
       { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
       { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0xd8, 0x3f, 0x00, 0x00], id: 'speed-cap' }, // X=0x3fd8 (835 = 40.0 km/h)
-      { off: 0x87e8, from: [0x30], to: [0x38], id: 'version-marker' }, // fwBldc "0016" -> "8816"
+      { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' }, // fwBldc "0016" -> "4416"
     ],
     stdSpeedKmh: 40,
     variants: {
@@ -822,37 +813,37 @@ const IMAGES = {
         { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
         { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
         { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x00, 0x37, 0x00, 0x00], id: 'speed-cap' }, // X=0x3700 (522)
-        { off: 0x87e8, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed27: { experimental: true, speedKmh: 27, patches: [
         { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
         { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
         { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x54, 0x37, 0x00, 0x00], id: 'speed-cap' }, // X=0x3754 (564)
-        { off: 0x87e8, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed30: { experimental: true, speedKmh: 30, patches: [
         { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
         { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
         { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0xc0, 0x0a, 0x00, 0x00], id: 'speed-cap' }, // X=0x0ac0 (626)
-        { off: 0x87e8, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed32: { experimental: true, speedKmh: 32, patches: [
         { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
         { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
         { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0xc0, 0x0d, 0x00, 0x00], id: 'speed-cap' }, // X=0x0dc0 (668)
-        { off: 0x87e8, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed35: { experimental: true, speedKmh: 35, patches: [
         { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
         { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
         { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x0c, 0xb9, 0x00, 0x00], id: 'speed-cap' }, // X=0xb90c (731)
-        { off: 0x87e8, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
       speed50: { experimental: true, speedKmh: 50, patches: [
         { off: 0x3d5c, from: [0x07], to: [0x08], id: 'speed-mode3' },
         { off: 0x3d60, from: [0x05], to: [0x06], id: 'speed-mode5' },
         { off: 0x40c8, from: [0x62, 0x03, 0x00, 0x20], to: [0x04, 0xd1, 0x00, 0x00], id: 'speed-cap' }, // X=0xd104 (1044)
-        { off: 0x87e8, from: [0x30], to: [0x38], id: 'version-marker' },
+        { off: 0x87e8, from: [0x30], to: [0x34], id: 'version-marker' },
       ] },
     },
   },
