@@ -16,6 +16,12 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.120
+- NAVEE ST3/GT3/GT5: the firmware patcher now asks for one speed path instead of two checkboxes - switchable (flash the meter, flip the top speed live in the app) or permanent (flash the controller to a fixed speed). You can no longer flash both by accident, which is what used to leave the live toggle dead.
+- NAVEE ST3/GT3/GT5: when a scooter already carries the permanent controller patch, the app now says so and explains it overrides the switchable limiter - flash the controller back to stock to get the live toggle (GitHub issue #23). A permanent patch now reports a version starting with 8, a switchable one with 5, so you can tell them apart, and a patched firmware file is named by that version.
+- NAVEE UT5 Max: a newer switchable-meter version (reported as 5.5.6.5) is recognized as the same live speed selector, so a scooter on it keeps the selector and kickstart. Older firmware is unchanged.
+- NAVEE account ID: the help is Android-only now - read the User ID out of a Bluetooth log, laid out as clear numbered steps. The iPhone / Http Catcher path and its paste box were removed, and the account buttons no longer sit cramped against each other.
+
 ## 1.0.119
 - Guide: clarified that on the UT5 Max cruise needs the controller patch too, not the meter patch alone, to actually engage. Documentation only; no app or firmware change.
 
