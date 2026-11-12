@@ -2109,6 +2109,16 @@ patches: [
     patches: [
       { off: 0x12c48, from: [0x03, 0xd8], to: [0x00, 0xbf], id: 'speedsel' }, // region gate in frame builder FUN_08012ad8 @0x08012c42 (bhi 0x08012c52) -> nop: payload[7] then follows BLE speed cell 0x20ab9e in every region, live 0x6E sub1 = lock/open. Experimental, HW-unconfirmed
       { off: 0x1400e, from: [0x32], to: [0x35], id: 'version-marker' }, // reported meter version is CODE-BUILT in the 0x73 response builder FUN_0801400e (movs r1,#'2' @0x1400e -> #'5'), NOT a data string. fwMeter '2058' -> '5058', so the app/tool detect the patched meter (the dead debug literal '2058handle key value read' @0x19664 is NOT read - never patch there)
+      // Per-tone beep silences (bl -> nop; GPIO buzzer, no dur<2 guard). BLE-command confirm chirps left on.
+      { off: 0x15f84, from: [0x1e, 0x28], to: [0xff, 0x28], id: 'beep-overspeed-nag' },   // continuous >~30 km/h nag: cmp #0x1e -> #0xff
+      { off: 0x155fe, from: [0xff, 0xf7, 0x6e, 0xfa], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-a' },     // fault/status threshold tone
+      { off: 0x1567e, from: [0xff, 0xf7, 0x2e, 0xfa], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-b' },     // status-change event tone
+      { off: 0x1573c, from: [0xff, 0xf7, 0xcf, 0xf9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-c' },     // periodic warning cadence
+      { off: 0x15cd2, from: [0xfe, 0xf7, 0x04, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-a' },    // startup / mode-entry melody
+      { off: 0x15f5c, from: [0xfe, 0xf7, 0xbf, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-b' },    // announce melody
+      { off: 0x16052, from: [0xfe, 0xf7, 0x44, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-c' },    // event-announce melody
+      { off: 0x15e12, from: [0xfe, 0xf7, 0x66, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-d' },    // mode/state tick chime
+      { off: 0x165cc, from: [0xfe, 0xf7, 0x87, 0xfa], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-findmy' }, // find-me / locate chirp
     ],
   },
 
@@ -2125,7 +2135,25 @@ patches: [
     verify: { size: 0x23800, crcOff: 0x13, crcStock: 0xa321, lenOff: 0x10, lenStock: 0x023400 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    patches: [],
+    // No drossel/marker: the US image already ships open (init sets the speed cell to 40 for country
+    // {8,9,10}) and its frame builder has no DE region gate - nothing to lift. Only per-tone beep silences
+    // (bl -> nop; GPIO buzzer, no dur<2 guard). BLE-command confirm chirps left on.
+    patches: [
+      { off: 0x16430, from: [0x1e, 0x28], to: [0xff, 0x28], id: 'beep-overspeed-nag' },   // continuous >~30 km/h nag: cmp #0x1e -> #0xff
+      { off: 0x14e78, from: [0xff, 0xf7, 0x90, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed-onset' },   // over-speed onset
+      { off: 0x14dfe, from: [0xff, 0xf7, 0xcd, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed-cadence' }, // over-speed cadence
+      { off: 0x15a66, from: [0xff, 0xf7, 0xa8, 0xf9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-alarm-a' },     // long alarm tone
+      { off: 0x15ba0, from: [0xff, 0xf7, 0x0b, 0xf9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-a' },     // speed-mismatch fault
+      { off: 0x150be, from: [0xff, 0xf7, 0x6d, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-b' },     // status / fault-code announce
+      { off: 0x150ee, from: [0xff, 0xf7, 0x55, 0xfe], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-c' },
+      { off: 0x151ec, from: [0xff, 0xf7, 0xd6, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-d' },
+      { off: 0x15220, from: [0xff, 0xf7, 0xbc, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-e' },
+      { off: 0x15262, from: [0xff, 0xf7, 0x9b, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-f' },
+      { off: 0x152b6, from: [0xff, 0xf7, 0x71, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-g' },
+      { off: 0x152d4, from: [0xff, 0xf7, 0x62, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-h' },
+      { off: 0x152e6, from: [0xff, 0xf7, 0x59, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-i' },
+      { off: 0x1531a, from: [0xff, 0xf7, 0x3f, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-fault-j' },
+    ],
   },
 
   // V40i / V40i Pro BLDC 0.0.0.8 (1301). Same build shape as the V50i Pro, own marker.
@@ -2280,6 +2308,11 @@ patches: [
     patches: [
       { off: 0x173f4, from: [0x05, 0xd9], to: [0x05, 0xe0], id: 'speedsel' },        // region clamp bls -> unconditional b (0x17402)
       { off: 0x19b5c, from: [0x32], to: [0x35], id: 'version-marker' },              // fwMeter "2057" -> "5057"
+      // Per-tone beep silences (bl -> nop; GPIO buzzer, no dur<2 guard). BLE-command confirm chirps left on.
+      { off: 0x15ea2, from: [0x1e, 0x28], to: [0xff, 0x28], id: 'beep-overspeed-nag' },   // continuous >~30 km/h nag: cmp #0x1e -> #0xff (also disarms the mode-5 cadence)
+      { off: 0x1568c, from: [0xff, 0xf7, 0xc7, 0xf9], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed-cadence' }, // over-speed sustained cadence
+      { off: 0x1554e, from: [0xff, 0xf7, 0x66, 0xfa], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed-warn' },    // over-speed warning
+      { off: 0x15e7a, from: [0xfe, 0xf7, 0xd0, 0xfd], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-melody-a' },          // over-speed state-transition chime
     ],
   },
 
@@ -2576,6 +2609,7 @@ const FLASH_ENABLED = new Set([
   'meterG5',                                                      // G5/Pro/Max meter (switchable drossel + version marker, experimental)
   'st5_meter',                                                    // ST5 Pro/Max meter (switchable drossel + version marker, experimental; no ST5 controller image, HW-unconfirmed; previously blocked)
   'n65ii6001_meter',                                             // N65i II meter 2.0.5.8 DE (switchable drossel: region-gate NOP + version marker, controller stays stock, experimental)
+  'n65ii10701_meter',                                            // N65i II meter 2.0.5.9 US (per-tone beep silences only; US ships open so no drossel, experimental)
   'bldc9701', 'bldc9401', 'bldc9301', 'bldc9207',                 // NT5 family controllers
   'bldcUT5Max', 'bldcUT5Max_0013',                                // UT5 Max controller (switchable 22-40, obeys the meter-sent byte10; 0.0.1.0 plus newer 0.0.1.3; flashed with the meter, HW-confirmed)
   'bldcUT5UltraX',                                                // UT5 Ultra X controller (target-speed selector 22-50, experimental)
@@ -2588,7 +2622,7 @@ const FLASH_ENABLED = new Set([
 
 // Flashable but not yet confirmed on recoverable hardware. The UI must show a red untested warning
 // plus an extra confirmation before creating or flashing these images.
-const EXPERIMENTAL = new Set(['meterST3GT3', 'meterGT5', 'meterG5', 'st5_meter', 'n65ii6001_meter', 'meterXT5_3023', 'bldcUT5UltraX', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
+const EXPERIMENTAL = new Set(['meterST3GT3', 'meterGT5', 'meterG5', 'st5_meter', 'n65ii6001_meter', 'n65ii10701_meter', 'meterXT5_3023', 'bldcUT5UltraX', 'bldcXT5ProMax0013', 'bldcST3Pro', 'bldcGT3Pro', 'bldcST3_0101', 'bldcST3_0102', 'bldcGT3_0101', 'bldcGT3Max_0101', 'bldcNT3Pro', 'bldcG5', 'bldcGT5Max', 'bldcGT5Pro', 'bldcGT5_0016', 'bldcUT3Max', 'bldcUT3Max_1007', 'bldcNT3Max', 'bldcG5Max', 'bldcG5Pro', 'bldcV45i', 'bldcS2', 'bldcV40iProII', 'bldcN65i', 'bldcV3Pro', 'bldcS60', 'bldcS40', 'bldcV40i', 'bldcV50iPro', 'bldcV25', 'bldcE20LiteE25Go', 'bldcE45E60', 'bldcE20E25', 'bldcK100', 'bldcK100Pro', 'bldcK100Max']);
 function isExperimental(key) { return EXPERIMENTAL.has(key); }
 
 function identify(u8) {

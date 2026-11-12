@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.125
+- NAVEE N65i II and G5: the firmware patcher can now silence individual beeps on the meter. Per-tone sound-off is offered for the N65i II (DE 2.0.5.8 and US 2.0.5.9) and the G5 / G5 Pro / G5 Max (2.0.5.7) - choose which tones go quiet (the over-speed nag, fault and warning tones, melodies, the find-me alarm) while the BLE-command confirm chirps stay on. It never mutes every tone at once.
+- NAVEE N65i II (US 2.0.5.9): the meter is now flashable. It was recognized before but had nothing to patch; it now offers the per-tone beep silences. The US build already ships with the speed open, so it needs no drossel patch. Experimental, with the untested warning.
+
 ## 1.0.124
 - NAVEE account ID: reading the User ID from a Bluetooth log no longer runs the app out of memory. A real btsnoop_hci.log can be tens to hundreds of MB; the app used to load the whole file into memory at once and crash on it. It now scans the log as a stream, so any size works - a raw log, a .gz, or an Android bug report .zip.
 - Dashboard: when a connected scooter shows only the two speed tiles and the live cells stay empty, the app now points at the likely cause - a missing NAVEE account ID. Account-bound scooters stream the live data (battery, range, trip and more) only once your real NAVEE User ID is set, and the hint clears itself as soon as the live values arrive.
