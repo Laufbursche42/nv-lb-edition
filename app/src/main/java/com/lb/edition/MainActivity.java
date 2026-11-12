@@ -1783,13 +1783,10 @@ public class MainActivity extends Activity {
         if (uri == null) return;
         new Thread(() -> {
             long id = 0;
-            try (InputStream in = getContentResolver().openInputStream(uri);
-                 ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-                if (in != null) {
-                    byte[] buf = new byte[8192]; int n;
-                    while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
-                    id = AuthLog.extractUserId(bos.toByteArray());
-                }
+            // Stream straight into the scanner - the picked btsnoop_hci.log can be tens to hundreds
+            // of MB and reading it whole into the heap used to OOM the app.
+            try (InputStream in = getContentResolver().openInputStream(uri)) {
+                if (in != null) id = AuthLog.extractUserId(in);
             } catch (Throwable t) {
                 Log.e(TAG, "onAuthLogPicked failed", t);
             }

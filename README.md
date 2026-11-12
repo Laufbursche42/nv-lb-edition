@@ -103,6 +103,8 @@ Everything below is implemented and shipping in the app.
 - **Current ride (GPS)** - distance, time, average speed, altitude, climb and descent, GPS fix quality and the number of recorded points.
 - **Gauge themes (Carbon, Lambo).** Two speedometer-dial themes ship built in; their scale is selectable - **Klar**, **Fine** or **Round** - in the Theme manager, with evenly-spaced marks and the needle pointing exactly at the number.
 
+> **Only the two speed tiles filling and the rest of the grid empty? That is almost always a missing account ID, not a bug.** An account-bound NAVEE streams its live values - battery, range, trip, voltage and the rest - **only once your real NAVEE User ID is stored** under *Settings -> NAVEE User ID* (the internal binding ID, **not** the NAVEE ID shown in the NAVEE app). The dashboard shows this hint by itself when it happens, and the tiles fill the moment the stored ID matches the scooter.
+
 ### "All values" telemetry (scroll down on the main screen)
 
 - Shows **every value the app decodes** from the scooter, including the ones that have no tile of their own.

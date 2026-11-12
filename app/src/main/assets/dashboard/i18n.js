@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>NAVEE account ID: reading it from a Bluetooth log no longer runs out of memory.</b> A real btsnoop_hci.log can be tens to hundreds of MB. The app used to load the whole file at once and crash on it - now it scans the log as a stream, so any size works (raw log, .gz or an Android bug report .zip).",
+      "<b>Dashboard: only the two speed tiles and the rest empty? The app now tells you why.</b> Empty live values are usually just a missing NAVEE account ID - account-bound scooters stream battery, range and trip only once your real User ID is set. The hint clears itself the moment the live values arrive.",
       "<b>NAVEE ST3/GT3/GT5: the switchable-or-permanent choice is back.</b> After the dashboard-tile bug was fixed, the single speed-path choice returns - switchable (flash the meter, flip the top speed live in the app) or permanent (flash the controller to a fixed speed) - instead of two checkboxes you could tick both. Flashing both is what used to leave the live toggle dead.",
       "<b>NAVEE ST3/GT3/GT5: the app explains a dead toggle, and marks permanent vs switchable.</b> If your controller carries the permanent speed patch the live toggle is overridden - the app now says so and tells you to flash the controller back to stock for the live toggle (GitHub issue #23). A permanent patch reports a version starting with 8, a switchable one with 5, and the patched file is named by that version, so you can always tell them apart.",
       "<b>NAVEE account ID: Android-only and tidier.</b> The account-ID help now explains only the Android way - reading the User ID out of a Bluetooth log - as clear numbered steps. The iPhone Http Catcher path was removed (this is an Android app) and the buttons no longer sit cramped together.",
@@ -161,7 +163,7 @@ window.I18N = {
     "msg.connect.status.connecting": "Connecting...",
     "msg.connect.status.discovering": "Reading services...",
     "msg.connect.status.noservice": "Not a NAVEE scooter (no compatible service)",
-    "msg.connect.hint.noaccount": "<b>Connected, but no live values?</b> Account-bound scooters only stream live data (speed, range, trip) once you enter your real NAVEE User ID - not the NAVEE ID shown in the app.",
+    "msg.connect.hint.noaccount": "<b>Live tiles empty, only speed showing?</b> That is usually just a missing account ID - an account-bound NAVEE streams the live values (battery, range, trip and more) only once your real NAVEE User ID is set, not the NAVEE ID shown in the app.",
     "msg.connect.hint.noaccount.btn": "Enter account ID",
     "msg.error.generic": "Error: {e}",
     "msg.gear.tag.park": "P",
@@ -430,7 +432,7 @@ window.I18N = {
     "start.s2.b5.text": "Bluetooth via the gear. Still limited? Flash the controller first.",
     "start.s2.b6.cond": "Any other (G5, V, N65i, E, S, K100, UT3, NT3 ...)",
     "start.s2.b6.text": "Flash the controller. Permanent, no app toggle.",
-    "start.s2.note": "Most models are experimental, not yet hardware-confirmed. Kick-start needs the meter patch. Account-bound scooters need your NAVEE User ID in Settings - not the NAVEE ID shown in the NAVEE app. Only flash a controller you can recover over SWD.",
+    "start.s2.note": "Most models are experimental, not yet hardware-confirmed. Kick-start needs the meter patch. Account-bound scooters need your NAVEE User ID in Settings - not the NAVEE ID shown in the NAVEE app - and without it the dashboard shows only the two speed tiles while battery, range and trip stay empty. Only flash a controller you can recover over SWD.",
     "start.s3.title": "3. In the patcher",
     "start.s3.text": "The patcher detects your model and offers, under \"What to patch\", only what it can take. Tick any combination.",
     "start.s3.b1.cond": "Unlock speed",
@@ -452,7 +454,7 @@ window.I18N = {
     "start.s6.text": "To undo everything, flash the manufacturer firmware back. The original .bin was saved to your Downloads folder when you patched (or just re-download it). Load it with no option ticked and flash - the result is byte-identical to factory, so the speed limit and the road approval (ABE) are back. Meter and controller can be restored on their own.",
     "start.risk": "At your own risk: on many models patching is experimental and not hardware-confirmed. A higher speed voids the road approval. Private ground, your own scooter only.",
     "settings.account.group.title": "NAVEE User ID",
-    "settings.account.intro": "Some scooters (for example the NAVEE ST3 Pro) are bound to a NAVEE account and close the Bluetooth link after about ten seconds unless the app authenticates. Enter the User ID to keep the link open - this is needed for flashing.\n\nYou read this ID out of a Bluetooth log yourself, right on the phone, nothing is uploaded. Use the \"?\" at the Bluetooth-log step below for the exact walk-through.",
+    "settings.account.intro": "Empty live tiles - only the two speed values showing and battery, range and trip blank? That is almost always a missing User ID. Account-bound scooters (for example the NAVEE ST3 Pro) stream their live data only once the app authenticates, and without it they also close the Bluetooth link after about ten seconds. Enter the User ID to keep the link open and fill the tiles - it is also needed for flashing.\n\nYou read this ID out of a Bluetooth log yourself, right on the phone, nothing is uploaded. Use the \"?\" at the Bluetooth-log step below for the exact walk-through.",
     "settings.account.notid": "This is NOT the NAVEE ID you can see in the NAVEE app. It is the internal User ID that binds the scooter.",
     "settings.account.placeholder": "User ID (digits only)",
     "settings.account.status.none": "No User ID stored",
@@ -1003,6 +1005,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>NAVEE Konto-ID: das Auslesen aus einem Bluetooth-Log sprengt nicht mehr den Speicher.</b> Ein echtes btsnoop_hci.log kann zig bis hunderte MB groß sein. Die App las bisher die ganze Datei auf einmal und stürzte daran ab - jetzt liest sie das Log als Stream, also geht jede Größe (rohes Log, .gz oder ein Android-Bugreport-.zip).",
+      "<b>Dashboard: nur die beiden Tempo-Kacheln und der Rest leer? Die App sagt jetzt warum.</b> Leere Live-Werte liegen meist einfach an der fehlenden NAVEE-Konto-ID - kontogebundene Roller senden Akku, Reichweite und Strecke erst, wenn deine echte User-ID gesetzt ist. Der Hinweis verschwindet von selbst, sobald die Live-Werte kommen.",
       "<b>NAVEE ST3/GT3/GT5: die Schaltbar-oder-Permanent-Auswahl ist zurück.</b> Nachdem der Kachel-Bug gefixt ist, kommt die einzelne Auswahl zurück - schaltbar (Tacho flashen, Höchstgeschwindigkeit live in der App umschalten) oder permanent (Controller auf eine feste Geschwindigkeit flashen) - statt zweier Haken, die man beide setzen konnte. Beide zu flashen ließ genau den Live-Umschalter tot aussehen.",
       "<b>NAVEE ST3/GT3/GT5: die App erklärt einen toten Umschalter und markiert permanent gegen schaltbar.</b> Trägt dein Controller den permanenten Speed-Patch, wird der Live-Umschalter überschrieben - die App sagt das jetzt und rät, den Controller auf Serie zurückzuflashen (GitHub-Issue #23). Ein permanenter Patch meldet eine Version, die mit 8 beginnt; ein schaltbarer eine mit 5. Die gepatchte Datei ist nach dieser Version benannt - so erkennst du sie immer.",
       "<b>NAVEE Konto-ID: nur noch Android und aufgeräumt.</b> Die Konto-ID-Hilfe erklärt jetzt nur noch den Android-Weg - die User ID aus einem Bluetooth-Log lesen - als klare nummerierte Schritte. Der iPhone-Http-Catcher-Weg ist raus (das ist eine Android-App) und die Buttons kleben nicht mehr aneinander.",
@@ -1155,7 +1159,7 @@ window.I18N = {
     "msg.connect.status.connecting": "Verbinden...",
     "msg.connect.status.discovering": "Dienste werden gelesen...",
     "msg.connect.status.noservice": "Kein NAVEE-Scooter (kein passender Dienst)",
-    "msg.connect.hint.noaccount": "<b>Verbunden, aber keine Live-Werte?</b> Konto-gebundene Scooter senden Live-Daten (Tempo, Reichweite, Trip) erst, wenn du deine echte NAVEE-User-ID einträgst - nicht die NAVEE-ID aus der App.",
+    "msg.connect.hint.noaccount": "<b>Live-Kacheln leer, nur Tempo da?</b> Das liegt meist einfach an der fehlenden Konto-ID - ein kontogebundener NAVEE sendet die Live-Werte (Akku, Reichweite, Strecke und mehr) erst, wenn deine echte NAVEE-User-ID gesetzt ist, nicht die NAVEE-ID aus der App.",
     "msg.connect.hint.noaccount.btn": "Konto-ID eintragen",
     "msg.error.generic": "Fehler: {e}",
     "msg.gear.tag.park": "P",
@@ -1424,7 +1428,7 @@ window.I18N = {
     "start.s2.b5.text": "Bluetooth über den Gang. Noch begrenzt? Erst den Controller flashen.",
     "start.s2.b6.cond": "Jeder andere (G5, V, N65i, E, S, K100, UT3, NT3 ...)",
     "start.s2.b6.text": "Controller flashen. Permanent, kein App-Schalter.",
-    "start.s2.note": "Die meisten Modelle sind experimentell, noch nicht auf Hardware bestätigt. Kickstart braucht den Meter-Patch. Kontogebundene Roller brauchen deine NAVEE User ID in den Einstellungen - nicht die NAVEE-ID aus der NAVEE-App. Controller nur flashen, wenn du ihn per SWD retten kannst.",
+    "start.s2.note": "Die meisten Modelle sind experimentell, noch nicht auf Hardware bestätigt. Kickstart braucht den Meter-Patch. Kontogebundene Roller brauchen deine NAVEE User ID in den Einstellungen - nicht die NAVEE-ID aus der NAVEE-App - und ohne sie zeigt das Dashboard nur die beiden Tempo-Kacheln, während Akku, Reichweite und Strecke leer bleiben. Controller nur flashen, wenn du ihn per SWD retten kannst.",
     "start.s3.title": "3. Im Patcher",
     "start.s3.text": "Der Patcher erkennt dein Modell und bietet unter Was patchen nur, was es kann. Hake jede Kombination an.",
     "start.s3.b1.cond": "Speed entsperren",
@@ -1446,7 +1450,7 @@ window.I18N = {
     "start.s6.text": "Zum Rückgängigmachen die Hersteller-Firmware zurückflashen. Die Original-.bin wurde beim Patchen in deinem Downloads-Ordner gespeichert (oder lade sie einfach neu). Lade sie mit keiner angehakten Option und flashe - das Ergebnis ist byte-identisch zum Werkszustand, also sind Tempolimit und Straßenzulassung (ABE) zurück. Meter und Controller lassen sich einzeln zurücksetzen.",
     "start.risk": "Auf eigenes Risiko: Bei vielen Modellen ist das Patchen experimentell und noch nicht auf Hardware bestätigt. Ein höheres Tempo hebt die Straßenzulassung auf. Nur am eigenen Roller auf privatem Grund.",
     "settings.account.group.title": "NAVEE User ID",
-    "settings.account.intro": "Manche Roller wie der NAVEE ST3 Pro sind an ein NAVEE-Konto gebunden und schließen die Bluetooth-Verbindung nach etwa zehn Sekunden, solange die App sich nicht authentifiziert. Trage die User ID ein, damit die Verbindung offen bleibt - das ist zum Flashen nötig.\n\nDu liest diese ID selbst aus einem Bluetooth-Log aus, direkt auf dem Handy, nichts wird hochgeladen. Nutze unten das \"?\" beim Bluetooth-Log-Schritt für die genaue Anleitung.",
+    "settings.account.intro": "Leere Live-Kacheln - nur die beiden Tempo-Werte da und Akku, Reichweite und Strecke bleiben leer? Das liegt fast immer an einer fehlenden User ID. Kontogebundene Roller wie der NAVEE ST3 Pro senden ihre Live-Daten erst wenn die App sich authentifiziert. Ohne sie schließt der Roller die Bluetooth-Verbindung zudem nach etwa zehn Sekunden. Trage die User ID ein, damit die Verbindung offen bleibt und sich die Kacheln füllen - das ist auch zum Flashen nötig.\n\nDu liest diese ID selbst aus einem Bluetooth-Log aus, direkt auf dem Handy, nichts wird hochgeladen. Nutze unten das \"?\" beim Bluetooth-Log-Schritt für die genaue Anleitung.",
     "settings.account.notid": "Das ist NICHT die NAVEE-ID, die du in der NAVEE-App sehen kannst. Es ist die interne User ID, die den Roller bindet.",
     "settings.account.placeholder": "User ID (nur Ziffern)",
     "settings.account.status.none": "Keine User ID gespeichert",

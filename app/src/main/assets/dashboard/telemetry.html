@@ -489,7 +489,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
   <div id="connect-scroller">
     <div class="conn-state" id="conn-state" data-i18n="settings.connect.state.disconnected">Not connected</div>
     <div class="conn-hint is-hidden" id="report-arm-hint">
-      <div class="conn-hint-txt" id="report-arm-hint-txt" data-i18n="msg.connect.hint.noaccount">Connected, but no live values? Account-bound scooters only stream live data once you enter your real NAVEE User ID.</div>
+      <div class="conn-hint-txt" id="report-arm-hint-txt" data-i18n="msg.connect.hint.noaccount">Live tiles empty, only speed showing? That is usually just a missing account ID - an account-bound NAVEE streams battery, range and trip only once your real NAVEE User ID is set.</div>
       <button id="report-arm-hint-btn" data-i18n="msg.connect.hint.noaccount.btn">Enter account ID</button>
     </div>
     <div class="row-8 mb-6">
@@ -1959,6 +1959,7 @@ function updateBLEUI(data) {
     _teleSeen = {};
     try { applyTeleAvailability(); } catch (e) {}
     renderAllValues(null);
+    updateReportHint(false); _connAt = 0;
     return;
   }
 
@@ -1975,6 +1976,7 @@ function updateBLEUI(data) {
   // commands the locked value (incl. the UT5 Max, whose meter keeps the switch in NVM key 0x5c). The
   // rider must deliberately re-arm the release (triple-tap) after every restart.
   if (connected && !wasConnected) _speedReleased = false;
+  if (connected && !wasConnected) _connAt = Date.now();   // start the grace before the empty-tiles hint can show
 
   bleDot.classList.toggle('connected', connected);
   const connBtn = document.getElementById('btn-connect');
@@ -1986,6 +1988,7 @@ function updateBLEUI(data) {
     _teleSeen = {};
     try { applyTeleAvailability(); } catch (e) {}
     renderAllValues(null);
+    updateReportHint(false); _connAt = 0;
     return;
   }
 
@@ -2107,6 +2110,10 @@ function updateBLEUI(data) {
   _teleColors(data);
   if (connected && data._keys) data._keys.forEach(function(k) { _teleSeen[k] = true; });
   applyTeleAvailability();
+
+  // No live telemetry received over BLE since connecting (only speed)? Point at the likely cause.
+  // Keys off the RECEIVED data, not the visible tiles, so hidden or reordered tiles do not matter.
+  updateReportHint(noLiveTelemetry());
 
   // All values
   renderAllValues(data);
@@ -3416,14 +3423,30 @@ window.__onBleState = function(stArg) {
   if (dot) dot.classList.toggle('connected', connected);
   const connBtn = document.getElementById('btn-connect');
   if (connBtn) connBtn.classList.toggle('connected', connected);
-  // Native sets s.hint once the arming grace elapsed with no report push and no account id stored.
-  updateReportHint(connected && !!s.hint);
+  // The empty-live-tiles hint is owned by updateBLEUI (it keys on the actual live values); on a clean
+  // disconnect hide it here too, since updateBLEUI(null) may not run for a pure status change.
+  if (!connected) updateReportHint(false);
 };
 
 // Show/hide the "enter your account id" hint under the connection state.
 function updateReportHint(show) {
   const el = document.getElementById('report-arm-hint');
   if (el) el.classList.toggle('is-hidden', !show);
+}
+
+// Did the scooter actually send its live telemetry over BLE since we connected? This looks at the
+// RECEIVED data keys (_teleSeen is fed from each frame's keys in updateBLEUI), NOT at which tiles are on
+// screen - so hiding, reordering or theming tiles cannot fool it. An account-bound NAVEE streams these
+// values (battery, range, power, trip) only once the real User ID is set and matches; until then only
+// speed arrives. So "no live telemetry a few seconds after connect" points at the likely cause: a
+// missing or mismatched NAVEE account ID. Clears itself the instant the first live value arrives.
+var _connAt = 0;
+var LIVE_TELE_KEYS = ['soc','range','packMv','packMa','totalMile','tripMile','tripMax','tripAvg','temp','soh','cycles'];
+function noLiveTelemetry() {
+  if (!state.bleConnected) return false;
+  if (!_connAt || (Date.now() - _connAt) < 3000) return false;   // let the first live frame land before hinting
+  for (var i = 0; i < LIVE_TELE_KEYS.length; i++) if (_teleSeen[LIVE_TELE_KEYS[i]]) return false;
+  return true;
 }
 
 /* ── Scooter settings (writable settings via LB.sendSetting) ── */

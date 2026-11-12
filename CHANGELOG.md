@@ -16,6 +16,10 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.124
+- NAVEE account ID: reading the User ID from a Bluetooth log no longer runs the app out of memory. A real btsnoop_hci.log can be tens to hundreds of MB; the app used to load the whole file into memory at once and crash on it. It now scans the log as a stream, so any size works - a raw log, a .gz, or an Android bug report .zip.
+- Dashboard: when a connected scooter shows only the two speed tiles and the live cells stay empty, the app now points at the likely cause - a missing NAVEE account ID. Account-bound scooters stream the live data (battery, range, trip and more) only once your real NAVEE User ID is set, and the hint clears itself as soon as the live values arrive.
+
 ## 1.0.123
 - NAVEE ST3/GT3/GT5: the switchable-or-permanent patcher choice is back. It was rolled back in 1.0.121 while the dashboard-tile bug was fixed, and now returns on top of that fix. The firmware patcher asks for one speed path instead of two checkboxes - switchable (flash the meter, flip the top speed live in the app) or permanent (flash the controller to a fixed speed). You can no longer flash both by accident, which is what used to leave the live toggle dead.
 - NAVEE ST3/GT3/GT5: when a scooter already carries the permanent controller patch, the app now says so and explains it overrides the switchable limiter - flash the controller back to stock to get the live toggle (GitHub issue #23). A permanent patch now reports a version starting with 8, a switchable one with 5, so you can tell them apart, and a patched firmware file is named by that version.
