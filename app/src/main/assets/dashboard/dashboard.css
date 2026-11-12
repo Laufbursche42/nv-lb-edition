@@ -604,6 +604,8 @@ button {
   border-radius: 9px; cursor: pointer; text-align: center;
   -webkit-tap-highlight-color: transparent;
 }
+/* Stacked buttons in the account card need breathing room so they do not look cramped. */
+.account-body .settings-btn { margin-top: 10px; }
 .settings-btn:active,
 #btn-scooter-settings:active, #btn-connect-scooter:active, #btn-export-logs:active, #btn-error-reports:active, #btn-navigation:active, #btn-info:active, #btn-battery:active, #btn-whatsnew:active, #btn-version-info:active { background: var(--border); }
 /* #btn-stream-start (good fill) + #btn-stream-stop (neutral) are styled by the shared action-button base. */

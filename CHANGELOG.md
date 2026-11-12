@@ -16,6 +16,11 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.123
+- NAVEE ST3/GT3/GT5: the switchable-or-permanent patcher choice is back. It was rolled back in 1.0.121 while the dashboard-tile bug was fixed, and now returns on top of that fix. The firmware patcher asks for one speed path instead of two checkboxes - switchable (flash the meter, flip the top speed live in the app) or permanent (flash the controller to a fixed speed). You can no longer flash both by accident, which is what used to leave the live toggle dead.
+- NAVEE ST3/GT3/GT5: when a scooter already carries the permanent controller patch, the app now says so and explains it overrides the switchable limiter - flash the controller back to stock to get the live toggle (GitHub issue #23). A permanent patch now reports a version starting with 8, a switchable one with 5, so you can tell them apart, and a patched firmware file is named by that version.
+- NAVEE account ID: the help is Android-only now - read the User ID out of a Bluetooth log, laid out as clear numbered steps. The iPhone / Http Catcher path and its paste box were removed, and the account buttons no longer sit cramped against each other.
+
 ## 1.0.122
 - Fix: the dashboard tiles could still vanish on some scooters (the 1.0.121 rollback did not fully solve it). A live frame that arrived before the battery reading - no voltage yet - made the grid render throw and abort, so every tile after the voltage tile disappeared until a complete frame came in; this showed up most often right after entering a NAVEE account ID. The render now treats any not-yet-received value as "-" and keeps drawing, so the grid never drops out.
 
