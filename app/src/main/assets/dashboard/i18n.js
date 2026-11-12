@@ -5,6 +5,8 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>Dashboard tiles: the real fix.</b> The rollback in the last build did not fully solve it - on some scooters the tile grid could still vanish when a live frame arrived before the battery reading (no voltage yet). The render now shows any not-yet-received value as \"-\" and keeps drawing, so the grid stays put for good.",
+      "<b>Robust live display.</b> One briefly-missing value in a frame can no longer blank the whole dashboard - each tile falls back to \"-\" on its own.",
       "<b>Fix: the dashboard tiles are back.</b> On the previous build (1.0.120) the live tiles could vanish after you saved your NAVEE account ID - only the VCU and GPS tiles stayed. That change has been rolled back, so the dashboard shows every live value again.",
       "<b>ST3/GT3/GT5 patcher rework postponed.</b> The single switchable-or-permanent patcher choice from the last build is temporarily removed together with the tile fix; it returns once it is fully tested. Flashing and every other feature are unchanged.",
       "<b>UT5 Max: a newer meter version is recognized.</b> A UT5 Max on the newer switchable-meter firmware (reported as 5.5.6.5) now gets the live speed selector and kickstart in the app, exactly like the previous version. Scooters on the older firmware keep every function - nothing changes for them.",
@@ -1137,6 +1139,8 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>Dashboard-Kacheln: der echte Fix.</b> Der Rollback im letzten Build hat es nicht ganz gelöst - auf manchen Rollern konnte das Kachel-Gitter weiter verschwinden, wenn ein Live-Frame vor dem Akku-Wert ankam (noch keine Spannung). Der Render zeigt jetzt jeden noch nicht gelieferten Wert als \"-\" und zeichnet weiter, so bleibt das Gitter dauerhaft stehen.",
+      "<b>Robustes Live-Display.</b> Ein kurz fehlender Wert in einem Frame kann nicht mehr das ganze Dashboard leeren - jede Kachel fällt für sich auf \"-\" zurück.",
       "<b>Fix: die Dashboard-Kacheln sind zurück.</b> Im vorigen Build (1.0.120) konnten die Live-Kacheln verschwinden, nachdem du deine NAVEE-Konto-ID gespeichert hast - nur die VCU- und GPS-Kachel blieben. Diese Änderung wurde zurückgenommen, das Dashboard zeigt wieder alle Live-Werte.",
       "<b>ST3/GT3/GT5-Patcher-Umbau verschoben.</b> Die einzelne Schaltbar-oder-Permanent-Auswahl aus dem letzten Build ist mit dem Kachel-Fix vorerst wieder raus; sie kommt zurück, sobald sie vollständig getestet ist. Flashen und alle anderen Funktionen bleiben unverändert.",
       "<b>UT5 Max: eine neuere Tacho-Version wird erkannt.</b> Ein UT5 Max mit der neueren schaltbaren Tacho-Firmware (meldet 5.5.6.5) bekommt jetzt die Live-Geschwindigkeitsauswahl und den Kickstart in der App, genau wie die vorige Version. Roller mit der älteren Firmware behalten jede Funktion - für sie ändert sich nichts.",

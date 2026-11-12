@@ -1931,6 +1931,7 @@ function hideGearTag() {
 }
 
 function convSpeed(kmh) {
+  if (typeof kmh !== 'number' || isNaN(kmh)) return '-';   // a frame may arrive before this field; never throw
   if (state.useMph) return (kmh * 0.621371).toFixed(1);
   return kmh.toFixed(1);
 }
@@ -2077,7 +2078,7 @@ function updateBLEUI(data) {
   hideGearTag();
 
   // Grid
-  setTxt('dg-volt', data.volt.toFixed(1) + ' V');
+  setTxt('dg-volt', (typeof data.volt === 'number' && !isNaN(data.volt)) ? data.volt.toFixed(1) + ' V' : '-');   // volt may lag the first frame; guard like the tele catalog
   // Pack current, rider-signed (draw red, recuperation green); "-" when absent.
   const curEl = document.getElementById('dg-current');
   if (curEl) {

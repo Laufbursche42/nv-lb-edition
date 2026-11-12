@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.122
+- Fix: the dashboard tiles could still vanish on some scooters (the 1.0.121 rollback did not fully solve it). A live frame that arrived before the battery reading - no voltage yet - made the grid render throw and abort, so every tile after the voltage tile disappeared until a complete frame came in; this showed up most often right after entering a NAVEE account ID. The render now treats any not-yet-received value as "-" and keeps drawing, so the grid never drops out.
+
 ## 1.0.121
 - Hotfix: on 1.0.120 the dashboard tiles could disappear after you saved your NAVEE account ID - only the VCU and GPS tiles stayed. This release rolls back the ST3/GT3/GT5 patcher change that caused it, so the dashboard shows every live tile again. The switchable-or-permanent patcher rework will return once it is fully tested on hardware.
 
