@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>NAVEE ST3/GT3: the speed selector now needs the controller flashed too.</b> On the ST3 and GT3 the top speed lives in the controller, not the meter - the meter patch only unlocks the zero-start. The live speed selector and the triple-tap now appear only once the controller carries the speed patch; with a stock controller the app tells you to flash both the meter and the controller instead of changing only the displayed number.",
       "<b>NAVEE N65i II: unlock to 40, switchable from the app.</b> Flash the controller to unlock, then pick the top speed in the app - the scooter boots limited and the app opens it to 40 km/h (a restart re-locks). For a permanently open speed, also flash the meter. (The US 2.0.5.9 build is not open after all - it is region-throttled, so the controller patch is what lifts it.)",
       "<b>NAVEE N65i II and G5: turn off individual beeps when flashing the meter.</b> The firmware patcher now offers per-tone sound-off for the N65i II (DE 2.0.5.8 and US 2.0.5.9 meter) and the G5 / G5 Pro / G5 Max (2.0.5.7). Pick exactly which tones go quiet - the over-speed nag, fault and warning tones, melodies, the find-me alarm - while the confirm chirps for BLE commands stay on. It never mutes every tone at once.",
       "<b>NAVEE N65i II (US 2.0.5.9): the meter is now flashable.</b> It used to be recognized with nothing to patch; now it offers the per-tone beep silences. The US build already ships with the speed open, so there is no drossel patch - just the sound-off. Experimental, with the usual untested warning.",
@@ -430,7 +431,7 @@ window.I18N = {
     "start.s2.b3.cond": "NT5 Max, Max+, Ultra or Turbo",
     "start.s2.b3.text": "Flash the controller, then switch from the app. Re-locks to 22 on restart.",
     "start.s2.b4.cond": "ST3, GT3, ST5, GT5 Pro/Max, UT5 Max, N65i II (DE) or NT5 Ultra X",
-    "start.s2.b4.text": "Flash the meter, then switch from the app. ST3, GT3 and GT5 can instead flash the controller (permanent).",
+    "start.s2.b4.text": "Flash the meter, then switch from the app. ST3/GT3 are different: the speed sits in the controller, so you must flash BOTH the meter (zero-start) and the controller (speed) - the meter alone will not raise the speed. GT5 can flash the controller (permanent).",
     "start.s2.b5.cond": "UT5 Ultra X",
     "start.s2.b5.text": "Bluetooth via the gear. Still limited? Flash the controller first.",
     "start.s2.b6.cond": "Any other (G5, V, N65i, E, S, K100, UT3, NT3 ...)",
@@ -719,6 +720,7 @@ window.I18N = {
     "scooter.tune.legal": "<b>Private ground only.</b> With this release the scooter goes faster than it is approved for. That voids the operating permit and the insurance cover; on public roads it is not allowed.",
     "scooter.tune.send": "Send drive mode 4",
     "scooter.tune.status.idle": "Not sent yet.",
+    "scooter.tune.st3gt3.needctrl": "On the ST3 and GT3 the top speed sits in the controller, not the meter. The meter patch only unlocks the zero-start; the triple-tap would just change the displayed number, not the real speed. To actually go faster you must flash BOTH: the meter (zero-start) and the controller (speed). No command was sent.",
     "scooter.tune.permanent": "This model does not support the app-side release. The speed cap sits in the controller: on a stock scooter the top gear is locked there, on a patched one the raised top gear is baked in. Either way there is nothing for the app to switch here. The speedometer is never patched, so the only way back from a patched controller is flashing the stock controller firmware.",
     "scooter.tune.ut5max": "The UT5 Max speed-limiter switch needs the patched meter firmware. Flash the UT5 Max meter image (speed + kick-start + cruise) once, then this on/off switch opens or limits the top speed over Bluetooth. A stock meter has no such switch.",
     "scooter.tune.clamped": "The controller did not take the release - its SKU byte clamps the open gear on this firmware. The only way to actually raise the top speed on your scooter is to patch the controller firmware first in the app's Firmware Patcher, then re-send the release.",
@@ -1008,6 +1010,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>NAVEE ST3/GT3: der Speed-Selektor braucht jetzt auch den geflashten Controller.</b> Beim ST3 und GT3 sitzt die Höchstgeschwindigkeit im Controller, nicht im Tacho - der Tacho-Patch schaltet nur den Zero-Start frei. Der Live-Speed-Selektor und der Dreifach-Tipp erscheinen jetzt erst, wenn der Controller den Speed-Patch trägt; bei Serien-Controller sagt die App, dass Tacho UND Controller geflasht werden müssen, statt nur die angezeigte Zahl zu ändern.",
       "<b>NAVEE N65i II: Entdrosseln auf 40, in der App schaltbar.</b> Controller flashen zum Entdrosseln, dann in der App die Höchstgeschwindigkeit wählen - der Roller startet gesperrt, die App schaltet bis 40 km/h frei (Neustart sperrt wieder). Dauerhaft offen = zusätzlich den Meter flashen. (Der US-2.0.5.9-Build ist doch nicht offen, sondern region-gedrosselt - der Controller-Patch hebt das an.)",
       "<b>NAVEE N65i II und G5: einzelne Pieptöne beim Flashen des Tachos abschalten.</b> Der Firmware-Patcher bietet jetzt Ton-für-Ton-Abschaltung für den N65i II (DE 2.0.5.8 und US 2.0.5.9 Tacho) und den G5 / G5 Pro / G5 Max (2.0.5.7). Wähle genau, welche Töne still werden - der Übertempo-Dauerton, Fehler- und Warntöne, Melodien, der Find-me-Alarm - während die Bestätigungs-Chirps für BLE-Befehle anbleiben. Es schaltet nie alles auf einmal stumm.",
       "<b>NAVEE N65i II (US 2.0.5.9): der Tacho ist jetzt flashbar.</b> Er wurde bisher erkannt, hatte aber nichts zu patchen; jetzt bietet er die Ton-für-Ton-Abschaltung. Der US-Build ist ab Werk offen, also gibt es keinen Drossel-Patch - nur die Tonabschaltung. Experimentell, mit der üblichen Ungetestet-Warnung.",
@@ -1429,7 +1432,7 @@ window.I18N = {
     "start.s2.b3.cond": "NT5 Max, Max+, Ultra oder Turbo",
     "start.s2.b3.text": "Controller flashen, dann per App schalten. Sperrt bei Neustart auf 22 zurück.",
     "start.s2.b4.cond": "ST3, GT3, ST5, GT5 Pro/Max, UT5 Max, N65i II (DE) oder NT5 Ultra X",
-    "start.s2.b4.text": "Meter flashen, dann per App schalten. ST3, GT3 und GT5 können stattdessen den Controller flashen (permanent).",
+    "start.s2.b4.text": "Meter flashen, dann per App schalten. ST3/GT3 sind anders: die Geschwindigkeit sitzt im Controller, du musst also BEIDE flashen - den Tacho (Zero-Start) und den Controller (Speed); der Tacho allein hebt das Tempo nicht. GT5 kann den Controller flashen (permanent).",
     "start.s2.b5.cond": "UT5 Ultra X",
     "start.s2.b5.text": "Bluetooth über den Gang. Noch begrenzt? Erst den Controller flashen.",
     "start.s2.b6.cond": "Jeder andere (G5, V, N65i, E, S, K100, UT3, NT3 ...)",
@@ -1718,6 +1721,7 @@ window.I18N = {
     "scooter.tune.legal": "<b>Nur auf privatem Grund.</b> Mit dieser Freischaltung fährt der Roller schneller als zugelassen. Damit erlischt die Betriebserlaubnis und der Versicherungsschutz; auf öffentlichen Wegen ist das nicht erlaubt.",
     "scooter.tune.send": "Fahrmodus 4 senden",
     "scooter.tune.status.idle": "Noch nicht gesendet.",
+    "scooter.tune.st3gt3.needctrl": "Beim ST3 und GT3 sitzt die Höchstgeschwindigkeit im Controller, nicht im Tacho. Der Tacho-Patch schaltet nur den Zero-Start frei; der Dreifach-Tipp würde bloß die angezeigte Zahl ändern, nicht das echte Tempo. Um wirklich schneller zu fahren, musst du BEIDE flashen: den Tacho (Zero-Start) und den Controller (Speed). Es wurde kein Befehl gesendet.",
     "scooter.tune.permanent": "Dieses Modell unterstützt die App-Freigabe nicht. Die Geschwindigkeits-Grenze sitzt im Controller: beim Serien-Scooter ist der Top-Gang dort gesperrt, beim gepatchten ist der angehobene Top-Gang fest eingebaut. In beiden Fällen gibt es für die App nichts zu schalten. Der Tacho wird nie gepatcht - zurück aus einem gepatchten Controller geht es nur über das Einspielen der Original-Controller-Firmware.",
     "scooter.tune.ut5max": "Der Drossel-Schalter des UT5 Max braucht die gepatchte Tacho-Firmware. Flashe einmal das UT5-Max-Meter-Image (Speed + Kickstart + Tempomat), danach öffnet oder drosselt dieser An/Aus-Schalter die Höchstgeschwindigkeit über Bluetooth. Ein Serien-Tacho hat diesen Schalter nicht.",
     "scooter.tune.clamped": "Der Controller hat die Freigabe nicht übernommen - seine SKU-Byte-Begrenzung clamp't den Open-Gang bei dieser Firmware. Um die Topspeed deines Scooters wirklich anzuheben, musst du die Controller-Firmware erst im Firmware-Patcher der App patchen und dann die Freigabe erneut senden.",

@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.127
+- NAVEE ST3/GT3: the live speed selector now requires the controller to be flashed too. On the ST3 and GT3 the top speed lives in the controller, not the meter - the meter patch only unlocks the zero-start. The selector and the triple-tap now appear only once the controller carries the speed patch; with a stock controller the app explains that both the meter and the controller must be flashed instead of changing only the displayed number.
+
 ## 1.0.126
 - NAVEE N65i II: unlock to 40 km/h, switchable from the app. Flash the controller to unlock, then pick the top speed in the app - the scooter boots limited and the app opens it to 40 km/h (a restart re-locks). For a permanently open speed, also flash the meter. (The US 2.0.5.9 build is not open after all - it is region-throttled, so the controller patch is what lifts it.)
 

@@ -1123,7 +1123,7 @@ Source-available under the PolyForm Noncommercial License 1.0.0 with Additional 
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s2.b4.cond">ST3, GT3, ST5, GT5 Pro/Max, UT5 Max or NT5 Ultra X</div>
-      <div class="start-branch-text" data-i18n="start.s2.b4.text">Flash the meter, then switch from the app. ST3, GT3 and GT5 can instead flash the controller (permanent).</div>
+      <div class="start-branch-text" data-i18n="start.s2.b4.text">Flash the meter, then switch from the app. ST3/GT3 are different: the speed sits in the controller, so you must flash BOTH the meter (zero-start) and the controller (speed) - the meter alone will not raise the speed. GT5 can flash the controller (permanent).</div>
     </div>
     <div class="start-branch">
       <div class="start-branch-cond" data-i18n="start.s2.b5.cond">UT5 Ultra X</div>
@@ -3592,6 +3592,9 @@ function applyModelPanels(modelName) {
   if (xp) {
     let steps = (modelName && (meterKickstartPatched() || naveeN65iiSwitchable())) ? naveeLiveSpeedSteps(modelName) : null;
     if (naveeRealModel() === 'UT5 Max' && !ut5MaxSelectable()) steps = null;   // the "0050" on/off meter has no value selector
+    // ST3/GT3: the top-speed cap lives in the controller (02831 governor), not the meter. The meter patch
+    // gives zero-start only, so the live selector is real only once the controller carries the speed patch.
+    if (/^(ST3|GT3)/.test(naveeRealModel()) && !naveeCtrlPatched()) steps = null;
     xp.style.display = steps ? '' : 'none';
     const xs = document.getElementById('ss-xt5speed');
     if (steps && xs) {
@@ -3620,7 +3623,7 @@ function applyModelPanels(modelName) {
     // (naveeCtrlPatched: leading '8' or a legacy GT3/ST3/GT5 marker); with a stock controller the meter
     // drossel toggle works, so no warning.
     const ph = document.getElementById('xt5speed-permctrl-hint');
-    if (ph) ph.style.display = (steps && PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0 && naveeCtrlPatched()) ? '' : 'none';
+    if (ph) ph.style.display = (steps && PERMANENT_CAP_MODELS.indexOf(naveeRealModel()) >= 0 && naveeCtrlPatched() && !/^(ST3|GT3)/.test(naveeRealModel())) ? '' : 'none';
   }
 }
 // Unified switchable-drossel capability per patched-meter family (byte10 / 0x6E sub1 selector). All BLE,
@@ -4540,6 +4543,11 @@ function speedReleaseGear(on) {
 }
 
 function sendSpeedRelease(on) {
+  // ST3/GT3: the top speed is controller-side. With a stock controller the meter toggle changes only the
+  // reported number, not the real speed - send nothing and tell the rider the controller must be flashed too.
+  if (/^(ST3|GT3)/.test(naveeRealModel()) && meterKickstartPatched() && !naveeCtrlPatched()) {
+    showToast(t('scooter.tune.st3gt3.needctrl'), 9000); return false;
+  }
   // Patched meter with the switchable byte10 drossel (XT5 Pro/Max/Ultra, ST3/GT3 family, GT5 Pro/Max): the
   // triple-tap toggles the live speed cell between the locked default (22) and the rider's chosen max
   // (lb_xt5speed, set in the dropdown) via class 0x6E sub1. This is the core quick-toggle. For XT5 the drive
