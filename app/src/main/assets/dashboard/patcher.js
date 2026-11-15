@@ -2135,10 +2135,11 @@ patches: [
     verify: { size: 0x23800, crcOff: 0x13, crcStock: 0xa321, lenOff: 0x10, lenStock: 0x023400 },
     bodyBase: 0x400,
     reseal: meterReseal,
-    // No drossel/marker: the US image already ships open (init sets the speed cell to 40 for country
-    // {8,9,10}) and its frame builder has no DE region gate - nothing to lift. Only per-tone beep silences
-    // (bl -> nop; GPIO buzzer, no dur<2 guard). BLE-command confirm chirps left on.
+    markerFeature: 'drossel',
+    // Permanent drossel (frame[7] forced to 40); controller must be flashed too.
     patches: [
+      { off: 0x12c6a, from: [0x48, 0x7f], to: [0x28, 0x20], id: 'speedsel' }, // ldrb r0,[r1,0x1d] -> movs r0,#0x28
+      { off: 0x14212, from: [0x32], to: [0x38], id: 'version-marker' }, // "2059" -> "8059"
       { off: 0x16430, from: [0x1e, 0x28], to: [0xff, 0x28], id: 'beep-overspeed-nag' },   // continuous >~30 km/h nag: cmp #0x1e -> #0xff
       { off: 0x14e78, from: [0xff, 0xf7, 0x90, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed-onset' },   // over-speed onset
       { off: 0x14dfe, from: [0xff, 0xf7, 0xcd, 0xff], to: [0x00, 0xbf, 0x00, 0xbf], id: 'beep-overspeed-cadence' }, // over-speed cadence

@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.126
+- NAVEE N65i II: unlock to 40 km/h, switchable from the app. Flash the controller to unlock, then pick the top speed in the app - the scooter boots limited and the app opens it to 40 km/h (a restart re-locks). For a permanently open speed, also flash the meter. (The US 2.0.5.9 build is not open after all - it is region-throttled, so the controller patch is what lifts it.)
+
 ## 1.0.125
 - NAVEE N65i II and G5: the firmware patcher can now silence individual beeps on the meter. Per-tone sound-off is offered for the N65i II (DE 2.0.5.8 and US 2.0.5.9) and the G5 / G5 Pro / G5 Max (2.0.5.7) - choose which tones go quiet (the over-speed nag, fault and warning tones, melodies, the find-me alarm) while the BLE-command confirm chirps stay on. It never mutes every tone at once.
 - NAVEE N65i II (US 2.0.5.9): the meter is now flashable. It was recognized before but had nothing to patch; it now offers the per-tone beep silences. The US build already ships with the speed open, so it needs no drossel patch. Experimental, with the untested warning.

@@ -3590,7 +3590,7 @@ function applyModelPanels(modelName) {
   // forwards the BLE-set speed byte, so class 0x6E sub1 selects the live top speed. Steps are per-family.
   const xp = document.getElementById('xt5speed-panel');
   if (xp) {
-    let steps = (modelName && meterKickstartPatched()) ? naveeLiveSpeedSteps(modelName) : null;
+    let steps = (modelName && (meterKickstartPatched() || naveeN65iiSwitchable())) ? naveeLiveSpeedSteps(modelName) : null;
     if (naveeRealModel() === 'UT5 Max' && !ut5MaxSelectable()) steps = null;   // the "0050" on/off meter has no value selector
     xp.style.display = steps ? '' : 'none';
     const xs = document.getElementById('ss-xt5speed');
@@ -3643,10 +3643,7 @@ function naveeDrosselCaps(name) {
   // ceiling). 50 is the meter's zero sentinel - sending 50 makes the controller fall back to its default
   // (~20) instead of going faster (field-confirmed: 50 dropped to 20), so only 50 was removed.
   if (/^UT5 Max/.test(name)) return { open: [27, 30, 35, 40, 45], lock: [15, 20, 22, 25] };
-  // N65i II: the patched "5058" meter NOPs the region gate so the live 0x6E sub1 value is forwarded as
-  // drive-frame byte10; the stock controller already caps = min(modeCap, byte*scale), so both locked and
-  // open are selectable. Top step is 40: the controller's mode-4 cap bounds real speed there, so higher
-  // values would be clamped (false promise). Meter-only patch, controller stays stock. HW-unconfirmed.
+  // N65i II: 0x6E sub1 sets the cap the drive frame sends. 6001 = meter gate-NOP (stock ctrl); 10701 = patched ctrl (gov 40) + stock meter. Top 40 (ctrl ceiling).
   if (/^N65i II/.test(name)) return { open: [27, 30, 35, 40], lock: [15, 20, 22, 25] };
   return null;
 }
@@ -4222,6 +4219,9 @@ function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRa
 // leading '8' or a listed marker means patched. On a permanent-cap model that overrides the meter drossel toggle.
 const NAVEE_CTRL_PATCHED_FW = ['4417', '4424', '4416', '1111', '2211', '3311', '3312']; // GT3 Pro/Max, ST3 Pro, GT5 Pro/Max, GT3, GT3 Max, ST3 (legacy permanent markers; kept so already-flashed users keep the warning)
 function naveeCtrlPatched() { const c = (liveRaw().fwBldc || '').trim(); return c.charAt(0) === '8' || NAVEE_CTRL_PATCHED_FW.indexOf(c) >= 0; }
+// N65i II 10701 switchable: patched controller (fwBldc "4446", gov 40) + stock meter. The 0x6E sub1 cap
+// cell is what the drive frame sends, boots locked; the app selector opens it live. Meter "8059" = permanent force, no live toggle.
+function naveeN65iiSwitchable() { return naveeRealModel() === 'N65i II' && (liveRaw().fwBldc || '').trim() === '4446' && (liveRaw().fwMeter || '').trim() !== '8059'; }
 // Stock meters re-clamp the launch level to a minimum of 3 outside the USA SKU (meter-side, the periodic
 // drive-state builder forces any sub-3 value back to 3). No model is exempt by pid: levels 0-2 become
 // available only on the USA SKU or on a meter carrying the kickstart marker (see NAVEE_METER_PATCHED_FW).

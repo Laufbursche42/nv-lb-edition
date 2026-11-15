@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>NAVEE N65i II: unlock to 40, switchable from the app.</b> Flash the controller to unlock, then pick the top speed in the app - the scooter boots limited and the app opens it to 40 km/h (a restart re-locks). For a permanently open speed, also flash the meter. (The US 2.0.5.9 build is not open after all - it is region-throttled, so the controller patch is what lifts it.)",
       "<b>NAVEE N65i II and G5: turn off individual beeps when flashing the meter.</b> The firmware patcher now offers per-tone sound-off for the N65i II (DE 2.0.5.8 and US 2.0.5.9 meter) and the G5 / G5 Pro / G5 Max (2.0.5.7). Pick exactly which tones go quiet - the over-speed nag, fault and warning tones, melodies, the find-me alarm - while the confirm chirps for BLE commands stay on. It never mutes every tone at once.",
       "<b>NAVEE N65i II (US 2.0.5.9): the meter is now flashable.</b> It used to be recognized with nothing to patch; now it offers the per-tone beep silences. The US build already ships with the speed open, so there is no drossel patch - just the sound-off. Experimental, with the usual untested warning.",
       "<b>NAVEE account ID: reading it from a Bluetooth log no longer runs out of memory.</b> A real btsnoop_hci.log can be tens to hundreds of MB. The app used to load the whole file at once and crash on it - now it scans the log as a stream, so any size works (raw log, .gz or an Android bug report .zip).",
@@ -1007,6 +1008,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>NAVEE N65i II: Entdrosseln auf 40, in der App schaltbar.</b> Controller flashen zum Entdrosseln, dann in der App die Höchstgeschwindigkeit wählen - der Roller startet gesperrt, die App schaltet bis 40 km/h frei (Neustart sperrt wieder). Dauerhaft offen = zusätzlich den Meter flashen. (Der US-2.0.5.9-Build ist doch nicht offen, sondern region-gedrosselt - der Controller-Patch hebt das an.)",
       "<b>NAVEE N65i II und G5: einzelne Pieptöne beim Flashen des Tachos abschalten.</b> Der Firmware-Patcher bietet jetzt Ton-für-Ton-Abschaltung für den N65i II (DE 2.0.5.8 und US 2.0.5.9 Tacho) und den G5 / G5 Pro / G5 Max (2.0.5.7). Wähle genau, welche Töne still werden - der Übertempo-Dauerton, Fehler- und Warntöne, Melodien, der Find-me-Alarm - während die Bestätigungs-Chirps für BLE-Befehle anbleiben. Es schaltet nie alles auf einmal stumm.",
       "<b>NAVEE N65i II (US 2.0.5.9): der Tacho ist jetzt flashbar.</b> Er wurde bisher erkannt, hatte aber nichts zu patchen; jetzt bietet er die Ton-für-Ton-Abschaltung. Der US-Build ist ab Werk offen, also gibt es keinen Drossel-Patch - nur die Tonabschaltung. Experimentell, mit der üblichen Ungetestet-Warnung.",
       "<b>NAVEE Konto-ID: das Auslesen aus einem Bluetooth-Log sprengt nicht mehr den Speicher.</b> Ein echtes btsnoop_hci.log kann zig bis hunderte MB groß sein. Die App las bisher die ganze Datei auf einmal und stürzte daran ab - jetzt liest sie das Log als Stream, also geht jede Größe (rohes Log, .gz oder ein Android-Bugreport-.zip).",
