@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.128
+- NAVEE: the untested-warning list now matches the firmware tools. UT5 Ultra X no longer carries the warning (hardware-confirmed), while the still-unconfirmed ST3, GT3 and ST5 family now do, so the app, the web tool and the patcher agree on which models are confirmed.
+
 ## 1.0.127
 - NAVEE ST3/GT3: the live speed selector now requires the controller to be flashed too. On the ST3 and GT3 the top speed lives in the controller, not the meter - the meter patch only unlocks the zero-start. The selector and the triple-tap now appear only once the controller carries the speed patch; with a stock controller the app explains that both the meter and the controller must be flashed instead of changing only the displayed number.
 

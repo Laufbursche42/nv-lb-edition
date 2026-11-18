@@ -4500,7 +4500,7 @@ const PATCHED_LATCH_BLDC = ['5556', '0050', '0055', '5525', '5557', '5517', '551
 // Old NT5 markers: unlock on Turbo nibble 5, so the boost button alone opens full speed. Warn, refuse.
 const OUTDATED_LATCH_BLDC = ['5556', '0050', '0055'];
 // Untested models: still patchable, but shown with the untested warning (not yet confirmed on recoverable hardware).
-const EXPERIMENTAL_PIDS = ['2585']; // UT5 Ultra X - carries the untested warning (UT5 Max 2538 now HW-confirmed, freed by Bob despite brick-prone; general flash-risk notes still apply)
+const EXPERIMENTAL_PIDS = ['2345', '2714', '2403', '2704', '2401', '2402', '2441', '2517']; // untested NAVEE, mirrors lb-tool-web driver _EXPERIMENTAL: ST3 Pro (2345,2714), GT3 Pro (2403,2704), ST3 (2401), GT3 (2402), ST5 Pro (2441), ST5 Max (2517). HW-confirmed ones (GT3 Max 2418, UT5 Max 2538, UT5 Ultra X 2585) are NOT listed. Per-patch image experimental flag still warns on unconfirmed patches.
 // Hard block: models that must NOT be patched in-app at all. Mechanism kept available, but currently EMPTY -
 // every NAVEE scooter is patchable; unconfirmed ones carry the untested warning (EXPERIMENTAL_PIDS + image flag).
 const PATCH_BLOCKED_PIDS = [];
