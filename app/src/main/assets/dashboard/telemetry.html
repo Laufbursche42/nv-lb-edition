@@ -4220,7 +4220,7 @@ function meterKickstartPatched() { return NAVEE_METER_PATCHED_FW.indexOf((liveRa
 // the builder's leading digit away from stock '0': the current scheme stamps a leading '8' (= permanent),
 // older GT3/ST3/GT5 builds stamp the raw markers listed below. Stock controllers never report these, so a
 // leading '8' or a listed marker means patched. On a permanent-cap model that overrides the meter drossel toggle.
-const NAVEE_CTRL_PATCHED_FW = ['4417', '4424', '4416', '1111', '2211', '3311', '3312']; // GT3 Pro/Max, ST3 Pro, GT5 Pro/Max, GT3, GT3 Max, ST3 (legacy permanent markers; kept so already-flashed users keep the warning)
+const NAVEE_CTRL_PATCHED_FW = ['4417', '4424', '4416', '1111', '2211', '3311', '3312', '5517']; // permanent markers + '5517' = GT3/ST3 switchable controller 0.0.1.7 (keeps byte10 live, lets the meter-forwarded speed through)
 function naveeCtrlPatched() { const c = (liveRaw().fwBldc || '').trim(); return c.charAt(0) === '8' || NAVEE_CTRL_PATCHED_FW.indexOf(c) >= 0; }
 // N65i II 10701 switchable: patched controller (fwBldc "4446", gov 40) + stock meter. The 0x6E sub1 cap
 // cell is what the drive frame sends, boots locked; the app selector opens it live. Meter "8059" = permanent force, no live toggle.

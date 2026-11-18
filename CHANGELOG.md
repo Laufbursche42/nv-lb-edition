@@ -16,6 +16,9 @@ To hand-write the notes for a release, add a section headed with its version num
 
 If no matching section exists the notes fall back to the commit messages, so keeping this file up to date is optional.
 
+## 1.0.129
+- NAVEE GT3/ST3: the app now recognizes the switchable controller (marker 5517). After flashing both the patched meter and the switchable controller, the live speed selector and the triple-tap work and the top speed switches between the locked and the open value without a re-flash.
+
 ## 1.0.128
 - NAVEE: the untested-warning list now matches the firmware tools. UT5 Ultra X no longer carries the warning (hardware-confirmed), while the still-unconfirmed ST3, GT3 and ST5 family now do, so the app, the web tool and the patcher agree on which models are confirmed.
 

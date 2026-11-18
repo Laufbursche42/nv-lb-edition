@@ -5,6 +5,7 @@
 window.I18N = {
   en: {
     'whatsnew.points': [
+      "<b>NAVEE GT3/ST3: the switchable controller is now recognized.</b> Flash the patched meter and the new switchable controller, then switch the top speed live in the app (lock 22, open up to 40) - no re-flash. The permanent controller patch stays as the alternative.",
       "<b>NAVEE: the untested-warning list now matches the firmware tools.</b> UT5 Ultra X no longer shows the warning (it is hardware-confirmed), while the still-unconfirmed ST3, GT3 and ST5 family now do - so the app, the web tool and the patcher agree on which models are confirmed.",
       "<b>NAVEE ST3/GT3: the speed selector now needs the controller flashed too.</b> On the ST3 and GT3 the top speed lives in the controller, not the meter - the meter patch only unlocks the zero-start. The live speed selector and the triple-tap now appear only once the controller carries the speed patch; with a stock controller the app tells you to flash both the meter and the controller instead of changing only the displayed number.",
       "<b>NAVEE N65i II: unlock to 40, switchable from the app.</b> Flash the controller to unlock, then pick the top speed in the app - the scooter boots limited and the app opens it to 40 km/h (a restart re-locks). For a permanently open speed, also flash the meter. (The US 2.0.5.9 build is not open after all - it is region-throttled, so the controller patch is what lifts it.)",
@@ -1011,6 +1012,7 @@ window.I18N = {
 
   de: {
     'whatsnew.points': [
+      "<b>NAVEE GT3/ST3: der schaltbare Controller wird jetzt erkannt.</b> Flashe den gepatchten Tacho und den neuen schaltbaren Controller, dann schalte die Höchstgeschwindigkeit live in der App (gesperrt 22, offen bis 40) - ohne neu zu flashen. Der permanente Controller-Patch bleibt als Alternative.",
       "<b>NAVEE: Die Ungetestet-Warnung passt jetzt zu den Firmware-Tools.</b> UT5 Ultra X zeigt sie nicht mehr (auf Hardware bestätigt), die noch unbestätigte ST3-, GT3- und ST5-Familie dafür jetzt - so sind App, Web-Tool und Patcher einig, welche Modelle bestätigt sind.",
       "<b>NAVEE ST3/GT3: der Speed-Selektor braucht jetzt auch den geflashten Controller.</b> Beim ST3 und GT3 sitzt die Höchstgeschwindigkeit im Controller, nicht im Tacho - der Tacho-Patch schaltet nur den Zero-Start frei. Der Live-Speed-Selektor und der Dreifach-Tipp erscheinen jetzt erst, wenn der Controller den Speed-Patch trägt; bei Serien-Controller sagt die App, dass Tacho UND Controller geflasht werden müssen, statt nur die angezeigte Zahl zu ändern.",
       "<b>NAVEE N65i II: Entdrosseln auf 40, in der App schaltbar.</b> Controller flashen zum Entdrosseln, dann in der App die Höchstgeschwindigkeit wählen - der Roller startet gesperrt, die App schaltet bis 40 km/h frei (Neustart sperrt wieder). Dauerhaft offen = zusätzlich den Meter flashen. (Der US-2.0.5.9-Build ist doch nicht offen, sondern region-gedrosselt - der Controller-Patch hebt das an.)",
